@@ -14,9 +14,8 @@ while read line ; do
 done <${STATE_DIR}/initrd.dirs
 
 pushd ${INITRDROOT}/dev >/dev/null
- ${SKELETON}/../sbin/MAKEDEV generic-nopty md
+ ${SKELETON}/sbin/MAKEDEV generic-nopty md
  # someday make only devices where the cdrom can be in /dev/cdrom
- # $SKELETON *HAS* to be a subdirectory of the ISO skeleton
 popd >/dev/null
 
 rm -f tmp.libs
@@ -44,7 +43,7 @@ pushd ${SYSROOT}/lib/modules/${KERNEL_VERSION} >/dev/null
  done <${STATE_DIR}/initrd.kernel
 popd >/dev/null
 
-cp -pr ${SKELETON}/* ${INITRDROOT}
+cp -pr ${SKELETON}/initrd/* ${INITRDROOT}
 
 [ -e ${STATE_DIR}/initrd.patch ] &&
  patch -d ${INITRDROOT} -p0 <${STATE_DIR}/initrd.patch
