@@ -1,0 +1,142 @@
+#!/bin/bash
+#unsafe defaults!
+CACHE_DIR=/mnt/isoroot/var/cache/sorcery
+ARCH=i386-pc-linux-gnu
+ISO_DIR=$(pwd)/iso-root
+SKELETON=$(pwd)/../../../devel/iso/skeleton
+STATE_DIR=$(pwd)/../creation-data
+SYSROOT=/
+mkdir -p $ISO_DIR
+ISO_ARCH=i386
+ISO_VERSION=devel
+
+TMP_DIR="/tmp/mkiso.$$"
+UNPACK_DIR="${TMP_DIR}/unpack"
+rm -rf $TMP_DIR
+mkdir -m700 $TMP_DIR
+declare -a DEF_INCLUDE
+declare -a DEF_EXCLUDE
+
+output_warning()
+{
+  echo $1 1>&2
+}
+
+fatal_warning()
+{
+  echo $1 1>&2
+  exit 1;
+}
+
+add_default_include()
+{
+  DEF_INCLUDE[${#DEF_INCLUDE[*]}]="$1"
+}
+
+add_default_exclude()
+{
+  DEF_EXCLUDE[${#DEF_EXCLUDE[*]}]="$1"
+}
+
+iso_include()
+{
+  pushd ${UNPACK_DIR} >/dev/null
+  eval "cp --parents -au ./$1 ${ISO_DIR}"
+  popd >/dev/null
+}
+
+iso_exclude()
+{
+  eval "rm -rf ${UNPACK_DIR}/$1"
+}
+
+unpack()
+{ # $1: spell to unpack
+  begin_unpack "$@"
+  end_unpack "$@"
+}
+
+begin_unpack()
+{
+  local file
+  if [ -e $UNPACK_DIR ] ;then
+    output_warning "An old unpack failed. Flushing the toilet."
+    rm -rf $UNPACK_DIR
+  fi
+  mkdir $UNPACK_DIR
+  if [ "$1" == "linux" ] ;then # special case linux spell
+    tar -xjf ${STATE_DIR}/linux-ISO.tar.bz2 -C $UNPACK_DIR
+  else
+    [ $(find ${CACHE_DIR} -name "$1-*-$ARCH.tar.bz2" | wc -l) -gt 1 ] &&
+     output_warning "$1: source file could not be uniquely identified.
+Please kick the maintainer for choosing bad spell names"
+    for file in $(find ${CACHE_DIR} -name "$1-*-$ARCH.tar.bz2") ;do
+      # FIXME: use sorcery functions
+      tar -xjf $file -C $UNPACK_DIR
+    done
+  fi &&
+  echo $1 >${TMP_DIR}/unpack_successful
+}
+
+end_unpack()
+{
+  local entry
+  for entry in "${DEF_INCLUDE[@]}" ;do
+    iso_include "$entry"
+  done
+  for entry in "${DEF_EXCLUDE[@]}" ;do
+    iso_exclude "$entry"
+  done
+  [  -e ${TMP_DIR}/unpack_successful ] ||
+   fatal_warning "The unpack failed. Can't install to ISO"
+
+  if ! cp -au ${UNPACK_DIR}/* ${ISO_DIR} 2>/dev/null ;then
+    echo -n "nothing to be done for "
+    cat ${TMP_DIR}/unpack_successful
+  fi
+  rm ${TMP_DIR}/unpack_successful
+  rm -rf ${UNPACK_DIR}
+}
+
+# code starts here
+
+while read line ; do
+  mkdir -p ${ISO_DIR}/${line}
+done <${STATE_DIR}/iso.dirs
+
+. ../creation-data/iso.packages
+
+pushd $ISO_DIR/dev >/dev/null
+ $SKELETON/sbin/MAKEDEV generic-nopty md
+ mknod initctl p
+popd >/dev/null
+
+pushd $SKELETON >/dev/null
+cp -af --parents $(find * -maxdepth 0 ! -name initrd) $ISO_DIR
+popd $SKELETON >/dev/null
+
+# watch out - nasty, ugly template code afoot...
+while read template ; do
+  cp ${ISO_DIR}/$template  ${TMP_DIR}/tmp.template
+  while read pattern ; do
+    sed -i "s/$pattern/g" ${TMP_DIR}/tmp.template
+  done <${STATE_DIR}/smgl.templates
+  cat ${TMP_DIR}/tmp.template |
+  grep -v "s/^__SMGL_TEMPLATE_NOT_${ISO_ARCH}__/${ISO_VERSION}" |
+  sed 's/^__SMGL_TEMPLATE_NOT_[^_]*__//' >${ISO_DIR}/$template
+done <${STATE_DIR}/iso.templates
+
+[ -e ${STATE_DIR}/iso.patch ] &&
+  patch -d $ISO_DIR -p0 ${STATE_DIR}/iso.patch
+
+cp ${SYSROOT}/sbin/ldconfig ${ISO_DIR}
+chroot ${ISO_DIR} /ldconfig
+rm ${ISO_DIR}/ldconfig
+
+[ -e ${STATE_DIR}/iso.command ] &&
+  . ${STATE_DIR}/iso.command
+
+rm -r ${TMP_DIR}
+
+# all ready
+mkisofs -quiet -R -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o /my-vanilla.iso ${ISO_DIR}
