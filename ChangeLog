@@ -1,3 +1,6 @@
+2005-01-10 Karsten Behrmann <BearPerson@sourcemage.org>
+	* generation-scripts: fixed typo, added config file
+
 2005-01-09 Karsten Behrmann <BearPerson@sourcemage.org>
 	* skeleton: added the install-list and optional-list
 	* generation-scripts, data: added those spell lists

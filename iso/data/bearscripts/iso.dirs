@@ -3,6 +3,7 @@
 /var/log
 /var/lib
 /var/lib/nfs
+/var/cache/sorcery
 /dev
 /isolinux
 /sbin

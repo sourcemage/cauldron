@@ -4,12 +4,9 @@
 # nothing will prevent a malicious local user from making you override files.
 # neither is it thread-safe. DO NOT run this twice at the same time.
 
-SYSROOT=/
-KERNEL_VERSION=$(uname -r)
+. ./config
 OLDWD=$(pwd)
-INITRDROOT=${OLDWD}/theinitrd
-STATE_DIR=$(pwd)/../../data/bearscripts
-SKELETON=$(pwd)/../../skeleton/initrd
+
 mkdir -p $INITRDROOT
 
 while read line ; do

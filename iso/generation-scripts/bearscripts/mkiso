@@ -1,16 +1,8 @@
 #!/bin/bash
-#unsafe defaults!
-CACHE_DIR=/var/cache/sorcery
-ARCH=i686-pc-linux-gnu
-ISO_DIR=$(pwd)/iso-root
-SKELETON=$(pwd)/../../skeleton
-STATE_DIR=$(pwd)/../../data/bearscripts
-SYSROOT=/
-mkdir -p $ISO_DIR
-ISO_ARCH=i686
-ISO_VERSION=devel
-IGNORE_FATAL=yes
 
+. ./config
+
+mkdir -p $ISO_DIR
 TMP_DIR="/tmp/mkiso.$$"
 UNPACK_DIR="${TMP_DIR}/unpack"
 rm -rf $TMP_DIR
@@ -108,7 +100,7 @@ while read line ; do
   mkdir -p ${ISO_DIR}/${line}
 done <${STATE_DIR}/iso.dirs
 
-. ../creation-data/iso.packages
+. ${STATE_DIR}/iso.packages
 
 pushd $ISO_DIR/dev >/dev/null
  $SKELETON/sbin/MAKEDEV generic-nopty md
@@ -132,14 +124,17 @@ while read template ; do
   sed 's/^__SMGL_TEMPLATE_NOT_[^_]*__//' >${ISO_DIR}/$template
 done <${STATE_DIR}/iso.templates
 
-cat ${STATE_DIR}/install-list ${STATE_DIR}/optional-list >${TMP_DIR}/tmp.spells
+cat ${STATE_DIR}/install-list ${STATE_DIR}/optional-list |
+ grep -v '^#' >${TMP_DIR}/tmp.spells
 while read spell ; do
-  [ $(find ${CACHE_DIR} -name "$1-*-$ARCH.tar.bz2" | wc -l) -gt 1 ] &&
-   output_warning "$1: cache file could not be uniquely identified.
+  [ $(find ${CACHE_DIR} -name "$spell-*-$ARCH.tar.bz2" | wc -l) -gt 1 ] &&
+   output_warning "$spell: cache file could not be uniquely identified.
 Please kick the maintainer for choosing bad spell names"
-  [ $(find ${CACHE_DIR} -name "$1-*-$ARCH.tar.bz2" | wc -l) -lt 1 ] &&
-   fatal_warning "$1: cache file could not be found."
-  cp $(find ${CACHE_DIR} -name "$1-*-$ARCH.tar.bz2") ${ISO_DIR}/var/cache/sorcery/
+  if [ $(find ${CACHE_DIR} -name "$spell-*-$ARCH.tar.bz2" | wc -l) -lt 1 ] ;then
+    fatal_warning "$spell: cache file could not be found."
+  else
+    cp $(find ${CACHE_DIR} -name "$spell-*-$ARCH.tar.bz2") ${ISO_DIR}/var/cache/sorcery/
+  fi
 done <${TMP_DIR}/tmp.spells
 rm ${TMP_DIR}/tmp.spells
 
