@@ -53,6 +53,20 @@ package_fromver()
   fi
 }
 
+process_templates()
+{
+  cp $1  ${TMP_DIR}/tmp.template
+  while read pattern ; do
+    sed -i "s/$pattern/g" ${TMP_DIR}/tmp.template
+  done <${STATE_DIR}/smgl.templates
+  cat ${TMP_DIR}/tmp.template |
+  grep -v "^__SMGL_TEMPLATE_NOT_${ISO_ARCH}__" |
+  sed 's/^__SMGL_TEMPLATE_NOT_[^_]*__//' |
+  sed "s/^__SMGL_TEMPLATE_ONLY_${ISO_ARCH}__/__SMGL_INTERNAL_KEEP__/" |
+  grep -v "^__SMGL_TEMPLATE_ONLY_[^_*]*__" |
+  sed 's/^__SMGL_INTERNAL_KEEP__//' >$1
+}
+
 #--------------begin interface for iso.packages------------------
 
 add_default_include()
@@ -149,13 +163,7 @@ popd $SKELETON >/dev/null
 
 # watch out - nasty, ugly template code afoot...
 while read template ; do
-  cp ${ISO_DIR}/$template  ${TMP_DIR}/tmp.template
-  while read pattern ; do
-    sed -i "s/$pattern/g" ${TMP_DIR}/tmp.template
-  done <${STATE_DIR}/smgl.templates
-  cat ${TMP_DIR}/tmp.template |
-  grep -v "s/^__SMGL_TEMPLATE_NOT_${ISO_ARCH}__/${ISO_VERSION}" |
-  sed 's/^__SMGL_TEMPLATE_NOT_[^_]*__//' >${ISO_DIR}/$template
+  process_templates ${ISO_DIR}/$template
 done <${STATE_DIR}/iso.templates
 
 echo "Copying cache tarballs..."

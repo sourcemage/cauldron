@@ -1,4 +1,17 @@
 #!/bin/bash
+. ./config
+if ! [ -e ${STATE_DIR}/linux-ISO.tar.bz2 ] ;then
+  echo "Missing a linux tarball for the ISO, generating one"
+  gaze install linux | tar -cjf ${STATE_DIR}/linux-ISO.tar.bz2 -T -
+fi
+if ! [ -e ${STATE_DIR}/stable.tar.bz2 ] ;then
+  echo "Missing grimoire tarball, fetching..."
+  wget -O ${STATE_DIR}/stable.tar.bz2 "http://codex.sourcemage.org/stable.tar.bz2"
+fi
+if ! [ -e ${STATE_DIR}/sorcery-stable.tar.bz2 ] ;then
+  echo "Missing sorcery tarball, getting..."
+  wget -O ${STATE_DIR}/sorcery-stable.tar.bz2 "http://download.sourcemage.org/sorcery-stable.tar.bz2"
+fi
 ./mkinitrd
 mv ./initrd.gz ../../data/bearscripts
 ./mkiso
