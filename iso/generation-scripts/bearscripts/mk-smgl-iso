@@ -1,4 +1,0 @@
-#!/bin/bash
-./mkinitrd
-mv ./initrd.gz ../../data/bearscripts
-./mkiso
