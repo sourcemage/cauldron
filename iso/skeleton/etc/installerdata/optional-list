@@ -6,7 +6,7 @@ screen
 procinfo
 pciutils
 uptimed
-EthStatus
+ethstatus
 nmap
 which
 cvs
