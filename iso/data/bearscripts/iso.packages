@@ -31,6 +31,7 @@ unpack glibc
 unpack grep
 unpack gzip
 unpack hotplug
+unpack iana-etc
 begin_unpack init.d
   iso_include '/etc/init.d' # overriding the default
 end_unpack
@@ -87,8 +88,8 @@ unpack xfsprogs
 unpack xinetd
 unpack zlib
 unpack hdparm
-begin_unpack syslinux # warning: this is a hack
-  mkdir -p ${ISO_DIR}/isolinux
+begin_unpack syslinux
+  mkdir -p ${ISO_DIR}/isolinux # warning: this is a hack
   cp ${UNPACK_DIR}/usr/lib/syslinux/isolinux.bin ${ISO_DIR}/isolinux/
   iso_exclude '*'
 end_unpack

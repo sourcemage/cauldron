@@ -45,3 +45,4 @@ nano
 # /sbin/fsck
 e2fsprogs
 ndiswrapper
+iana-etc
