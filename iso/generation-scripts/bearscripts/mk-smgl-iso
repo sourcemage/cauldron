@@ -10,7 +10,7 @@ if ! [ -e ${STATE_DIR}/stable.tar.bz2 ] ;then
 fi
 if ! [ -e ${STATE_DIR}/sorcery-stable.tar.bz2 ] ;then
   echo "Missing sorcery tarball, getting..."
-  wget -O ${STATE_DIR}/sorcery-stable.tar.bz2 "http://download.sourcemage.org/sorcery-stable.tar.bz2"
+  wget -O ${STATE_DIR}/sorcery-stable.tar.bz2 "http://download.sourcemage.org/sorcery/sorcery-stable.tar.bz2"
 fi
 ./mkinitrd
 mv ./initrd.gz ../../data/bearscripts
