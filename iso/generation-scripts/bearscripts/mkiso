@@ -12,25 +12,31 @@ declare -a DEF_EXCLUDE
 
 copy_fromlog()
 {
-  output_warning "Using installed files for $1."
-  gaze install $1 |
-   xargs cp --parents --target-directory $2 ||
-   fatal_warning "No way to install $1: no trace of it could be found."
+  if gaze install $1 >/dev/null ;then
+    output_warning "Using installed files for $1."
+    gaze install $1 |
+     xargs cp --parents --target-directory $2 2>/dev/null
+  else
+    fatal_warning "No way to install $1: no trace of it could be found."
+  fi
 }
 
 package_fromlog()
 {
-  output_warning "Using installed files for $1."
-  gaze install $1 |
-   tar --no-recursion -cjf "$2/$1-ISO-$ARCH.tar.bz2" -T - ||
-   fatal_warning "No way to install $1: no trace of it could be found."
+  if gaze install $1 >/dev/null;then
+    output_warning "Using installed files for $1."
+    gaze install $1 |
+     tar --no-recursion -cjf "$2/$1-ISO-$ARCH.tar.bz2" -T -
+  else
+    fatal_warning "No way to install $1: no trace of it could be found."
+  fi
 }
 
 copy_fromver()
 {
   if [ -e $(find ${CACHE_DIR} -name "$1-$(gaze -q installed $1)-$ARCH.tar.bz2") ] ;then
     output_warning "Falling back to installed version number for finding $1"
-    tar -xjf -C $2 "$(find ${CACHE_DIR} -name "$1-$(gaze -q installed $1)-$ARCH.tar.bz2")"
+    tar -xjf "$(find ${CACHE_DIR} -name "$1-$(gaze -q installed $1)-$ARCH.tar.bz2")" -C $2
   else
     copy_fromlog $@
   fi
@@ -38,8 +44,7 @@ copy_fromver()
 
 package_fromver()
 {
-  if [ -e $(find ${CACHE_DIR} -name "$1-$(gaze -q installed $1)-$ARCH.tar.bz2")
-  ] ;then
+  if [ -e $(find ${CACHE_DIR} -name "$1-$(gaze -q installed $1)-$ARCH.tar.bz2") ] ;then
     output_warning "Falling back to installed version number for finding $1"
     cp "$(find ${CACHE_DIR} -name "$1-$(gaze -q installed $1)-$ARCH.tar.bz2")" $2
   else
@@ -93,7 +98,7 @@ begin_unpack()
     elif [ $(find ${CACHE_DIR} -name "$1-*-$ARCH.tar.bz2" | wc -l) -lt 1 ] ;then
       copy_fromlog $1 ${UNPACK_DIR}
     else
-      tar -xjf -C $UNPACK_DIR "$(find ${CACHE_DIR} -name "$1-*-$ARCH.tar.bz2")"
+      tar -xjf "$(find ${CACHE_DIR} -name "$1-*-$ARCH.tar.bz2")" -C $UNPACK_DIR
     fi
   fi &&
   echo $1 >${TMP_DIR}/unpack_successful
@@ -108,14 +113,15 @@ end_unpack()
   for entry in "${DEF_EXCLUDE[@]}" ;do
     iso_exclude "$entry"
   done
-  [  -e ${TMP_DIR}/unpack_successful ] ||
-   fatal_warning "The unpack failed. Can't install to ISO"
-
-  if ! cp -au ${UNPACK_DIR}/* ${ISO_DIR} 2>/dev/null ;then
-    echo -n "nothing to be done for "
-    cat ${TMP_DIR}/unpack_successful
+  if [ -e ${TMP_DIR}/unpack_successful ] ;then
+    if ! cp -au ${UNPACK_DIR}/* ${ISO_DIR} 2>/dev/null ;then
+      echo -n "nothing to be done for "
+      cat ${TMP_DIR}/unpack_successful
+    fi
+    rm ${TMP_DIR}/unpack_successful
+  else
+    fatal_warning "The unpack failed. Can't install to ISO"
   fi
-  rm ${TMP_DIR}/unpack_successful
   rm -rf ${UNPACK_DIR}
 }
 
