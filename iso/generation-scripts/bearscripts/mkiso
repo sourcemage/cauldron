@@ -10,17 +10,44 @@ mkdir -m700 $TMP_DIR
 declare -a DEF_INCLUDE
 declare -a DEF_EXCLUDE
 
-output_warning()
+copy_fromlog()
 {
-  echo $1 1>&2
+  output_warning "Using installed files for $1."
+  gaze install $1 |
+   xargs cp --parents --target-directory $2 ||
+   fatal_warning "No way to install $1: no trace of it could be found."
 }
 
-fatal_warning()
+package_fromlog()
 {
-  echo $1 1>&2
-  [ "$IGNORE_FATAL" == "yes" ] ||
-  exit 1;
+  output_warning "Using installed files for $1."
+  gaze install $1 |
+   tar --no-recursion -cjf "$2/$1-ISO-$ARCH.tar.bz2" -T - ||
+   fatal_warning "No way to install $1: no trace of it could be found."
 }
+
+copy_fromver()
+{
+  if [ -e $(find ${CACHE_DIR} -name "$1-$(gaze -q installed $1)-$ARCH.tar.bz2") ] ;then
+    output_warning "Falling back to installed version number for finding $1"
+    tar -xjf -C $2 "$(find ${CACHE_DIR} -name "$1-$(gaze -q installed $1)-$ARCH.tar.bz2")"
+  else
+    copy_fromlog $@
+  fi
+}
+
+package_fromver()
+{
+  if [ -e $(find ${CACHE_DIR} -name "$1-$(gaze -q installed $1)-$ARCH.tar.bz2")
+  ] ;then
+    output_warning "Falling back to installed version number for finding $1"
+    cp "$(find ${CACHE_DIR} -name "$1-$(gaze -q installed $1)-$ARCH.tar.bz2")" $2
+  else
+    package_fromlog $@
+  fi
+}
+
+#--------------begin interface for iso.packages------------------
 
 add_default_include()
 {
@@ -61,15 +88,13 @@ begin_unpack()
   if [ "$1" == "linux" ] ;then # special case linux spell
     tar -xjf ${STATE_DIR}/linux-ISO.tar.bz2 -C $UNPACK_DIR
   else
-    [ $(find ${CACHE_DIR} -name "$1-*-$ARCH.tar.bz2" | wc -l) -gt 1 ] &&
-     output_warning "$1: cache file could not be uniquely identified.
-Please kick the maintainer for choosing bad spell names"
-    [ $(find ${CACHE_DIR} -name "$1-*-$ARCH.tar.bz2" | wc -l) -lt 1 ] &&
-     fatal_warning "$1: cache file could not be found."
-    for file in $(find ${CACHE_DIR} -name "$1-*-$ARCH.tar.bz2") ;do
-      # FIXME: use sorcery functions
-      tar -xjf $file -C $UNPACK_DIR
-    done
+    if [ $(find ${CACHE_DIR} -name "$1-*-$ARCH.tar.bz2" | wc -l) -gt 1 ] ;then
+      copy_fromver $1 ${UNPACK_DIR}
+    elif [ $(find ${CACHE_DIR} -name "$1-*-$ARCH.tar.bz2" | wc -l) -lt 1 ] ;then
+      copy_fromlog $1 ${UNPACK_DIR}
+    else
+      tar -xjf -C $UNPACK_DIR "$(find ${CACHE_DIR} -name "$1-*-$ARCH.tar.bz2")"
+    fi
   fi &&
   echo $1 >${TMP_DIR}/unpack_successful
 }
@@ -94,7 +119,9 @@ end_unpack()
   rm -rf ${UNPACK_DIR}
 }
 
-# code starts here
+# ---------------end interface for iso.packages-----------------
+
+echo "Creating ISO file structure..."
 
 while read line ; do
   mkdir -p ${ISO_DIR}/${line}
@@ -124,16 +151,17 @@ while read template ; do
   sed 's/^__SMGL_TEMPLATE_NOT_[^_]*__//' >${ISO_DIR}/$template
 done <${STATE_DIR}/iso.templates
 
+echo "Copying cache tarballs..."
+
 cat ${STATE_DIR}/install-list ${STATE_DIR}/optional-list |
  grep -v '^#' >${TMP_DIR}/tmp.spells
 while read spell ; do
-  [ $(find ${CACHE_DIR} -name "$spell-*-$ARCH.tar.bz2" | wc -l) -gt 1 ] &&
-   output_warning "$spell: cache file could not be uniquely identified.
-Please kick the maintainer for choosing bad spell names"
-  if [ $(find ${CACHE_DIR} -name "$spell-*-$ARCH.tar.bz2" | wc -l) -lt 1 ] ;then
-    fatal_warning "$spell: cache file could not be found."
+  if [ $(find ${CACHE_DIR} -name "$spell-*-$ARCH.tar.bz2" | wc -l) -gt 1 ] ;then
+    package_fromver $spell ${ISO_DIR}/var/cache/sorcery/
+  elif [ $(find ${CACHE_DIR} -name "$spell-*-$ARCH.tar.bz2" | wc -l) -lt 1 ] ;then
+    package_fromlog $spell ${ISO_DIR}/var/cache/sorcery/
   else
-    cp $(find ${CACHE_DIR} -name "$spell-*-$ARCH.tar.bz2") ${ISO_DIR}/var/cache/sorcery/
+    cp "$(find ${CACHE_DIR} -name "$spell-*-$ARCH.tar.bz2")" ${ISO_DIR}/var/cache/sorcery/
   fi
 done <${TMP_DIR}/tmp.spells
 rm ${TMP_DIR}/tmp.spells

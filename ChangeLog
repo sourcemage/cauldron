@@ -1,5 +1,9 @@
+2005-01-12 Karsten Behrmann <BearPerson@sourcemage.org>
+	* scripts/mkiso: added fallbacks to installed stuff
+
 2005-01-10 Karsten Behrmann <BearPerson@sourcemage.org>
 	* generation-scripts: fixed typo, added config file
+	* data: added kernel configs
 
 2005-01-09 Karsten Behrmann <BearPerson@sourcemage.org>
 	* skeleton: added the install-list and optional-list
