@@ -48,3 +48,11 @@
 
 2004-12-21 Karsten Behrmann <BearPerson@sourcemage.org>
 	* skeleton/isolinux.cfg: added the vga option, fix bug #7642.
+
+===========================================================
+People who have contributed before this ChangeLog was kept:
+(in alphabetical order)
+He Who Does Not Wish To Be Named
+Kyle Sallee
+Laurent Wandrebeck <low@sourcemage.org>
+Seth Woolley <seth@tautology.org>
