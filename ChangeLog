@@ -1,3 +1,7 @@
+2005-01-14 Karsten Behrmann <BearPerson@sourcemage.org>
+	* almost everything: updated to fixes that came up during 
+	  yesterday's generation night
+
 2005-01-12 Karsten Behrmann <BearPerson@sourcemage.org>
 	* scripts/mkiso: added fallbacks to installed stuff
 

@@ -1,10 +1,13 @@
 /var
 /var/run
 /var/log
+/var/lock
 /var/lib
 /var/lib/nfs
 /var/cache/sorcery
 /dev
+/dev/pts
+/dev/shm
 /isolinux
 /sbin
 /boot

@@ -13,10 +13,10 @@ while read line ; do
   mkdir -p ${INITRDROOT}/${line}
 done <${STATE_DIR}/initrd.dirs
 
-pushd ${INITRDROOT}/dev >/dev/null
- ${SKELETON}/sbin/MAKEDEV generic-nopty md
- # someday make only devices where the cdrom can be in /dev/cdrom
-popd >/dev/null
+#pushd ${INITRDROOT}/dev >/dev/null
+# ${SKELETON}/sbin/MAKEDEV generic-nopty md
+# # someday make only devices where the cdrom can be in /dev/cdrom
+#popd >/dev/null
 
 rm -f tmp.libs
 pushd $SYSROOT >/dev/null
@@ -43,7 +43,7 @@ pushd ${SYSROOT}/lib/modules/${KERNEL_VERSION} >/dev/null
  done <${STATE_DIR}/initrd.kernel
 popd >/dev/null
 
-cp -pr ${SKELETON}/initrd/* ${INITRDROOT}
+cp -af ${SKELETON}/initrd/* ${INITRDROOT}
 
 [ -e ${STATE_DIR}/initrd.patch ] &&
  patch -d ${INITRDROOT} -p0 <${STATE_DIR}/initrd.patch
@@ -52,9 +52,9 @@ cp ${SYSROOT}/sbin/ldconfig ${INITRDROOT}
 chroot ${INITRDROOT} /ldconfig
 rm ${INITRDROOT}/ldconfig
 
-cp ${SYSROOT}/sbin/depmod ${INITRDROOT}
+cp ${SYSROOT}/sbin/depmod ${SYSROOT}/sbin/depmod.old ${INITRDROOT}
 chroot ${INITRDROOT} /depmod
-rm ${INITRDROOT}/depmod
+rm ${INITRDROOT}/depmod ${INITRDROOT}/depmod.old
 
 [ -x ${STATE_DIR}/initrd.command ] &&
  . ${STATE_DIR}/initrd.command
@@ -70,7 +70,7 @@ mkdir -p tmp.initrd-mountdir
 [ $UID != 0 ] &&
  echo "Root access is needed to mount loopback"
 su -c "mount tmp.initrd tmp.initrd-mountdir -o loop" # doesn't prompt if root
-cp -r ${INITRDROOT}/* tmp.initrd-mountdir
+cp -a ${INITRDROOT}/* tmp.initrd-mountdir
 [ $UID != 0 ] &&
  echo "And again for unmounting"
 su -c "umount tmp.initrd-mountdir"

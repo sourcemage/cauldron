@@ -6,6 +6,8 @@
 /bin/umount
 /bin/uname
 /sbin/modprobe
+/sbin/modprobe.old
+/sbin/insmod.old
 /sbin/pivot_root
 /usr/bin/dialog
 /usr/bin/grep

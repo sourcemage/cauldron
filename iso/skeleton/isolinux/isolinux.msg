@@ -1,9 +1,8 @@
-SMGL-Release-devel by the Source Mage GNU/Linux team
-0e<www.sourcemage.org>07
+SMGL-Release-devel by the Source Mage GNU/Linux team 0e<www.sourcemage.org>07
 
-09Welcome07 to 04Source Mage GNU/Linux07 (Linux kernel 2.6.8.1)
+09Welcome07 to 04Source Mage GNU/Linux07 (Linux kernel 2.4.28)
 Copyright (C) 2000-2001 by Kyle Sallee
-Copyright (C) 2002-2003 by Source Magers <www.sourcemage.org>
+Copyright (C) 2002-2005 by Source Magers <www.sourcemage.org>
 All Rights Reserved
 
 Source Mage is distributed under the terms of the GNU General Public License
@@ -16,8 +15,9 @@ Download Source Mage GNU/Linux and documentation from
   you need special kernel parameters, just type 02install07 followed by
   kernel parameters, like "acpi=off" for instance.
 
-* To use this CD as a rescue CD, either type 02linux07 (or 02initrd07 to
-  use the initrd to load kernel modules, needed for SCSI devices for
-  instance) followed by usual kernel parameters, like 02root=07 to
-  specify a root device.
+* This is a TESTING version. Chances are it does not work at all. If 
+  you're new to Source Mage, you'll be better off downloading the 
+  official latest release, 0.9.3
 
+* This version uses framebuffers. If you get no picture after this 
+  screen, try typing ^O02lowres^O07 at this prompt.

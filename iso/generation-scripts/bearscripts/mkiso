@@ -2,6 +2,7 @@
 
 . ./config
 
+rm -rf ${ISO_DIR}
 mkdir -p $ISO_DIR
 TMP_DIR="/tmp/mkiso.$$"
 UNPACK_DIR="${TMP_DIR}/unpack"
@@ -135,10 +136,10 @@ done <${STATE_DIR}/iso.dirs
 
 . ${STATE_DIR}/iso.packages
 
-pushd $ISO_DIR/dev >/dev/null
- $SKELETON/sbin/MAKEDEV generic-nopty md
- mknod initctl p
-popd >/dev/null
+#pushd $ISO_DIR/dev >/dev/null
+# $SKELETON/sbin/MAKEDEV generic-nopty md
+# mknod initctl p
+#popd >/dev/null
 
 cp ${STATE_DIR}/initrd.gz $ISO_DIR/boot/initrd.gz
 
@@ -172,6 +173,10 @@ while read spell ; do
 done <${TMP_DIR}/tmp.spells
 rm ${TMP_DIR}/tmp.spells
 
+mkdir -p ${ISO_DIR}/var/lib/sorcery/codex
+cp ${STATE_DIR}/stable.tar.bz2 ${ISO_DIR}/var/lib/sorcery/codex/stable.tar.bz2
+cp ${STATE_DIR}/sorcery-stable.tar.bz2 ${ISO_DIR}/var/cache/sorcery/sorcery-stable.tar.bz2
+
 [ -e ${STATE_DIR}/iso.patch ] &&
   patch -d $ISO_DIR -p0 ${STATE_DIR}/iso.patch
 
@@ -179,10 +184,21 @@ cp ${SYSROOT}/sbin/ldconfig ${ISO_DIR}
 chroot ${ISO_DIR} /ldconfig
 rm ${ISO_DIR}/ldconfig
 
+cp ${SYSROOT}/sbin/depmod ${SYSROOT}/sbin/depmod.old ${ISO_DIR}
+chroot ${ISO_DIR} /depmod
+rm ${ISO_DIR}/depmod ${ISO_DIR}/depmod.old
+
+# symlinks would be pointing to ${INSTALL_ROOT} if we used that feature
+# have to run after ldconfig so everything finds its libs
+mkdir ${ISO_DIR}/tmpsorcery
+tar -C ${ISO_DIR}/tmpsorcery -xjf ${STATE_DIR}/sorcery-stable.tar.bz2
+chroot ${ISO_DIR} sh -c "cd /tmpsorcery/sorcery ; ./install"
+rm -r ${ISO_DIR}/tmpsorcery
+
 [ -e ${STATE_DIR}/iso.command ] &&
   . ${STATE_DIR}/iso.command
 
 rm -r ${TMP_DIR}
 
 # all ready
-mkisofs -quiet -R -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o /my-vanilla.iso ${ISO_DIR}
+mkisofs -quiet -R -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o /smgl-0.9.4-rc1.iso ${ISO_DIR}

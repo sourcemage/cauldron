@@ -340,7 +340,7 @@ DIALOG=( "dialog" "--trim" "--stdout" \
 mount -n -t proc  proc  /proc
 
 KERNEL=`uname -r`
-DEVICE=/dev
+DEVICE=/dev/cdroms
  MOUNT=/mnt/cdrom
     ID=$MOUNT/etc/sourcemage_version
 

@@ -1283,7 +1283,27 @@ chroot_newdep() {
 setup_target() {
 
 # install sorcery to ${TARGET}
-  CROSS_INSTALL=on INSTALL_ROOT=$TARGET sorcery -v
+  tar -xjf /var/cache/sorcery/sorcery-stable.tar.bz2 -C /tmp
+  pushd /tmp/sorcery
+  ./install ${TARGET}
+  popd
+  rm -r /tmp/sorcery
+
+# BIG HACK: make all directories we had previously relied on to magically appear
+
+  mkdir -p ${TARGET}/etc/sorcery/local/depends
+  mkdir -p ${TARGET}/var/spool/sorcery
+  mkdir -p ${TARGET}/var/lib/sorcery/codex
+  mkdir -p ${TARGET}/var/state/sorcery
+  mkdir -p ${TARGET}/dev
+  mkdir -p ${TARGET}/etc/init.d/runlevels
+  mkdir -p ${TARGET}/sbin
+  mkdir -p ${TARGET}/usr/bin
+  mkdir -p ${TARGET}/bin
+  mkdir -p ${TARGET}/lib
+  mkdir -p ${TARGET}/proc
+  mkdir -p ${TARGET}/root
+  mkdir -p ${TARGET}/etc/sysconfig
 
 # hack in case grimoire linux is behind the installer
   echo "Adding KERNEL_VERSION  to ${TARGET}/etc/sorcery/local/depends/linux" >> /tmp/installer-debug
