@@ -1,6 +1,0 @@
-CPUNAME="AMD Athlon 64, Athlon 64 FX and Opteron Pure64 Mode"
-CFLAGS="-march=k8 -pipe"
-HOST="x86_64-unknown-linux-gnu"
-FAST="-O2"
-SMALL="-Os"
-
