@@ -147,7 +147,7 @@ scan_cdroms()  {
 
 show_filesystems()  {
 
-  for FILESYSTEM in `cat /proc/filesystems | grep -v nodev`;
+  for FILESYSTEM in `grep -v nodev </proc/filesystems`;
   do
 
     echo  "${FILESYSTEM}"
