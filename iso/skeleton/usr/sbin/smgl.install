@@ -2330,22 +2330,19 @@ rest of the install)"
     ln  -sf  "${LOCALTIME}/${ZONE}" /etc/localtime
 
     TITLE="GMT or Local"
-     HELP="Does the hardware clock store time in GMT or local?"
+     HELP="Does the hardware clock store time in GMT or local?\n\
+GMT may cause incorrect time on systems like MS Windows."
 
-    CLOCK=`"${DIALOG[@]}"  --title  "$TITLE"  \
-                    --menu   "$HELP"   \
-                    7 60 0             \
-                    "GMT"    ""        \
-                    "Local"  ""`
-    case  $CLOCK  in
-        GMT)
-            UTC=yes
-            ;;
-
-        Local)
-            UTC=no
-            ;;
-    esac
+    if "${DIALOG[@]}"  --title  "$TITLE"  \
+                    --defaultno        \
+                    --yes-label "GMT"  \
+                    --no-label "Local" \
+                    --yesno   "$HELP"  \
+                    7 60 ;then
+      UTC=yes
+    else
+      UTC=no
+    fi
 
 # select if the hardware clock is UTC or not
 cat > ${TARGET}/etc/sysconfig/hwclock <<EOF
