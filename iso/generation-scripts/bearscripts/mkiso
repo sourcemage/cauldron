@@ -9,6 +9,7 @@ SYSROOT=/
 mkdir -p $ISO_DIR
 ISO_ARCH=i686
 ISO_VERSION=devel
+IGNORE_FATAL=yes
 
 TMP_DIR="/tmp/mkiso.$$"
 UNPACK_DIR="${TMP_DIR}/unpack"
@@ -25,6 +26,7 @@ output_warning()
 fatal_warning()
 {
   echo $1 1>&2
+  [ "$IGNORE_FATAL" == "yes" ] ||
   exit 1;
 }
 
@@ -68,8 +70,10 @@ begin_unpack()
     tar -xjf ${STATE_DIR}/linux-ISO.tar.bz2 -C $UNPACK_DIR
   else
     [ $(find ${CACHE_DIR} -name "$1-*-$ARCH.tar.bz2" | wc -l) -gt 1 ] &&
-     output_warning "$1: source file could not be uniquely identified.
+     output_warning "$1: cache file could not be uniquely identified.
 Please kick the maintainer for choosing bad spell names"
+    [ $(find ${CACHE_DIR} -name "$1-*-$ARCH.tar.bz2" | wc -l) -lt 1 ] &&
+     fatal_warning "$1: cache file could not be found."
     for file in $(find ${CACHE_DIR} -name "$1-*-$ARCH.tar.bz2") ;do
       # FIXME: use sorcery functions
       tar -xjf $file -C $UNPACK_DIR
@@ -111,6 +115,8 @@ pushd $ISO_DIR/dev >/dev/null
  mknod initctl p
 popd >/dev/null
 
+cp ${STATE_DIR}/initrd.gz $ISO_DIR/boot/initrd.gz
+
 pushd $SKELETON >/dev/null
 cp -af --parents $(find * -maxdepth 0 ! -name initrd) $ISO_DIR
 popd $SKELETON >/dev/null
@@ -125,6 +131,17 @@ while read template ; do
   grep -v "s/^__SMGL_TEMPLATE_NOT_${ISO_ARCH}__/${ISO_VERSION}" |
   sed 's/^__SMGL_TEMPLATE_NOT_[^_]*__//' >${ISO_DIR}/$template
 done <${STATE_DIR}/iso.templates
+
+cat ${STATE_DIR}/install-list ${STATE_DIR}/optional-list >${TMP_DIR}/tmp.spells
+while read spell ; do
+  [ $(find ${CACHE_DIR} -name "$1-*-$ARCH.tar.bz2" | wc -l) -gt 1 ] &&
+   output_warning "$1: cache file could not be uniquely identified.
+Please kick the maintainer for choosing bad spell names"
+  [ $(find ${CACHE_DIR} -name "$1-*-$ARCH.tar.bz2" | wc -l) -lt 1 ] &&
+   fatal_warning "$1: cache file could not be found."
+  cp $(find ${CACHE_DIR} -name "$1-*-$ARCH.tar.bz2") ${ISO_DIR}/var/cache/sorcery/
+done <${TMP_DIR}/tmp.spells
+rm ${TMP_DIR}/tmp.spells
 
 [ -e ${STATE_DIR}/iso.patch ] &&
   patch -d $ISO_DIR -p0 ${STATE_DIR}/iso.patch

@@ -1,5 +1,4 @@
 #!/bin/bash
 ./mkinitrd
-mkdir -p ../../skeleton/boot
-mv ./initrd.gz ../../skeleton/boot
+mv ./initrd.gz ../../data/bearscripts
 ./mkiso

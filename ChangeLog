@@ -1,3 +1,7 @@
+2005-01-09 Karsten Behrmann <BearPerson@sourcemage.org>
+	* skeleton: added the install-list and optional-list
+	* generation-scripts, data: added those spell lists
+
 2005-01-08 Karsten Behrmann <BearPerson@sourcemage.org>
 	* skeleton: added a few needed files and symlinks
 	* generation-scripts, data: moved my scripts over
