@@ -44,3 +44,4 @@ nano
 # e2fsprogs is required even if ext2/ext3 is not used since it contains
 # /sbin/fsck
 e2fsprogs
+ndiswrapper
