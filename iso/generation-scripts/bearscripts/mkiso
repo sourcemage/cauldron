@@ -1,13 +1,13 @@
 #!/bin/bash
 #unsafe defaults!
-CACHE_DIR=/mnt/isoroot/var/cache/sorcery
-ARCH=i386-pc-linux-gnu
+CACHE_DIR=/var/cache/sorcery
+ARCH=i686-pc-linux-gnu
 ISO_DIR=$(pwd)/iso-root
-SKELETON=$(pwd)/../../../devel/iso/skeleton
-STATE_DIR=$(pwd)/../creation-data
+SKELETON=$(pwd)/../../skeleton
+STATE_DIR=$(pwd)/../../data/bearscripts
 SYSROOT=/
 mkdir -p $ISO_DIR
-ISO_ARCH=i386
+ISO_ARCH=i686
 ISO_VERSION=devel
 
 TMP_DIR="/tmp/mkiso.$$"

@@ -1,5 +1,5 @@
 #!/bin/bash
 ./mkinitrd
-mkdir -p ../../../devel/iso/skeleton/boot
-mv ./initrd.gz ../../../devel/iso/skeleton/boot
+mkdir -p ../../skeleton/boot
+mv ./initrd.gz ../../skeleton/boot
 ./mkiso

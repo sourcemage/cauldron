@@ -4,13 +4,12 @@
 # nothing will prevent a malicious local user from making you override files.
 # neither is it thread-safe. DO NOT run this twice at the same time.
 
-INITRDROOT=theinitrd
-SYSROOT=${1:-/}
-KERNEL_VERSION=${3:-$(uname -r)}
+SYSROOT=/
+KERNEL_VERSION=$(uname -r)
 OLDWD=$(pwd)
-INITRDROOT=${OLDWD}/${INITRDROOT}
-STATE_DIR=$(pwd)/../creation-data/
-STATIC_DIR=$(pwd)/../../../devel/iso/skeleton/initrd
+INITRDROOT=${OLDWD}/theinitrd
+STATE_DIR=$(pwd)/../../data/bearscripts
+SKELETON=$(pwd)/../../skeleton/initrd
 mkdir -p $INITRDROOT
 
 while read line ; do
@@ -18,9 +17,9 @@ while read line ; do
 done <${STATE_DIR}/initrd.dirs
 
 pushd ${INITRDROOT}/dev >/dev/null
- ${STATIC_DIR}/../sbin/MAKEDEV generic-nopty md
+ ${SKELETON}/../sbin/MAKEDEV generic-nopty md
  # someday make only devices where the cdrom can be in /dev/cdrom
- # $STATIC_DIR *HAS* to be a subdirectory of the ISO skeleton
+ # $SKELETON *HAS* to be a subdirectory of the ISO skeleton
 popd >/dev/null
 
 rm -f tmp.libs
@@ -48,7 +47,7 @@ pushd ${SYSROOT}/lib/modules/${KERNEL_VERSION} >/dev/null
  done <${STATE_DIR}/initrd.kernel
 popd >/dev/null
 
-cp -pr ${STATIC_DIR}/* ${INITRDROOT}
+cp -pr ${SKELETON}/* ${INITRDROOT}
 
 [ -e ${STATE_DIR}/initrd.patch ] &&
  patch -d ${INITRDROOT} -p0 <${STATE_DIR}/initrd.patch
