@@ -1,3 +1,6 @@
+2005-01-15 Karsten Behrmann <BearPerson@sourcemage.org>
+	* isolinux.msg: replace ^O with real escape char, fix bug 7982
+
 2005-01-14 Karsten Behrmann <BearPerson@sourcemage.org>
 	* almost everything: updated to fixes that came up during 
 	  yesterday's generation night

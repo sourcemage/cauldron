@@ -20,4 +20,4 @@ Download Source Mage GNU/Linux and documentation from
   official latest release, 0.9.3
 
 * This version uses framebuffers. If you get no picture after this 
-  screen, try typing ^O02lowres^O07 at this prompt.
+  screen, try typing 02lowres07 at this prompt.
