@@ -96,6 +96,8 @@
 #   it requires a proper configuration file.
 #
 
+#introduction: don't remember ever seeing this do anything...
+# SECTION: MISC
 introduction()  {
 
   local MSG="The purpose of Source Mage GNU/Linux is to return
@@ -127,22 +129,24 @@ And it provides the conveniences of:
 }
 
 # press_enter: display a single line and wait for the user to press enter
-
+# SECTION: MISC
 press_enter() {
 
   read -p "Press enter..."
 
 }
 
-
+#inputbox: creates a simple input box based off the two passed parameters
+# SECTION: MISC
 inputbox()  {
 
   "${DIALOG[@]}"  --nocancel --inputbox "$1" 8 60 "$2"
 
 }
 
+#chroot_cmd: Creates a chrooted environment
 # usage: chroot_cmd cmd args...
-
+# SECTION: MISC
 chroot_cmd() {
 
   mount --bind /dev  "${TARGET}/dev"
@@ -163,7 +167,8 @@ chroot_cmd() {
 
 }
 
-
+#confirm: displays a confirm dialog
+# SECTION: MISC
 confirm()  {
 
   if  [  -z  "$CONFIRM"  ];  then
@@ -183,12 +188,14 @@ confirm()  {
 
 }
 
-
+#goodbye: the finishing function. Copy the debug log if theres a certain
+# file in the /tmp dir. then ask to reboot.
+# SECTION: ???
 goodbye() {
 
     # copy the install-debug log 
     if [ -d ${TARGET}/var/log ] && [ -s /tmp/installer-debug ]
-    then cp -f /tmp/installer-debug ${TARGET}/var/log/SMGL-$VERSION-install.log
+    	then cp -f /tmp/installer-debug ${TARGET}/var/log/SMGL-$VERSION-install.log
     fi
 
     PROMPT="Reboot now?" 
@@ -199,7 +206,9 @@ goodbye() {
     fi
 }
 
-
+#list_discs: used when running cfdisk
+#  should be placed with that section...
+# SECTION: DISK_STRUCTURE
 list_discs()  {
 
   # sfdisk reads /proc/partitions for discs so it is the same as cat
@@ -221,7 +230,9 @@ list_discs()  {
 
 }
 
-
+#list_parts:  creates a list of partitions used when mounting
+#   should be placed with that section.
+# SECTION: DISK_STRUCTURE
 list_parts()  {
   # grepping a non-existant file gives an error
   touch /etc/raidtab
@@ -253,9 +264,11 @@ list_parts()  {
 
 }
 
+# TODO: find the difference between this function and the function above
+# TODO: determine if they can be combined or something, they're very similar
 # the raid functions use of --checklist means the regular list_parts
 # wouldn't work.
-
+# SECTION: DISK_STRUCTURE
 list_raid_parts()  {
   # grepping a non-existant file gives an error
   touch /etc/raidtab
@@ -286,6 +299,9 @@ list_raid_parts()  {
 
 }
 
+#get_part: display the dialog menu for selecting a partition
+# should go with the filesystem part
+# SECTION: DISK_STRUCTURE
 get_part()  {
 
   TITLE="Partition Selection Menu"
@@ -310,7 +326,8 @@ get_part()  {
 
 }
 
-
+#choose_raid_parts: Displays the RAID menu
+#SECTION: DISK_STRUCTURE
 choose_raid_parts()  {
   TITLE="Installer menu for RAID device generation"
    HELP="Please select partitions to make the RAID array. \
@@ -330,6 +347,8 @@ You can return to the previous menu and repartition so you have a separate /boot
 
 }
 
+# choose_raid_level: menu for selection of raid level
+# SECTION: DISK_STRUCTURE
 choose_raid_level()  {
 
   TITLE="RAID level selection Menu"
@@ -339,6 +358,7 @@ descriptions of RAID levels read the Source Mage
 GNU/Linux Install Guide. Use <Cancel> or Esc to leave
 this menu"
 
+#TODO: fix usage of the IFS?
   IFS=$'\n' LIST_RAID_LEVEL=( `cat /etc/installerdata/raidlevel` )
 
   "${DIALOG[@]}" \
@@ -350,7 +370,8 @@ this menu"
 
 }
 
-
+#get_disk: display's menu to select a disk
+#SECTION: DISK_STRUCTURE
 get_disc()  {
 
   TITLE="Disk Selection Menu"
@@ -375,7 +396,8 @@ get_disc()  {
 
 }
 
-
+#get_filesystem: displays the menu to select a filesystem
+# SECTION: DISK_STRUCTURE
 get_filesystem()  {
 
    TITLE="Filesystem Selection Menu"
@@ -399,7 +421,9 @@ get_filesystem()  {
 
 }
 
-
+#show_keymaps: Does something with keymaps, perhaps just displays them
+# TODO: Figure out where this is used
+# SECTION: LOCALE_CONFIG
 show_keymaps()  {
 
   KEYDIR="/usr/share/keymaps/i386"
@@ -420,7 +444,8 @@ show_keymaps()  {
 
 }
 
-
+#keymap_menu: display's the menu for a keymap selection
+# SECTION: LOCALE_CONFIG
 keymap_menu()  {
 
      TITLE="Keymap Selection Menu"
@@ -441,7 +466,8 @@ keymap_menu()  {
   echo -e "Running $LOADKEYS" >> /tmp/installer-debug
 }
 
-
+#fdisc : displays the menu for running a partition manager
+# STRUCTURE: DISK_STRUCTURE
 fdisc()  {
 
   if [ "$ARCH" = "ppc" ]; then
@@ -488,9 +514,9 @@ separate boot partition"
 }
 
 #
+# TODO: REAL DOCUMENTATION OMFG!!!!!1
 # usage : get_mk_prog ext3
 # output: program name to make the specified filesystem
-
 # function to provide correct name for the filesystem-formatting
 # binary (eg. mk??fs)
 
@@ -507,7 +533,8 @@ get_mk_prog()  {
 
 }
 
-
+#check_partition: displays the screen that asks whether to check for errors
+# SECTION: DISK_STRUCTURE
 check_partition()  {
 
   PROMPT="Check for errors?"
@@ -522,6 +549,7 @@ check_partition()  {
 }
 
 # filesystems using mkfs need switches passed
+# SECTION: DISK_STRUCTURE
 get_fstype()  {
 
   case  $1  in
@@ -535,6 +563,9 @@ get_fstype()  {
 }
 
 
+#TODO: Meaningful function names!
+#use_the_force: something about forcing ?
+# SECTION: DISK_STRUCTURE
 use_the_force()  {
 
   case  $1  in
@@ -545,7 +576,8 @@ use_the_force()  {
 
 }
 
-
+# mk_swap_file: displays the menu for creating a swapfile
+# SECTION: DISK_STRUCTURE
 mk_swap_file()  {
 
   LOCATION_PROMPT="Please enter the location for the swapfile."
@@ -577,7 +609,8 @@ mk_swap_file()  {
   fi
 }
 
-
+#make_fsys: displays the menu for filesystem creation
+# SECTION: DISK_STRUCTURE
 make_fsys()  {
 
   SUCCESS="Filesystem created"
@@ -604,7 +637,8 @@ $CHECK $FORCE $DEVICE"
 
 }
 
-
+#mount_fsys: displays the menu for mounting a filesystem
+# SECTION: DISK_STRUCTURE
 mount_fsys()  {
 
     MOUNT=$TARGET$MNT_POINT
@@ -640,6 +674,8 @@ mount_fsys()  {
 }
 
 
+# make_fstab_line: not sure
+# SECTION: DISK_STRUCTURE
 make_fstab_line()  {
 
          DP="$DEVICE	$MNT_POINT"    &&
@@ -650,6 +686,8 @@ FSTAB_ENTRY="$DP	$FOL	$LAST"     &&
 }
 
 
+# determine_fstab_settings: what settings to write to fstab for each filesystem
+# SECTION: DISK_STRUCTURE
 determine_fstab_settings()  {
 
   LAST="0 2"
@@ -668,7 +706,9 @@ determine_fstab_settings()  {
 
 }
 
-
+#get_mount_point: displays the menu for mounting filesystems other than root
+# allows people to enter a mount point for other things
+# SECTION: DISK_STRUCTURE
 get_mount_point()  {
 
   PROMPT="Please enter a mount point"
@@ -693,6 +733,8 @@ get_mount_point()  {
 }
 
 
+#mount_partition: what things to do to mount a partition
+#SECTION: DISK_STRUCTURE
 mount_partition()  {
 
       PART=`get_part`                  &&
@@ -710,7 +752,9 @@ mount_partition()  {
   
 }
 
-
+#mounty: confirms completion of making partions
+# TODO: meaningful function names!
+# SECTION: DISK_STRUCTURE
 mounty()  {
 
       PROMPT="Are you done making partitions?"
@@ -725,7 +769,9 @@ mounty()  {
 
 }
 
-
+#mk_raid_device: another function for raid stuff
+# SECTION: DISK_STRUCTURE
+# TODO: determine what this does...
 mk_raid_device() {
    mk_raid_config 
    PROMPT="Edit the raidtab before initialising the arrays ?\nExperienced users might like to change RAID 5 parity-algorithm options \
@@ -782,6 +828,9 @@ the partition tables and initialising array"
 
 }
 
+# mk_raid_config: don't know what...
+# TODO: determine what this does
+# SECTION: DISK_STRUCTURE
 mk_raid_config() {
 
 #detect an already initialised array and set the counter
@@ -823,6 +872,8 @@ fi
 
 }
 
+#make_fstab: writes out the fstab...
+# SECTION: DISK_STRUCTURE
 make_fstab()  {
   cp -f /etc/installerdata/fstab ${TARGET}/etc/fstab &&
   if [[ `uname -r` == 2.6.* ]]
@@ -843,7 +894,8 @@ make_fstab()  {
 # 10/09/2003 The code for optimize_architecture(), architecture_menu()
 # and optimization_menu() has been adapted from /usr/sbin/sorcery
 # version 1.3 (Benoit PAPILLAULT)
-
+# TODO: could this be sourced from the actual sorcery script?
+# SECTION: SOFTWARE_CONFIG
 optimize_architecture() {
 
     architecture_menu  ARCHITECTURE  "Build system selection"    &&
@@ -857,7 +909,9 @@ optimize_architecture() {
 
 }
 
-
+# architecture_menu: displays an architecture menu
+# TODO: also comes from sorcery?
+# SECTION: SOFTWARE_CONFIG
 architecture_menu() {
 
     local  SPECFILE
@@ -892,7 +946,9 @@ architecture_menu() {
 
 }
 
-
+#optimization_menu : Displays the menu to select optimizations
+# TODO: can this come from the sorcery file/libs/etc?
+# SECTION: SOFTWARE_CONFIG
 optimization_menu() {
     # default flags
     SPEEDY=on
@@ -946,7 +1002,7 @@ chmod a+x ${TARGET}/etc/sorcery/local/compile_config
 #          ROOT=/dev/hda6, BOOT=/dev/hda5, MBR=no  => /dev/hda5
 
 # usage: BR=`bootloader_get_br`
-
+#SECTION: BOOTLOADER_CONFIG
 bootloader_get_br() {
 
   # if BOOT is not defined, we use ROOT
@@ -971,14 +1027,14 @@ bootloader_get_br() {
 
 # return the installed kernel version (either precompiled or compiled)
 # it returns for instance 2.6.8.1
-
+# SECTION: BOOTLOADER_CONFIG
 bootloader_get_kernel() {
 
   chroot_cmd gaze version linux | head -3 | tail -1 | awk '{print $5}'
 
 }
 
-
+#SECTION: BOOTLOADER_CONFIG
 bootloader_grub_conf() {
 
   mkdir -p "${TARGET}/boot/grub" &&
@@ -996,6 +1052,7 @@ bootloader_grub_conf() {
 
   LINUX=`bootloader_get_kernel`
 
+  #TODO: store the default information in a default file not here!
   cat > "${TARGET}/boot/grub/menu.lst" <<EOF
 #
 # /boot/grub/menu.lst generated by the Source Mage GNU/Linux installer
@@ -1025,7 +1082,9 @@ EOF
 
 }
 
-
+#bootloader_grub_edit : displays a menu request if they want to configure 
+# the boot loader by hand. Then display's the default editor, usually nano, or elvis
+# SECTION: BOOTLOADER_CONFIG
 bootloader_grub_edit() {
 
   S_GRUB="Source Mage GNU/Linux by default installs GRUB to the
@@ -1047,6 +1106,8 @@ grub.conf."
 
 }
 
+#actually does the install for GRUB
+# SECTION: BOOTLOADER_CONFIG
 bootloader_grub_install() {
 
   # get boot record
@@ -1072,7 +1133,7 @@ bootloader_grub_install() {
 
 }
 
-
+# SECTION: BOOTLOADER_CONFIG
 bootloader_lilo_conf() {
 
   # if BOOT is not defined, we use ROOT
@@ -1099,7 +1160,7 @@ bootloader_lilo_conf() {
   cp -a /boot/boot.bmp "${TARGET}/boot/boot.bmp"
 
   # create a configuration file
-
+  # TODO: move default lilo.conf into a default file not in here
   mkdir -p "${TARGET}/etc" &&
   cat > "${TARGET}/etc/lilo.conf" <<EOF
 boot=${BR}
@@ -1124,6 +1185,8 @@ EOF
 
 }
 
+# displays a menu to config LILO
+#SECTION: BOOTLOADER_CONFIG
 bootloader_lilo_edit() {
 
   local MSG="SMGL installs LILO to the first sector of /boot.  If
@@ -1141,6 +1204,7 @@ or even the first disk on the machine"
 
 }
 
+# SECTION: BOOTLOADER_CONFIG
 bootloader_lilo_install() {
 
   chroot_cmd lilo -v
@@ -1151,6 +1215,7 @@ bootloader_lilo_install() {
 
 }
 
+# SECTION: BOOTLOADER_CONFIG
 bootloader_yaboot_conf() {
 
   # yabootconfig will df, df will use /etc/mtab
@@ -1206,6 +1271,8 @@ EOF
 
 }
 
+# SECTION: BOOTLOADER_CONFIG
+# TODO: the message should be the same for all of them, er pretty close
 bootloader_yaboot_edit() {
 
   local MSG="You can now reconfigure /etc/yaboot.conf. Feel free to
@@ -1219,6 +1286,7 @@ do it, at your own risk."
 
 }
 
+#SECTION: BOOTLOADER_CONFIG
 bootloader_yaboot_install() {
 
   # we use --nonvram since we don't have nvsetenv installed
@@ -1232,7 +1300,7 @@ bootloader_yaboot_install() {
 }
 
 # usage: chroot_install spell
-
+# installs a spell into the chroot environ
 chroot_install() {
 
 # check if it's already installed then install it
@@ -1267,6 +1335,8 @@ chroot_install() {
 
 }
 
+# TODO: figure out what this does...
+# SECTION: SYSTEM_CONFIG
 chroot_newdep() {
 
 # this is run after the default list is installed so it checks in the
@@ -1280,6 +1350,8 @@ chroot_newdep() {
 
 }
 
+# sets up the target system for the installer and such
+#SECTION: SYSTEM_CONFIG
 setup_target() {
 
 # install sorcery to ${TARGET}
@@ -1377,7 +1449,10 @@ setup_target() {
 # usage : optional_spell_list
 # output: for each spell, output 3 lines : spell name, spell
 # description and "off"
-
+# Generates the spell list...
+#TODO: this should be pregenerated, because it doesn't change after the iso
+# is made
+# SECTION: SYSTEM_CONFIG
 optional_spell_list () {
 
   cat /etc/installerdata/optional-list | \
@@ -1390,6 +1465,8 @@ optional_spell_list () {
 
 }
 
+# displays the screen that allows to select optional spells
+# SECTION: SYSTEM_CONFIG
 choose_optionals() {
 
   IFS=$'\n' OPTIONAL_SPELL_LIST=( `optional_spell_list` )
@@ -1409,6 +1486,10 @@ needs them."
 
 }
 
+# goes through things for optional configs
+# udev or static is in here
+# optional spell list is in here
+# SECTION: SYSTEM_CONFIG
 spell_select() {
 
   echo "Sorcery is generating the optional spell menu, please wait ..." &&
@@ -1446,6 +1527,8 @@ echo "Optionally chose $OPTIONALS for installation" >> /tmp/installer-debug
 
 }
 
+# generates the list of available/installed services
+# SECTION: SYSTEM_CONFIG
 service_list() {
 
 ALLSCRIPTS=`find ${TARGET}/etc/init.d/runlevels/%*/ | grep -v runlevel.config`
@@ -1462,6 +1545,8 @@ done
 
 }
 
+# displays the menu to select services
+# SECTION: SYSTEM_CONFIG
 service_choose() {
 
   TITLE="Installer menu for selecting initscripts to run at boot."
@@ -1480,6 +1565,8 @@ for a good reason !)."
 
 }
 
+# actually does the work involved with selecting services
+# SECTION: SYSTEM_CONFIG
 service_select() {
  
 echo "Running menu selection of services to start at boot" >> /tmp/installer-debug &&
@@ -1499,7 +1586,7 @@ done        &&
 
 # usage : IFS=$'\n' FS_PROGS=( `get_fs_progs` )
 # return a list of all spells needed for the filesystem in /etc/fstab
-
+# SECTION: SYSTEM_CONFIG
 get_fs_progs() {
 
   # check which fs spells are needed
@@ -1536,7 +1623,8 @@ get_fs_progs() {
 
 }
 
-
+#does the actual installing ito the target
+# SECTION: SYSTEM_CONFIG
 install_to_target()  {
 
   PROMPT="Are you ready to install ?"
@@ -1581,6 +1669,7 @@ install_to_target()  {
 
     # install EDITOR LOGGER and the networking spells 
 	chroot_install ${REAL_ED}
+	# TODO: figure out what this means...
 	chroot_newdep ${REAL_ED} #frikkin jed and slang !
 
 	# install the bootloader
@@ -1609,6 +1698,8 @@ install_to_target()  {
 	do
 	  chroot_install $extraspell
 	  chroot_newdep $extraspell
+	  # TODO: move things like this into a folder and just run through
+	  # TODO: the folder and run the stuff like xinetd or something
 	  if [[ $extraspell == openssh* ]]; then
         mkdir -p ${TARGET}/etc/xinetd.d
 		cp -f /etc/xinetd.d/openssh ${TARGET}/etc/xinetd.d
@@ -1649,6 +1740,8 @@ install_to_target()  {
     sed -i -e  s/KEYMAP=.*/KEYMAP=${KEYMAP}/  ${TARGET}/etc/sysconfig/keymap &&
 
  # install the users choice of editor ($REAL_ED) to the system profile.d dir
+ # TODO: things like this should be optional/configurable
+ # TODO: create a /profile.d directory to copy from with stuff like that
 
 	cat >> "${TARGET}/etc/profile.d/editor.sh" <<EOF &&
 #!/bin/bash
@@ -1664,7 +1757,7 @@ export EDITOR
 EOF
 
 # installing the chosen LANG to the system profile.d dir
-
+#TODO: same thing here should be an external file that's processed
     cat >> "${TARGET}/etc/profile.d/lc.sh" <<EOF &&
 #!/bin/bash
 # Added by $0
@@ -1690,6 +1783,8 @@ EOF
 	  sed -i -e s:/dev/tty:/dev/vc/: ${TARGET}/etc/inittab
     fi &&
 
+    # TODO: system is installed, but kernel isn't compiled?
+    # TODO: should kernel be compiled here?
 	S_INSTALLED="The system and your chosen spells have been installed
 to ${TARGET}. Next enter the password for the root
 account and if you chose to compile a kernel, that
@@ -1697,6 +1792,7 @@ happens last."
 
     "${DIALOG[@]}" --msgbox "${S_INSTALLED}" 9 60
 
+    # TODO: not really part of install, but part of config
 	echo "Last thing to do: choose root password:" 
     chroot_cmd passwd root
   fi &&
@@ -1719,7 +1815,8 @@ happens last."
 
 }
 
-
+# displays the menu for what to do about a kernel
+# SECTION: SYSTEM_CONFIG
 make_kernel()  {
 
   # install the config used for this kernel
@@ -1751,10 +1848,13 @@ spell installation)"
   fi &&
 
 # next stop logger config
+# TODO: Self motivated menu
   [ -n "$GUIDE" ] && ICOMMAND="L"
 
 }
 
+# does cast  -c linux
+# SECTION: SYSTEM_CONFIG
 compile_kernel() {
 
   "${DIALOG[@]}"  --cr-wrap --textbox  /etc/installerdata/kernel.help 22 60
@@ -1766,7 +1866,8 @@ compile_kernel() {
 
 }
 
-
+# shells out
+# SECTION: MISC
 shell() {
 
   echo  "Press CTRL-D or type exit to return to the installer"
@@ -1774,7 +1875,8 @@ shell() {
 
 }
 
-
+# asks questions for network connectivity
+# SECTION: NETWORK_CONFIG
 ethernet()  {
 
        DHCPCD_PROMPT="Will you require DHCPCD ?"
@@ -1816,7 +1918,8 @@ fi
 
 }
 
-
+# configuration menu for ppp
+# SECTION: NETWORK_CONFIG
 ppp()  {
      unset NETTAGE
      DHCPCD_PROMPT="Will you require DHCPCD ?"           &&
@@ -1866,7 +1969,8 @@ fi
 
 }
 
-
+# configuration menu and actions for pppoe
+# SECTION: NETWORK_CONFIG
 pppoe()  {
         unset NETTAGE
 
@@ -1901,6 +2005,8 @@ fi
 
 }
 
+# displays menu to select a syslog
+#SECTION: SYSTEM_CONFIG
 syslog()  {
 
   TITLE="Please select your system logger"
@@ -1931,7 +2037,8 @@ syslog()  {
 
 }
 
-
+# top level network config selection and actions
+# SECTION: NETWORK_CONFIG
 network()  {
 
     # chroot call netconf to configure hostname (we need to remove the
@@ -1972,7 +2079,8 @@ hostname `cat /etc/hostname` &&
 
 }
 
-
+# toggles guided menu
+# SECTION: MISC
 toggle_guide()  {
 
   [  -n  "$GUIDE"  ]  &&
@@ -1981,7 +2089,8 @@ toggle_guide()  {
 
 }
 
-
+# toggles a confirm variable
+# SECTION: MISC
 toggle_confirm()  {
 
   [  -n  "$CONFIRM"  ]  &&
@@ -1990,12 +2099,15 @@ toggle_confirm()  {
 
 }
 
-
+# builds the list of all the available fonts
+# SECTION: SYSTEM_CONFIG
 show_consolefonts()  {
 
   FONTDIR="/usr/share/consolefonts"
   cd  $FONTDIR
 
+  #TODO: the font list should be generated by the iso creation script
+  #TODO: to make it faster...
   FONTS=`ls  *.gz  |  sed  "s/\.psf\.gz//"`
 
   for  FONT  in  $FONTS;  do
@@ -2005,7 +2117,8 @@ show_consolefonts()  {
 
 }
 
-
+#displays the menu for the font selection screen
+# SECTION: SYSTEM_CONFIG
 font_menu()  {
 
      TITLE="Console Font Selection Menu"
@@ -2022,10 +2135,12 @@ font_menu()  {
 
 }
 
-
+# generates the languages list
+# SECTION: SYSTEM_CONFIG
 show_languages()  {
     IDX=0
-
+	# TODO: this list should be auto generated by the ISO script
+	# TODO:  that will make it faster and add a trivial amount of data
     cd /usr/share/i18n/locales
     for lang in *;
     do
@@ -2041,6 +2156,8 @@ show_languages()  {
 
 }
 
+# displays the language selection menu
+# SECTION: SYSTEM_CONFIG
 lang_menu()  {
 
     TITLE="Language Selection Menu"
@@ -2059,7 +2176,8 @@ select your preferred language."
     echo "Chose LANG=$LANG" >> /tmp/installer-debug
 }
 
-
+# displays the menu for editor installation selection
+# SECTION: SYSTEM_CONFIG
 editor_menu()  {
 
   ELVIS_HELP="elvis is a clone of the ex/vi text editor"
@@ -2101,7 +2219,9 @@ elvis during the install"
  
 }
 
-
+# native language support
+# determines customizeable things for this linux system
+# SECTION: LOCALE_CONFIG
 nls()  {
 
   while
@@ -2136,7 +2256,9 @@ nls()  {
 
 }
 
-
+# builds a list of timezones
+# TODO: this should be generated by ISO script
+# SECTION: LOCALE_CONFIG
 show_timezones()  {
 
   for  ITEM  in  `ls  $LOCALTIME/$1`;  do
@@ -2150,7 +2272,11 @@ show_timezones()  {
   
 }
 
-
+# displays the timezone selection screen and does all the settings for it
+# TODO: split apart display and selection from applying settings
+# SECTION: SYSTEM_CONFIG
+# TODO: the stuff in the background shouldn't be part of this function
+# TODO: the background stuff should be fired off by the installer manager
 timezone()  {
 
 # being the first menu item after mounting, ask the user if it's ok to
@@ -2237,7 +2363,8 @@ EOF
 
 # usage: choose_bootloader()
 # returns a string with the bootloader choosen : lilo/grub/yaboot
-
+# displays a menu to select a bootloader
+# SECTION: BOOTLOADER_CONFIG
 choose_bootloader() {
 
   GRUB_HELP="GNU GRUB is a Multiboot boot loader. It was derived
@@ -2283,6 +2410,8 @@ based machines. It works on NewWorld machines only."
 
 }
 
+# applies the chosen bootloader
+# SECTION: BOOTLOADER_CONFIG
 config_bootloader() {
 
 # if a bootloader has not been already choosen, do so.
@@ -2324,13 +2453,16 @@ partition (answer No) ?" &&
 
 }
 
-
+#displays the intallation help file
+# SECTION: MISC
 install_help()  {
 
   "${DIALOG[@]}" --cr-wrap --textbox /etc/installerdata/install.guide  21 60
 
 }
 
+# resets every variable and restarts the installation
+# SECTION: MISC
 restart_install() {
 # unset all these
 # ppc specific variables
@@ -2418,6 +2550,8 @@ swapoff -a
 
 }
 
+#toggles the debug switch
+# SECTION: MISC
 toggle_debug() {
 
   if [ "${DEBUG}" = "yes" ]; then
@@ -2431,6 +2565,9 @@ toggle_debug() {
 
 }
 
+#display's the actual installer menu
+# TODO: should handle flow and such
+#SECTION: INSTALLER
 install_menu()  {
 
  ICOMMAND="B"
@@ -2613,7 +2750,8 @@ Then select the optional spells for installation."
 
 }
 
-
+# sets up the system for the install process
+# SECTION: INSTALLER
 main()  {
 
   export  PATH="/bin:/usr/bin:/sbin:/usr/sbin"
@@ -2650,6 +2788,7 @@ main()  {
 # this script really starts here
 #
 
+# notes on dialog:
 # General warning about dialog --radiolist. Since the result is
 # enclosed with spurious ". 
 # For instance:
@@ -2660,7 +2799,7 @@ main()  {
 #
 # will return "grub" instead of grub.
 # We will use sed -e 's/^"//' -e 's/"$//' to remove spurious "".
-
+#
 # dialog --yesno     : add 4 to get height
 # dialog --msgbox    : add 5 to get height
 # dialog --menu      : add 6 to get height (let menu-height to always be 0)
@@ -2668,6 +2807,8 @@ main()  {
 # dialog --checklist : add 6 to get height (let list-height to always be 0)
 # dialog --inputbox  : add 7 to get height
 
+# do some initial config things
+# TODO: add these to a function
 if [ -f /etc/installerdata/version ]; then
   . /etc/installerdata/version 
 else
@@ -2682,4 +2823,5 @@ DIALOG=( "dialog" "--backtitle" \
 
 trap  ":"  INT QUIT
 
+# start the installation process
 main

@@ -1,3 +1,6 @@
+2005-01-15 David Kowis <dkowis@shlrm.org>
+	* smgl.install: added documentation and comments on splitting
+
 2005-01-15 Karsten Behrmann <BearPerson@sourcemage.org>
 	* isolinux.msg: replace ^O with real escape char, fix bug 7982
 
