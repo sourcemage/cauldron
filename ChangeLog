@@ -1,3 +1,7 @@
+2005-01-27 Karsten Behrmann <BearPerson@sourcemage.org>
+	* really everything: moved everything not related
+	  to the current scripts to branches
+
 2005-01-26 Karsten Behrmann <BearPerson@sourcemage.org>
 	* genscript/mk-smgl-iso: added sanity checks
 	* genscript/mkiso: Moved template into own function,
