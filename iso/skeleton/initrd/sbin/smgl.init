@@ -314,9 +314,11 @@ main()  {
     echo "Running /sbin/init $@"
 
 # if the new root filesystem use devfs, /dev/console should not exist
-    if [ ! -e /dev/console ]; then
-      mount -t devfs  devfs  /dev
+    if [ ! -e dev/console ]; then
+      mount -t devfs  devfs  dev
     fi
+
+    /bin/mount -t proc proc proc
 
     exec chroot . /sbin/init "$@" </dev/console >/dev/console 2>&1
 
@@ -338,7 +340,7 @@ DIALOG=( "dialog" "--trim" "--stdout" \
 mount -n -t proc  proc  /proc
 
 KERNEL=`uname -r`
-DEVICE=/dev/cdroms
+DEVICE=/dev
  MOUNT=/mnt/cdrom
     ID=$MOUNT/etc/sourcemage_version
 

@@ -1,1 +1,4 @@
 local_fs=mountall.sh
+remote_fs=smgl-default-remote-fs
+network=network
+syslog=sysklogd
