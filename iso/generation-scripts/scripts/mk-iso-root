@@ -77,8 +77,95 @@ remove_static_lib() {
     rm "${TMP}"
 }
 
+# usage: update_var_state_sorcery $SPELL $VERSION
+#
+# add a line to work/iso_root/var/state/sorcery/packages
+# either from $IMAGE/var/state/sorcery/packages
+# or using the current date
+
+update_var_state_sorcery_packages() {
+
+	local SPELL="$1" &&
+	local VERSION="$2" &&
+
+	local PACK_DIR="work/iso_root/var/state/sorcery" &&
+	local PACKAGES="${PACK_DIR}/packages" &&
+	local LINE=`grep "^${SPELL}:" "${IMAGE}/var/state/sorcery/packages"` &&
+
+	# remove existing lines if any
+	if [ -f "${PACKAGES}" ]; then
+	  grep -v "^${SPELL}:" "${PACKAGES}" > /tmp/$$ &&
+	  mv /tmp/$$ "${PACKAGES}"
+	fi
+
+	mkdir -p "${PACK_DIR}" &&
+	if [ -n "${LINE}" ]; then
+		echo "${LINE}" >> "${PACKAGES}"
+	else
+		echo "${SPELL}:`date +%Y%m%d`:installed:${VERSION}" >> "${PACKAGES}"
+	fi
+
+}
+
+# usage: install_alien $SPELL
+#
+# copy know alien files from $IMAGE to work/iso_root
+#
+
+install_alien () {
+
+	local SPELL="$1"
+
+	# copy known alien files
+	case "${SPELL}" in
+	  init.d)
+		cat <<EOF
+/etc/sysconfig/facilities
+EOF
+		;;
+	  bash)
+		cat <<EOF
+/etc/skel
+/etc/skel/.bash_logout
+/etc/skel/.bash_profile
+/etc/skel/.bashrc
+EOF
+		;;
+	  openssh)
+		cat <<EOF
+/etc/ssh
+/etc/ssh/ssh_host_rsa_key.pub
+/etc/ssh/ssh_host_rsa_key
+/etc/ssh/ssh_host_key.pub
+/etc/ssh/ssh_host_key
+/etc/ssh/ssh_host_dsa_key.pub
+/etc/ssh/ssh_host_dsa_key
+/etc/ssh/sshd_config
+/etc/ssh/ssh_config
+/etc/ssh/moduli
+EOF
+		;;
+	  Linux-PAM)
+		cat <<EOF
+/etc/security
+/etc/security/time.conf
+/etc/security/pam_env.conf
+/etc/security/limits.conf
+/etc/security/group.conf
+/etc/security/access.conf
+EOF
+		;;
+	esac | sed 's:^\(/*\)::' > "/tmp/alien.${SPELL}"
+
+    (cd "${IMAGE}" && tar cfl - --no-recursion -T "/tmp/alien.${SPELL}" )\
+        | (cd work/iso_root && tar xfp -) || exit 1
+
+	rm "/tmp/alien.${SPELL}"
+
+}
+
 # function to copy an existing spell files from image to iso_root
-cast ()
+install_spell ()
 {
     SPELL="$1"
 
@@ -109,6 +196,11 @@ cast ()
         | (cd work/iso_root && tar xfp -) || exit 1
 
     rm "/tmp/ls.${SPELL}"
+
+    update_var_state_sorcery_packages "${SPELL}" "${VERSION}"
+
+	install_alien "${SPELL}"
+
 }
 
 # usage: spell_versions bash
@@ -203,6 +295,41 @@ copy_spell() {
 	fi
   fi
 
+  # copy /etc/sorcery/local/depends files
+  local DEPENDS_DIR=/etc/sorcery/local/depends
+  local DEPENDS="${DEPENDS_DIR}/${SPELL}"
+  if [ -f "${IMAGE}/${DEPENDS}" ]; then
+    mkdir -p "work/iso_root/${DEPENDS_DIR}" &&
+	cp -a "${IMAGE}/${DEPENDS}" "work/iso_root/${DEPENDS_DIR}"
+  else
+	echo "${SPELL} : no ${DEPENDS}"
+  fi
+
+  local DEPENDS="${DEPENDS_DIR}/${SPELL}.p"
+  if [ -f "${IMAGE}/${DEPENDS}" ]; then
+    mkdir -p "work/iso_root/${DEPENDS_DIR}" &&
+	cp -a "${IMAGE}/${DEPENDS}" "work/iso_root/${DEPENDS_DIR}"
+  else
+	echo "${SPELL} : no ${DEPENDS}"
+  fi
+
+  case "${SPELL}" in
+    linux)
+	  local KERNEL_CONFIG_DIR=/etc/sorcery/local
+	  local KERNEL_CONFIG="${KERNEL_CONFIG_DIR}/kernel.config"
+	  if [ -f "${IMAGE}/${KERNEL_CONFIG}" ]; then
+		mkdir -p "work/iso_root/${KERNEL_CONFIG_DIR}" &&
+		cp -a "${IMAGE}/${KERNEL_CONFIG}" "work/iso_root/${KERNEL_CONFIG_DIR}"
+	  else
+		echo "${SPELL} : no ${KERNEL_CONFIG}"
+	  fi
+	  ;;
+  esac
+
+  update_var_state_sorcery_packages "${SPELL}" "${VERSION}"
+
+  install_alien "${SPELL}"
+
 }
 
 # umount directories under work/iso_root
@@ -236,7 +363,7 @@ cat src/iso_root/spell-iso-root "src/iso_root/spell-iso-root.${ARCH}" |
 grep -v "^#" | grep -v "^$" |
 while read spell;
 do
-  cast "${spell}" || exit 1
+  install_spell "${spell}" || exit 1
 done || exit 1
 
 # /etc/ld.so.conf
@@ -279,32 +406,34 @@ mkdir -p work/iso_root/root
 touch work/iso_root/proc/mounts
 ln -sf ../proc/mounts work/iso_root/etc/mtab
 
-# copy kernel files :
-# bzImage-2.4.21 -> linux
-# config-2.4.21
+# copy kernel configuration and source
+# /etc/sorcery/local/kernel.config -> /boot/config-2.6.8.1
+# /var/spool/sorcery/linux-2.6.8.1.tar.bz2{.sign}
 
-mkdir -p work/iso_root/boot
+mkdir -p work/iso_root/boot &&
+mkdir -p work/iso_root/var/spool/sorcery &&
 
-KERNEL_VERSION=`installed_version linux`
-KERNEL_IMAGE="/boot/vmlinux-${KERNEL_VERSION}"
-case `uname -m` in
-  i386 | i486 | i586 | i686)
-    KERNEL_IMAGE="/boot/vmlinubz-${KERNEL_VERSION}"
-	;;
-esac
-if [ ! -f "${IMAGE}/${KERNEL_IMAGE}" ]; then
-	echo "kernel image ${KERNEL_IMAGE} is missing"
-	exit 1
-fi
-
-cp "${IMAGE}/${KERNEL_IMAGE}" \
-    "work/iso_root/boot/linux" &&
-cp "${IMAGE}/etc/sorcery/local/kernel.config" \
-    "work/iso_root/boot/config-${KERNEL_VERSION}" || exit 1
+KERNEL_VERSION=`installed_version linux` &&
+cp -a "${IMAGE}/etc/sorcery/local/kernel.config" \
+    "work/iso_root/boot/config-${KERNEL_VERSION}" &&
+cp -a "${IMAGE}/var/spool/sorcery/linux-${KERNEL_VERSION}.tar.bz2" \
+	"work/iso_root/var/spool/sorcery" && 
+cp -a "${IMAGE}/var/spool/sorcery/linux-${KERNEL_VERSION}.tar.bz2.sign" \
+	"work/iso_root/var/spool/sorcery" || exit 1
 
 #mkdir -p work/iso_root/lib/modules
 #(cd "${IMAGE}/lib/modules"; tar cfl - .) \
 #    | (cd work/iso_root/lib/modules; tar xfp -)
+
+# /etc/modules and /etc/modules.conf
+
+mkdir -p work/iso_root/etc &&
+touch work/iso_root/etc/modules &&
+touch work/iso_root/etc/modules.conf
+
+if [ "${ARCH}" = "ppc" ]; then
+  echo "therm_adt746x" >> work/iso_root/etc/modules
+fi
 
 # copy the dialog configuration
 cp "${IMAGE}/etc/sorcery/dialogrc" work/iso_root/etc/dialogrc
@@ -312,46 +441,29 @@ cp "${IMAGE}/etc/sorcery/dialogrc" work/iso_root/etc/dialogrc
 # copy some files from our sources
 cp src/iso_root/inittab       work/iso_root/etc/inittab &&
 cp src/iso_root/smgl.install  work/iso_root/usr/sbin/   &&
-cp src/iso_root/mkinitrd-smgl work/iso_root/usr/sbin/   &&
+#cp src/iso_root/mkinitrd-smgl work/iso_root/usr/sbin/   &&
 cp src/iso_root/MAKEDEV       work/iso_root/sbin/MAKEDEV
 
-mkdir -p work/iso_root/etc
+mkdir -p work/iso_root/etc &&
 for file in \
-    passwd shadow group;
+	src/image/passwd \
+	src/image/shadow \
+	src/image/group \
+	base-files/nsswitch.conf \
+	base-files/protocols \
+	base-files/services \
+	base-files/rpc \
+;
 do
-  cp src/image/${file} work/iso_root/etc/${file}
+  cp "${file}" "work/iso_root/etc"
 done
 
-for file in \
-  group nsswitch.conf passwd protocols rpc services;
-do
-  cp "base-files/${file}" "work/iso_root/etc/${file}"
-done
-
-# install sorcery (and patch)
-mkdir -p work/iso_root/tmp &&
-cat sorcery-stable.tar.bz2 | (cd work/iso_root/tmp ; tar jxf -) &&
-cat sorcery.diff           | (cd work/iso_root/tmp/sorcery; patch -g0 -p1) &&
-chroot work/iso_root sh -c "cd /tmp/sorcery; ./install"
+# install sorcery/grimoire
+IMAGE=work/iso_root ./install-sorcery-grimoire
 
 # make a tar.bz2 of the grimoire
-if [ ! -d "${IMAGE}/var/lib/sorcery/codex/stable" ]; then
-  echo "stable codex is missing on image"
-  exit 1
-fi
-mkdir -p work/iso_root/var/lib/sorcery/codex/ &&
-(cd "${IMAGE}/var/lib/sorcery/codex" ; tar jcfl - stable) > \
-  work/iso_root/var/lib/sorcery/codex/stable.tar.bz2
-
-# installing some files needed by sorcery
-mkdir -p work/iso_root/etc/sorcery/local &&
-cat > work/iso_root/etc/sorcery/local/grimoire <<EOF
-GRIMOIRE_DIR[0]=${INSTALL_ROOT}/var/lib/sorcery/codex/stable
-EOF
-
-mkdir -p work/iso_root/var/state/sorcery &&
-cp "${IMAGE}/var/state/sorcery/packages" \
-  work/iso_root/var/state/sorcery/packages
+(cd work/iso_root/var/lib/sorcery/codex && tar jcfl stable.tar.bz2 stable &&
+    rm -rf stable)
 
 # needed by the /etc/init.d/hostname.sh script
 
@@ -416,15 +528,20 @@ cat > work/iso_root/etc/sourcemage_version <<EOF
 Source Mage GNU/Linux ${ISO_VERSION} ${ARCH}
 EOF
 
-# alien files
-
-cp "${IMAGE}/etc/sysconfig/facilities" work/iso_root/etc/sysconfig/ &&
-cp "${IMAGE}/boot/boot.bmp" work/iso_root/boot/ &&
+cp src/iso_root/boot.bmp work/iso_root/boot/ &&
 
 # create /etc/installerdata
 mkdir -p work/iso_root/etc/installerdata &&
-echo "VERSION=`date +%Y%m%d`" > src/iso_root/installerdata/version &&
-cp -r src/iso_root/installerdata/* work/iso_root/etc/installerdata
+echo "VERSION=`date +%Y%m%d`" > work/iso_root/etc/installerdata/version &&
+for file in fstab \
+            install.guide \
+            install-list \
+            kernel.help \
+            optional-list \
+            raidlevel;
+do
+  cp "src/iso_root/installerdata/${file}" work/iso_root/etc/installerdata
+done
 
 # copy /var/cache/sorcery
 mkdir -p work/iso_root/var/cache/sorcery &&

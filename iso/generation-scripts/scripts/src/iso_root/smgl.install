@@ -632,7 +632,7 @@ mount_fsys()  {
              during install ? (Recommended)"
 
       if confirm "${PROMPT}"; then
-        swapon "${PART}" && export SWAPON=on
+        swapon "${PART}" && SWAPON=on
 	  fi
 	  ;;
   esac
@@ -823,22 +823,38 @@ fi
 
 }
 
+# usage: make_fstab
+#
+# generates a valid /etc/fstab for the installed system
+# according to $DEVICES (static, devfs, udev) and FS_LIST
+
 make_fstab()  {
-  cp -f /etc/installerdata/fstab ${TARGET}/etc/fstab &&
+
+  # /dev/system | static   | devfs              | udev
+  # floppy      | /dev/fd0 | /dev/floppy/0      | /dev/fd0
+  # cdrom       | /dev/hdc | /dev/cdroms/cdrom0 | /dev/hdc
+
+  # the iso uses devfs, how it can automatically detects /dev/hdc?
+
+  cp -f /etc/installerdata/fstab "${TARGET}/etc/fstab" &&
+
   if [[ `uname -r` == 2.6.* ]]
-  then FLOPPY=fd0
+  then FLOPPY=/dev/fd0
        CDROM=`cat /proc/mounts | grep iso9660 | awk '{print $1}'`
        sed -i -e 's/\#sysfs/sysfs/' ${TARGET}/etc/fstab && mkdir ${TARGET}/sys
   else CDROM=/dev/cdroms/cdrom0
-       FLOPPY=floppy/0
+       FLOPPY=/dev/floppy/0
   fi 
+
   echo  -e  "$FS_LIST"  >>  "${TARGET}/etc/fstab"
 
-
-  echo -e "$CDROM  /mnt/cdrom   auto  defaults,noauto,user  0 0" >> "${TARGET}/etc/fstab"
-  echo -e "/dev/$FLOPPY       /mnt/floppy  auto  defaults,noauto,user  0 0" >> "${TARGET}/etc/fstab"
+  cat >> "${TARGET}/etc/fstab" <<EOF
+${CDROM}	/media/cdrom	auto	defaults,noauto,user	0 0
+${FLOPPY}	/media/floppy	auto	defaults,noauto,user	0 0
+EOF
   
 }
+
 
 # 10/09/2003 The code for optimize_architecture(), architecture_menu()
 # and optimization_menu() has been adapted from /usr/sbin/sorcery
@@ -935,6 +951,23 @@ echo MAKE_NJOBS=$MAKE_JOBS > ${TARGET}/etc/sorcery/local/compile_config         
 
  # if it isn't -x sorcery won't read it
 chmod a+x ${TARGET}/etc/sorcery/local/compile_config
+
+}
+
+# usage: create_etc_mtab
+
+# this functions creates a valid $TARGET/etc/mtab file that will make
+# df work in a chroot. This is usefull for yabootconfig, lilo and
+# grub-install for instance, if they are run in chroot.
+
+# warning: $TARGET must not end with /
+
+create_etc_mtab() {
+
+  # replace $TARGET followed by zero or more /, by /
+
+  cat /proc/mounts | grep " ${TARGET}" |
+  sed -e "s:${TARGET}/*:/:g" > "${TARGET}/etc/mtab"
 
 }
 
@@ -1063,7 +1096,7 @@ bootloader_grub_install() {
   # install grub (it is a shell script using df, and thus /etc/mtab to
   # locate file)
 
-  cp "${TARGET}/etc/fstab" "${TARGET}/etc/mtab" &&
+  create_etc_mtab &&
   chroot_cmd grub-install "${BR}"
 
   if [ "${DEBUG}" = "yes" ]; then
@@ -1074,10 +1107,6 @@ bootloader_grub_install() {
 
 
 bootloader_lilo_conf() {
-
-  # if BOOT is not defined, we use ROOT
-
-  BOOT="${BOOT:=${ROOT}}"
 
   # get the linux kernel version
 
@@ -1160,7 +1189,7 @@ bootloader_yaboot_conf() {
 #
 #  if confirm "${PROMPT}" --defaultno; then
 #
-#    cp "${TARGET}/etc/fstab" "${TARGET}/etc/mtab" &&
+#    create_etc_mtab &&
 #    chroot_cmd yabootconfig --noinstall -q
 #
 #  else
@@ -1183,6 +1212,9 @@ bootloader_yaboot_conf() {
 
   head -n -3 "${TARGET}/etc/yaboot.conf" > /tmp/yaboot.conf
   cp /tmp/yaboot.conf "${TARGET}/etc/yaboot.conf"
+
+  # if BOOT is not defined, we use ROOT
+  BOOT="${BOOT:=${ROOT}}"
 
   if [ "${BOOT}" != "${ROOT}" ]; then
     BOOTLOC=""
@@ -1231,6 +1263,87 @@ bootloader_yaboot_install() {
 
 }
 
+# usage: update_var_state_sorcery $SPELL $VERSION
+#
+# add a line to $TARGET/var/state/sorcery/packages
+# either from /var/state/sorcery/packages
+# or using the current date
+
+update_var_state_sorcery_packages() {
+
+	local SPELL="$1" &&
+	local VERSION="$2" &&
+
+	local PACK_DIR="${TARGET}/var/state/sorcery" &&
+	local PACKAGES="${PACK_DIR}/packages" &&
+	local LINE=`grep "^${SPELL}:" "/var/state/sorcery/packages"` &&
+
+	mkdir -p "${PACK_DIR}" &&
+	if [ -n "${LINE}" ]; then
+		echo "${LINE}" >> "${PACKAGES}"
+	else
+		echo "${SPELL}:`date +%Y%m%d`:installed:${VERSION}" >> "${PACKAGES}"
+	fi
+
+}
+
+# usage: install_alien $SPELL
+#
+# copy know alien files from / to $TARGET
+# note: this is a copy/paste of mk-iso-root
+
+install_alien () {
+
+	local SPELL="$1"
+
+	# copy known alien files
+	case "${SPELL}" in
+	  init.d)
+		cat <<EOF
+/etc/sysconfig/facilities
+EOF
+		;;
+	  bash)
+		cat <<EOF
+/etc/skel
+/etc/skel/.bash_logout
+/etc/skel/.bash_profile
+/etc/skel/.bashrc
+EOF
+		;;
+	  openssh)
+		cat <<EOF
+/etc/ssh
+/etc/ssh/ssh_host_rsa_key.pub
+/etc/ssh/ssh_host_rsa_key
+/etc/ssh/ssh_host_key.pub
+/etc/ssh/ssh_host_key
+/etc/ssh/ssh_host_dsa_key.pub
+/etc/ssh/ssh_host_dsa_key
+/etc/ssh/sshd_config
+/etc/ssh/ssh_config
+/etc/ssh/moduli
+EOF
+		;;
+	  Linux-PAM)
+		cat <<EOF
+/etc/security
+/etc/security/time.conf
+/etc/security/pam_env.conf
+/etc/security/limits.conf
+/etc/security/group.conf
+/etc/security/access.conf
+EOF
+		;;
+	esac | sed 's:^\(/*\)::' > "/tmp/alien.${SPELL}"
+
+    (cd / && tar cfl - --no-recursion -T "/tmp/alien.${SPELL}" )\
+        | (cd "${TARGET}" && tar xfp -) || exit 1
+
+	rm "/tmp/alien.${SPELL}"
+
+}
+
 # usage: chroot_install spell
 
 chroot_install() {
@@ -1251,15 +1364,50 @@ chroot_install() {
 	  return 1
 	fi
 
+    # we add a "2>/dev/null" to remove messages like :
+    # tar: Removing leading `/' from member names
+
 	(cd "${TARGET}" &&
-	  tar jxpf "/var/cache/sorcery/${SPELL}-${VERSION}"-*.tar.bz2)
+	  tar jxpf "/var/cache/sorcery/${SPELL}-${VERSION}"-*.tar.bz2 2>/dev/null)
 
     chroot_cmd ldconfig 2>> /tmp/installer-debug
 
     echo "chroot installing $*" >> /tmp/installer-debug     
 
-    LINE=`grep "^${SPELL}:" "${SPELL_STATUS}"`
-	echo "${LINE}" >> "${TARGET}/var/state/sorcery/packages"
+    # copy /etc/sorcery/local/depends files
+	local DEPENDS_DIR=/etc/sorcery/local/depends
+	local DEPENDS="${DEPENDS_DIR}/${SPELL}"
+	if [ -f "${DEPENDS}" ]; then
+	  mkdir -p "${TARGET}/${DEPENDS_DIR}" &&
+	  cp -a "${DEPENDS}" "${TARGET}/${DEPENDS}"
+	else
+	  echo "${SPELL} : no ${DEPENDS}"
+	fi
+
+	local DEPENDS="${DEPENDS_DIR}/${SPELL}.p"
+	if [ -f "${DEPENDS}" ]; then
+	  mkdir -p "${TARGET}/${DEPENDS_DIR}" &&
+	  cp -a "${DEPENDS}" "${TARGET}/${DEPENDS}"
+	else
+	  echo "${SPELL} : no ${DEPENDS}"
+	fi
+
+	case "${SPELL}" in
+	  linux)
+		local KERNEL_CONFIG_DIR=/etc/sorcery/local
+		local KERNEL_CONFIG="${KERNEL_CONFIG_DIR}/kernel.config"
+		if [ -f "${KERNEL_CONFIG}" ]; then
+		  mkdir -p "${TARGET}/${KERNEL_CONFIG_DIR}" &&
+		  cp -a "${KERNEL_CONFIG}" "${TARGET}/${KERNEL_CONFIG}"
+		else
+		  echo "${SPELL} : no ${KERNEL_CONFIG}"
+		fi
+		;;
+	esac
+
+	update_var_state_sorcery_packages "${SPELL}" "${VERSION}"
+
+	install_alien "${SPELL}"
 
   else
     echo "Spell ${SPELL} already installed"
@@ -1282,7 +1430,7 @@ chroot_newdep() {
 
 setup_target() {
 
-# install sorcery to ${TARGET}
+  # install sorcery to ${TARGET}
   CROSS_INSTALL=on INSTALL_ROOT=$TARGET sorcery -v
 
 # hack in case grimoire linux is behind the installer
@@ -1311,17 +1459,24 @@ setup_target() {
   touch ${TARGET}/var/state/sorcery/packages
 
   echo "Generating /etc/fstab ... " >> /tmp/installer-debug
-  make_fstab 
-  mkdir -p ${TARGET}/mnt/{floppy,cdrom}
+  make_fstab
+
+  # Generate directories compliant with FHS 2.3
+  mkdir -p "${TARGET}/media/floppy"
+  mkdir -p "${TARGET}/media/cdrom"
+  mkdir -p "${TARGET}/media/cdrecorder"
+  mkdir -p "${TARGET}/media/zip"
 
   # add the installation's date in /etc/sourcemage_version
 
-  local FILE=/etc/sourcemage_version
-  echo "Adding installation date to ${FILE}..." >> /tmp/installer-debug
-  cp "${VERSION}" "${TARGET}/${FILE}" &&
+  local FILE=/etc/sourcemage_version &&
+  echo "Adding installation date to ${FILE}..." >> /tmp/installer-debug &&
+  cp "${FILE}" "${TARGET}/${FILE}" &&
   echo "installed from CD on `date --utc`" >> "${TARGET}/${FILE}"
 
-# copy these files as they are untracked or SA generated
+  # copy these files as they are untracked or SA generated
+  # /etc/modules, /etc/modules.conf /etc/yp.conf are missing
+
   echo "Adding /etc/* files to $TARGET" >> /tmp/installer-debug
   cp -f /etc/{passwd,group,ld.so.conf,services,protocols,issue,modules,modules.conf,nsswitch.conf,yp.conf} ${TARGET}/etc
   echo "Symlinking ${TARGET}/etc/init.d/runlevels/rc to /bin/true" >> /tmp/installer-debug
@@ -1336,10 +1491,16 @@ setup_target() {
   # have already copied /etc/ld.so.conf , so ...
   chroot_cmd ldconfig
 
-# adding root's config files to ${TARGET}
-  cp -f /etc/skel/.* ${TARGET}/root/
+  # adding root's config files to ${TARGET}
+  for file in /etc/skel/.bash_logout \
+	          /etc/skel/.bash_profile \
+	          /etc/skel/.bashrc;
+  do
+	cp -f "${file}" "${TARGET}/root/"
+  done
+
   # secure default for the history file
-  ln -sf /dev/null ${TARGET}/root/.bash_history
+  ln -sf /dev/null "${TARGET}/root/.bash_history"
 
 # setup the static /dev/ entries while the user configures the rest of the install
   echo "Setting up static /dev entries" >> /tmp/installer-debug
@@ -1360,7 +1521,8 @@ setup_target() {
 
 optional_spell_list () {
 
-  cat /etc/installerdata/optional-list | \
+  cat /etc/installerdata/optional-list |
+  grep -v "^#" | grep -v "^$" |
   while read spell;
   do
     echo "${spell}"
@@ -1526,13 +1688,10 @@ install_to_target()  {
 
     # now install the default spells 
 
-	cat /etc/installerdata/install-list | \
+	cat /etc/installerdata/install-list |
+	grep -v "^#" | grep -v "^$" |
 	while read spell;
 	do
-	  if [ -z "${spell}" ]; then
-		# we have a blank line, ignore it
-		continue
-      fi
       chroot_install "${spell}"
     done &&
        
@@ -1738,7 +1897,17 @@ spell installation)"
 compile_kernel() {
 
   "${DIALOG[@]}"  --cr-wrap --textbox  /etc/installerdata/kernel.help 22 60
-  rm -rf "${TARGET}/usr/src/linux"*
+
+  # copy kernel.config used to compile iso kernel
+  local KERNEL_CONFIG_DIR=/etc/sorcery/local
+  local KERNEL_CONFIG="${KERNEL_CONFIG_DIR}/kernel.config"
+  if [ -f "${KERNEL_CONFIG}" ]; then
+    mkdir -p "${TARGET}/${KERNEL_CONFIG_DIR}" &&
+    cp -a "${KERNEL_CONFIG}" "${TARGET}/${KERNEL_CONFIG}"
+  else
+    echo "${SPELL} : no ${KERNEL_CONFIG}"
+  fi
+
   chroot_cmd cast -c linux &&
   echo "compiling custom kernel" >> /tmp/installer-debug
 
@@ -1896,12 +2065,11 @@ syslog()  {
 	  --radiolist        \
 	  "$HELP"            \
 	  7 60 0             \
-	  "sysklogd"  "" "off" "$SYSKLOGD_HELP" \
+	  "sysklogd"  "" "on"  "$SYSKLOGD_HELP" \
 	  "syslog-ng" "" "off" "$SYSLOGNG_HELP" \
 	  "metalog"   "" "off" "$METALOG_HELP"  \
 	  "none"      "" "off" "$NONE_HELP"`    &&
   LOGGER=`echo "${LOGGER}" | sed -e 's/^"//' -e 's/"$//'` &&
-  export LOGGER                                           &&
 
   echo "Chose $LOGGER for the system logger" >> /tmp/installer-debug  &&
 
@@ -2072,9 +2240,17 @@ elvis during the install"
                    "elvis"  "" "${ELVIS}" "$ELVIS_HELP"  \
                    "jed"    "" "${JED}"   "$JED_HELP"    \
                    "nano"   "" "${NANO}"  "$NANO_HELP"` &&
-  EDITOR=`echo "${NEW_EDITOR}" | sed -e 's/^"//' -e 's/"$//'`
+  REAL_ED=`echo "${NEW_EDITOR}" | sed -e 's/^"//' -e 's/"$//'`
 
-  export  REAL_ED=$EDITOR
+  # REAL_ED is the editor that will be installed on the new system
+  # EDITOR is the editor used throughout the install process
+  # since vim/elvis conflicts, only elvis is installed (smaller)
+
+  EDITOR="${REAL_ED}"
+  if [ "${EDITOR}" = "vim" ]; then
+	EDITOR="elvis";
+  fi
+
   export  EDITOR
 
   echo "chose $EDITOR as EDITOR" >> /tmp/installer-debug
@@ -2153,7 +2329,11 @@ rest of the install)"
 # redirect errors to /dev/null and return shell to the installer
 
       setup_target 
-	  read -p "press enter..."
+
+	  if [ "${DEBUG}" = "yes" ]; then
+		press_enter
+	  fi
+
       DONE_SETUP=yes
     else
       return 1
@@ -2287,7 +2467,7 @@ config_bootloader() {
 (answer Yes) or to the boot sector of the /boot
 partition (answer No) ?" &&
 
-    if "${DIALOG[@]}" --defaultno --yesno "${PROMPT}" 7 60; then
+    if "${DIALOG[@]}" --yesno "${PROMPT}" 7 60; then
       MBR="yes"
     else
       MBR="no"
@@ -2596,7 +2776,7 @@ Then select the optional spells for installation."
 
 main()  {
 
-  export  PATH="/bin:/usr/bin:/sbin:/usr/sbin"
+  export PATH="/bin:/usr/bin:/sbin:/usr/sbin"
 
 # mount /proc (needed later for /proc/partitions for instance
 

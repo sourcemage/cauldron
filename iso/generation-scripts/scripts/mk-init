@@ -13,15 +13,13 @@ wget http://download.sourcemage.org/sorcery/sorcery-stable.tar.bz2 || exit -1
 rm -f stable.tar.bz2 &&
 wget http://codex.sourcemage.org/stable.tar.bz2 || exit -1
 
-mkdir -p work/grimoire
-cat stable.tar.bz2 | (cd work/grimoire ; tar jxfp -)
 
-while read spell;
-do
-  ./find_source_url "${spell}"
-done < spell-stage1 > files-stage1
+#while read spell;
+#do
+#  ./find_source_url "${spell}"
+#done < spell-stage1 > files-stage1
 
-while read spell;
-do
-  ./find_source_url "${spell}"
-done < spell-stage2 > files-stage2
+#while read spell;
+#do
+#  ./find_source_url "${spell}"
+#done < spell-stage2 > files-stage2
