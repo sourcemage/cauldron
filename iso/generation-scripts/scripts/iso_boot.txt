@@ -1,0 +1,120 @@
+16/07/2003 Benoit PAPILLAULT <benoit.papillault@free.fr>
+
+How the ISO boot process works:
+
+isolinux/isolinux.bin
+isolinux/isolinux.cfg are loaded
+
+it loads the kernel from /boot/linux <- /boot/bzImage-2.4.20 and the
+ramdisk image isolinux/initrd.gz
+
+Inside the ramdisk, it starts /sbin/init which launch /sbin/init from the new
+root, which default to the ISO root.
+
+-> ramdisk /sbin/init
+   -> /bin/sh [bash]
+      -> libreadline [readline]
+      -> libhistory  [readline]
+      -> libncurses  [ncurses]
+      -> libdl       [glibc]
+      -> libc        [glibc]
+      -> ld-linux    [glibc]
+   -> /bin/ls [coreutils]
+      -> librt       [glibc]
+      -> libpthread  [glibc]
+   -> /bin/sed [sed]
+   -> /bin/echo [coreutils]
+   -> /usr/bin/dialog [dialog] 
+   -> /lib/modules/$KERNEL/kernel/drivers [linux]
+   -> true [coreutils]
+   -> /usr/bin/basename [coreutils]
+   -> /sbin/modprobe [modutils]
+   -> /usr/bin/sleep [coreutils]
+   -> /bin/mount [util-linux]
+   -> /bin/umount [util-linux]
+   -> /bin/cat [coreutils]
+   -> /usr/bin/grep [grep]
+   -> /sbin/pivot_root [util-linux]
+   -> /bin/uname [coreutils]
+   -> /etc/sorcery/config
+      -> /var/lib/sorcery/subroutines
+         -> mkdir
+         -> rmdir
+         -> play
+         -> less
+         -> mail
+         -> ...
+      -> /etc/sorcery/local/config
+
+Total:
+  glibc [lib]
+  readline [lib]
+  ncurses [lib]
+  bash
+  coreutils
+  dialog
+  modutils
+  util-linux
+  grep
+  sed
+  nano
+  linux
+
+-> iso_root /sbin/init [simpleinit-msb]
+   -> /tmp/smage.cd [tested by the script on initrd]
+   -> /etc/inittab [simpleinit-msb]
+      -> /etc/init.d/rc start [init.d]
+         -> /etc/sysconfig/init [init.d]
+         -> /etc/init.d/smgl_functions [init.d]
+         -> /sbin/need [simpleinit-msb]
+
+-> iso root /sbin/init [sysvinit]
+   -> /tmp/smage.cd [tested by the initrd]
+   -> /etc/inittab
+      -> /etc/init.d/rcS
+         -> /etc/rcs.d/S10mount -> /etc/init.d/mount.sh
+            -> /etc/init.d/functions
+               -> swapon
+               -> fsck [e2fsprogs]
+               -> cat [textutils]
+         -> /etc/init.d/hostname.sh
+            -> /bin/hostname [net-tools]
+         -> /etc/rcS.d/S70sorcerer -> /etc/init.d/sorcerer.sh
+            -> /usr/sbin/sgl.install
+               -> /bin/sh [bash]
+                  -> libreadline [readline]
+                  -> libncurses [ncurses]
+               -> dialog [dialog]
+               -> chroot [sh-utils]
+               -> shutdown [sysvinit]
+               -> ls [fileutils]
+               -> echo [sh-utils]
+               -> mkreiserfs [reiserfsprogs]
+               -> mkswap [util-linux]
+               -> mkfs [util-linux]
+               -> inputbox
+               -> dd [fileutils]
+               -> chmod [fileutils]
+               -> tar [tar]
+               -> rm [fileutils]
+               -> touch [fileutils]
+               -> sedit
+               -> cp [fileutils]
+               -> ln [fileutils]
+               -> hwclock [util-linux]
+               -> lilo [lilo]
+               -> consolechars [console-tools]
+               -> loadkeys [console-tools]
+               -> elvis [elvis]
+               -> jed [jed]
+               -> nano [nano]
+      -> /etc/init.d/rc
+      -> /sbin/agetty [util-linux]      
+
+CHROOT OR NOT?
+
+Pretty simple. If a script is used only for the installer and is totally
+uneeded after installation, the script should be on iso_root and not image.
+
+If a script is needed after the installation and can be launched by chrooting,
+it should be on image.

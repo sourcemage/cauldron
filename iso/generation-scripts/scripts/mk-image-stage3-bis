@@ -1,0 +1,249 @@
+#!/bin/sh
+
+# Author: Benoit PAPILLAULT <benoit.papillault@free.fr>
+# Creation: 25/07/2003
+
+# This script recompile the whole system using sorcery. It also compiles
+# the linux kernel.
+
+# We download the latest stable grimoire. This download is done only
+# if we do not have already a grimoire. This is done to avoid
+# constantly updating
+
+if [ ! -d /var/lib/sorcery/codex/stable ]; then
+    scribe add stable || exit -1
+fi
+
+# apply patch to the stable grimoire if needed
+if [ -f /tmp/stable.patch ]; then
+    (cd /var/lib/sorcery/codex/stable; patch -p1 < /tmp/stable.patch)
+fi
+
+# sorcery rebuild does not work since no spells are installed
+#
+# gcc2: removed (according to hgg, gcc do not need gcc2 anymore)
+# 
+# glibc -> autoconf
+# gettext -> automake
+# xfsprogs -> libtool
+
+# we configure sorcery to compiled for i386
+cat > /etc/sorcery/local/config <<EOF
+             ARCHIVE="on"
+             AUTOFIX="on"
+           AUTOPRUNE="off"
+               CABAL="off"
+         GATHER_DOCS="on"
+        MAIL_REPORTS="off"
+        VIEW_REPORTS="on"
+               PATCH="on"
+            PRESERVE="on"
+         SUPER_DEBUG=""
+                 set "+x"
+        ARCHITECTURE="i386"
+       OPTIMIZATIONS="speedy combreloc tiny strip "
+EOF
+
+# preconfigure some spell
+
+cat > /etc/sorcery/local/depends/gcc <<EOF
+FRONTENDS=--enable-languages=c,c++
+CONFIGURED="y"
+EOF
+
+cat > /etc/sorcery/local/depends/linux <<EOF
+KERNEL_VERSION=2.4.21
+CONFIG_KERNEL=y
+xfs=2.4.21
+EOF
+
+cat > /etc/sorcery/local/depends/linux.DETAILS <<EOF
+SOURCE8=xfs-2.4.21-all-i386.bz2
+SOURCE8_URL=ftp://oss.sgi.com/projects/xfs/download/patches/2.4.21/$SOURCE8
+MD5[7]=2f2dcc9f9aa73dbd1e4a37a482e40716
+EOF
+
+while read spell;
+do
+  case "${spell}" in
+      \#*)
+          ;;
+      *)
+          # we use yes to answer to all (stupid?) questions that "cast" ask
+          yes "" | cast "${spell}"
+          ;;
+  esac
+done <<EOF
+#
+# console-tools: contains loadkeys to change the keyboard mapping at boot time
+console-tools
+#
+# m4: autoconf and gettext depends on m4
+m4
+#
+# gawk: e2fsprogs depends on gawk
+gawk
+#
+# bin86: lilo depends on bin86
+bin86
+#
+# diffutils: basesystem depends on diffutils
+diffutils
+#
+# patch: basesystem depends on patch
+patch
+#
+# unzip: basesystem depends on unzip
+unzip
+#
+# rpmunpack: basesystem depends on rpmunpack
+rpmunpack
+#
+# make: is needed to compile anything (like gcc)
+make
+#
+# man-pages is blocking (it says: man-pages won't ARCHIVE installed files)
+man-pages
+#
+# mutt: basesystem optionally depends on mutt
+mutt
+#
+# file: basesystem depends on file
+file
+#
+# jed is one of the editor selected by the installer
+jed
+glib
+#
+# db: who depends on db? perl! but it's not listed!
+db
+# 
+# gzip: basesystem depends on gzip
+gzip
+# zlib is blocking when recompiling dependencies. (see PRE_BUILD and
+# POST_INSTALL). This is resolved with a patch against stable codex.
+zlib
+#
+# xdelta: basesystem depends on xdelta
+xdelta
+#
+# nasm: lilo depends on nasm
+nasm
+perl
+#
+# cpio: is needed by the linux spell when decompressing from an rpm
+# (see PRE_BUIULD file)
+cpio
+#
+# ed: who is using ed ?
+ed
+#
+# findutils: find needs to be added to protected files
+findutils
+console-data
+#
+# which: ?
+which
+#
+# instalwatch: sorcery tracking system is based on this dynamic library
+installwatch
+# procps: this create /etc/init.d/sysctl.sh and links
+procps
+shadow
+wget
+ncurses
+#
+# elvis is one of the editor selected by the installer
+elvis
+readline
+#
+# termcap: no one uses it => removed
+#termcap
+#
+# less: basesystem depends on less
+less
+#
+# man: should be after textutils to find the correct location of cat and less
+man
+#
+# net-tools: create /etc/init.d/networking.sh and links
+# needs to be compiled after coretuils since both provide /bin/hostname and
+# only the former provide the -F switch (like /bin/hostname -F /etc/hostname)
+net-tools
+#
+# netkit-base: this spell provide basic networking files (/etc/hosts).
+netkit-base
+#
+# uudeview: who is using this package? -> no one, so removed
+#uudeview
+#
+# bash: this is the shell used for every shell script (it contains /bin/sh)
+bash
+#
+# dialog is the text menu interface used by sorcery
+dialog
+#
+# lockexec: basesystem depends on lockexec
+# lockexec is used by the sorcery system
+lockexec
+bzip2
+#
+# simpleinit-msb: init.d depends on simpleinit-msb
+simpleinit-msb
+#
+# init.d is needed to bootup the system
+init.d
+e2fsprogs
+sed
+binutils
+bison
+groff
+hdparm
+reiserfsprogs
+lvm
+modutils
+#
+# util-linux: basesystem depends on util-linux
+util-linux
+xfsprogs
+grep
+texinfo
+basesystem
+flex
+slang
+#
+# dump has some problem : invalid user man
+# dump is not used, so removed
+#dump
+#
+# nano is one of the editor selected by the installer
+nano
+#
+# lilo is needed to load the linux kernel
+lilo
+#
+# parted is needed to edit the partition
+parted
+#
+# tar: basesystem depends on tar
+tar
+#
+# gettext: it will triggers glibc
+gettext
+#
+# glibc: this dynamic library is needed by nearly every binary
+glibc
+#
+# gcc: this C compiler is needed to recompile anything from sources
+gcc
+#
+# required by the installer to be on image : linux, pcmcia-cs, dhcpcd,
+# rp-pppoe
+pcmcia-cs
+dhcpcd
+ppp
+rp-pppoe
+#
+# linux: the linux kernel itself. needed to boot up the system
+linux
+EOF

@@ -1,0 +1,24 @@
+09SMGL-i386-2.6.5-20040407.iso07 052.6.5 kernel07
+                Welcome to 04Source07 08Mage07 GNU/Linux
+
+Copyright 2000-2001 Kyle Sallee, 2002-2004 04Source07 08Magers07. All Rights Reserved.
+04Source07 08Mage07 distributed under the GNU General Public License Version 2.
+Please see 09http://www.gnu.org/copyleft/gpl.html07 for the GNU GPL.
+
+Download 04Source07 08Mage07 GNU/Linux and documentation from 04http://www.sourcemage.org07
+
+* To install 04Source07 08Mage07 in 04800 X 60007 mode, press 05enter07.If you need
+  special kernel parameters, type 05install07 followed by the kernel parameters. 
+
+* To install 04Source07 08Mage07 in 04non-framebuffer07 mode, type 05lowres07 
+  followed by kernel parameters. 
+
+* To use this CD as a rescue CD, type either 05boot07 followed by usual
+  kernel parameters, like 05root=07 to specify the root device.
+  04OR07
+  05initrd07 to use the initrd to load kernel modules, needed for SCSI
+  devices for instance, followed by usual kernel parameters and then select
+  your root from the initrd's menu.
+
+* For a higher resolution console append 05vga=XXX07 to the 05initrd07 
+  command line as a kernel parameter. Press F1 to see the list of vga codes.

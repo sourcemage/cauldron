@@ -1,0 +1,448 @@
+#!/bin/sh
+
+# Author : Benoit PAPILLAULT <benoit.papillault@free.fr>
+# Creation: 21/07/2003
+
+# This script is used to build the ISO root image CD
+
+# read common configuration file
+
+. config
+
+# we use $IMAGE if defined, or else work/image-stage3
+if [ -z "${IMAGE}" ]; then
+    IMAGE="work/image-stage3"
+fi
+echo "using IMAGE=${IMAGE}"
+
+# we use $ARCH if defined, or else we automatically detect the current
+# architecture
+
+if [ -z "${ARCH}" ]; then
+  case `uname -m` in
+	i386|i486|i586|i686)
+	  ARCH=i386
+	  ;;
+	*)
+	  ARCH=`uname -m`
+	  ;;
+  esac
+fi
+echo "using ARCH=${ARCH}"
+
+# checking image directory
+if [ ! -d "${IMAGE}" ]; then
+    echo "${IMAGE} is not a directory"
+    exit 1
+fi
+
+# function to strip all binaries
+strip_binaries() {
+
+  DIR="$1"
+  TMP="/tmp/list.$$"
+
+  echo "stripping binaries under ${DIR}"
+
+  find "${DIR}" -type f -exec file {} \; \
+    | grep " ELF " \
+    | grep -v "relocatable" \
+    | awk -F ':' '{print $1}' > "${TMP}"
+
+  (while read file;
+   do
+     strip "${file}"
+   done ) < "${TMP}"
+
+  rm "${TMP}"
+}
+
+# function to remove static libraries
+remove_static_lib() {
+
+    DIR="$1"
+    TMP="/tmp/list.$$"
+
+    echo "removing static libraries under ${DIR}"
+
+    find "${DIR}" -type f -exec file {} \; \
+        | grep "current ar archive" \
+        | awk -F ':' '{print $1}' > "${TMP}"
+
+    (while read file;
+     do
+       rm "${file}"
+     done ) < "${TMP}"
+
+    rm "${TMP}"
+}
+
+# function to copy an existing spell files from image to iso_root
+cast ()
+{
+    SPELL="$1"
+
+    # packages version:
+    SPELL_STATUS="${IMAGE}/var/state/sorcery/packages"
+
+    VERSION=`grep "^${SPELL}:"  "${SPELL_STATUS}" | cut  -d : -f4 | head  -n 1`
+
+    # find the file containing all the files belonging to the spell
+    FILES="${IMAGE}/var/log/sorcery/install/${SPELL}-${VERSION}"
+
+    if [ ! -f "${FILES}" ]; then
+        echo "spell $SPELL does not exist";
+        exit 1;
+    fi
+
+    # remove leading / be carefull to use '' instead of "" for sed
+    # since \ is interpreted by the shell
+  
+	sed 's:^\(/*\)::' "${FILES}" > "/tmp/ls.${SPELL}"
+
+    echo "installing spell ${SPELL} version ${VERSION}"
+
+    # copy files from "image" to "iso_root" using tar
+    # we use the --no-recursion to avoid copying whole directories like /usr
+
+    (cd "${IMAGE}" && tar cfl - --no-recursion -T "/tmp/ls.${SPELL}" )\
+        | (cd work/iso_root && tar xfp -) || exit 1
+
+    rm "/tmp/ls.${SPELL}"
+}
+
+# usage: spell_versions bash
+# returns the grimoire version and the installed version
+# you can use it as : 
+# grimoire_version=`spell_versions bash | awk '{print $1}'
+# installed_version=`spell_versions bash | awk '{print $2}'
+
+spell_versions() {
+
+  local SPELL="$1"
+  chroot "${IMAGE}" gaze version "${SPELL}" |
+  head -3 | tail -1 | awk '{print $4" "$5}'
+
+}
+
+# usage: grimoire_version bash
+# returns the version in the grimoire
+
+grimoire_version() {
+
+  local SPELL="$1"
+  spell_versions "${SPELL}" | awk '{print $1}'
+
+}
+
+# usage: installed_version bash
+# returns the installed version or "-"
+
+installed_version() {
+
+  local SPELL="$1"
+  spell_versions "${SPELL}" | awk '{print $2}'
+
+}
+
+# usage: copy_spell bash
+# copy /var/cache/sorcery/bash-*.tar.bz2 on the ISO
+# special work is done for some spells, like linux for instance
+
+copy_spell() {
+
+  # use gaze to find out the grimoire/installed version (we might
+  # want to copy spell that are not installed, but that are in the
+  # cache, like metalog)
+
+  GRIMOIRE_VERSION=`grimoire_version "${SPELL}"`
+  VERSION=`installed_version "${SPELL}"`
+
+  # if there is no installed version, try to use the grimoire version
+
+  if [ "${VERSION}" = "-" ]; then
+    VERSION="${GRIMOIRE_VERSION}"
+  fi
+
+  if [ -z "${VERSION}" ]; then
+	echo "spell ${SPELL} is not on the image";
+	exit 1
+  fi
+
+  echo "copying spell ${SPELL} version ${VERSION}"
+
+  # check if the cache file exist. we take only one file if several exists.
+  # for instance, you might find :
+  #   mozilla-1.7.2-i386-pc-linux-gnu.tar.bz2
+  #   mozilla-1.7.3-i686-pc-linux-gnu.tar.bz2
+  # the sort | head -1 will take the "most" compatible. (not perfect)
+
+  CACHE=`find "${IMAGE}/var/cache/sorcery" \
+	  -name "${SPELL}-${VERSION}-*.tar.bz2" | sort | head -1`
+
+  if [ -f "${CACHE}" ]; then
+	if ! cp "${CACHE}" work/iso_root/var/cache/sorcery; then
+	  exit 1
+	fi
+  else
+	# we don't have a cache file, try to build one ourself
+	INSTALL="${IMAGE}/var/log/sorcery/install/${SPELL}-${VERSION}"
+	if [ ! -f "${INSTALL}" ]; then
+	  echo "spell ${SPELL} is not on the image"
+      exit 1
+    fi
+
+    # remove all leading /
+
+	sed 's:^\(/*\)::' "${INSTALL}" > "/tmp/ls.${SPELL}"
+
+	if ! tar jcfP \
+      "work/iso_root/var/cache/sorcery/${SPELL}-${VERSION}-iso.tar.bz2" \
+      -C "${IMAGE}"  --no-recursion -T "/tmp/ls.${SPELL}"; then
+		exit 1
+	fi
+  fi
+
+}
+
+# umount directories under work/iso_root
+DIR=`cd work/iso_root && pwd`
+cat /proc/mounts | awk '{print $2}' | grep "^${DIR}" | sort -ur |
+while read dir;
+do
+  echo "umounting ${dir}..."
+  umount "${dir}" || exit 1
+done || exit 1
+
+# erase existing directory if any
+echo "deleting existing iso_root"
+rm -rf work/iso_root || exit 1
+
+# create a new directory
+mkdir -p work/iso_root
+
+# /mnt & /proc & /devices directories
+mkdir -p work/iso_root/proc
+mkdir -p work/iso_root/dev
+
+
+# init install
+#/var/log/sorcery/install/sysvinit-2.84
+
+# grep -v "^#" : remove comments
+# grep -v "^$" : remove blank lines
+
+cat src/iso_root/spell-iso-root "src/iso_root/spell-iso-root.${ARCH}" |
+grep -v "^#" | grep -v "^$" |
+while read spell;
+do
+  cast "${spell}" || exit 1
+done || exit 1
+
+# /etc/ld.so.conf
+mkdir -p work/iso_root/etc
+cat > work/iso_root/etc/ld.so.conf <<EOF
+/lib
+/usr/lib
+EOF
+
+# create correct link under /lib
+chroot work/iso_root /sbin/ldconfig
+
+# /etc/fstab (no need to put devfs since it's mounted by the kernel)
+cat > work/iso_root/etc/fstab <<EOF
+proc    /proc		proc	defaults	0 0
+tmpsfs  /dev/shm    tmpfs   defaults    0 0
+devpts  /dev/pts    devpts  defaults    0 0
+tmpfs   /var/lock	tmpfs	defaults	0 0
+tmpfs   /var/log    tmpfs   defaults    0 0
+tmpfs	/var/run	tmpfs	defaults	0 0
+tmpfs	/tmp		tmpfs	defaults,size=256m,nr_inodes=64m	0 0
+EOF
+
+# directories
+mkdir -p work/iso_root/mnt/cdrom
+mkdir -p work/iso_root/mnt/floppy
+mkdir -p work/iso_root/proc
+mkdir -p work/iso_root/var/lock
+mkdir -p work/iso_root/var/log
+mkdir -p work/iso_root/var/run
+mkdir -p work/iso_root/tmp
+# for the initrd's pivot_root
+# mkdir -p work/iso_root/initrd
+# for the sgl.install script
+mkdir -p work/iso_root/mnt/root
+# root HOME directory
+mkdir -p work/iso_root/root
+
+# /etc/mtab -> /proc/mounts
+touch work/iso_root/proc/mounts
+ln -sf ../proc/mounts work/iso_root/etc/mtab
+
+# copy kernel files :
+# bzImage-2.4.21 -> linux
+# config-2.4.21
+
+mkdir -p work/iso_root/boot
+
+KERNEL_VERSION=`installed_version linux`
+KERNEL_IMAGE="/boot/vmlinux-${KERNEL_VERSION}"
+case `uname -m` in
+  i386 | i486 | i586 | i686)
+    KERNEL_IMAGE="/boot/vmlinubz-${KERNEL_VERSION}"
+	;;
+esac
+if [ ! -f "${IMAGE}/${KERNEL_IMAGE}" ]; then
+	echo "kernel image ${KERNEL_IMAGE} is missing"
+	exit 1
+fi
+
+cp "${IMAGE}/${KERNEL_IMAGE}" \
+    "work/iso_root/boot/linux" &&
+cp "${IMAGE}/etc/sorcery/local/kernel.config" \
+    "work/iso_root/boot/config-${KERNEL_VERSION}" || exit 1
+
+#mkdir -p work/iso_root/lib/modules
+#(cd "${IMAGE}/lib/modules"; tar cfl - .) \
+#    | (cd work/iso_root/lib/modules; tar xfp -)
+
+# copy the dialog configuration
+cp "${IMAGE}/etc/sorcery/dialogrc" work/iso_root/etc/dialogrc
+
+# copy some files from our sources
+cp src/iso_root/inittab       work/iso_root/etc/inittab &&
+cp src/iso_root/smgl.install  work/iso_root/usr/sbin/   &&
+cp src/iso_root/mkinitrd-smgl work/iso_root/usr/sbin/   &&
+cp src/iso_root/MAKEDEV       work/iso_root/sbin/MAKEDEV
+
+mkdir -p work/iso_root/etc
+for file in \
+    passwd shadow group;
+do
+  cp src/image/${file} work/iso_root/etc/${file}
+done
+
+for file in \
+  group nsswitch.conf passwd protocols rpc services;
+do
+  cp "base-files/${file}" "work/iso_root/etc/${file}"
+done
+
+# install sorcery (and patch)
+mkdir -p work/iso_root/tmp &&
+cat sorcery-stable.tar.bz2 | (cd work/iso_root/tmp ; tar jxf -) &&
+cat sorcery.diff           | (cd work/iso_root/tmp/sorcery; patch -g0 -p1) &&
+chroot work/iso_root sh -c "cd /tmp/sorcery; ./install"
+
+# make a tar.bz2 of the grimoire
+if [ ! -d "${IMAGE}/var/lib/sorcery/codex/stable" ]; then
+  echo "stable codex is missing on image"
+  exit 1
+fi
+mkdir -p work/iso_root/var/lib/sorcery/codex/ &&
+(cd "${IMAGE}/var/lib/sorcery/codex" ; tar jcfl - stable) > \
+  work/iso_root/var/lib/sorcery/codex/stable.tar.bz2
+
+# installing some files needed by sorcery
+mkdir -p work/iso_root/etc/sorcery/local &&
+cat > work/iso_root/etc/sorcery/local/grimoire <<EOF
+GRIMOIRE_DIR[0]=${INSTALL_ROOT}/var/lib/sorcery/codex/stable
+EOF
+
+mkdir -p work/iso_root/var/state/sorcery &&
+cp "${IMAGE}/var/state/sorcery/packages" \
+  work/iso_root/var/state/sorcery/packages
+
+# needed by the /etc/init.d/hostname.sh script
+
+HOSTNAME="smgl-install"
+echo "${HOSTNAME}"            > work/iso_root/etc/hostname
+echo "127.0.0.1 ${HOSTNAME}" >> work/iso_root/etc/hosts
+
+cat > "work/iso_root/etc/issue" <<EOF
+Welcome on Source Mage GNU/\s ${ISO_VERSION} \l
+Linux kernel \r on an \m
+EOF
+
+# create devices from a tar.gz
+# cat src/initrd/dev.tar.gz | (cd work/iso_root; tar zxf -)
+
+# remove un-needed files (doc & include)
+rm -rf work/iso_root/usr/doc
+rm -rf work/iso_root/usr/info
+rm -rf work/iso_root/usr/man
+rm -rf work/iso_root/usr/share/info
+rm -rf work/iso_root/usr/share/doc
+rm -rf work/iso_root/usr/include
+rm -rf work/iso_root/usr/jed/doc
+rm -rf work/iso_root/usr/jed/info
+rm -rf work/iso_root/var/lock
+rm -rf work/iso_root/var/run
+rm -rf work/iso_root/tmp
+rm -rf work/iso_root/usr/lib/perl5/5.8.1/pod
+
+# /usr/lib/locale/ used by /usr/bin/locale
+# as well as /usr/lib/locale/locale-archive & /usr/share/locale/locale.alias
+
+# /usr/share/aclocal [parted] 
+# /usr/share/consolefonts [console-data] used by consolechars
+# /usr/share/consoletrans [console-data] 
+# /usr/share/et [e2fsprogs]
+# /usr/share/i18n [glibc]
+# /usr/share/keymaps [console-data]
+# /usr/share/locale/locale.alias -> /usr/bin/locale
+# /usr/share/locale/fr/LC_MESSAGES/coreutils.mo -> /bin/date
+# /usr/share/misc [util-linux]
+# /usr/share/ss [e2fsprogs]
+# /usr/share/tabset [ncurses]
+# /usr/share/terminfo
+# /usr/share/unidata
+# /usr/share/videomodes
+# /usr/share/zoneinfo
+
+# create some directories (/tmp, /var/run, /var/lock, /initrd)
+
+mkdir -p work/iso_root/var/lock &&
+mkdir -p work/iso_root/var/run  &&
+mkdir -p work/iso_root/tmp      &&
+chmod a+rwxt work/iso_root/tmp  &&
+mkdir -p work/iso_root/initrd   || exit 1
+
+# create /etc/sourcemage_version used by initrd to recognize the CD as
+# a Source Mage GNU/Linux CD
+
+mkdir -p work/iso_root/etc &&
+cat > work/iso_root/etc/sourcemage_version <<EOF
+Source Mage GNU/Linux ${ISO_VERSION} ${ARCH}
+EOF
+
+# alien files
+
+cp "${IMAGE}/etc/sysconfig/facilities" work/iso_root/etc/sysconfig/ &&
+cp "${IMAGE}/boot/boot.bmp" work/iso_root/boot/ &&
+
+# create /etc/installerdata
+mkdir -p work/iso_root/etc/installerdata &&
+echo "VERSION=`date +%Y%m%d`" > src/iso_root/installerdata/version &&
+cp -r src/iso_root/installerdata/* work/iso_root/etc/installerdata
+
+# copy /var/cache/sorcery
+mkdir -p work/iso_root/var/cache/sorcery &&
+(cd src/iso_root/installerdata && cat install-list optional-list | sort -u) |
+grep -v "^#" | grep -v "^$" |
+while read SPELL;
+do
+  copy_spell "${SPELL}" || exit 1
+done || exit 1
+
+# patch. Warning : we cannot use /dev/null as the file for writing
+# rejects since it will remove /dev/null first!
+
+#if [ -f src/iso_root/iso_root.patch ]; then
+#    cat src/iso_root/iso_root.patch | \
+#        (cd work/iso_root; patch -p0 -N -r /tmp/null)
+#    rm -f /tmp/null
+#fi
+
+remove_static_lib work/iso_root
+strip_binaries    work/iso_root

@@ -1,0 +1,209 @@
+#!/bin/sh
+
+# Author : Benoit PAPILLAULT <benoit.papillault@free.fr>
+# Creation: 30/07/2003
+
+# This script clean up a bit the image directory. It only removes files
+# that are really un-needed to use the image.
+
+# we use $IMAGE if defined, or else work/image
+if [ -z "${IMAGE}" ]; then
+    IMAGE="work/image-stage3"
+fi
+echo "using IMAGE=${IMAGE}"
+
+# remove files that were used in mk-image-stage2
+rm -rf "${IMAGE}/src"
+rm -rf "${IMAGE}/tmp/tools2"
+
+# delete configuration of spells (44 Ko)
+# rm /etc/sorcery/local/depends/*
+
+# precompiled binaries (83 Mo)
+#rm -rf "${IMAGE}/var/cache/sorcery"
+#mkdir  "${IMAGE}/var/cache/sorcery"
+
+# compilation log (1 Mo)
+#rm -rf "${IMAGE}/var/log/sorcery/compile"
+#mkdir  "${IMAGE}/var/log/sorcery/compile"
+
+# downloaded packages (247 Mo) except linux
+(cd "${IMAGE}/var/spool/sorcery";
+    for file in *;
+      do
+      case "${file}" in
+		  linux-2.4.26.tar.bz2)
+			  ;;
+		  linux-2.4.26.tar.bz2.sign)
+			  ;;
+          linux-2.6.7.tar.bz2)
+              ;;
+          linux-2.6.7.tar.bz2.sign)
+              ;;
+#         xfs-2.4.23-all-i386.bz2)
+              # needed by the linux spell if you select the XFS patch
+			  # no longer exist for 2.6.7 kernel
+#		  ;;
+          pcmcia-cs-3.2.8.tar.gz)
+              # mobile/pcmcia-cs spell, triggered by the linux spell
+              ;;
+          eagle-1.0.4.tar.gz)
+              # kernels/eagle spell => BROKEN 
+              ;;
+          eciadsl-synch_bin.tar.bz2)
+              # net/eciadsl-synch spell
+              ;;
+          eciadsl-usermode-0.9.tar.bz2)
+              # net/eciadsl-usermode spell
+              ;;
+          speedtouch-1.3.tar.bz2)
+              # kernels/speedtouch spell
+              ;;
+          *)
+# we don't remove anything there.
+#              rm -rf "${file}"
+              ;;
+      esac
+    done
+)
+
+# /tmp
+rm -rf "${IMAGE}/tmp"
+mkdir -p "${IMAGE}/tmp"
+chmod a+rwxt "${IMAGE}/tmp"
+
+# /dev
+umount "${IMAGE}/dev/pts"
+umount "${IMAGE}/dev"
+
+rm -rf "${IMAGE}/dev"
+mkdir -p "${IMAGE}/dev"
+chmod 755 "${IMAGE}/dev"
+
+# /proc
+rm -rf "${IMAGE}/proc"
+mkdir -p "${IMAGE}/proc"
+chmod 555 "${IMAGE}/proc"
+
+# removing backup made by the init.d spell
+rm -rf "${IMAGE}/etc/init.d/backup"
+
+# removing codex except stable
+(cd "${IMAGE}/var/lib/sorcery/codex";
+    for file in *;
+      do
+      case "${file}" in
+          stable)
+              ;;
+          *)
+              rm -rf "${file}"
+              ;;
+      esac
+    done
+)
+
+# removing sources (a simple rm `ls | grep` does not handle correctly
+# whitespace). low said : rm `ls -Q | grep -v '^"linux"$'`. This later
+# solution do not work. it says: cannot remove '"a' :-(
+
+(cd "${IMAGE}/usr/src";
+    for file in *;
+      do
+      case "${file}" in
+          linux) 
+              ;; 
+		  linux-2.4.26)
+			  ;;
+          linux-2.6.7)
+              ;;
+          *)
+              rm -rf "${file}"
+              ;;
+      esac
+    done
+)
+
+# removing old kernel modules
+
+(cd "${IMAGE}/lib/modules";
+    for file in *;
+      do
+      case "${file}" in
+          2.6.7)
+              ;;
+          *)
+              rm -rf "${file}"
+              ;;
+      esac
+    done
+)
+
+# linux kernel sources (except includes) (235 Mo)
+(cd "${IMAGE}/usr/src/linux";
+    for file in *;
+      do
+      case "${file}" in
+          include)
+              ;;
+          *)
+              rm -rf "${file}"
+              ;;
+      esac
+    done
+)
+
+# linux kernel includes symlink. Those includes are now provided by
+# glibc-kernel-headers spell.
+
+#if [ ! -h  "${IMAGE}/usr/include/asm-generic" ]; then
+#    rm -rf "${IMAGE}/usr/include/asm-generic"
+#    ln -s ../src/linux/include/asm-generic "${IMAGE}/usr/include/asm-generic"
+#fi
+#
+#if [ ! -h  "${IMAGE}/usr/include/asm" ]; then
+#    rm -rf "${IMAGE}/usr/include/asm"
+#    ln -s ../src/linux/include/asm "${IMAGE}/usr/include/asm"
+# fi
+
+# if [ ! -h  "${IMAGE}/usr/include/linux" ]; then
+#     rm -rf "${IMAGE}/usr/include/linux"
+#     ln -s ../src/linux/include/linux "${IMAGE}/usr/include/linux"
+# fi
+
+# remove accounts files
+
+rm -rf "${IMAGE}/home"
+mkdir  "${IMAGE}/home"
+
+rm -rf "${IMAGE}/root"
+mkdir  "${IMAGE}/root"
+
+# get the list of installed spells
+if [ ! -f "${IMAGE}/var/state/sorcery/packages" ]; then
+    echo "missing /var/state/sorcery/packages"
+    exit -1
+fi
+
+OIFS="${IFS}"
+IFS=":"
+(while read spell x y version;
+do
+  echo "${spell}-${version}"
+done) < "${IMAGE}/var/state/sorcery/packages" | sort -r -u > /tmp/spell_list
+
+# remove unused "install" or "md5sum" log file
+
+ls "${IMAGE}/var/log/sorcery/install" | sort -r -u > /tmp/install
+diff -B /tmp/spell_list /tmp/install | grep "^>" | cut -b 3- | \
+(while read file;
+do
+  rm -f "${IMAGE}/var/log/sorcery/install/${file}"
+done)
+
+ls "${IMAGE}/var/log/sorcery/md5sum" | sort -r -u > /tmp/md5sum
+diff -B /tmp/spell_list /tmp/md5sum | grep "^>" | cut -b 3- | \
+(while read file;
+do
+  rm -f "${IMAGE}/var/log/sorcery/md5sum/${file}"
+done)
+
