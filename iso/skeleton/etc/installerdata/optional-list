@@ -60,3 +60,7 @@ syslog-ng
 metalog
 linux
 e2fsprogs
+automake
+g++
+glib2
+libtool
