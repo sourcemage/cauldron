@@ -1,3 +1,6 @@
+2005-02-10 Karsten Behrmann <BearPerson@sourcemage.org>
+        * ChangeLog: added before-changelog credits
+
 2005-01-27 Karsten Behrmann <BearPerson@sourcemage.org>
 	* really everything: moved everything not related
 	  to the current scripts to branches
@@ -48,11 +51,12 @@
 
 2004-12-21 Karsten Behrmann <BearPerson@sourcemage.org>
 	* skeleton/isolinux.cfg: added the vga option, fix bug #7642.
+	* ChangeLog: created
 
 ===========================================================
 People who have contributed before this ChangeLog was kept:
 (in alphabetical order)
-He Who Does Not Wish To Be Named
+Hamish Greig
 Kyle Sallee
 Laurent Wandrebeck <low@sourcemage.org>
 Seth Woolley <seth@tautology.org>
