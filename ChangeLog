@@ -1,2 +1,5 @@
+2005-01-02 Karsten Behrmann <BearPerson@sourcemage.org>
+	* skeleton: populated the skeleton a little...
+
 2004-12-21 Karsten Behrmann <BearPerson@sourcemage.org>
 	* skeleton/isolinux.cfg: added the vga option, fix bug #7642.
