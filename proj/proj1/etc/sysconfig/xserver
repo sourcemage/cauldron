@@ -1,0 +1,3 @@
+XSERVER="XFree86"
+XMODULE="vesa"
+XDESC="630 SiS630 GUI Accelerator+3D"

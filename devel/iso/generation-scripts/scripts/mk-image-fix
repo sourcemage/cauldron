@@ -1,0 +1,134 @@
+#!/bin/sh
+
+# Author : Benoit PAPILLAULT <benoit.papillault@free.fr>
+# Creation: 31/07/2003
+
+# Scripts that fix some files on the image after the image has been
+# constructed (this can be used on iso_root also by changing IMAGE=
+# definition)
+
+# /etc/fstab contents needs to be updated for each and every specific
+# cases. So the content here is just given as a hint.
+
+# we use $IMAGE if defined, or else work/image
+if [ -z "${IMAGE}" ]; then
+    IMAGE="work/image-stage3"
+fi
+echo "using IMAGE=${IMAGE}"
+
+# boot bitmap, needed by lilo
+cp src/image/boot.bmp "${IMAGE}/boot"
+
+# users and groups definitions
+# root password is empty.
+
+mkdir -p "${IMAGE}/etc"
+for file in \
+    passwd shadow group;
+do
+  cp "src/image/${file}" "${IMAGE}/etc/${file}"
+done
+
+# needed by the /etc/init.d/hostname.sh script
+
+HOSTNAME="sourcemage"
+echo "${HOSTNAME}"            > "${IMAGE}/etc/hostname"
+grep -v "127.0.0.1 ${HOSTNAME}" "${IMAGE}/etc/hosts" > /tmp/hosts
+cp /tmp/hosts "${IMAGE}/etc/hosts"
+echo "127.0.0.1 ${HOSTNAME}" >> "${IMAGE}/etc/hosts"
+
+# needed by the /etc/init.d/mount.sh script
+
+cat > "${IMAGE}/etc/fstab" <<EOF
+proc	/proc		proc	defaults	0 0
+#devfs  /dev        devfs   defaults    0 0
+#tmpfs	/var/lock	tmpfs	defaults	0 0
+#tmpfs	/var/run	tmpfs	defaults	0 0
+#tmpfs	/tmp		tmpfs	defaults,size=256m,nr_inodes=64m	0 0
+EOF
+
+# needed by agetty
+
+cat > "${IMAGE}/etc/issue" <<EOF
+Welcome on Source Mage GNU/\s 0.8.0 \l
+EOF
+
+rm -f "${IMAGE}/etc/mtab"
+touch "${IMAGE}/etc/mtab"
+
+# for the dynamic loader
+cat > "${IMAGE}/etc/ld.so.conf" <<EOF
+/lib
+/usr/lib
+EOF
+chroot "${IMAGE}" /sbin/ldconfig
+
+chroot "${IMAGE}" umount /proc
+chroot "${IMAGE}" umount /dev
+
+# files that have an unknown uid/gid :
+#chroot "${IMAGE}" find / -nouser -exec ls -lad {} \;
+#chroot "${IMAGE}" find / -nogroup -exec ls -lad {} \;
+
+# -exec chown root.root {} \;
+
+# create root home
+mkdir -p "${IMAGE}/root"
+
+# create dir for mount
+mkdir -p "${IMAGE}/mnt/cdrom"
+mkdir -p "${IMAGE}/mnt/floppy"
+
+# create /proc needed to mount /proc (needed by "top" from procps spell)
+mkdir -p "${IMAGE}/proc"
+mkdir -p "${IMAGE}/dev"
+
+# those files needs to be created after devfs is mounted
+#ln -sf ../proc/self/fd/0 "${IMAGE}/dev/stdin"
+#ln -sf ../proc/self/fd/1 "${IMAGE}/dev/stdout"
+#ln -sf ../proc/self/fd/2 "${IMAGE}/dev/stderr"
+
+# create /var/lock needed by sorcery
+mkdir -p "${IMAGE}/var/lock"
+
+# create /var/log needed by mountall.sh to create /var/log/dmesg
+mkdir -p "${IMAGE}/var/log"
+
+# create an empty dir needed by %3/network
+mkdir -p "${IMAGE}/etc/sysconfig/network"
+
+# create directories needed by adduser
+mkdir -p "${IMAGE}/home"
+mkdir -p "${IMAGE}/var/spool/mail"
+
+# create a working /etc/resolv.conf
+mkdir -p "${IMAGE}/etc"
+cp /etc/resolv.conf "${IMAGE}/etc/resolv.conf"
+
+# create a working /etc/localtime
+mkdir -p "${IMAGE}/etc"
+cp -d /etc/localtime "${IMAGE}/etc/localtime"
+
+# create a working /tmp (world writable)
+mkdir -p "${IMAGE}/tmp"
+chmod a+rwxt "${IMAGE}/tmp"
+
+# patch (-N : skip patches that are already applied, -r /tmp/null :
+# saves reject file to /tmp/null)
+
+if [ -f src/image/image.patch ]; then
+    cat src/image/image.patch | (cd "${IMAGE}"; patch -p0 -N -r /tmp/null)
+    rm -f /tmp/null
+fi
+
+# maybe we need to re-install and re-patch sorcery & stable grimoire
+# since those files are considered as alien files.
+exit
+
+mkdir -p "${IMAGE}/tmp/x"
+cat sorcery-stable.tar.bz2 | (cd "${IMAGE}/tmp/x" ; tar jxf -)
+chroot "${IMAGE}" sh -c "cd /tmp/x/sorcery ; ./install"
+rm -rf "${IMAGE}/tmp/x"
+
+cat stable.tar.bz2 | (cd "${IMAGE}/var/lib/sorcery/codex" ; tar jxf -)
+chroot "${IMAGE}" /usr/sbin/scribe reindex

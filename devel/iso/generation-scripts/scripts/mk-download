@@ -1,0 +1,67 @@
+#!/bin/sh
+
+# Author: Benoit PAPILLAULT <benoit.papillault@free.fr>
+# Creation: 24/07/2003
+
+# This scripts download all needed source files
+
+# define URL
+
+              GNU_URL=ftp://ftp.gnu.org/pub/gnu
+              GCC_URL=ftp://ftp.uvsq.fr/pub/gcc
+              KDE_URL=ftp://ftp.kde.org/pub/kde
+             CTAN_URL=ftp://tug.ctan.org/tex-archive
+            GNOME_URL=ftp://ftp.gnome.org/pub/GNOME
+           KERNEL_URL=ftp://ftp.kernel.org
+          XFREE86_URL=ftp://ftp.xfree86.org/pub/XFree86
+          SORCERY_URL=http://download.sourcemage.org/sorcery/
+      SOURCEFORGE_URL=http://heanet.dl.sourceforge.net/sourceforge
+
+# define ${files[@]}
+# `eval echo $line` is needed to evaluatre $GNU_URL in $line
+
+sort -u files.stage1 files.stage2 > tmp.$$
+
+while read line;
+  do
+  file=`eval echo "${line}"`
+  files[$((i++))]="${file}"
+#  echo "${file}"
+done < tmp.$$
+
+rm tmp.$$
+
+# download all files in work/src
+mkdir -p work/src &&
+cd work/src || exit -1
+
+for file in ${files[@]}
+do
+#  echo ${file}
+  base=`basename "${file}"`
+#  if [ -f "${base}" ]; then
+#    case "${base}" in
+#	*.tar.gz)
+#	    if tar ztf "${base}" > /dev/null; then
+#		echo "${file} (tar.gz) is OK"
+#		continue
+#	    fi
+#	    ;;
+#       *.tar.bz2)
+#	    if tar jtf "${base}" > /dev/null; then
+#		echo "${file} (tar.bz2) is OK"
+#		continue
+#	    fi
+#	    ;;
+#    esac
+#  fi
+    WGET_OPTIONS="-q -t 1 --passive-ftp -c"
+#  if [ ! -f "${base}" ]; then 
+# try our mirror first
+#      wget -c "http://benoit.is-a-geek.net/sourcemage/src/${base}" ||
+#    wget ${WGET_OPTIONS} "http://smgl.positivism.org/${base}" ||
+    wget ${WGET_OPTIONS} "${file}" ||
+    echo "can't download ${file}"
+#  fi
+done
+

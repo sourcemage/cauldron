@@ -1,0 +1,142 @@
+31/07/2003 Benoit PAPILLAULT <benoit.papillault@free.fr>
+
+How the init system is currently used in SourceMage ISO?
+========================================================
+
+When /sbin/init is started:
+
+-> /etc/init.d/rcS
+   -> all files in /etc/rcS.d/S*
+
+-> default runlevel 3:
+   -> /etc/init.d/rc 3
+      -> all files in /etc/rc3.d/K*
+      -> all files in /etc/rc3.d/S*
+
+/etc/rcS.d content:
+
+ln -sf ../init.d/mount.sh S10mount
+ln -sf ../init.d/localtime.sh S15localtime
+ln -sf ../init.d/hostname.sh S20hostname
+ln -sf ../init.d/modutils.sh S20modutils
+ln -sf ../init.d/sorcerer.sh S70sorcerer
+ln -sf ../init.d/bootmisc.sh S99bootmisc
+ln -sf ../init.d/sysctl.sh S99sysctl
+
+/etc/rc0.d content : (used to halt the computer)
+
+ln -sf ../init.d/mountnfs.sh K65mountnfs
+ln -sf ../init.d/networking.sh K70networking
+ln -sf ../init.d/localtime.sh K75localtime
+ln -sf ../init.d/signals.sh K80signals
+ln -sf ../init.d/mount.sh K90mount
+ln -sf ../init.d/halt.sh S90halt
+
+/etc/rc3.d content : (usual runlevel)
+
+ln -sf ../init.d/networking.sh S30networking
+ln -sf ../init.d/mountnfs.sh S35mountnfs
+
+/etc/rc6.d content : used to reboot the computer
+ln -sf ../init.d/mountnfs.sh K65mountnfs
+ln -sf ../init.d/networking.sh K70networking
+ln -sf ../init.d/localtime.sh K75localtime
+ln -sf ../init.d/signals.sh K80signals
+ln -sf ../init.d/mount.sh K90mount
+ln -sf ../init.d/reboot.sh S90reboot
+
+Scripts contents:
+
+/etc/init.d/functions [init.d spell]
+
+  used by other init scripts
+
+/etc/init.d/mount.sh [init.d spell]
+
+  mount devfs on /devices
+  remount / rw 
+
+/etc/init.d/localtime.sh [init.d spell]
+
+  is created by the installer like:
+
+  HWCLOCK="/sbin/hwclock  --hctosys  --localtime"
+  echo  "#!/bin/sh"   >           $TARGET/etc/init.d/localtime.sh
+  echo  "$HWCLOCK"   >>           $TARGET/etc/init.d/localtime.sh
+  chmod  a+x                      $TARGET/etc/init.d/localtime.sh
+  ln  -s  ../init.d/localtime.sh  $TARGET/etc/rcS.d/S15localtime
+
+/etc/init.d/hostname.sh [net-tools spell]
+
+  /bin/hostname  -F  /etc/hostname
+
+/etc/init.d/modutils.sh [no spell]
+
+  no spell
+  not needed I think.
+
+/etc/init.d/sorcerer.sh [no spell, only for the ISO]
+
+#!/bin/sh
+
+if  [      -x  /usr/sbin/sgl.install  ];  then
+  /bin/rm  -f  /usr/sbin/sgl.install  2>  /dev/null  ||
+  /usr/sbin/sgl.install
+fi
+
+/etc/init.d/bootmisc.sh [init.d spell]
+
+  the installer add at the end:
+    echo   "loadkeys $KEYMAP"        >>  $TARGET/etc/init.d/bootmisc.sh &&
+    echo   "consolechars -f $FONT"   >>  $TARGET/etc/init.d/bootmisc.sh &&
+    echo   "export  LANG=\"$LANG\""  >>  $TARGET/etc/init.d/bootmisc.sh &&
+
+/etc/init.d/sysctl.sh [procps spell]
+
+/etc/init.d/mountnfs.sh [no spell]
+
+/etc/init.d/networking.sh [net-tools spell]
+
+/etc/init.d/signals.sh [no spell]
+#!/bin/sh
+#
+# SMGL-script-version=20030224
+# SMGL-STOP:0 6:K80
+
+source /etc/init.d/functions
+
+echo  "Sending all processes the TERM signal... "
+killall5  -15
+evaluate_retval
+
+sleep 5
+
+echo  "Sending all processes the KILL signal... "
+killall5  -9
+evaluate_retval
+
+/etc/init.d/halt.sh [no spell]
+
+#!/bin/sh
+
+halt  -d -f -i -p
+
+/etc/init.d/reboot.sh [no spell]
+
+#!/bin/sh
+#
+# SMGL-script-version=20030224
+# SMGL-START:6:S90
+
+echo    "Rebooting... "
+reboot  -d -f -i
+
+/etc/profile:
+
+  the installer add at the end:
+    echo   "export  LANG=\"$LANG\""  >>  $TARGET/etc/profile &&
+
+/etc/init.d/networking.sh [net-tools spell]
+
+  is responsible for bringing up all configured interfaces
+

@@ -1,0 +1,93 @@
+#!/bin/sh
+
+# Author : Benoit PAPILLAULT <benoit.papillault@free.fr>
+# Creation : 03/06/2003
+
+# script to update the directories created by mk-setup
+
+# function to strip all binaries
+strip_binaries() {
+
+  TMP="/tmp/list.$$"
+
+  find . -type f -exec file {} \; \
+    | grep " ELF " \
+    | grep -v "relocatable" \
+    | awk -F ':' '{print $1}' > "${TMP}"
+
+  (while read file;
+   do
+     strip "${file}"
+   done ) < "${TMP}"
+
+#  rm "${TMP}"
+}
+    
+
+DST="`pwd`/work"
+#KERNEL=/mnt/hda9/papillau/linux/linux-2.4.20
+KERNEL=/home/benoit/software/linux-2.4.20
+VERSION=2.4.20
+
+# update ISO root
+
+echo "updating iso_root..."
+cp srcmage.txt isolinux.cfg "${DST}/iso_root/isolinux"
+cp sgl.install "${DST}/iso_root/usr/sbin"
+
+# delete old files
+rm -f                     "${DST}/iso_root/boot/bzImage-${VERSION}"
+rm -f                     "${DST}/iso_root/boot/System.map-${VERSION}"
+rm -f                     "${DST}/iso_root/boot/config-${VERSION}"
+
+# copy latest files
+cd "${KERNEL}"
+cp arch/i386/boot/bzImage "${DST}/iso_root/boot/bzImage-${VERSION}"
+cp System.map             "${DST}/iso_root/boot/System.map-${VERSION}"
+cp .config                "${DST}/iso_root/boot/config-${VERSION}"
+rm -rf "${DST}/iso_root/lib/modules"
+make modules_install INSTALL_MOD_PATH="${DST}/iso_root"
+
+# strip binaries on iso_root
+cd "${DST}/iso_root"
+strip_binaries
+
+# update initrd
+
+echo "updating initrd..."
+cd "${KERNEL}"
+rm -rf "${DST}/initrd/lib/modules"
+make modules_install INSTALL_MOD_PATH="${DST}/initrd"
+
+# stripping some files (find all ELF files except in lib/modules)
+cd "${DST}/initrd"
+strip_binaries
+
+# update image
+
+echo "updating image..."
+cd "${KERNEL}"
+rm -f                     "${DST}/image/boot/bzImage-${VERSION}"
+rm -f                     "${DST}/image/boot/System.map-${VERSION}"
+rm -f                     "${DST}/image/boot/config-${VERSION}"
+cp arch/i386/boot/bzImage "${DST}/image/boot/bzImage-${VERSION}"
+cp System.map             "${DST}/image/boot/System.map-${VERSION}"
+cp .config                "${DST}/image/boot/config-${VERSION}"
+rm -rf "${DST}/image/lib/modules"
+make modules_install INSTALL_MOD_PATH="${DST}/image"
+
+# strip binaries on image
+cd "${DST}/image"
+strip_binaries
+
+# copy kernel includes to /usr/src/linux/include
+
+mkdir -p "${DST}/image/usr/src"
+cd "${DST}/image/usr/src"
+rm -rf linux*
+
+# create linux -> linux-${VERSION} symlink
+mkdir "linux-${VERSION}"
+ln -s "linux-${VERSION}" linux
+
+( cd "${KERNEL}" ; tar cfl - include ) | ( cd linux ; tar xvfp - )

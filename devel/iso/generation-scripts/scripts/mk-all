@@ -1,0 +1,63 @@
+#!/bin/sh
+
+# Author: Benoit PAPILLAULT <benoit.papillault@free.fr>
+# Creation: 22/07/2003
+
+# 16/09/2003 Benoit PAPILLAULT <benoit.papillault@free.fr>
+#            Maybe the whole system should be designed this way:
+#            - we start by downloading a sorcery + grimoire version
+#            - we extract the list of files to be downloaded for various stages
+#            - we compile stage1
+#            - we compile stage2
+#            - we compile stage3 from our mirrored sources
+#            - we make the final image
+#            - we make the final iso_root
+#            - we make the final initrd
+#            - we make the final ISO
+
+if [ ! -f sorcery-stable.tar.bz2 ]; then
+    ./mk-init
+fi
+
+# download needed source files listed in files.stage1 and files.stage2
+# stage3 does not need any files since stage3 download files itself
+./mk-download
+
+# create a statically compiled image
+./mk-image-stage1 2>&1 | tee stage1.log
+
+# create a dynamically compiled image
+./mk-image-stage2 2>&1 | tee stage2.log
+
+# make a scribe update & sorcery rebuild. this step also compile the linux
+# kernel.
+./mk-image-stage3 2>&1 | tee stage3.log
+
+#./detect_alien
+
+# correct some files and add missing files (/etc/fstab) to produce
+# a working image
+./mk-image-fix
+
+# erase some unneded files or old one to gain some space
+./mk-image-clean
+
+# create a ramdisk from image
+./mk-initrd
+
+# create an iso root from image
+./mk-iso-root
+
+# create the real .iso in the iso subdirectory
+./mk-iso
+
+# copy iso_root to /dev/hda3
+
+#mkdir -p /mnt/hda3
+#mount -t ext3 /dev/hda3 /mnt/hda3
+#(cd work/iso_root; tar cfl - .) | (cd /mnt/hda3; tar xfp -)
+#umount /mnt/hda3
+
+# copy initrd.gz to /boot
+#cp initrd.gz /boot
+

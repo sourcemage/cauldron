@@ -1,0 +1,54 @@
+2004-03-08 hgg <hgreig@bigpond.net.au>
+	* 2.4.25 config I last uploaded was wrong one. This one was used for 0.9.2
+
+2004-02-28 hgg <hgreig@bigpond.net.au>
+	* added 2.4.25 and 2.6.3 configs
+
+2004-02-25 hgg <hgreig@bigpond.net.au>
+	* lots of files: moved into the kickstart-spell
+	* config-2.6.1: added for Worf
+
+2004-02-20 hgg <hgreig@bigpond.net.au>
+	* smgl.install: RAID 90% added
+
+2004-02-19 hgg <hgreig@bigpond.net.au>
+	* smgl.install: add menu item for restarting install from scratch and the restart_install function (tested and working)
+	* smgl.install: correct some typos
+	* smgl.install: begin adding code for raid device generation
+
+2004-02-14 hgg <hgreig@bigpond.net.au>
+	* config-2.4.24: updated to make some stuff statically.
+	* smgl.install-using*blablabla: remove, was a backup only.
+	* smgl.install: change swap + RAM requirements to recommendations.
+	* smgl.install: change swapfile generation to only be prompted if a dedicated
+	swap partition isn't found when system transfer starts
+	* kickstart-spell/*: some files needed to kickstart an installation.
+
+2004-02-05 hgg <hgreig@bigpond.net.au>
+	* smgl.install 
+		* move fs dispelling to immediately post image transfer
+		* move passwd changing similarly
+		* add dispelling prompts for ppp and rp-pppoe
+		* comment out cast of rp-pppoe now pppoe is included in image and
+		add chroot_cmd adsl-setup for pppoe configuration, amazed it was left broken for so long
+		* unset WASTAGE VAR incase someone chooses the wrong menu, and also check it isn't an empty var, or dispel just opens 
+		less and waits for input.
+
+2004-01-26 hgg <hgreig@bigpond.net.au>
+	* added missing # to editor.sh and lc.sh script generation
+
+2004-01-22 hgg <hgreig@bigpond.net.au>
+	* added smgl.install-using-proc-partitions-and-etc-profile.d-dir
+	which starts using /proc/partitions for partitions and disks (tested with a raid install today)
+	also puts EDITOR and LANG into .sh files in the /etc/profile.d/ directory so the test spell can be 
+	integrated into stable soon.
+	* I specifically made this a second file becuase I was worried Unet might be working on the other one (I am 
+	happy to merge/ change if he has)
+
+2004-01-20 hgg <hgreig@bigpond.net.au>
+	* add smgl.install from 0.8.1 iso I made
+
+2004-01-20 hgg <hgreig@bigpond.net.au>
+	* add the config for the kernel I built, has more options turned on as modules.
+	and some special features like raid fasttrak for promise controllers that nee it turned on to use disks the 
+	bios can't see

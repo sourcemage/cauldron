@@ -1,0 +1,299 @@
+#!/bin/bash
+
+PATH="/bin:/usr/bin:/sbin:/usr/sbin"; export PATH
+umask 022
+
+# [ "`id -u`" != "0" ] && echo "WARNING: $0 has to run as root to work properly." 1>&2
+
+# ANSI COLORS
+CRE="
+[K"
+NORMAL="[0;39m"
+# RED: Failure or error message
+RED="[1;31m"
+# GREEN: Success message
+GREEN="[1;32m"
+# YELLOW: Descriptions
+YELLOW="[1;33m"
+# BLUE: System messages
+BLUE="[1;34m"
+# MAGENTA: Found devices or drivers
+MAGENTA="[1;35m"
+# CYAN: Questions
+CYAN="[1;36m"
+# BOLD WHITE: Hint
+WHITE="[1;37m"
+
+TMPFILE="/tmp/mkxf86config-$$"
+MONITORTMP="$TMPFILE-monitor"
+
+rm -f "$TMPFILE" "$MONITORTMP"
+
+### Utility Function(s)
+# Reread boot command line; echo last parameter's argument or return false.
+CMDLINE="$(cat /proc/cmdline)"
+
+getbootparam(){
+case "$CMDLINE" in *\ $1=*) ;; *) return 1; ;; esac
+result="${CMDLINE##*$1=}"
+result="${result%%[     ]*}"
+echo "$result"
+return 0
+}
+
+checkbootparam(){
+case "$CMDLINE" in *\ $1*) return 0;; esac
+return 1
+}
+
+# Read in what hwsetup has found for X
+[ -f /etc/sysconfig/xserver ] && . /etc/sysconfig/xserver
+
+# Xserver, Xmodule, Xscreen, Xvrefresh, if specified by commandline
+NEWXSERVER="$(getbootparam xserver 2>/dev/null)"
+[ -z "$XSERVER" -a -z "$NEWXSERVER" ] && NEWXSERVER="XFree86"
+[ -n "$NEWXSERVER" ] && { XSERVER="$NEWXSERVER" ; echo "XSERVER='$XSERVER'" >> /etc/sysconfig/knoppix ; echo "XSERVER='$XSERVER'" >> /etc/sysconfig/xserver; }
+NEWXMODULE="$(getbootparam xmodule 2>/dev/null)"
+[ -z "$XMODULE" -a -z "$NEWXMODULE" ] && NEWXMODULE="vesa"
+[ -n "$NEWXMODULE" ] && { XMODULE="$NEWXMODULE" ; echo "XMODULE='$XMODULE'" >> /etc/sysconfig/knoppix ; echo "XMODULE='$XMODULE'" >> /etc/sysconfig/xserver; }
+XSCREEN="$(getbootparam xscreen 2>/dev/null)"
+[ -z "$XSCREEN" ] && XSCREEN="$(getbootparam screen 2>/dev/null)"
+[ -n "$XSCREEN" ] && { echo "XSCREEN='$XSCREEN'" >> /etc/sysconfig/knoppix ; echo "XSCREEN='$XSCREEN'" >> /etc/sysconfig/xserver; }
+XVREFRESH="$(getbootparam xvrefresh 2>/dev/null)"
+[ -n "$XVREFRESH" ] || XVREFRESH="$(getbootparam vrefresh 2>/dev/null)"
+[ -n "$XVREFRESH" ] || XVREFRESH="$(getbootparam xvsync 2>/dev/null)"
+[ -n "$XVREFRESH" ] || XVREFRESH="$(getbootparam vsync 2>/dev/null)"
+[ -n "$XVREFRESH" ] && { echo "XVREFRESH='$XVREFRESH'" >> /etc/sysconfig/knoppix ; echo "XVREFRESH='$XVREFRESH'" >> /etc/sysconfig/xserver; }
+XHREFRESH="$(getbootparam xhrefresh 2>/dev/null)"
+[ -n "$XHREFRESH" ] || XHREFRESH="$(getbootparam hrefresh 2>/dev/null)"
+[ -n "$XHREFRESH" ] || XHREFRESH="$(getbootparam xhsync 2>/dev/null)"
+[ -n "$XHREFRESH" ] || XHREFRESH="$(getbootparam hsync 2>/dev/null)"
+[ -n "$XHREFRESH" ] && { echo "XHREFRESH='$XHREFRESH'" >> /etc/sysconfig/knoppix ; echo "XHREFRESH='$XHREFRESH'" >> /etc/sysconfig/xserver; }
+XDEPTH="$(getbootparam xdepth 2>/dev/null)"
+[ -n "$XDEPTH" ] || XDEPTH="$(getbootparam depth 2>/dev/null)"
+[ -n "$XDEPTH" ] && { echo "XDEPTH='$XDEPTH'" >> /etc/sysconfig/knoppix ; echo "XDEPTH='$XDEPTH'" >> /etc/sysconfig/xserver; }
+
+# Wheel
+WHEEL=""
+checkbootparam "wheel" && WHEEL='s|"PS/2"|"IMPS/2"\
+Option          "ZAxisMapping"          "4 5"|g;'
+
+
+# Read in changes
+[ -f /etc/sysconfig/knoppix ] && . /etc/sysconfig/knoppix
+
+# Read default keyboard from config file.
+# There seems to be no reliable autoprobe possible.
+[ -f /etc/sysconfig/keyboard ] && . /etc/sysconfig/keyboard
+
+# Create mouse link and insert a mouse default type into XF86Config
+# if not already done by hwsetup
+[ -f /etc/sysconfig/mouse ] && . /etc/sysconfig/mouse
+[ -e /dev/mouse ] || ln -sf /dev/ttyS0 /dev/mouse
+# PROTO="${XMOUSETYPE:-Auto}"
+PROTO="${XMOUSETYPE:-Microsoft}"
+NOEMU=""
+[ "${XEMU3}" = "no" ] && NOEMU='s|^.*Emulate3|# No 2 -> 3 Button emulation|g'
+DEADKEYS=""
+[ "$XKEYBOARD" = "de" ] || DEADKEYS='s|^.*nodeadkeys.*$||g;'
+if [ -n "XMODULE" ]; then
+# Check for Framebuffer X-Modules and initialize framebuffer module
+case "$XMODULE" in
+pvr2fb) modprobe "$XMODULE" >/dev/null 2>&1 ; XMODULE="fbdev"; ;;
+esac
+fi
+
+NODDC=""
+checkbootparam noddc &&  NODDC="true"
+
+MONITOR=""
+COMPLETE=""
+RC=""
+
+if [ -z "$NODDC" ]; then
+# Try to get Monitor data via ddcxinfo-knoppix
+MONITOR="$(ddcxinfo-knoppix -monitor)"
+RC="$?"
+COMPLETE="$(awk '/EndSection/{print}' <<EOF
+$MONITOR
+EOF)"
+fi
+
+if [ "$RC" != "0" -o -z "$MONITOR" -o -z "$COMPLETE" ]; then
+MONITOR='
+Section "Monitor"
+	Identifier   "Monitor0"
+	ModelName    "Old Monitor (no DDC)"
+#	HorizSync    28.0 - 78.0 # Warning: This may fry very old Monitors
+	HorizSync    28.0 - 96.0 # Warning: This may fry old Monitors
+	VertRefresh  50.0 - 76.0 # Very conservative. May flicker.
+# These are some Modelines that happen to work on many systems
+# Especially the "1024x768" has been thoroughly tested, even on Laptops
+	Modeline "640x480"     25.175 640  664  760  800   480  491  493  525 #60Hz
+	Modeline "800x600"     40.12  800  848  968 1056   600  601  605  628 #60Hz
+	Modeline "1024x768"    85    1024 1056 1152 1360   768  784  787  823
+	Modeline "1152x864"    92    1152 1208 1368 1474   864  865  875  895
+	Modeline "1152x864"   110    1152 1240 1324 1552   864  864  876  908
+	Modeline "1152x864"   135    1152 1464 1592 1776   864  864  876  908
+	Modeline "1152x864"   137.65 1152 1184 1312 1536   864  866  885  902 -HSync -VSync
+	Modeline "1280x1024"   80    1280 1296 1512 1568  1024 1025 1037 1165 Interlace
+	Modeline "1280x1024"  110    1280 1328 1512 1712  1024 1025 1028 1054
+	Modeline "1280x1024"  126.5  1280 1312 1472 1696  1024 1032 1040 1068 -HSync -VSync
+	Modeline "1280x1024"  135    1280 1312 1456 1712  1024 1027 1030 1064
+	Modeline "1280x1024"  135    1280 1312 1416 1664  1024 1027 1030 1064
+	Modeline "1280x1024"  157.5  1280 1344 1504 1728  1024 1025 1028 1072 +HSync +VSync
+	Modeline "1280x1024"  181.75 1280 1312 1440 1696  1024 1031 1046 1072 -HSync -VSync
+	Modeline "1600x1200"  162    1600 1664 1856 2160  1200 1201 1204 1250 +HSync +VSync
+	Modeline "1600x1200"  189    1600 1664 1856 2160  1200 1201 1204 1250 -HSync -VSync
+	Modeline "1600x1200"  202.5  1600 1664 1856 2160  1200 1201 1204 1250 +HSync +VSync
+	Modeline "1600x1200"  220    1600 1616 1808 2080  1200 1204 1207 1244 +HSync +VSync
+	ModeLine "1800x1440"  230    1800 1896 2088 2392  1440 1441 1444 1490 +HSync +VSync
+	ModeLine "1800x1440"  250    1800 1896 2088 2392  1440 1441 1444 1490 +HSync +VSync
+EndSection
+'
+fi
+
+# Extract values for display
+MODEL="$(awk '/^[	 ]*ModelName/{print;exit}'<<EOF
+$MONITOR
+EOF
+)"
+
+MODEL="${MODEL#*\"}"
+MODEL="${MODEL%\"*}"
+
+HREFRESH="$(awk '/^[	 ]*HorizSync/{print $2 $3 $4; exit}'<<EOF
+$MONITOR
+EOF
+)"
+
+VREFRESH="$(awk '/^[	 ]*VertRefresh/{print $2 $3 $4; exit}'<<EOF
+$MONITOR
+EOF
+)"
+
+# Build line of allowed modes
+MODES=""
+ADDMODE=""
+# Use commandline modes if specified
+[ -n "$XSCREEN" ] && ADDMODE="-firstmode $XSCREEN"
+if [ -z "$NODDC" ]; then
+MODES="$(ddcxinfo-knoppix -modes $ADDMODE)"
+fi
+if [ "$?" != "0" -o -z "$MODES" ]; then
+MODES="Modes "
+[ -n "$XSCREEN" ] && MODES="$MODES \"$XSCREEN\""
+MODES="$MODES \"1024x768\" \"800x600\" \"640x480\""
+fi
+
+# Use commandline vertical refresh rate if specified
+if [ -n "$XVREFRESH" ]; then
+MONITOR="$(sed 's|VertRefresh[	 ].*$|VertRefresh 49.0 - '"$XVREFRESH"'|g;' <<EOF
+$MONITOR
+EOF
+)"
+fi
+
+# Use commandline horizontal refresh rate if specified
+if [ -n "$XHREFRESH" ]; then
+MONITOR="$(sed 's|HorizSync[	 ].*$|HorizSync 28.0 - '"$XHREFRESH"'|g;' <<EOF
+$MONITOR
+EOF
+)"
+fi
+
+DEPTH=""
+# Use commandline colordepth if specified
+if [ -n "$XDEPTH" ]; then
+DEPTH='s|DefaultColorDepth[	].*$|DefaultColorDepth '"$XDEPTH"'|g;'
+fi
+
+# We need to check this because serial mice have long timeouts
+SERIALMOUSE="$(ls -l1 /dev/mouse* 2>/dev/null | awk '/ttyS/{print $NF ; exit 0}')"
+if [ -n "$SERIALMOUSE" ]; then
+SERIALMOUSE="s|/dev/ttyS0|$SERIALMOUSE|g;"
+else
+SERIALMOUSE='s|^.*InputDevice.*"Serial Mouse".*$|# Serial Mouse not detected|g;'
+fi
+
+# PS/2 bug: Some keyboards are incorrectly used as mice in XFree. :-(
+PSMOUSE="$(ls -l1 /dev/mouse* 2>/dev/null | awk '/psaux/{print $NF ; exit 0}')"
+if [ -n "$PSMOUSE" ]; then
+PSMOUSE=""
+else
+PSMOUSE='s|^.*InputDevice.*"PS/2 Mouse".*$|# PS/2 Mouse not detected|g;'
+fi
+
+case "$(cat /proc/modules)" in *usbmouse*|*mousedev*)
+USBMOUSE="" ;;
+*)
+USBMOUSE='s|^.*InputDevice.*"USB Mouse".*$|# USB Mouse not detected|g;';;
+esac
+
+# Write Monitor data now
+rm -f "$MONITORTMP"
+echo "$MONITOR" >"$MONITORTMP"
+
+# /etc/X11/XF86Config is the "default" config
+# (SCRIPT NEEDED BUT NOT USED IN ARCH LINUX)
+if [ ! -f /etc/XF86Config.hwd -a ! -f /etc/X11/XF86Config.hwd ]; then
+# Remove it, just in case it's a link to CD
+rm -f /etc/XF86Config.hwd /etc/X11/XF86Config.hwd 2>/dev/null
+sed -e 's|@@PROTOCOL@@|'"$PROTO"'|g;'"$NOEMU" \
+    -e '/@@MONITOR@@/r '"$MONITORTMP" \
+    -e 's|@@MONITOR@@||g' \
+    -e 's|@@MODES@@|'"$MODES"'|g;'"$DEPTH" \
+    -e 's|XkbLayout *"[^"]*"|XkbLayout "'"$XKEYBOARD"'"|g;'"$DEADKEYS" \
+    /etc/X11/XF86Config.in > /etc/X11/XF86Config.hwd
+fi
+
+if [ ! -f /etc/XF86Config-4.hwd -a ! -f /etc/X11/XF86Config-4.hwd ]; then 
+rm -f /etc/XF86Config-4.hwd /etc/X11/XF86Config-4.hwd 2>/dev/null
+
+# VMWare special handling
+VMWARE=""
+if [ "$XMODULE" = "vmware" ]; then
+VMWARE='s|^.*BusID.*PCI.*$|BusID "PCI:0:15:0"|g;'
+DEPTH='s|DefaultColorDepth |# DefaultColorDepth |g;'
+fi
+
+# These drivers need the sw_cursor option
+SWCURSOR=""
+case "$XMODULE" in ati|radeon|nv|trident) SWCURSOR='s|^.*#Option.*"sw_cursor".*$|Option "sw_cursor"|g;';; esac
+
+# We must use NoPM, because some machines freeze if Power management is being activated.
+
+NOPM=""
+DPMS=""
+checkbootparam noapm && NOPM='Option	"NoPM"	"true"' || DPMS='Option	"DPMS"	"true"'
+
+sed -e 's|@@PROTOCOL@@|'"$PROTO"'|g;'"$NOEMU" \
+    -e '/@@MONITOR@@/r '"$MONITORTMP" \
+    -e 's|@@MONITOR@@||g' \
+    -e 's|@@NOPM@@|'"$NOPM"'|g' \
+    -e 's|@@XMODULE@@|'"$XMODULE"'|g;'"$VMWARE""$SERIALMOUSE""$USBMOUSE""$PSMOUSE""$SWCURSOR""$WHEEL" \
+    -e 's|@@MODES@@|'"$MODES"'|g;'"$DEPTH" \
+    -e 's|"XkbLayout" *"[^"]*"|"XkbLayout" "'"$XKEYBOARD"'"|g;'"$DEADKEYS" \
+    /etc/X11/XF86Config-4.in >/etc/X11/XF86Config-4.hwd
+
+if [ -n "$DPMS" ]; then
+sed -e 's|Identifier[	 ]*"Monitor0"|Identifier	"Monitor0"\
+	'"$DPMS"'|g' /etc/X11/XF86Config-4.hwd >/etc/X11/XF86Config-4.new
+mv -f /etc/X11/XF86Config-4.new /etc/X11/XF86Config-4.hwd
+fi
+
+fi
+
+rm -f "$TMPFILE" "$MONITORTMP" 2>/dev/null
+
+# Print info about selected X-Server
+[ -n "$XDESC" ] || XDESC="(yet) unknown card"
+echo -n " ${GREEN}Video      :"
+[ -n "$XDESC" ] && echo -n " ${NORMAL}$XDESC${GREEN}"
+echo -n " server: ${NORMAL}${XSERVER:-generic VESA}"
+[ -n "$XMODULE" ] && echo -n "(${MAGENTA}$XMODULE${NORMAL})"
+echo " ${NORMAL}"
+echo -n " ${GREEN}Monitor    : ${NORMAL}${MODEL:-Generic Monitor}${NORMAL}"
+[ -n "$HREFRESH" -a -n "$VREFRESH" ] && echo "${GREEN} ${GREEN}H:${NORMAL}${HREFRESH}kHz${GREEN} V:${NORMAL}${VREFRESH}Hz${NORMAL}" || echo ""
+[ -n "$XVREFRESH" ] && echo " ${GREEN}Trying specified vrefresh rate of ${NORMAL}${XVREFRESH}Hz.${NORMAL}"
+[ -n "$MODES" ] && echo " ${GREEN}Using Modes: ${NORMAL}${MODES##Modes }${NORMAL}"

@@ -1,0 +1,50 @@
+#!/bin/sh
+
+# Author : Benoit PAPILLAULT <benoit.papillault@free.fr>
+# Creation : 12/09/2003
+
+# Search the source URL for a given spell.
+
+if [ $# -ne 1 ]; then
+    echo "usage: $0 spell"
+    exit -1;
+fi
+
+SPELL=$1
+
+FILE=`find work/grimoire -maxdepth 3 -name "${SPELL}"`
+#echo "${FILE}"
+if [ -z "${FILE}" ]; then
+    echo "cannot find spell ${SPELL}" > /dev/stderr
+    exit -1
+fi
+
+              GNU_URL='$GNU_URL'
+              KDE_URL='$KDE_URL'
+             CTAN_URL='$CTAN_URL'
+            GNOME_URL='$GNOME_URL'
+           KERNEL_URL='$KERNEL_URL'
+          XFREE86_URL='$XFREE86_URL'
+          SORCERY_URL='$SORCERY_URL'
+      SOURCEFORGE_URL='$SOURCEFORGE_URL'
+
+# for the linux spell
+
+DEPENDS_CONFIG="."
+SPELL_CONFIG="./${SPELL}"
+SCRIPT_DIRECTORY="${FILE}"
+
+# for all spells
+
+. "${FILE}/DETAILS" > /dev/null
+
+for i in "" 2 3 4 5 6 7 8 9 ;
+do
+  src="SOURCE${i}_URL"
+  if [ -n "${src}" ]; then
+      x=`eval echo \\$$src`
+      if [ -n "${x}" ]; then
+          echo ${x}
+      fi
+  fi
+done

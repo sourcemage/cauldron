@@ -1,0 +1,180 @@
+#!/bin/sh
+
+# Author: Benoit PAPILLAULT <benoit.papillault@free.fr>
+# Creation: 24/07/2003
+
+# This script compile a basic Linux system which is statically link
+# This is inspired from LFS (http://www.linuxfromscratch.org/)
+
+# It uses source archives (tar.gz & tar.bz2) that have been downloaded
+# in work/src by mk-download. All compilation will be done under
+# work/image-stage1/src and installation should be done in
+# work/image-stage1/tmp/tools only.
+
+# This step does not require root access, but read/write access to
+# work/image-stage1.
+
+# define ${files[@]}
+
+while read line;
+do
+  file=`eval echo "${line}"`
+  files[$((i++))]="${file}"
+done < files.stage1
+
+# setup compilation option (LFS should be an absolute path)
+export TOOLS=/tmp/tools2
+export LFS="`pwd`/work/image-stage1"
+export LANG=POSIX
+export LC_ALL=POSIX
+export PATH="${TOOLS}/bin:/bin:/usr/bin"
+unset CC CCX CPP LD_LIBRARY_PATH LD_PRELOAD
+set +h
+
+# setup destination directories
+rm -rf "${LFS}" &&
+mkdir -p "${LFS}/${TOOLS}" &&
+rm -rf "${TOOLS}" &&
+ln -sf "${LFS}/${TOOLS}" "${TOOLS}" || exit -1
+
+# setup compilation directories
+mkdir -p work/image-stage1/src &&
+cd work/image-stage1/src || exit -1
+
+# define the appropriate lib directory according to architecture
+case `uname -m` in
+    x86_64)
+	LIB=/lib64
+	BI_ARCH=yes
+	;;
+    *)
+	LIB=/lib
+	;;
+esac
+
+# compiles everything statically
+for file in ${files[@]}
+do
+  file=`basename "${file}"`
+  (
+	  echo "${file} : extracting..."
+      case "${file}" in
+          *.tar.gz)
+              if ! tar zxf "../../src/${file}"; then
+                  echo "extracting ${file} failed"
+                  exit -1
+              fi
+              base=`basename "${file}" .tar.gz`
+              ;;
+          *.tgz)
+              if ! tar zxf "../../src/${file}"; then
+                  echo "extracting ${file} failed"
+                  exit -1
+              fi
+              base=`basename "${file}" .tgz`
+              ;;
+          *.tar.bz2)
+              if ! tar jxf "../../src/${file}"; then
+                  echo "extracting ${file} failed"
+                  exit -1
+              fi
+              base=`basename "${file}" .tar.bz2`
+              ;;
+          *.patch)
+              # nothing need to be done for patch files
+              base="."
+              ;;
+          *)
+              echo "don't know how to extract ${file}"
+              exit -1
+              ;;
+      esac
+      cd "${base}"
+	  echo "${file} : compiling in ${base}..."
+      case "${file}" in
+          *.patch)
+              # nothing need to be done for patch files
+              ;;
+          binutils*) # LFS 5.1 OK
+              mkdir ../binutils-build
+              cd ../binutils-build
+              "../${base}/configure" --prefix="${TOOLS}" \
+		  --libdir="${TOOLS}/${LIB}" --disable-nls
+              make configure-host
+# -all-static is needed instead of -static for libtool
+# however, -all-static does not work with configure
+              make LDFLAGS="-all-static"
+              make install
+              make -C ld clean
+# LIB_PATH is the directory used to find the dynamic linker installed by
+# glibc in stage2. It must contains path for 32 bits and 64 bits linker.
+	      LIB_PATH="${TOOLS}/${LIB}"
+	      if [ "${BI_ARCH}" = "yes" ]; then
+		  LIB_PATH="${LIB_PATH}:${TOOLS}/lib"
+	      fi
+	      make -C ld LDFLAGS="-all-static" LIB_PATH="${LIB_PATH}"
+              ;;
+          gcc-*) # LFS 5.1 OK
+              mkdir ../gcc-build
+              cd ../gcc-build
+              "../${base}/configure" --prefix="${TOOLS}" \
+		  --libdir="${TOOLS}/${LIB}" \
+                  --with-local-prefix="${TOOLS}" \
+                  --disable-nls --enable-shared \
+                  --enable-languages=c
+              make BOOT_LDFLAGS="-static" bootstrap
+              make install
+	      ln -s gcc "${TOOLS}/bin/cc"
+              ;;
+	  linux-*) # LFS 5.1 OK
+	      make mrproper
+	      make include/linux/version.h
+# copy kernel headers
+	      tar cfl - include/asm-* include/linux \
+		  | (cd "${TOOLS}"; tar xfp -)
+# generate multi-arch kernel headers (currently only i386, ppc and
+# x86_64 are tested). check gcc-X.X.X/gcc/config.... builtin_define()
+	      rm -rf "${TOOLS}/include/asm" &&
+	      mkdir -p "${TOOLS}/include/asm"
+	      while read arch define;
+		do
+		for file in "include/${arch}/"*;
+		  do
+		  file=`basename "${file}"`
+		  cat >> "${TOOLS}/include/asm/${file}" <<EOF
+#ifdef ${define}
+#include <${arch}/${file}>
+#endif
+EOF
+		done
+	      done <<EOF
+asm-alpha   __alpha__
+asm-arm     __arm__
+asm-cris    cris
+asm-h8300   __H8300__
+asm-i386	i386
+asm-ia64    __ia64__
+asm-m68k    m68k
+asm-mips    __mips__
+asm-parisc  parisc
+asm-ppc		__powerpc__
+asm-ppc64   __powerpc64__
+asm-s390    __s390__
+asm-sh      __sh__
+asm-sparc   __sparc__
+asm-sparc64 __sparc64__
+asm-x86_64	__x86_64__
+EOF
+	      ;;
+          *)
+              LDFLAGS="-static" ./configure --prefix="${TOOLS}" --disable-nls
+              make
+              make install
+              ;;
+      esac
+      if [ $? -eq 0 ]; then
+          touch "../${file}.install"
+      fi
+  )
+done
+

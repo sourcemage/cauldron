@@ -1,0 +1,2 @@
+FULLNAME="Realtek|RTL-8139"
+DRIVER="8139too"

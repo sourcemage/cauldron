@@ -1,0 +1,616 @@
+= About this Installation Help Guide
+
+This file is located at /etc/installerdata/install.guide on the install  
+disk, in case you want to copy it to another computer and/or print it 
+out.  See the end for authors and copyright notice.
+
+= How to navigate this document
+
+Use the up and down arrows to scroll, and page up and page down keys to 
+scroll quickly.  Use the / key to search for text.  Hit enter to exit.
+
+= How to navigate the Installer
+
+The Source Mage installer uses the `dialog' program to accept user input.
+ 
+
+Generally in dialog, escape means cancel and enter means ok.
+
+The dialog program supports the following basic widget types that we use:
+
+-- textbox
+
+This is the widget that you see here.  It supports arrow keys, page-up, 
+page-down, home, end, and many vi navigation keys.
+
+-- menu
+
+This widget merely presents a list of choices. To the left of each choice 
+is a hot-key that moves you to that menu item quickly.  If there are more 
+menu options than the screen can fit, the arrow keys can be used to
+reveal more menu items and (+) graphics will show you that more items are 
+available.  To select an item that's highlighted, press enter.  To leave 
+the menu, press cancel.  Cancelling a submenu often means "I'm done." 
+in this installer.
+
+-- checklist
+
+The checklist widget allows one to turn on and off items in a list.  
+Similar to the menu widget, the checklist also has [ ] or [X] boxes for 
+off and on, respectively.  To toggle the state of each item, use the
+space bar.  When finished, press enter.
+
+-- msgbox
+
+The msgbox merely lets you know something, and you acknowledge it by 
+hitting enter to select ok.
+
+-- inputbox
+
+The inputbox allows you to enter a free string of text into a box.  When 
+you press enter, the text in the box is accepted by the program.
+
+-- yesno
+
+The yesno box allows you to say yes or no to a query.  Press Y or N to 
+respond, or highlight the appropriate response with the left and right 
+arrow keys and select the highlighted response with the enter key.
+
+= How to install Source Mage
+
+Essentially, to install Source Mage from this program, you insert the 
+installation disk into your computer, you boot it up so that the 
+installation disk is booted (sometimes requiring one to set the CDROM 
+boot urder before other media in the bios or using a cdrom boot floppy), 
+and you see the initrd menu where you can load special kernel modules for 
+different scsi devices, etc. if needed.  Most people can just skip that 
+menu by selecting `Continue'.
+
+Once you continue from the initrd menu, the main install script is 
+executed.  Most people will follow the basic guided menus during 
+installation, but at any point the user may `shell out' with the shell 
+menu and perform special install steps if they so desire, or they may 
+disable the guided menu to gain more flexibility with the install process.
+
+To learn more about each step in the Install Menu, read the next section.
+
+When you are done with the Install Menu, you simply reboot the computer 
+without the install disk in the drive, and enter the user `root' and 
+password you selected during install. Do not forget this password, as you 
+will be asked for it to gain access to your machine each time you use it.
+
+If you don't already have your network setup, you can use the `netconf' 
+tool to configure your networking now.  Once you get online, you should 
+update your box to the latest stable Source Mage.  To do that, merely
+type 
+`sorcery system-update' and hit enter. 
+After your system is updated, type 
+`sorcery rebuild` to recompile your system to your optimizations.
+
+After that, you may create an unprivileged user with `adduser', `cast' an 
+irc program such as `irssi', and use `lynx' if needed to browse the 
+wiki.sourcemage.org website to get help. Linux uses two types of manuals, 
+for the most part: `man' and `info' pages.  Type `man adduser' for
+example to read the manual for adduser.  Most command-line programs will 
+come with man pages rather than info docs, although many gnu utilities 
+will have more extensive info documentation available.
+
+Check out `man sorcery', `man cast', `man dispel', `man gaze', and `man 
+scribe' to learn more about the sorcery package manager for Source Mage.
+
+= Install Menu Items
+
+-- Restart Installation
+
+This unmounts all mounted harddrives, deletes any temporary files, unsets 
+all the variables already set by the installer allowing you to begin the 
+installation again without having to reboot.
+
+-- Introduction
+
+This is merely an introduction screen for Source Mage.
+
+-- Installation Help
+
+This is just a reader for this text file.
+
+-- Native Language Support
+
+All of these options have sane defaults for many people.
+KEYMAP,LANG and EDITOR now show selected types in the item-help at the 
+bottom of the screen.
+
+-- -- Font
+
+This is where you may select a preferred console font.
+
+-- -- Keymap
+
+This is where you may select a preferred console keymap.
+
+-- -- Lang
+
+This is where you may select a preferred console language.  Sorcery is 
+currently English-only, but many other programs support many different 
+languages.
+
+-- -- Editor
+
+Nano is the default editor, but you may select elvis (vi-like) and jed as 
+alternatives.  Jed is like emacs, and nano is like pico.
+
+-- Partition Drive
+
+In this menu, you'll first be asked which disk you want to partition.  
+Second, you'll be able to select from one of three partitioning programs
+available: cfdisk, fdisk, and parted.  Note that since Source Mage uses
+the device filesystem, we no longer use the /dev/hda, /dev/sda formats
+for discs, but instead use the long unified namespace, such as 
+/dev/discs/{disc0|disk1|...}/{disc|part1|part2|...} .
+
+Source Mage requires at least a root (/) partition.  The Linux filesystem 
+structure consists of a root mount point, and nestable subdirectories 
+(folders in Windows-speak).  Partitions in addition to the root mount 
+point are mounted on any subdirectory at any depth of the root directory.
+ 
+See `man hier' for more information about the Linux filesystem hierarchy.
+ 
+Directories are separated by the `/' character.
+
+Most people create a / and /boot partition.  If you use a filesystem 
+that lilo recognizes, you don't need a separate /boot partition, grub 
+will run from xfs, reiserfs or ext[2,3].
+Additionally, many create partitions specifically for /var, /usr,
+sometimes /var/log and even /var/spool/sorcery.
+
+If you create a separate /boot partition, it should be at least enough to 
+handle however many kernels you may want to boot from.  I suggest at
+least 100mb for Source Mage, but it's possible to get away with something 
+as small as 10mb.
+
+When creating partitions, it's also a good idea to allocate a swap 
+partition.  Swap is where memory goes when you run out of more expensive 
+physical RAM.  Source Mage recommends at least 1 GB of memory (RAM +
+swap). Most people create a swap partition twice the size of their total 
+physical RAM. Instead of a swap partition, it is also possible to create 
+a swap file later, although, swap partitions are preferred. If no swap 
+partition is detected when the image transfer is about to begin, you will 
+be prompted to create a swapfile instead.
+
+Linux uses partition type 83.  Linux swap uses partition type 82.  Raid 
+and Volume Managed types may have different values, like fd for Linux
+raid autodetect and 8E for Linux LVM. Specific details of advanced
+partitioning schemes are beyond the scope of this install guide. But
+there is now software RAID support in the installer, that will 
+automatically change the partition type of RAID partitions to fd so the 
+kernel can autodetect and initialise them upon boot.
+
+A brief description of each partitioning program follows:
+
+-- -- cfdisk
+
+`cfdisk' is a curses-based disk partition table manipulator.
+
+To learn more about how to use cfdisk, shell out and type `man cfdisk'.  
+Cfdisk is suggested for most normal installations and new users.  See the 
+discussion above on what partitions to create.
+
+-- -- fdisk
+
+`fdisk' is an interactive command-based disk partition table manipulator.
+
+To learn more about how to use fdisk, shell out and type `man fdisk'.  
+Fdisk is suggested for more advanced users.
+
+-- -- parted
+
+`parted' is an interactive command-based partition manipulator, that can 
+edit not just tables, but it can resize many partitions as well.
+
+To learn more about how to use parted, shell out and type `man parted'
+and `info parted`.  Try: `info parted "File Systems" "Supported File
+Systems"' to see a table of supported File Systems.  The most useful 
+feature of parted is to resize an existing partition to a smaller 
+partition to give you more room for a Source Mage partition, if you are 
+an existing Windows 9x user.
+
+-- [Optionally} Make a Raid device
+
+This menu guides you through a simple RAID setup.
+
+-- -- RAID partition selection Menu
+
+Use the checklist to choose which partitions to assign to this array.
+
+-- -- RAID level selection Menu
+
+Choose the level for your Raid Array.
+
+Linear - Combine the hard disk partitions by simply appending one to the 
+other.
+
+Raid 0 - Combine the hard disk partitions into one logical device in such 
+a fashion as to fill them up evenly, one chunk here and one chunk there.
+This will increase the throughput rate if the partitions reside on
+distinct disks.
+
+Raid 1 - A RAID-1 set consists of several disk drives which are exact 
+copies of each other. In the event of a mirror failure, the RAID driver 
+will continue to use the operational mirrors in the set, providing an 
+error free MD (multiple device) to the higher levels of the kernel. In a 
+set with N drives, the available space is the capacity of a single drive, 
+and the set protects against a failure of (N - 1) drives.
+RAID 1 is the only raid level that grub and lilo can boot from.
+
+Raid 4/5 - A RAID-4/5 set of N drives with a capacity of C MB per drive
+provides the capacity of C * (N - 1) MB, and protects against a failure 
+of a single drive. For a given sector (row) number, (N - 1) drives 
+contain data sectors, and one drive contains the parity protection. For 
+a RAID-4 set, the parity blocks are present on a single drive, while a 
+RAID-5 set distributes the parity across the drives in one of the 
+available parity distribution methods.
+
+Raid 6 - This is possible by manually editing the raidtab file next but
+there is not official support for it because it is too experimental.
+
+-- -- Edit the raidtab before initialising the arrays ?
+
+A chance is offered for experienced users to edit the raidtab and allocate
+disks as spare, change parity options or change chunk-size. Leaving the 
+default options will work for everyone. 
+
+-- -- Make and start the RAID arrays now ?
+
+This is the point of no return. Confirming will rewrite your partitions
+tables so raid partitions are of type fd (raid autodetect), and then 
+initialise the arrays outlined in the raidtab file. 
+THIS WILL DESTROY ALL DATA ON THESE PARTITIONS.
+
+-- Mount Filesystems
+
+After you have created your partitions and have at least a root partition 
+ready to be mounted, you must mount your partitions.  This menu will ask 
+you for what partition to mount and what filesystem to mount it with. 
+The currently supported filesystems are ext2, ext3, reiserfs, swap, xfs, 
+and jfs.  The following is a list of supported filesystems and a 
+description of each:
+
+-- -- ext2
+
+ext2 was originally released in January 1993.  Written by R'emy Card,
+Theodore Ts'o and Stephen Tweedie, it was a major rewrite of the
+Extended Filesystem.  It is currently still (April 2001) the predominant
+filesystem in use by Linux.  There are also implementations available
+for NetBSD, FreeBSD, the GNU HURD, Windows 95/98/NT, OS/2 and RISC OS.
+
+ext2 shares many properties with traditional Unix filesystems.  It has
+the concepts of blocks, inodes and directories.  It has space in the
+specification for Access Control Lists (ACLs), fragments, undeletion and
+compression though these are not yet implemented (some are available as
+separate patches).  There is also a versioning mechanism to allow new
+features (such as journalling) to be added in a maximally compatible  
+manner.
+
+-- -- ext3
+
+ext3 is a journalling version of ext2.  Journalling avoids the need for 
+long `fsck's (filesystem checks) on dirty (uncleanly mounted) disks, and 
+ensures that the file system can be quickly brought to a consistent 
+state, even across power cuts to the system.  You can choose either 
+data=writeback or data=ordered.  data=writeback ensures filesystem 
+integrity but not data integrity.  data=ordered is designed for complete 
+data integrity.
+
+-- -- reiserfs
+
+# Generally higher performance for all file sizes
+# Wastes less space: no static inode space allocation, small files packed 
+  together
+# Much higher performance for large directories, even compared to other 
+  balanced tree filesystems
+# Commitment to introducing plug-ins in the next major release: we don't 
+  lock the users out of the source code, you can easily invent your own 
+  types of files and directories, and share them with the world
+# Technical foundation has now been laid for systematically introducing 
+  the best features of database and keyword systems into the filesystem 
+  where all applications in the OS can use them.
+# Reduces the need for namespace fragmentation in the operating system: 
+  see Future Vision
+
+ReiserFS does meta-data journaling, enabling fast crash recovery without 
+the expense of full data journaling. There is a (separate) patch from 
+Chris Mason that implements full data journaling for ReiserFS v3.
+
+Note: Full data journaling is considered by many to be a good way to 
+achieve file data integrity across system crashes. However, although file 
+data may appear to be consistent from the kernel point of view, since 
+there is no API exported to the userspace to control transactions, we may 
+end-up in a situation where the application makes 2 write requests (as 
+part of one logical transaction) but only one of these gets journaled 
+before the system crashes. From the application point of view, we may
+then end up with inconsistent data in the file.
+
+Such issues should be addressed with the upcoming ReiserFS v.4 release. 
+Such an API will be exported to userspace and all programs that need 
+transactions will be able to use it.
+
+See http://www.namesys.com/ for more information.  This information was 
+taken from the namesys.com website.
+
+-- -- swap
+
+This is the Linux swap partition type.  Swaps may be given priority 
+numbers on mount to round-robin swap across multiple harddrives:
+
+Swap pages are allocated from areas in priority order, highest priority
+first.  For areas with different priorities, a higher-priority area  is
+exhausted  before  using  a  lower-priority area.  If two or more areas
+have the same priority, and it is the highest priority available, pages
+are allocated on a round-robin basis between them.
+(from `man 2 swapon')
+
+-- -- xfs
+
+XFS is a journalling filesystem developed by SGI and used in SGI's IRIX 
+operating system. It is now also available under GPL for linux. It is 
+extremely scalable, using btrees extensively to support large and/or 
+sparse files, and extremely large directories. The journalling capability 
+means no more waiting for fsck's or worrying about meta-data corruption.
+
+  Q: Does LILO work with XFS?
+This depends on where you install LILO. For MBR installation: Yes. For
+root partitions: No, because the XFS superblock goes where LILO would be 
+installed. This is to maintain compatibility with the Irix on-disk format.
+This will not be changed. Putting the Superblock on the swap partition is 
+reported to work but not guaranteed. 
+(from http://oss.sgi.com/projects/xfs/faq.html#whatisxfs )
+
+Grub works with XFS natively.  XFS can also be made a root partition as 
+long as lilo is installed to the MBR or some other location.  Use the 
+Linux native type 83 for the partition type when creating an XFS 
+partition.
+
+-- -- jfs
+
+IBM's journaled file system technology, currently used in IBM enterprise 
+servers, is designed for high-throughput server environments, key to 
+running intranet and other high-performance e-business file servers. IBM 
+is contributing this technology to the Linux open source community with 
+the hope that some or all of it will be useful in bringing the best of 
+journaling capabilities to the Linux operating system.
+
+The Journaled File System (JFS) provides a log-based, byte-level file 
+system that was developed for transaction-oriented, high performance 
+systems. Scalable and robust, its advantage over non-journaled file 
+systems is its quick restart capability: JFS can restore a file system to 
+a consistent state in a matter of seconds or minutes.
+
+While tailored primarily for the high throughput and reliability 
+requirements of servers (from single processor systems to advanced 
+multi-processor and clustered systems), JFS is also applicable to client 
+configurations where performance and reliability are desired.
+
+-- [Optionally] Make Swapfile
+
+To setup a swap file, it is necessary to create that file before ini 
+tializing it with mkswap , e.g. using a command like
+
+# dd if=/dev/zero of=swapfile bs=1024 count=65536
+
+Note that a swap file must not contain any holes (so, using cp(1) to
+create the file is not acceptable).
+
+(from `man swapon')
+
+Our installer handles this work for you.  You just have to provide a name 
+and size in Megabytes. Swapfile generation is now optional, it is only
+included in the unguided menu, but it will be prompted for if no swap 
+exists prior to transfering Source Mage to the harddrive, but may still 
+be cancelled as either a swap partition or a swapfile are optional.
+
+-- Select Timezone
+
+This is where you select your timezone for the system locale.  Most of
+the United States uses something under the US/ directory, such as 
+US/Pacific.
+ 
+Setting this correctly makes your computer keep local time and it knows 
+when to switch for daylight savings changes.
+
+-- Architecture Optimize
+
+The first menu is the Build system selection.  You should select the one 
+closest to your processor type but not above it.  For IBM/Intel-clones, 
+i386 is the safest bet if you're not sure.  Shelling out and typing `cat 
+/proc/cpuinfo' should give you a safe clue to operate from as a base.
+
+The second menu is the compiler optimization menu.  The defaults are
+speedy, combreloc, and strip.
+
+The following is a list of the available options and what they do:
+
+-- speedy     +size  ++speed
+
+Speedy sets -O3 optimizations to compilation.  This increases the size of 
+generated binaries, but gives you an increase in speed while taking
+a longer time to compile.
+
+-- risky              +speed
+
+Risky adds -ffast-math -funroll-loops, and 
+may violate ANSI or IEEE rules, causing incorrect code to be produced in 
+some programs.  
+
+-- combreloc         ++speed
+
+combreloc adds -z combreloc to the compiler.  This is needed for
+prelinking and speeds up library loading.
+
+combreloc sorts the cached relocations to speed up their access and can
+dramatically reduce the load time spent in the dynamic linker particularly
+for large programs with lots of relocations such as qt/kde.
+
+If you want even more relocation tuning, check out the prelink spell 
+when you're done installing.  There may be a patch in sorcery for native 
+support of prelink in the future.
+
+-- tiny       -size
+
+tiny adds -Os to the compiler flags.
+
+tiny optimizes for size.  -Os enables all -O2 optimizations that do not
+typically increase code size.  It also performs further optimiza- tions
+designed to reduce code size.
+
+-Os disables the following optimization flags: -falign-functions
+-falign-jumps -falign-loops -falign-labels -freorder-blocks
+-fprefetch-loop-arrays
+
+If you use multiple -O options, with or without level numbers, the last
+such option is the one that is effective.
+
+(from `man gcc')
+
+If you use small, there's no point in doing speedy.  The last one (small) 
+will override speedy.  Small does many -O2 optimizations anyways.
+
+-- strip     --size
+
+strip removes all symbol table and relocation information from the 
+executable.  It makes it quite a bit smaller of an executable, at the
+cost 
+of making it difficult to debug the program.  In Source Mage we don't
+care 
+as much about that because we can always turn off strip and recompile the 
+affected program or its dependencies.  It might be good to have one box 
+without strip enabled if you tend to send lots of bug reports just incase 
+finding the problem entails recompiling a lot of dependent libraries.
+
+-- Make jobs Menu
+
+Here is where you select how many make jobs you want to run in parallel.
+Number of CPUs + 1 is a good place to start.
+
+-- Install/Configure Linux Kernel
+
+This is no longer an optional stage.
+The two choices are 
+i) configure, compile, install a hardware-specific kernel of the same 
+version on the ISO
+OR
+ii) simply copy the default kernel from the ISO into the new system.
+Most Source Mage users build their own kernels. I tend to know what my 
+hardware is before I install something, and then compile the kernel with 
+just what I have built in and use zero modules.  This is nice because if 
+I ever break the init system (and module-init-tools' modutils startup 
+script), I'm not doing things by hand.  On the other hand, you may be 
+making a general install to be used on many machines, or you have 
+varying hardware needs and modules are quite nice to have around.
+
+Because the installer now sets up networking before installing, you can 
+now download extra patches or even a different kernel version if you wish.
+You need to let the installer start your network after configuring it, 
+and then you may select any kernel options.
+
+-- Configure Log System
+
+Three loggers are available to choose from, or you may choose not to 
+install one at all. Which logger to use is a personal choice, but in case
+you find the one you choose here to be lacking, don't worry, you can 
+cast another from within SMGL later on. 
+This will dispel the first one for you automatically.
+
+-- Configure bootloader (LiLo or grub for x86 or yaboot for ppc)
+
+For x86, you may choose grub or lilo.
+Both default to installing to the boot sector of the partition that 
+/boot is on, but you will be offered to install to the MBR if you want.
+The MBR option will NOT install to the MBR of the primary drive on your 
+system, it WILL install to the MBR of the drive SMGL is being installed 
+onto. If you are installing SMGL onto a primary drive that shares with 
+another OS or linux distribution you should think carefully before writing 
+to the MBR, you will likely lose the ability to boot your other partitions 
+(until you fix the problem that is).
+
+-- Configure Networking
+
+After changing the hostname of your machine, choose ethernet, ppp or 
+rp-pppoe connection. You will get asked if you need pcmcia-cs, dhcpcd or 
+wireless_tools for that connection, choose what you need and then 
+configure your connection.
+The configuration tools are simple to understand, so aren't detailed here.
+All three connection types will offer to start that connection for you 
+(for use during install) and if started, it will allow you to download 
+kernel patches or sources for compiling a custom kernel.
+
+-- Select optional spells to install
+
+Here a sorcery generated list will offer a choice of common tools, 
+programs and libraries to install. Each spell has a short description of 
+it's purpose, some of the choices might have been already chosen in 
+another stage of the installer (or not chosen, as the case may be), that 
+doesn't mean your previous choice won't be installed, it just means you 
+have a chance to install some spells the installer knows aren't necessary 
+for the actual running of your initial system.
+Nothing in this list conflicts with anything else in the installer or the 
+list, so choose as many or as few as you want.
+
+-- Transfer Source Mage
+
+Previously, when starting to configure timezones, a background process 
+installed sorcery, the stable grimoire, the sources for kernel and related 
+spells, some configuration files for your new system and a few libraries 
+and binaries so this transfer stage can complete.
+The installer now transfers the individual tarballs you configured from 
+/var/cache/sorcery/* onto the root install. This must be done after all 
+the filesystems are mounted so that, for example, /usr stuff goes onto the 
+separate /usr filesystem, if you so chose to do that, and doesn't get 
+hidden when /usr is mounted.
+
+-- Oops, I really need to compile a custom kernel
+
+Use this item to change your mind and compile a custom kernel for your 
+hardware.
+
+-- Reconfigure bootloader (grub or lilo)
+
+Use this item if you changed your mind and now want the bootloader 
+installed to the MBR (doesn't work the other way, once installed to MBR, 
+it can't be removed, only overwritten by some other bootloader),
+OR
+Use this item to change the configuration file. 
+eg. to pass vga=791 for a 1024x768 16-bit colour framebuffer console at 
+    boot
+    OR
+    special kernel parameters like hdx=remap63 (for OnTrack ide controller)
+
+-- Choose services to run at boot
+
+A simple menu to toggle services on or off. Only a few services are 
+essential and init won't let you turn them off so you can safely choose to 
+do what ever you want, no problems.
+
+-- Done
+-- Shell
+-- Restart Installation
+-- Disable/Enable Guided Menu
+-- Toggle Confirm
+
+= Post-Install
+
+bash-completion and Source Mage command-line utilities.
+
+
+= Authors
+
+Initial version written (mostly compiled) by 
+ Seth Woolley <seth@tautology.org>
+Additions for 0.9.2 ISO by 
+ Hamish Greig <hgreig@bigpond.net.au>
+More additions for 2004-04-12 ISO by
+ Hamish Greig <hgreig@bigpond.net.au>
+
+= Copyright (C) 2003-2004 The Source Mage Team.
+Released under the GNU Free Documentation License, with no immutable
+sections.
+

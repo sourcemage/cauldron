@@ -1,0 +1,39 @@
+On the following screen you will configure Linus Torvalds' Linux Kernel.
+
+The kernel will be bootable if you select the appropriate BUILT IN 
+support for your SCSI or EIDE hardware and the correct SCSI low-level 
+driver or IDE chipset support.
+
+Also compile support for the following:
+
+CONFIG_DEVFS_FS . . . /dev file system support (EXPERIMENTAL)  
+ and
+CONFIG_DEVFS_MOUNT . . . Automatically mount at boot
+	-We no longer rely on these as static /dev entries are made by 
+the installer. It is still recommended for 2.4 series kernels, but not 
+for 2.6.X kernels.
+
+2.4.X users wishing NOT to use devfs will need to edit their fstab, 
+inittab and/or lilo.conf manually, there is currently no automatic 
+conversion of these files, and the installer presumes devfs is wanted for 
+2.4.X series.
+
+CONFIG_TMPFS . . . Virtual memory file system support (former shm fs)
+
+CONFIG_RAMFS . . .
+ and 
+CONFIG_HOTPLUG . . . 
+are requirements for using the udev system with the 2.6.X kernel.
+
+The .config from this (currently running) kernel is located at 
+/boot/config-* or /etc/sorcery/local/ISO-kernel.config (depending 
+if we are talking about the ISO or the fresh system) and can be loaded 
+via the menuconfig menu. 
+Be prepared though, it builds *everything* possible, and takes a long 
+time. Starting from scratch will most likely be a more time efficient 
+option.
+
+Kernel compilation normally takes between 5 and 30 minutes, but the 
+full-featured ISO .config will take considerably longer.
+( almost 3 hours on a pII/300)
+

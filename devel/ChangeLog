@@ -1,0 +1,41 @@
+2005-01-17 Karsten Behrmann <BearPerson@sourcemage.org>
+	* iso.packages: added iana-etc for etc files
+	* installerdata/install-list: ditto
+
+2005-01-15 Karsten Behrmann <BearPerson@sourcemage.org>
+	* etc/passwd, etc/shadow: removed unneeded sshd user
+	* smgl.install: beautified GMT/Localtime prompt
+
+2005-01-15 David Kowis <dkowis@shlrm.org>
+	* smgl.install: added documentation and comments on splitting
+
+2005-01-15 Karsten Behrmann <BearPerson@sourcemage.org>
+	* isolinux.msg: replace ^O with real escape char, fix bug 7982
+
+2005-01-14 Karsten Behrmann <BearPerson@sourcemage.org>
+	* almost everything: updated to fixes that came up during 
+	  yesterday's generation night
+
+2005-01-12 Karsten Behrmann <BearPerson@sourcemage.org>
+	* scripts/mkiso: added fallbacks to installed stuff
+
+2005-01-10 Karsten Behrmann <BearPerson@sourcemage.org>
+	* generation-scripts: fixed typo, added config file
+	* data: added kernel configs
+
+2005-01-09 Karsten Behrmann <BearPerson@sourcemage.org>
+	* skeleton: added the install-list and optional-list
+	* generation-scripts, data: added those spell lists
+
+2005-01-08 Karsten Behrmann <BearPerson@sourcemage.org>
+	* skeleton: added a few needed files and symlinks
+	* generation-scripts, data: moved my scripts over
+
+2005-01-06 Karsten Behrmann <BearPerson@sourcemage.org>
+	* skeleton/initrd/smgl.init: removed the need for cat
+
+2005-01-02 Karsten Behrmann <BearPerson@sourcemage.org>
+	* skeleton: populated the skeleton a little...
+
+2004-12-21 Karsten Behrmann <BearPerson@sourcemage.org>
+	* skeleton/isolinux.cfg: added the vga option, fix bug #7642.

@@ -1,0 +1,204 @@
+#!/bin/bash
+
+. ./config
+
+rm -rf ${ISO_DIR}
+mkdir -p $ISO_DIR
+TMP_DIR="/tmp/mkiso.$$"
+UNPACK_DIR="${TMP_DIR}/unpack"
+rm -rf $TMP_DIR
+mkdir -m700 $TMP_DIR
+declare -a DEF_INCLUDE
+declare -a DEF_EXCLUDE
+
+copy_fromlog()
+{
+  if gaze install $1 >/dev/null ;then
+    output_warning "Using installed files for $1."
+    gaze install $1 |
+     xargs cp --parents --target-directory $2 2>/dev/null
+  else
+    fatal_warning "No way to install $1: no trace of it could be found."
+  fi
+}
+
+package_fromlog()
+{
+  if gaze install $1 >/dev/null;then
+    output_warning "Using installed files for $1."
+    gaze install $1 |
+     tar --no-recursion -cjf "$2/$1-ISO-$ARCH.tar.bz2" -T -
+  else
+    fatal_warning "No way to install $1: no trace of it could be found."
+  fi
+}
+
+copy_fromver()
+{
+  if [ -e $(find ${CACHE_DIR} -name "$1-$(gaze -q installed $1)-$ARCH.tar.bz2") ] ;then
+    output_warning "Falling back to installed version number for finding $1"
+    tar -xjf "$(find ${CACHE_DIR} -name "$1-$(gaze -q installed $1)-$ARCH.tar.bz2")" -C $2
+  else
+    copy_fromlog $@
+  fi
+}
+
+package_fromver()
+{
+  if [ -e $(find ${CACHE_DIR} -name "$1-$(gaze -q installed $1)-$ARCH.tar.bz2") ] ;then
+    output_warning "Falling back to installed version number for finding $1"
+    cp "$(find ${CACHE_DIR} -name "$1-$(gaze -q installed $1)-$ARCH.tar.bz2")" $2
+  else
+    package_fromlog $@
+  fi
+}
+
+#--------------begin interface for iso.packages------------------
+
+add_default_include()
+{
+  DEF_INCLUDE[${#DEF_INCLUDE[*]}]="$1"
+}
+
+add_default_exclude()
+{
+  DEF_EXCLUDE[${#DEF_EXCLUDE[*]}]="$1"
+}
+
+iso_include()
+{
+  pushd ${UNPACK_DIR} >/dev/null
+  eval "cp --parents -au ./$1 ${ISO_DIR}"
+  popd >/dev/null
+}
+
+iso_exclude()
+{
+  eval "rm -rf ${UNPACK_DIR}/$1"
+}
+
+unpack()
+{ # $1: spell to unpack
+  begin_unpack "$@"
+  end_unpack "$@"
+}
+
+begin_unpack()
+{
+  local file
+  if [ -e $UNPACK_DIR ] ;then
+    output_warning "An old unpack failed. Flushing the toilet."
+    rm -rf $UNPACK_DIR
+  fi
+  mkdir $UNPACK_DIR
+  if [ "$1" == "linux" ] ;then # special case linux spell
+    tar -xjf ${STATE_DIR}/linux-ISO.tar.bz2 -C $UNPACK_DIR
+  else
+    if [ $(find ${CACHE_DIR} -name "$1-*-$ARCH.tar.bz2" | wc -l) -gt 1 ] ;then
+      copy_fromver $1 ${UNPACK_DIR}
+    elif [ $(find ${CACHE_DIR} -name "$1-*-$ARCH.tar.bz2" | wc -l) -lt 1 ] ;then
+      copy_fromlog $1 ${UNPACK_DIR}
+    else
+      tar -xjf "$(find ${CACHE_DIR} -name "$1-*-$ARCH.tar.bz2")" -C $UNPACK_DIR
+    fi
+  fi &&
+  echo $1 >${TMP_DIR}/unpack_successful
+}
+
+end_unpack()
+{
+  local entry
+  for entry in "${DEF_INCLUDE[@]}" ;do
+    iso_include "$entry"
+  done
+  for entry in "${DEF_EXCLUDE[@]}" ;do
+    iso_exclude "$entry"
+  done
+  if [ -e ${TMP_DIR}/unpack_successful ] ;then
+    if ! cp -au ${UNPACK_DIR}/* ${ISO_DIR} 2>/dev/null ;then
+      echo -n "nothing to be done for "
+      cat ${TMP_DIR}/unpack_successful
+    fi
+    rm ${TMP_DIR}/unpack_successful
+  else
+    fatal_warning "The unpack failed. Can't install to ISO"
+  fi
+  rm -rf ${UNPACK_DIR}
+}
+
+# ---------------end interface for iso.packages-----------------
+
+echo "Creating ISO file structure..."
+
+while read line ; do
+  mkdir -p ${ISO_DIR}/${line}
+done <${STATE_DIR}/iso.dirs
+
+. ${STATE_DIR}/iso.packages
+
+#pushd $ISO_DIR/dev >/dev/null
+# $SKELETON/sbin/MAKEDEV generic-nopty md
+# mknod initctl p
+#popd >/dev/null
+
+cp ${STATE_DIR}/initrd.gz $ISO_DIR/boot/initrd.gz
+
+pushd $SKELETON >/dev/null
+cp -af --parents $(find * -maxdepth 0 ! -name initrd) $ISO_DIR
+popd $SKELETON >/dev/null
+
+# watch out - nasty, ugly template code afoot...
+while read template ; do
+  cp ${ISO_DIR}/$template  ${TMP_DIR}/tmp.template
+  while read pattern ; do
+    sed -i "s/$pattern/g" ${TMP_DIR}/tmp.template
+  done <${STATE_DIR}/smgl.templates
+  cat ${TMP_DIR}/tmp.template |
+  grep -v "s/^__SMGL_TEMPLATE_NOT_${ISO_ARCH}__/${ISO_VERSION}" |
+  sed 's/^__SMGL_TEMPLATE_NOT_[^_]*__//' >${ISO_DIR}/$template
+done <${STATE_DIR}/iso.templates
+
+echo "Copying cache tarballs..."
+
+cat ${STATE_DIR}/install-list ${STATE_DIR}/optional-list |
+ grep -v '^#' >${TMP_DIR}/tmp.spells
+while read spell ; do
+  if [ $(find ${CACHE_DIR} -name "$spell-*-$ARCH.tar.bz2" | wc -l) -gt 1 ] ;then
+    package_fromver $spell ${ISO_DIR}/var/cache/sorcery/
+  elif [ $(find ${CACHE_DIR} -name "$spell-*-$ARCH.tar.bz2" | wc -l) -lt 1 ] ;then
+    package_fromlog $spell ${ISO_DIR}/var/cache/sorcery/
+  else
+    cp "$(find ${CACHE_DIR} -name "$spell-*-$ARCH.tar.bz2")" ${ISO_DIR}/var/cache/sorcery/
+  fi
+done <${TMP_DIR}/tmp.spells
+rm ${TMP_DIR}/tmp.spells
+
+mkdir -p ${ISO_DIR}/var/lib/sorcery/codex
+cp ${STATE_DIR}/stable.tar.bz2 ${ISO_DIR}/var/lib/sorcery/codex/stable.tar.bz2
+cp ${STATE_DIR}/sorcery-stable.tar.bz2 ${ISO_DIR}/var/cache/sorcery/sorcery-stable.tar.bz2
+
+[ -e ${STATE_DIR}/iso.patch ] &&
+  patch -d $ISO_DIR -p0 ${STATE_DIR}/iso.patch
+
+cp ${SYSROOT}/sbin/ldconfig ${ISO_DIR}
+chroot ${ISO_DIR} /ldconfig
+rm ${ISO_DIR}/ldconfig
+
+cp ${SYSROOT}/sbin/depmod ${SYSROOT}/sbin/depmod.old ${ISO_DIR}
+chroot ${ISO_DIR} /depmod
+rm ${ISO_DIR}/depmod ${ISO_DIR}/depmod.old
+
+# symlinks would be pointing to ${INSTALL_ROOT} if we used that feature
+# have to run after ldconfig so everything finds its libs
+mkdir ${ISO_DIR}/tmpsorcery
+tar -C ${ISO_DIR}/tmpsorcery -xjf ${STATE_DIR}/sorcery-stable.tar.bz2
+chroot ${ISO_DIR} sh -c "cd /tmpsorcery/sorcery ; ./install"
+rm -r ${ISO_DIR}/tmpsorcery
+
+[ -e ${STATE_DIR}/iso.command ] &&
+  . ${STATE_DIR}/iso.command
+
+rm -r ${TMP_DIR}
+
+# all ready
+mkisofs -quiet -R -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o /smgl-0.9.4-rc1.iso ${ISO_DIR}

@@ -1,0 +1,4 @@
+MOUSETYPE="ps2"
+XMOUSETYPE="PS/2"
+FULLNAME="Generic Mouse (PS/2)"
+DEVICE="/dev/psaux"

@@ -1,0 +1,3 @@
+FULLNAME='3.5" 1.44MB floppy drive'
+DEVICE="/dev/fd0"
+DRIVER="unknown"

@@ -1,0 +1,3 @@
+drivers/cdrom
+drivers/scsi
+drivers/ide

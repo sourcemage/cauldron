@@ -1,0 +1,350 @@
+#!/bin/sh
+
+shell() {
+
+  echo  "Press CTRL-D or type exit to return"
+  /bin/sh
+
+}
+
+show_modules()  {
+
+    for ITEM in "$1"/*; do
+        echo `basename "${ITEM}"`
+        if [ -d "${ITEM}" ]; then
+            echo "Directory ";
+        else
+            echo "Module ";
+        fi
+    done
+
+}
+
+input_module_parameters()  {
+
+  HELP="Optionally, enter module parameters"
+
+  "${DIALOG[@]}"  --nocancel --inputbox  \
+           "$HELP"     \
+            0 60
+}
+
+# returns true (0) is a module has been loaded or false (-1)
+
+load_module()  {
+
+    if [ -n "$1" ]; then
+        
+          TITLE="Module Menu"
+           HELP="Select a module to load please"
+         MODULE=""
+
+        while true;
+        do
+
+# one line for drawing top line
+# x lines of text
+# top list line separator
+# y lines of list (if the list has more elements, only y'st are displayed)
+# bottom list line separator
+# one line for drawing a separator
+# one line for <OK> and <Cancel> button
+# one line for drawing bottom line
+#
+# Conclusion: dialog --menu "menu_help" x+y+6 60 y
+
+          MODULES=`show_modules  "$1"`
+           MODULE=`"${DIALOG[@]}"  --title  "$TITLE"  \
+                            --menu "$HELP"            \
+                            7 60 0              \
+                            $MODULES`
+
+# if the user hit the <Cancel> button, we return false
+           if [ -z "${MODULE}" ]; then
+#               echo "You press the <Cancel> button"
+#               sleep 2
+               return -1;
+           fi
+
+#           echo "MODULE=${MODULE}"
+#           sleep 2
+           
+# if the user select a directory, we display a new menu
+           if [ -d "$1/${MODULE}" ]; then
+               if load_module "$1/${MODULE}"; then
+#                   echo "load_module returns true"
+#                   sleep 2
+                   return;
+               fi
+# else if the user select a file, we load that module
+           elif [ -f "$1/${MODULE}" ]; then
+# remove .o (2.4 kernels) or .ko (2.6 kernels) extension.
+               MODULE=`basename "${MODULE}" .o`     &&
+			   MODULE=`basename "${MODULE}" .ko`    &&
+               PARAMETERS=`input_module_parameters` &&
+			   echo "Running modprobe ${MODULE} ${PARAMETERS}"      &&
+               if modprobe "${MODULE}" $PARAMETERS; then
+                   read -p "Success. Press enter..."
+                   return 0;
+               fi
+# wait 10 seconds with the modprobe's error displayed and
+# redisplay the same menu again (hence, no return statement)
+               reap -p "Failure. Press enter..."
+           fi
+        done
+
+    else
+
+	  MODULE_DIR="/lib/modules/${KERNEL}/kernel"
+	  M_NOMODULE="There is no module for ${KERNEL} kernel"
+
+	  if [ ! -d "${MODULE_DIR}" ]; then
+		"${DIALOG[@]}" --msgbox "${M_NOMODULE}" 6 60
+		return -1;
+	  fi
+
+      load_module "${MODULE_DIR}"
+    fi
+
+#    echo "load_module is returning $?"
+#    sleep 2
+}
+
+#
+# scan_cdroms: warning: we have an infinite loop here in the case the
+# Source Mage GNU/Linux CDROM is not inserted, we should replace with
+# a loop on files in /dev/cdroms (if using devfs).
+#
+
+# at the end SMGL_CD is defined to the device where the SMGL CD is found
+# or else SMGL_CD is undefined
+
+scan_cdroms()  {
+
+  unset SMGL_CD
+
+  for device in $DEVICE/*;
+  do
+
+	mount -n -r -t iso9660 $device $MOUNT 2>/dev/null
+
+	if [ -f $ID ]; then
+
+      umount -n $MOUNT 2>/dev/null
+	  SMGL_CD=$device
+	  break
+
+	else
+
+	  umount -n $MOUNT 2>/dev/null
+
+	fi
+
+  done
+
+}
+
+
+show_filesystems()  {
+
+  for FILESYSTEM in `cat /proc/filesystems | grep -v nodev`;
+  do
+
+    echo  "${FILESYSTEM}"
+    echo  filesystem
+
+  done
+
+}
+
+
+select_root()  {
+
+  FILESYSTEMS=`show_filesystems`                    &&
+
+  NEW_ROOT=`"${DIALOG[@]}"  --inputbox              \
+                    "Please enter the root device." \
+                    8 60                            \
+                    "${ROOT}"`                      &&
+
+  NEW_VFSTYPE=`"${DIALOG[@]}"  --menu               \
+                    "Please select a file system."  \
+                    7 60 0                          \
+                    $FILESYSTEMS`                   &&
+
+  NEW_OPTIONS=`"${DIALOG[@]}" --inputbox            \
+                    "Please enter mounting options" \
+                    8 60                            \
+                    "${OPTIONS}"`                   &&
+
+  ROOT="${NEW_ROOT}" &&
+  VFSTYPE="${NEW_VFSTYPE}" &&
+  OPTIONS="${NEW_OPTIONS}"
+
+}
+
+main_menu()  {
+    
+    while true;
+      do
+
+      M_HELP="Select modules to load"
+      S_HELP="Shell out for a moment"
+      R_HELP="Choose the device to be mounted as /"
+      D_HELP="Continue the normal boot process"
+      
+      scan_cdroms
+      
+      if  [  -z  "$SMGL_CD"  ]   &&
+          [  -z  "$ROOT"    ];  then
+
+          HELP="Load the correct low level SCSI driver kernel module
+                to be able to detect and read the SCSI CDROM."
+
+          DEFAULT_ITEM="M"
+
+      elif  [  -z  "$ROOT"  ];  then
+
+          HELP="The Source Mage GNU/Linux Install/Rescue CDROM is
+                detected on $SMGL_CD"
+
+          DEFAULT_ITEM="D"
+
+      else
+
+          HELP="You have selected to mount $ROOT as the root file
+                system."
+
+          DEFAULT_ITEM="D"
+
+      fi
+
+      COMMAND=`"${DIALOG[@]}"  --title  "Initrd Menu"         \
+                        --nocancel                            \
+                        --item-help                           \
+                        --default-item  "$DEFAULT_ITEM"       \
+                        --menu                                \
+                        "$HELP"                               \
+                        8 60 0                               \
+                        "M"  "Load modules "       "$M_HELP"  \
+                        "S"  "Shell "              "$S_HELP"  \
+                        "R"  "Choose root device (For rescue mode)" "$R_HELP" \
+                        "D"  "Continue booting "   "$D_HELP"`
+
+      case  $COMMAND  in
+          M)  load_module  ;;
+          S)  shell        ;;
+		  R)  select_root  ;;
+          D)  return       ;;
+      esac
+
+    done
+}
+
+
+main()  {
+
+  while true;
+  do
+
+	main_menu
+
+	if  [  -z  $ROOT    ]   &&
+        [  -z  $SMGL_CD ];  then
+
+# height is 6 lines : 
+# 1 line for drawing a top line
+# 1 line for a blank line
+# 1 line of text
+# 1 line for drawing a line
+# 1 line for <OK> button
+# 1 line for drawing a bottom line
+
+	  "${DIALOG[@]}" --msgbox "Unable to boot without a root." 6 60
+	  continue
+
+	fi
+
+	[  -n  "$ROOT"     ]  ||     ROOT=$SMGL_CD
+	[  -n  "$VFSTYPE"  ]  ||  VFSTYPE=iso9660
+	[  -n  "$OPTIONS"  ]  ||  OPTIONS="defaults,ro"
+
+	if ! mount -n -t $VFSTYPE  -o $OPTIONS  $ROOT  $MOUNT; then
+
+	  "${DIALOG[@]}" --msgbox "Unable to mount $ROOT as $VFSTYPE." 6 60
+	  continue
+
+	fi
+
+	if [ ! -x $MOUNT/sbin/init ]; then
+
+	  "${DIALOG[@]}" --msgbox "Unable to locate /sbin/init on $ROOT." 6 60
+	  umount -n $MOUNT
+	  continue
+
+	fi
+
+	umount -n /proc
+
+    cd  $MOUNT
+### HGG START ###
+      ## setup writable /etc /root and nfs stat dir if ISO is ROOT
+       if [ "$ROOT" = "$SMGL_CD" ]
+       then /bin/mount -t $VFSTYPE -o $OPTIONS $ROOT $MOUNT/mnt/cdrom
+            for i in etc root
+            do echo "Setting up writable /$i for install"
+               /bin/mount -t tmpfs tmpfs $MOUNT/$i
+               $MOUNT/bin/cp -a $MOUNT/mnt/cdrom/$i $MOUNT
+            done
+            echo "Setting up writable /var/log for install"
+	    /bin/mount -t tmpfs tmpfs $MOUNT/var/log/
+	    $MOUNT/bin/cp -a $MOUNT/mnt/cdrom/var/log/* $MOUNT/var/log/
+            echo "Setting up writable /var/lib/nfs for install"
+	    /bin/mount -t tmpfs tmpfs $MOUNT/var/lib/nfs
+	    $MOUNT/bin/cp -a $MOUNT/mnt/cdrom/var/lib/nfs $MOUNT/var/lib/
+	    /bin/umount $MOUNT/mnt/cdrom
+       fi
+### HGG END ###
+    if  [  -d  initrd  ];  then
+       pivot_root  .  initrd
+    else
+       pivot_root  .  mnt
+    fi
+
+    echo "Running /sbin/init $@"
+
+# if the new root filesystem use devfs, /dev/console should not exist
+    if [ ! -e /dev/console ]; then
+      mount -t devfs  devfs  /dev
+    fi
+
+    exec chroot . /sbin/init "$@" </dev/console >/dev/console 2>&1
+
+  done
+
+}
+
+# here is the real start of this shell script
+
+export PATH=/bin:/usr/bin:/sbin:/usr/sbin
+
+DIALOG=( "dialog" "--trim" "--stdout" \
+         "--backtitle" "Source Mage GNU/Linux initrd" )
+
+# devfs should be mounted at boot time, either with the boot parameter
+# "devfs=mount", either with the kernel option :
+# "[*] Automatically mount at boot"
+
+mount -n -t proc  proc  /proc
+
+KERNEL=`uname -r`
+DEVICE=/dev/cdroms
+ MOUNT=/mnt/cdrom
+    ID=$MOUNT/etc/sourcemage_version
+
+modprobe ide-generic
+modprobe ide-cd
+modprobe ide-scsi
+
+main "$@"
+

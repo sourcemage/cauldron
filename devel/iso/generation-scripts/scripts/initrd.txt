@@ -1,0 +1,62 @@
+04/06/2003 Benoit PAPILLAULT <benoit.papillault@free.fr>
+
+How the initrd works?
+=====================
+
+This documentation applies to linux kernel version 2.4.21, but it should
+be the same with other kernel, execept for source code reference.
+
+-> initrd.gz file is loaded into memory by isolinux (SYSLINUX) [see
+   isolinux.cf]. It can be loaded using lilo [see /etc/lilo.conf] or
+   grub too [see /boot/grub/menu.lst].
+
+-> the kernel convert it to a ramdisk (/dev/initrd -> /dev/ram)
+   in init/do_mounts.c + gunzip if needed
+
+-> prepare_namespace(void) [init/do_mounts.c]
+   -> initrd_load()
+      -> rd_load_image("/dev/initrd");
+         - copy from /dev/initrd [ramdisk, loaded by bootloader]
+           to /dev/ram [ramdisk]
+   -> handle_initrd() IF root != /dev/ram0
+      - create /dev/root.old to point to the ramdisk [/dev/ram0]
+      - mount /dev/root.old on /root
+      - mkdir /old
+      - cd /root
+      - pivot_root . /
+      - chroot .
+      - mount -t devfs /dev
+
+      - execute /linuxrc in the ramdisk
+
+      - cd /old
+      - pivot_root / .
+      - cd /
+      - chroot .
+      - umount /old/dev
+
+      - pivot_root /old /root/initrd
+      - umount /old
+      - free /dev/root.old
+
+Conclusion:
+  if "root=/dev/ram0" or "root=/dev/ram" or anything with the correct
+  major and minor 0, thus /sbin/init is lanched, else /dev/ram0 is mounted
+  and /linuxrc is executed.
+
+Freeing the initrd:
+===================
+
+-> if the kernel has been booted with "noinitrd" or without "initrd="
+   parameter : 
+
+   mknod /tmp/initrd b 1 250
+   dd if=/tmp/initrd of=/tmp/initrd.gz
+
+   This should display on the console:
+   "Freeing initrd memory: 2942k freed"
+
+-> if the kernel has run /linuxrc in the initrd.
+
+  either it's still mounted on /initrd 
+  or the kernel already free everything

@@ -1,0 +1,137 @@
+#!/bin/bash
+######################################################################
+# Copyright 2004 by Kevin Dahan <unet@sourcemage.org>                #
+######################################################################
+#                                                                    #
+#This program is free software; you can redistribute it and/or modify#
+#it under the terms of the GNU General Public License as published by#
+#the Free Software Foundation; either version 2 of the License, or   #
+#(at your option) any later version.                                 #
+#                                                                    #
+#   This program is distributed in the hope that it will be useful,  #
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of   #
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the    #
+#   GNU General Public License for more details.                     #
+#                                                                    #
+# You should have received a copy of the GNU General Public License  #
+# along with this program; if not, write to the Free Software        #
+# Foundation, Inc., 59 Temple Place, Suite 330, Boston,              #
+# MA  02111-1307  USA                                                #
+######################################################################
+# SMGL-alternate-initrd                                              #
+# Alternate initrd with hardware detection                           #
+# needs kudzu && hwdata                                              #
+######################################################################
+
+PATH=/bin:/usr/bin:/sbin:/usr/sbin
+
+scan_cdroms()  {
+
+  if  [  -z  "$SMGL_CD"  ];  then
+
+    COUNT=0
+    while [  -e  "$DEVICE$COUNT"  ];  do
+
+      /bin/mount  -n  -r  -t  iso9660  $DEVICE$COUNT  $MOUNT  2>/dev/null
+
+      if  [  -e  "$ID"  ];  then
+#        /bin/umount  -n  $MOUNT  2>/dev/null
+        SMGL_CD=$DEVICE$COUNT
+        break
+      else
+        (( COUNT++ ))
+        /bin/umount  -n  $MOUNT  2>/dev/null
+      fi
+
+    done
+
+  fi
+
+}
+
+
+get_hwd()
+{
+    echo "${NORMAL}Detecting ${BLUE}$CLASS${NORMAL} devices..."
+    KUDZU=`/sbin/kudzu -p -c $CLASS`
+    DESC=`echo "$KUDZU" | grep 'desc'`
+    MOD=`echo "$KUDZU" | grep driver`
+
+    (( lim = `echo "$DESC" | wc -l` + 1 ))
+    (( i = 1 ))
+    
+    while [ $i -ne $lim ]
+      do  
+      D=`echo "$DESC" | cut -d: -f2 | head -n $i | tail -n 1 | sed s/'"'//g`
+      M=`echo "$MOD" | cut -d: -f2 | head -n $i | tail -n 1`
+
+      if [ -n "$D" ] ;
+	  then
+	  if [ "$M" = " " ];
+	      then
+	     # echo "$CLASS$i: $D * none" >>$CONF
+	      echo "no modules"
+	  else
+#	      echo "$CLASS$i: $D * $M"
+	      echo "Activating ${BLUE}$D${NORMAL}..., Module is ${RED}$M${NORMAL}"
+	      /sbin/insmod $M
+	  fi
+      fi
+
+      (( i += 1 ))
+    done
+}
+
+detect_hwd()
+{
+
+for CLASS in `echo SCSI RAID`
+  do get_hwd
+done
+
+}
+
+
+main()  {
+
+  detect_hwd &&
+  sleep 10 &&
+  scan_cdroms &&
+
+  #No SMGLCD? --> bash
+  # needs rework
+  if  [  -z  "$ID"  ]
+      then bash 
+  else
+      cd  $MOUNT
+      /sbin/pivot_root  .  mnt/initrd
+      mount devfs -t devfs /dev
+ #     exec /bin/chroot . /sbin/init dev/console 2>&1
+      exec /sbin/init 
+  fi
+
+#  echo /sbin/init $*
+#  sleep 30
+#  exec  /sbin/init  $*
+  
+}
+
+
+/bin/mount -t devfs devfs /dev
+/bin/mount -t proc proc /proc
+/sbin/depmod -a
+
+KERNEL=`/bin/uname -r`
+DEVICE="/dev/cdroms/cdrom"
+ MOUNT="/mnt/cdrom"
+    ID="$MOUNT/tmp/smage.cd"
+
+
+# Definitions
+RED="[1;31m"
+BLUE="[1;34m"
+GREEN="[1;32m"
+NORMAL="[0;39m"
+
+
+main  $*

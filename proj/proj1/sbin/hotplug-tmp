@@ -1,0 +1,84 @@
+#!/bin/bash
+if [ -f /sbin/hotplug ]; then
+# Based on Knoppix live CD 3.1 /sbin/hotplug-knopppix
+# Scan /proc/scsi/scsi for USB driven storage devices and add new entries to /etc/fstab
+# 31-August-2003, Markku (Rasatmakananda) rasat@pacific.net.sg
+
+PATH="/bin:/sbin:/usr/bin:/usr/sbin"
+export PATH
+umask 022
+
+# DEBUG
+# exec >/tmp/hotplug.debug 2>&1
+# rm -f /tmp/hotplug.env
+# env > /tmp/hotplug.env
+
+scanusbluns(){
+ # Add/Remove LUNs
+ host=""
+ channel=""
+ id=""
+ lun=""
+ 
+ FOUND=""
+ while read p1 p2 p3 p4 p5 p6 p7 p8 relax; do
+  case "$p1" in
+   [Ho][Oo][Ss][Tt]*)
+    host="${p2##scsi}"
+    channel="$((${p4}))"
+    id="$((${p6}))"
+    lun="$((${p8}))"
+    continue
+    ;;
+   [Vv][Ee][Nn][Dd][Oo][Rr]*)
+    case "$lun" in 0)
+     case "$p2 $p3 $p4 $p5 $p6 $p7 $p8 $relax" in *[Uu][Ss][Bb]\ *)
+      FOUND="yes"
+      # I found no way yet to detect which newly plugged in USB device really belongs to which SCSI host,
+      # So this is really a workaround, and all USB SCSI devices will be removed and re-added. -KK Dec. 2002
+      case "$1" in
+      remove)
+       for i in 6 5 4 3 2 1; do
+        echo "scsi-remove-single-device $host $channel $id $i" >/proc/scsi/scsi
+       done
+      ;;
+      add)
+       for i in 1 2 3 4 5 6; do
+        echo "scsi-add-single-device $host $channel $id $i" >/proc/scsi/scsi
+       done
+      ;;
+      esac
+     ;;
+     esac
+    ;;
+    esac
+   ;;
+  esac
+ done <<EOT
+$(cat /proc/scsi/scsi)
+EOT
+}
+ 
+
+# Disable kernel messages while probing for new LUNs
+read LOGLEVEL relax </proc/sys/kernel/printk
+echo "0" >/proc/sys/kernel/printk
+
+# Check for USB-Storage device
+USBSTORAGE=""
+case "$(usbmodules --device "$DEVICE" 2>/dev/null)" in usb-storage) USBSTORAGE="true" ;; esac
+
+[ -n "$USBSTORAGE" ] && scanusbluns "remove"
+
+# Start the real hotplug manager
+/sbin/hotplug "$@"
+
+[ -n "$USBSTORAGE" ] && { scanusbluns "add"; sleep 6; rebuild; }
+
+echo "$LOGLEVEL" >/proc/sys/kernel/printk
+exit 0
+
+else
+dummy=""
+fi
+

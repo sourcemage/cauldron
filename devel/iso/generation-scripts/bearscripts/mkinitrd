@@ -1,0 +1,79 @@
+#!/bin/bash
+# note: this file is not safe for symlinks.
+# if you for some reason make the dir this runs in world-writeable,
+# nothing will prevent a malicious local user from making you override files.
+# neither is it thread-safe. DO NOT run this twice at the same time.
+
+. ./config
+OLDWD=$(pwd)
+
+mkdir -p $INITRDROOT
+
+while read line ; do
+  mkdir -p ${INITRDROOT}/${line}
+done <${STATE_DIR}/initrd.dirs
+
+#pushd ${INITRDROOT}/dev >/dev/null
+# ${SKELETON}/sbin/MAKEDEV generic-nopty md
+# # someday make only devices where the cdrom can be in /dev/cdrom
+#popd >/dev/null
+
+rm -f tmp.libs
+pushd $SYSROOT >/dev/null
+ while read line ; do # remove problem with leading /
+   cp -pr --parents ./${line} ${INITRDROOT} >/dev/null # just to be sure
+   file ./${line} | grep -q "dynamically linked" && # the -q prevents output
+    chroot . ldd ${line} | sed -e 's/^.* => //' -e 's/ (.*$//'
+ done <${STATE_DIR}/initrd.files \
+  | sort | uniq | grep -v '^[[:blank:]]*$' >${OLDWD}/tmp.libs 
+ # to prevent a subshell - this has to be just the ldd
+
+ while read line ; do
+   cp -p --parents ./${line} ${INITRDROOT}
+ done <${OLDWD}/tmp.libs
+ rm ${OLDWD}/tmp.libs
+popd >/dev/null
+
+pushd ${SYSROOT}/lib/modules/${KERNEL_VERSION} >/dev/null
+ mkdir -p ${INITRDROOT}/lib/modules/${KERNEL_VERSION}
+ while read line ; do
+   cp -pr --parents ./${line} ${INITRDROOT}/lib/modules/${KERNEL_VERSION} \
+    2>/dev/null #no error if what we're copying isn't in the kernel
+   # remove this when you're making an official ISO
+ done <${STATE_DIR}/initrd.kernel
+popd >/dev/null
+
+cp -af ${SKELETON}/initrd/* ${INITRDROOT}
+
+[ -e ${STATE_DIR}/initrd.patch ] &&
+ patch -d ${INITRDROOT} -p0 <${STATE_DIR}/initrd.patch
+
+cp ${SYSROOT}/sbin/ldconfig ${INITRDROOT}
+chroot ${INITRDROOT} /ldconfig
+rm ${INITRDROOT}/ldconfig
+
+cp ${SYSROOT}/sbin/depmod ${SYSROOT}/sbin/depmod.old ${INITRDROOT}
+chroot ${INITRDROOT} /depmod
+rm ${INITRDROOT}/depmod ${INITRDROOT}/depmod.old
+
+[ -x ${STATE_DIR}/initrd.command ] &&
+ . ${STATE_DIR}/initrd.command
+
+# The initrd is complete now.
+
+initrd_size=$(du -ks ${INITRDROOT} | cut -d$'\t' -f1)
+initrd_size="$(( initrd_size / 5 + initrd_size ))" # add 20% to allow for e2fs
+rm -rf tmp.initrd tmp.initrd-mountdir
+dd if=/dev/zero of=tmp.initrd bs=1024 count=$initrd_size
+mke2fs -q -b 1024 -i 1024 -F tmp.initrd
+mkdir -p tmp.initrd-mountdir
+[ $UID != 0 ] &&
+ echo "Root access is needed to mount loopback"
+su -c "mount tmp.initrd tmp.initrd-mountdir -o loop" # doesn't prompt if root
+cp -a ${INITRDROOT}/* tmp.initrd-mountdir
+[ $UID != 0 ] &&
+ echo "And again for unmounting"
+su -c "umount tmp.initrd-mountdir"
+gzip -c tmp.initrd >initrd.gz
+rm -rf tmp.initrd tmp.initrd-mountdir ${INITRDROOT}
+echo "initrd is compressed $(du -ks initrd.gz | cut -d$'\t' -f1)K, uncompressed ${initrd_size}K."

@@ -1,0 +1,20 @@
+# modulename	class	new module name(s)
+
+3c90x		NETWORK	3c59x
+bcm5700		NETWORK tg3
+rtl8139		NETWORK	8139too
+old_tulip	NETWORK	tulip
+sktr		NETWORK	tmspci
+tr		NETWORK	lanstreamer
+eepro100	NETWORK e100
+
+aic7xxx_mod	SCSI	aic7xxx
+hpnraid 	SCSI	aacraid
+percraid	SCSI	aacraid
+qla2x00		SCSI	qla2200/qla2300
+qlogicisp	SCSI	isp_mod
+
+via82cxxx	AUDIO	via82cxxx_audio
+ymfsb		AUDIO	ymfpci
+ymf_sb		AUDIO	ymfpci
+nm256		AUDIO	nm256_audio

@@ -1,0 +1,25 @@
+#!/bin/sh
+
+# Author: Benoit PAPILLAULT <benoit.papillault@free.fr>
+# Creation: 16/09/2003
+
+# Download the latest sorcery and stable grimoire. We download them once
+# to use the same sorcery/grimoire version throughout our build process. Doing
+# so make correcting bugs easier.
+
+rm -f sorcery-stable.tar.bz2 &&
+wget http://download.sourcemage.org/sorcery/sorcery-stable.tar.bz2 || exit -1
+
+rm -f stable.tar.bz2 &&
+wget http://codex.sourcemage.org/stable.tar.bz2 || exit -1
+
+
+#while read spell;
+#do
+#  ./find_source_url "${spell}"
+#done < spell-stage1 > files-stage1
+
+#while read spell;
+#do
+#  ./find_source_url "${spell}"
+#done < spell-stage2 > files-stage2

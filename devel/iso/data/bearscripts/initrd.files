@@ -1,0 +1,14 @@
+/bin/basename
+/bin/bash
+/bin/chroot
+/bin/mount
+/bin/sh
+/bin/umount
+/bin/uname
+/sbin/modprobe
+/sbin/modprobe.old
+/sbin/insmod.old
+/sbin/pivot_root
+/usr/bin/dialog
+/usr/bin/grep
+/usr/share/terminfo/l/linux

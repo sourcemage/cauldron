@@ -1,0 +1,11 @@
+/etc/sysconfig/knoppix: /etc/sysconfig/smgl
+/etc/hwd/hwd-no-autoconf:
+	All the 'knoppix' entries change to 'smgl'
+
+/etc/hwd/hwd-no-autoconf:
+	Line 234 fix an syntax error [ ] in the if stament 
+
+
+hwd:
+	The entire package, you need to add the things you want to 
+	autoprobe in your kernel.

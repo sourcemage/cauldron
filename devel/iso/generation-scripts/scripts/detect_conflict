@@ -1,0 +1,53 @@
+#!/bin/sh
+
+# Author : Benoit PAPILLAULT <benoit.papillault@free.fr>
+# Creation : 12/09/2003
+
+# we use $IMAGE if defined, or else work/image
+if [ -z "${IMAGE}" ]; then
+    IMAGE="work/image"
+fi
+echo "using IMAGE=${IMAGE}"
+
+# check for "packages" file
+if [ ! -f "${IMAGE}/var/state/sorcery/packages" ]; then
+    echo "missing /var/state/sorcery/packages";
+    exit -1;
+fi
+
+OIFS="${IFS}"
+IFS=":"
+(while read spell x y version;
+do
+	echo "${spell}-${version}"
+done) < "${IMAGE}/var/state/sorcery/packages" > /tmp/file
+IFS="${OIFS}"
+
+(while read file;
+do
+  if [ ! -f "${IMAGE}/var/log/sorcery/install/${file}" ]; then
+      echo "missing /var/log/sorcery/install/${file}"
+      exit -1;
+  fi
+
+  (while read line;
+  do
+      echo "${file} ${line}"
+  done) < "${IMAGE}/var/log/sorcery/install/${file}"
+done) </tmp/file > /tmp/toto
+
+sort +1 /tmp/toto > /tmp/titi
+
+(while read spell file;
+do
+	if [ -n "${prev_spell}" ]; then
+		if [ "${file}" == "${prev_file}" ]; then
+# we ignore conflict for directories
+			if [ ! -d "${file}" ]; then
+				echo "conflict for ${file} : ${prev_spell} / ${spell}"
+			fi
+		fi
+	fi
+	prev_spell=${spell}
+ 	prev_file=${file}
+done) < /tmp/titi

@@ -1,0 +1,283 @@
+#!/bin/sh
+
+# Author: Benoit PAPILLAULT <benoit.papillault@free.fr>
+# Creation: 17/07/2003
+
+# This script is used to build the initrd.gz file (ramdisk) use by the
+# installer. The resulting file is : work/initrd.gz
+
+# we use $IMAGE if defined, or else work/image-stage3
+if [ -z "${IMAGE}" ]; then
+    IMAGE="work/image-stage3"
+fi
+echo "using IMAGE=${IMAGE}"
+
+# function to strip all binaries
+strip_binaries() {
+
+  DIR="$1"
+  TMP="/tmp/list.$$"
+
+  find "${DIR}" -type f -exec file {} \; \
+    | grep " ELF " \
+    | grep -v "relocatable" \
+    | awk -F ':' '{print $1}' > "${TMP}"
+
+  (while read file;
+   do
+     strip "${file}"
+   done ) < "${TMP}"
+
+  rm "${TMP}"
+}
+
+# umount directories under work/initrd
+
+DIR=`cd work/initrd && pwd`
+cat /proc/mounts | awk '{print $2}' | grep "^${DIR}" | sort -ur |
+while read dir;
+do
+  echo "umounting ${dir}..."
+  umount "${dir}" || exit 1
+done || exit 1
+
+# erase existing directory if any
+
+echo "deleting existing initrd"
+rm -rf work/initrd      || exit 1
+
+# create a new directory
+
+mkdir -p work/initrd
+
+# create /tmp directory
+
+mkdir -p work/initrd/tmp
+chmod a+rwxt work/initrd/tmp
+
+# /mnt & /proc & /devices directories
+mkdir -p work/initrd/mnt/cdrom &&
+mkdir -p work/initrd/mnt/floppy &&
+mkdir -p work/initrd/sys &&
+mkdir -p work/initrd/proc &&
+mkdir -p work/initrd/dev &&
+#mkdir -p work/initrd/dev/shm
+#mkdir -p work/initrd/dev/pts
+
+#cp src/iso_root/MAKEDEV work/initrd/dev &&
+#(cd work/initrd/dev; ./MAKEDEV generic)
+#mknod work/initrd/dev/null c 1 3 &&
+
+# /etc files
+
+mkdir -p work/initrd/etc &&
+cp -p "${IMAGE}/etc/sorcery/dialogrc"       work/initrd/etc
+#cp -p "${IMAGE}/etc/sorcery/config"         work/initrd/etc/sorcery
+#cp -p "${IMAGE}/etc/sorcery/compile_config" work/initrd/etc/sorcery
+
+#mkdir -p work/initrd/etc/sorcery/local
+#cp "${IMAGE}/etc/sorcery/local/config"      work/initrd/etc/sorcery/local
+
+
+# /etc/fstab
+cp src/initrd/fstab work/initrd/etc/fstab
+
+# /etc/ld.so.conf
+echo /lib > work/initrd/etc/ld.so.conf
+
+# we create an empty /etc/mtab and we will use mount -n switch
+#(cd work/initrd/etc; ln -sf ../proc/mounts mtab)
+
+mkdir -p work/initrd/etc &&
+touch work/initrd/etc/mtab
+
+# installer script
+
+mkdir -p work/initrd/sbin &&
+cp src/initrd/smgl.init work/initrd/sbin/smgl.init
+(cd work/initrd;      ln -sf sbin/init linuxrc)
+(cd work/initrd/sbin; ln -sf smgl.init init)
+
+# create devices from a tar.gz
+# cat src/initrd/dev.tar.gz | (cd work/initrd; tar zxf -)
+
+# termcap entry for linux
+mkdir -p work/initrd/usr/share/terminfo/l &&
+cp -a "${IMAGE}/usr/share/terminfo/l/linux" work/initrd/usr/share/terminfo/l
+
+# copy /etc/pcmcia from image
+mkdir -p work/initrd/etc &&
+cp -a "${IMAGE}/etc/pcmcia" work/initrd/etc
+
+# copy binaries and libraries
+
+mkdir -p work/initrd/bin &&
+mkdir -p work/initrd/sbin &&
+for exe in basename cardmgr cat chroot dialog echo env false grep \
+	insmod ls lsmod mkdir modprobe mount nano pivot_root ps rmdir rmmod \
+	touch tr true umount uname sed sh sleep;
+do
+  # get absolute path name
+  chroot "${IMAGE}" which "${exe}" || exit 1
+done |
+while read file;
+do
+  # copy binaries in /bin or /sbin
+  #
+  # some path are harcoded in the kernel, so check for them
+  # /sbin/modprobe, /sbin/hotplug, /sbin/shutdown
+  # /sbin/poweroff, /sbin/critical_overtemp, /sbin/loader
+  #
+  # to avoid harcoded names here too, we follow the path used
+  # on $IMAGE
+  case "${file}" in
+    /sbin/*)
+      cp "${IMAGE}/${file}" work/initrd/sbin
+      ;;
+    *)
+      cp "${IMAGE}/${file}" work/initrd/bin
+      ;;
+  esac &&
+  chroot "${IMAGE}" ldd "${file}" | awk '{print $3}' || exit 1
+done |
+while read lib;
+do
+  # copy libraries
+  real_lib=`chroot "${IMAGE}" readlink -f "${lib}"` &&
+  dir=`dirname "${real_lib}"` &&
+  mkdir -p "work/initrd/${dir}" &&
+  cp -a "${IMAGE}/${real_lib}" "work/initrd/${real_lib}" || exit 1
+done || exit 1
+
+# create correct link under /lib and remove ldconfig next
+cp -a "${IMAGE}/sbin/ldconfig" work/initrd/sbin/ldconfig &&
+chroot work/initrd /sbin/ldconfig &&
+rm work/initrd/sbin/ldconfig
+
+# get the version of the installed kernel
+LINE=`chroot "${IMAGE}" gaze version linux | head -3 | tail -1`
+GRIMOIRE_VERSION=`echo "${LINE}" | awk '{print $4}'`
+VERSION=`echo "${LINE}" | awk '{print $5}'`
+
+# if there is not installed version, try to use the grimoire version
+
+if [ "${VERSION}" = "-" ]; then
+  VERSION="${GRIMOIRE_VERSION}"
+fi
+
+if [ -z "${VERSION}" ]; then
+  echo "linux is missing on image"
+  exit 1
+fi
+
+echo "using ${VERSION} linux kernel modules"
+
+# copy kernel modules
+mkdir -p work/initrd/lib/modules
+(cd "${IMAGE}/lib/modules/"; tar cfl - "${VERSION}" ) \
+    | (cd work/initrd/lib/modules; tar xfp -)
+
+# remove some kernel modules (we mostly keep only drivers needed to
+# access disk (ide, raid, scsi, usb-storage) and CDROM and filesystem
+# (fat, vfat)
+
+(cd work/initrd/lib/modules/*;
+	rm -rf build;
+    rm -rf kernel/arch;
+	rm -rf kernel/crypto;
+    rm -rf kernel/drivers/acpi;
+	rm -rf kernel/drivers/atm;
+	rm -rf kernel/drivers/base;
+	rm -rf kernel/drivers/block/nbd.ko;
+	rm -rf kernel/drivers/block/paride;
+	rm -rf kernel/drivers/block/ps2esdi.ko;
+	rm -rf kernel/drivers/bluetooth;
+	rm -rf kernel/drivers/cdrom/aztcd.ko;
+	rm -rf kernel/drivers/cdrom/cdu31a.ko;
+	rm -rf kernel/drivers/cdrom/cm206.ko;
+	rm -rf kernel/drivers/cdrom/gscd.ko;
+	rm -rf kernel/drivers/cdrom/isp16.ko;
+	rm -rf kernel/drivers/cdrom/mcd.ko;
+	rm -rf kernel/drivers/cdrom/mcdx.ko;
+	rm -rf kernel/drivers/cdrom/optcd.ko;
+	rm -rf kernel/drivers/cdrom/sbpcd.ko;
+	rm -rf kernel/drivers/cdrom/sjcd.ko;
+	rm -rf kernel/drivers/cdrom/sonycd535.ko;
+    rm -rf kernel/drivers/char;
+	rm -rf kernel/drivers/cpufreq;
+	rm -rf kernel/drivers/firmware;
+	rm -rf kernel/drivers/i2c
+	rm -rf kernel/drivers/ide/ide-tape.ko;
+	rm -rf kernel/drivers/ieee1394;
+    rm -rf kernel/drivers/input;
+    rm -rf kernel/drivers/isdn;
+	rm -rf kernel/drivers/media;
+    rm -rf kernel/drivers/message;
+	rm -rf kernel/drivers/misc;
+	rm -rf kernel/drivers/mtd;
+    rm -rf kernel/drivers/net;
+	rm -rf kernel/drivers/parport;
+	rm -rf kernel/drivers/pci;
+	rm -rf kernel/drivers/scsi/pcmcia;
+	rm -rf kernel/drivers/scsi/scsi_debug.ko;
+	rm -rf kernel/drivers/serial;
+	rm -rf kernel/drivers/telephony;
+    rm -rf kernel/drivers/usb;
+	rm -rf kernel/drivers/video;
+	rm -rf kernel/fs/autofs;
+	rm -rf kernel/fs/autofs4;
+	rm -rf kernel/fs/binfmt_aout.ko;
+	rm -rf kernel/fs/binfmt_misc.ko;
+	rm -rf kernel/fs/coda;
+	rm -rf kernel/fs/nls;
+	rm -rf kernel/fs/lockd;
+	rm -rf kernel/fs/ncpfs;
+	rm -rf kernel/fs/nfs;
+	rm -rf kernel/fs/nfsd;
+	rm -rf kernel/fs/smbfs
+	rm -rf kernel/lib/libcrc32*;
+    rm -rf kernel/net;
+	rm -rf kernel/security;
+	rm -rf kernel/sound;
+    rm -rf net;
+)
+
+# temporarily copy /sbin/depmod
+mkdir -p work/initrd/sbin &&
+cp "${IMAGE}/sbin/depmod" work/initrd/sbin &&
+(cd work/initrd/lib/modules; \
+	for version in *;
+	do
+	  (cd ../.. ; chroot . /sbin/depmod -ae "${version}") || exit 1
+	done || exit 1
+) || exit 1 &&
+rm work/initrd/sbin/depmod
+
+strip_binaries work/initrd
+
+# create a file initrd that will be mounted on work/mnt/initrd
+# and where work/initrd will be copied
+
+# warning : whenever you change the size of the ramdisk, you need to
+# change the value of ramdisk_size in isolinux.cfg too. Both values
+# must match!
+
+dd if=/dev/zero of=work/initrd.fs bs=1M count=12
+mke2fs -q -b 1024 -i 1024 -F work/initrd.fs
+
+mkdir -p work/mnt/initrd
+mount -o loop -t ext2 work/initrd.fs work/mnt/initrd
+if ! (cd work/initrd ; tar cfl - . )|(cd work/mnt/initrd ; tar xfp - ); then
+    echo "failed to copy system on a 8MB ramdisk"
+    umount work/mnt/initrd
+    exit -1
+fi
+umount work/mnt/initrd
+
+# -f : overwrite existing initrd.gz
+# -9 : do the best compression method.
+gzip -f -9 work/initrd.fs &&
+mv work/initrd.fs.gz work/initrd.gz
+
+echo "initrd.gz is ready:"
+ls -la work/initrd.gz

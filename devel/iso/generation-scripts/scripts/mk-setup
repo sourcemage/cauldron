@@ -1,0 +1,79 @@
+#!/bin/sh
+
+# Author : Benoit PAPILLAULT <benoit.papillault@free.fr>
+# Creation : 03/06/2003
+
+# creates initial directories from an existing ISO image
+
+if [ $# -ne 1 ]; then
+    echo "usage: $0 smgl.iso"
+    exit -1
+fi
+
+if [ `whoami` != "root" ]; then
+    echo "you must be root";
+    exit -1;
+fi
+
+ISO="$1"
+
+# check for the existence of the file first
+if [ ! -f "${ISO}" ]; then
+    echo "${ISO} does not exist";
+    exit -1;
+fi
+
+# mount the ISO as loopback
+
+mkdir -p work/mnt/iso_root
+if ! mount -o loop "${ISO}" work/mnt/iso_root; then
+    echo "cannot mount ${ISO}"
+    exit -1;
+fi
+
+# extract the ISO root directory
+
+mkdir -p work/iso_root
+( cd work/mnt/iso_root ; tar cfl - . ) | ( cd work/iso_root ; tar xfp - )
+
+INITRD=work/mnt/iso_root/isolinux/initrd
+INITRD_GZ=work/mnt/iso_root/isolinux/initrd.gz
+if [ -f "${INITRD}" ] || [ -f "${INITRD_GZ}" ]; then
+    if [ -f "${INITRD_GZ}" ]; then
+        INITRD=work/initrd.tmp
+        gunzip -c "${INITRD_GZ}" > "${INITRD}"
+    fi
+
+# mount the original initrd as loopback
+    
+    mkdir -p work/mnt/initrd
+    mount -o loop "${INITRD}" work/mnt/initrd
+    
+# extract the initrd directory
+    mkdir -p work/initrd
+    (cd work/mnt/initrd ; tar cfl - . ) | ( cd work/initrd ; tar xfp - )
+    
+# umount the original initrd
+    umount work/mnt/initrd
+    rmdir -p work/mnt/initrd
+
+else
+    echo "no initrd found";
+    umount work/mnt/iso_root
+    exit -1;
+fi
+
+# check for the image.tar.bz2
+if [ ! -f work/mnt/iso_root/image.tar.bz2 ]; then
+    echo "no compressed image found";
+    umount work/mnt/iso_root
+    exit -1;
+fi
+
+# extract the image.tar.bz2
+mkdir -p work/image
+( cd work/image ; tar jxf ../mnt/iso_root/image.tar.bz2)
+
+# umount the original ISO
+umount work/mnt/iso_root
+rmdir -p work/mnt/iso_root
