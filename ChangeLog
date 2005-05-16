@@ -1,5 +1,5 @@
 2005-02-10 Karsten Behrmann <BearPerson@sourcemage.org>
-        * ChangeLog: added before-changelog credits
+	* ChangeLog: added before-changelog credits
 
 2005-01-27 Karsten Behrmann <BearPerson@sourcemage.org>
 	* really everything: moved everything not related
@@ -52,6 +52,585 @@
 2004-12-21 Karsten Behrmann <BearPerson@sourcemage.org>
 	* skeleton/isolinux.cfg: added the vga option, fix bug #7642.
 	* ChangeLog: created
+
+2004-10-26 Benoit PAPILLAULT <benoit.papillault@sourcemage.org>
+	* 0.9.3 x86/PPC ISOs released
+	* Using a 2.6.8.1 kernel
+	* NPTL has been removed
+	* Native support of udev and static /dev
+	* Installs a bootable system
+	* Works better: yaboot/lilo/grub have been tested with or without a
+	  separate /boot partition
+	* All software have been compiled using stable sorcery/grimoire, with
+	  few patches.
+
+2004-09-21 Javier 'de_Moya' Lopez Baeza <JavierLopezBaeza@hotmail.com>
+	* 0.9.2 PPC ISO released
+	* Using a 2.6.8.1 kernel
+	* NPTL
+	* udev
+	* Installs a bootable system
+	* Works better: yabootconfig from the installer works properly
+	  mkreiserfs binary is no more missing on ISO so you can choose to create a
+	  reiserfs partition
+	  More complete keymap selection
+	  You can do a "cast linux" and select 2.6.8.1 kernel version (it wasn't
+	  possible with 2.6.5-rc3-ben0)
+
+2004-07-05 Javier 'de_Moya' Lopez Baeza <JavierLopezBaeza@hotmail.com>
+	* 0.9.1 PPC ISO released
+	* Using a 2.6.5-rc3-ben10 kenel and glibc-2.3.3
+	* Better keymap selection
+	* Works better
+
+2004-04-14 hgg <hgreig@bigpond.net.au>
+	* 20040414 ISO released
+	* smgl.install: fix list_parts and list_raid_parts so double digit
+	  partitions don't cause errors.
+	  Change find_grub_target to make and check for a specific file, or it
+	  "can" detect another SMGL /boot partition.
+
+2004-04-13 hgg <hgreig@bigpond.net.au>
+	* 20040413 ISO released
+	* uses devel sorcery (only devel has latest INSTALL_ROOT, CROSS_INSTALL
+	  fixes) users not wanting devel, should run sorcery and choose stable from
+	  "Option" -> "Sorcery Branch"
+	* isolinux boot screen updated and changed, default is 800x600 framebuffer
+	  console, low resolution (non-framebuffer) mode availableby typing
+	  "lowres", read the boot help for how to get other resolutions
+	* initrd fixed to autodetect the cdrom it booted from and allow root
+	  selection for rescue mode and then correct pivot_root function.
+	  (thanks to Wolfgang "Worf" Scheicher)
+	* /etc, /root, /var/lib/nfs, /var/log made writable to installer now that
+	  the initrd functions properly. (recursive thanks to Worf still)
+	* udev and sysfsutils added to 2.6.5 version (thanks to
+	  Arwed "alleycat" von Merkatz for his udev work) selection of udev or
+	  static during install (for 2.6.5 devfs is not included/supported)
+	* now that 2.6 uses udev, the code I added to check if entries in
+	  /etc/fstab were symlinks has been removed, which fixes
+	  http://bugs.sourcemage.org/show_bug.cgi?id=6338
+	* netconf updated to fix bug with module names
+	  http://bugs.sourcemage.org/show_bug.cgi?id=6523
+	* I was overzealous in trimming 260MB kernel sources down to 20+ for the
+	  includes stub installed with the default kernel.
+	  http://bugs.sourcemage.org/show_bug.cgi?id=6523
+	* general clean up of code, hints and comments, thanks to Ladislav Hagara
+	  ( "lace" ) http://bugs.sourcemage.org/show_bug.cgi?id=6411
+	* ppp and pppoe and wireless_tools now in iso_root
+	  http://bugs.sourcemage.org/show_bug.cgi?id=6321
+	* which now in iso_root http://bugs.sourcemage.org/show_bug.cgi?id=6320
+	* partition naming should now show partitions as Type "unknown" if the size
+	  and type check fails http://bugs.sourcemage.org/show_bug.cgi?id=6542
+	* vim added as optional install, jed and slang removed from iso_root and
+	  only the selected editor installed
+	  http://bugs.sourcemage.org/show_bug.cgi?id=6531
+	* reworded hint per mounting and formatting
+	  http://bugs.sourcemage.org/show_bug.cgi?id=6468
+	* bug in restart function, deleting raidtab before stopping and unmounting
+	  the running arrays. http://bugs.sourcemage.org/show_bug.cgi?id=6309
+	* only used fs and networks spells now installed, final closure of
+	  http://bugs.sourcemage.org/show_bug.cgi?id=4626
+	* ppp configuration errors fixed
+	  http://bugs.sourcemage.org/show_bug.cgi?id=3491
+	* grub added to installer, choice of lilo or grub now for x86 installs and
+	  simple query if wanted installed to MBR or not (editing no longer
+	  necessary, is still possible though)
+	  http://bugs.sourcemage.org/show_bug.cgi?id=2184
+	* removed the sis drm module from the 2.4.25 kernel
+	  http://bugs.sourcemage.org/show_bug.cgi?id=5727
+	* dialog usage of --defaultno fixed in installer so anything that needs
+	  confirmation now defaults to the no button (much safer and more convenient
+	  for minimum install)
+	* image.tar.bz2 is dead! long live /var/cache/sorcery/* !
+	  http://bugs.sourcemage.org/show_bug.cgi?id=3497
+	  Installer rewritten to only force installation of the minimum necessary, and
+	  give a selection of optional spells, then install minimum and optional
+	  spells and their depends.
+	* The installer order has been changed, transfer of spells now happens after
+	  configuration and the configuration is guided, after each stage is
+	  successfully completed, the installer will highlight the next stage,
+	  leaving the user to only press enter.
+	* installer uses sorcery's CROSS_INSTALL to setup sorcery on the new system
+	  http://bugs.sourcemage.org/show_bug.cgi?id=6329
+	* The configuration happens after mounting of the filesystems (and swap), and
+	  while configuring, the installer is copying files as a background process.
+	  Sorcery, the stable grimoire, the sources on the ISO, some minimum
+	  binaries/libraries needed for the actual install, plus any files that
+	  sorcery doesn't currently track (POST_INSTALL created files and/or files
+	  sorcery lost "track" of when the spell was rebuilt during the ISO
+	  manufacture) are copied in the background process after a prompt is answered
+	  when setting up the box's timezone.
+	* install.guide updated to show the new installer's flow
+
+2004-04-12 hgg <hgreig@bigpond.net.au>
+	* kernel.help: moved into a separate file that the installer reads, it can
+	  be updated without affecting installer now.
+	* smgl.install: simple hack if uptimed installed, and make maildir.
+	  Made many menus radiolists so the choice was selectable without hitting
+	  enter and closing the screen. Rerun grub if reconfiguring, so it can be
+	  loaded to MBR if that option changes
+
+2004-04-09 hgg <hgreig@bigpond.net.au>
+	* smgl.install: make some menus radiolist, so you can toggle selection on
+	  and off reordered grub lilo stuff, removed some unnecessary functions,
+	  slightly changed the partitioning and raid hints for bootloader. check
+	  for deps of EDITOR and install REAL_ED (onle nano and elvis in iso_root
+	  so EDITOR and REAL_ED are different altered kernel compile hint.
+	* bootmisc: the script with commands to free initrd memory for the installer
+
+2004-04-07 hgg <hgreig@bigpond.net.au>
+	* smgl.install: typos corrected, &&'s used to stop continuation when menu is
+	  escaped grub and lilo fixes, udev fixes, untracked file fixes, change menu
+	  item for kernel so it is escapable/cancellable; architecture, optimization
+	  menus fixed
+
+2004-04-07 hgg <hgreig@bigpond.net.au>
+	* srcmage.txt: the txt file read by isolinux
+	* isolinux.cfg: isolinux config
+	* f1.txt: graphical modes readable from isolinux prompt
+	* smgl.init: changes for 2.6 kernel modules
+	* mountall.sh: Updated to work with Arweds %DEV runlevel
+	* config-2.?.X: moving 2.4.25 and 2.6.5 configs into the spell dir
+	* smgl.install: mucho bueno changes, probably too many for a single
+	  submission, but ... ?
+	  Remove image.tar.bz2.
+	  Add two lists (etc/installerdata/*-list), one with defaults and second
+	  with list of optional spells,all spells (except for some untracked files)
+	  installed from /var/cache/sorcery/*.
+	  udev or static dev query (2.6 only).
+	  choice of lilo or grub added to installer, dialog query of whether to
+	  install  $bootloader to MBR or not.
+	  Reordered entire installer to install spells after configutation.
+	  Run all configuration after mounting drives, but before install,
+	  setup_target installs sorcery, makes static /dev entries and copies
+	  untracked files in the background while the user continues configuring.
+	  Fix ppp and pppoe configuration, offer to start all configurable
+	  interfaces, after configuring them.
+	  Copy /etc/skel/* to /root/* of the new install.
+	  Change list_parts (and list_raid_parts) so if finding size and type fails
+	  it continues instead of failing.
+	  Make /dev/pts and /dev/shm (in case static /dev is chosen).
+	  Move the raidtab from /tmp to /etc, functions and menu to select services
+	  to start at boot (the only post install item).
+	  Add vim to list of editors, but for duration of install alias vim and jed
+	  to elvis.
+	  Rename many, many variables from LINE and LIST (etc) to be more
+	  reflective of their job.
+	  More debugging added, some refinement.
+
+2004-04-02 hgg <hgreig@bigpond.net.au>
+	* smgl.init: pivot_root fixes, making writable dirs and new cdrom scan
+	  function to find the installer
+
+2004-04-01 Kevin Dahan <unet@sourcemage.org>
+	* added alternate-smgl.init with hwd
+
+2004-03-25 hgg <hgreig@bigpond.net.au>
+	* smgl.install: another string change for bug 6411
+
+2004-03-24 hgg <hgreig@bigpond.net.au>
+	* smgl.install: some polishing touches thanks to lace (bug #6411)
+	* smgl.install: remove extended partitions from the listings, add VERSION
+	  and change location of the installation record file
+
+2004-03-19 hgg <hgreig@bigpond.net.au>
+	* smgl.install: basic debugging, allows running through install without
+	  running the destructive commands
+	* smgl.install: forget the ${TARGET} prefix on a command, and netconf fix
+	* smgl.install: DEBUG checks reversed in two cases, move some debug
+	  reporting out so it always gets recorded
+
+2004-03-08 hgg <hgreig@bigpond.net.au>
+	* 2.4.25 config I last uploaded was wrong one. This one was used for 0.9.2
+
+2004-03-05 hgg <hgreig@bigpond.net.au>
+	* 0.9.2 x86 ISO released
+	* smgl.install: few polishing touches
+	* smgl.init*: few polishing touches
+	* ISO still based on previous versions as ISO spell is nowhere near
+	  finished, but patch, diff, pcmcia-cs and lvm have been added to the
+	  iso_root, future version will have better rescue capabilities.
+	* 2.6.3 kernel available as a courtesy to those wanting a rescue cd for
+	  their 2.6.X nptl systems.
+	* cardmgr, all pcmcia modules and /etc/pcmcia config added to initrd (both
+	  kernel versions) to hopefully allow pcmcia cdrom usage. No initrd menu
+	  integration yet, but it is possible to load modules and have cardmgr
+	  initialise devices.
+	  ( bug http://bugs.sourcemage.org/show_bug.cgi?id=1743 )
+	* static device generation in /dev after image transfer
+	  ( bug http://bugs.sourcemage.org/show_bug.cgi?id=6104 )
+	* addition of lvm binaries to iso_root. no installer menu integration, yet,
+	  but a request was made to atleast get the binaries into the iso_root.
+	  ( bug http://bugs.sourcemage.org/show_bug.cgi?id=6266 )
+	* restart function added to installer, so if a mistake is made, you no
+	  longer need to reboot
+	  ( bug http://bugs.sourcemage.org/show_bug.cgi?id=3828 )
+	* automatic software RAID generation from the menu
+	  ( bug http://bugs.sourcemage.org/show_bug.cgi?id=3562 )
+	* /var/tmp directory installed and will no longer be a symlink to /tmp
+	  ( bug http://bugs.sourcemage.org/show_bug.cgi?id=5707 )
+	* addition of item to select number of make jobs during install
+	  ( bug http://bugs.sourcemage.org/show_bug.cgi?id=2269)
+	* swapfile generation moved out of guided menu, but  prompted for if no
+	  swap found immediately before transferring the image. It is still
+	  possible to cancel this and install with no swapfile or swap partition.
+	  ( bug http://bugs.sourcemage.org/show_bug.cgi?id=5607)
+	* updated to latest netconf
+	* changed partition and disk listings to show partition type and size in
+	  blocks
+	* considerable uncompressed size decrease made by removing almost 30MB of
+	  unused locale and gconv files
+	* menus adjusted to show all entries in existing window
+	* grub sources added to ISO, I have no experience with grub so haven't
+	  integrated it's choice into the menu yet, future versions will have choice
+	  of grub or lilo as bootloader.
+	* reworked the "optional kernel compile" option, configuring the kernel is
+	  no longer optional. Now a screen gives a choice of compiling a kernel or
+	  copying the kernel used to boot the ISO. If "Default" is chosen the
+	  kernel is copied and a set of configured includes unpacked to
+	  /usr/src/linux-`uname -r` if "Compile" is chosen then normal cast -c
+	  linux is run.
+	* install.guide has been updated for the new options and moved to a generic
+	  /etc/installerdata directory in preparation for the ISO spell. Many thanks
+	  to Seth for his work on that file.
+
+2004-03-03 hgg <hgreig@bigpond.net.au>
+	* smgl.install: tested and works for both 2.4 series and 2.6 series
+	* smgl.init-4_2.6: 2.6 version of the initrd's linuxrc needed a few tweaks
+	* MAKEDEV: actually add the script
+
+2004-02-29 hgg <hgreig@bigpond.net.au>
+	* MAKEDEV: add a script and a few lines to installer to generate static
+	  /dev entries
+
+2004-02-28 hgg <hgreig@bigpond.net.au>
+	* added 2.4.25 and 2.6.3 configs
+
+2004-02-25 hgg <hgreig@bigpond.net.au>
+	* lots of files: moved into the kickstart-spell
+	* config-2.6.1: added for Worf
+	* smgl.install: added make jobs configuration to the optimisation item,
+	  test and remove raidtools, show block counts for partitions in the menu,
+	  remove spaces from the partition lines, add some hints here and there
+	  about possible actions within that screen. Change <cancel> to <Continue>
+	  for first nls menu. modify uname output for the lilo generation
+
+2004-02-23 hgg <hgreig@bigpond.net.au>
+	* mountall.sh-0.9.1: added the 0.9.1 version of this script
+	* inittab: add this, not significantly different to the grimoire
+	  version, but will save me generating it
+	* /etc/*: add the raidlevel data and move things around so a cp will
+	  work better
+
+2004-02-22 hgg <hgreig@bigpond.net.au>
+	* smgl.install: need to test it but RAID should be functional from the menu
+
+2004-02-20 hgg <hgreig@bigpond.net.au>
+	* smgl.install: RAID 90% added
+
+2004-02-19 hgg <hgreig@bigpond.net.au>
+	* smgl.install: add menu item for restarting install from scratch and the
+	  restart_install function (tested and working)
+	* smgl.install: correct some typos
+	* smgl.install: begin adding code for raid device generation
+
+2004-02-18 hgg <hgreig@bigpond.net.au>
+	* ALL: add some files not generated by any spell, and some that differ
+	  from regular files (for iso_root)
+
+2004-02-14 hgg <hgreig@bigpond.net.au>
+	* config-2.4.24: updated to make some stuff statically.
+	* smgl.install-using*blablabla: remove, was a backup only.
+	* smgl.install: change swap + RAM requirements to recommendations.
+	* smgl.install: change swapfile generation to only be prompted if a
+	  dedicated swap partition isn't found when system transfer starts
+	* kickstart-spell/*: some files needed to kickstart an installation.
+
+2004-02-05 hgg <hgreig@bigpond.net.au>
+	* 0.9.1 ISO released
+	* smgl.install
+	* move fs dispelling to immediately post image transfer
+	* move passwd changing similarly
+	* add dispelling prompts for ppp and rp-pppoe
+	* comment out cast of rp-pppoe now pppoe is included in image and add
+	  chroot_cmd adsl-setup for pppoe configuration, amazed it was left broken
+	  for so long
+	* unset WASTAGE VAR incase someone chooses the wrong menu, and also check
+	  it isn't an empty var, or dispel just opens less and waits for input.
+	* sorcery 1.7.5
+	* updated stable grimoire since 0.9.0 release
+	* kernel 2.4.24 with XFS patches
+	* Static support for USB input devices in installer kernel
+	* initrd bug fixed http://bugs.sourcemage.org/show_bug.cgi?id=5628
+	* default kernel includes nfs server and client modules, nfs-utils needs
+	  casting but no kernel recompile necessary
+	  http://bugs.sourcemage.org/show_bug.cgi?id=4614
+	* pcmcia bus drivers compiled into installer kernel and pcmcia-ide/cdrom
+	  drivers in initrd http://bugs.sourcemage.org/show_bug.cgi?id=1743
+	* Added choice of "no" system logger if wanted, gives final closure of
+	  http://bugs.sourcemage.org/show_bug.cgi?id=4627
+	* /etc/login.defs now supports passwords longer than 8 characters and md5
+	  encryption http://bugs.sourcemage.org/show_bug.cgi?id=5507
+	* /etc/services file corrected
+	  http://bugs.sourcemage.org/show_bug.cgi?id=5635
+	* moved root password choice and dispelling of unwanted fs spells to
+	  immediately post the image transfer
+	  http://bugs.sourcemage.org/show_bug.cgi?id=5630
+	* Added dispelling prompts for ppp and rp-pppoe
+	  http://bugs.sourcemage.org/show_bug.cgi?id=4626
+	* removed command to cast rp-pppoe (already installed by default) when
+	  pppoe networking selected, instead it now runs adsl-setup (should solve
+	  this bug) http://bugs.sourcemage.org/show_bug.cgi?id=5597
+	* removed mounting of /dev from /etc/fstab, added tmpfs mounting of
+	  /var/run and /var/lock. The previous bug for this was misfiled, it is an
+	  issue with mountall.sh script and will be addressed shortly and a new
+	  version of init.d spell will be released
+	  http://bugs.sourcemage.org/show_bug.cgi?id=3597
+	* Cleaner base system after install, devel section spells that have no
+	  bearing on a compile of the kernel during install, or networking sources,
+	  have been removed sample raidtab file included as /etc/raidtab.bak,
+	  simply shell out ( or vt switch), copy it to /tmp, edit it as per simple
+	  instructions within the file, run mkraid --configfile /tmp/raidtab.bak
+	  <device>, then raidstart --configfile /tmp/raidtab.bak <device>.
+
+2004-01-30 Laurent Wandrebeck <low@mren2.univ-littoral.fr>
+	* 0.9.0 ISO released
+	* Sorcery 1.7.5
+	* Stable grimoire (20040128)
+	* Linux 2.4.24 with XFS patches
+	* You can now choose your system logger (sysklogd,metalog,syslog-ng)
+	* Added root password choice at the end of installation (quick'n'dirty)
+	* CPU selection for compilation optimization now works
+	* Many modules available - don't forget to recompile if scsi is needed to
+	  boot
+	* Marled swapfile creation as optional
+	* swapfile now defaults to /.swapfile
+	* Cleaner base system after install (less unused spells installed)
+	* added entries for cdrom and floppy in /etc/fstab (/mnt/floppy and
+	  /mnt/cdrom)
+	* ISO size: 200 MB. Packed ISO size: 139 MB. MD5 files provided for .iso
+	  and .iso.bz2
+	* feedback needed on raid, wireless, pcmcia. tools present, no menu (yet)
+
+2004-01-26 hgg <hgreig@bigpond.net.au>
+	* added missing # to editor.sh and lc.sh script generation
+
+2004-01-22 hgg <hgreig@bigpond.net.au>
+	* added smgl.install-using-proc-partitions-and-etc-profile.d-dir which
+	  starts using /proc/partitions for partitions and disks (tested with a
+	  raid install today) also puts EDITOR and LANG into .sh files in the
+	  /etc/profile.d/ directory so the test spell can be integrated into
+	  stable soon.
+	* I specifically made this a second file because I was worried Unet
+	  might be working on the other one (I am happy to merge/ change if he has)
+
+2004-01-20 hgg <hgreig@bigpond.net.au>
+	* add smgl.install from 0.8.1 iso I made
+	* add the config for the kernel I built, has more options turned on as
+	  modules and some special features like raid fasttrak for promise
+	  controllers that nee it turned on to use disks the bios can't see
+
+2004-01-16 hgg <hgreig@bigpond.net.au>
+	* 0.8.1 x86 ISO released
+	* latest stable grimoire (as of yesterday)
+	* kernel 2.4.24 with XFS patches, more kernel modules built (agpgart, drm,
+	  sound etc so the supplied kernel can actually be used for more than
+	  bootstrapping)
+	* simpleinit-msb 1.2 (buffer overflow bugfix)
+	* netkit-ping (ping binary) added to both install and installer cd
+	* dhcpcd binary added to installer cd
+	* perl 5.8.2
+	* xdelta, glib removed from install and sorcery options adjusted to suit
+	  ed, parted removed (parted not needed after installation and already 3
+	  editors installed)
+	* unused networking spells dispelled when ethernet chosen
+	* architecture,optimisation menu bug merged from Unet's ppc iso and use_gcc2    
+	  error removed
+
+2004-01-11 Kevin Dahan <unet@sourcemage.org>
+	* 0.8.1 PPC ISO released
+	* Using a 2.4.24-ben1 + XFS patched kernel, there should be no more problem
+	  using either ext2/ext3/reiserfs/xfs (all tested on my powerbook)
+	* Not subject to the recent simpleinit bug.
+	* yaboot installer code is better: asks questions about your OpenFirmware
+	  (OF) device (in most cases, it is the default, hd:2). If the yaboot.conf
+	  generated should be ok in most cases, I *strongly* recommend checking the
+	  yaboot.conf file afterwards, particularly the "partition" item, which
+	  should point to your /.
+	* keymap is working due to the use of a -ben kernel. hwclock is still *not*
+	  functional.
+
+2004-01-03 Kevin Dahan <unet@sourcemage.org>
+	* 0.8.0 PPC ISO released
+	* Everything works like the x86 version, EXCEPT:
+	* No XFS support (as this cause problems with the ppc kernel),
+	* You _MUST_ use either ext2 or ext3 as your / (you can, of course, use a
+	  reiserfs or jfs for /home or what you want) - this is a yaboot bug.
+	* There's some problem with keymap.sh (at least on my powerbook), so I
+	  suggest *not* to activate it,
+	* Same goes for hwclock.sh - both are deactivated by default.$
+	* This iso is synced to 0.8 x86 version with current stable grimoire.
+
+2003-12-20 Benoit PAPILLAULT <benoit.papillault@sourcemage.org> and Laurent Wandrebeck <low@mren2.univ-littoral.fr>
+	* 0.8.0 ISO released
+	* sorcery 1.6 is used (no more lockexec)
+	* latest stable grimoire
+	* kernel 2.4.23 with XFS patches
+	* raid support, wifi, lvm added (all untested)...feedback needed
+	* JFS support added while installing
+	* plain WIP help file during install
+	* depends for eagle driver are available now on base system
+
+2003-12-09 Benoit PAPILLAULT <benoit.papillault@sourcemage.org> and Laurent WANDREBECK <lwandrebeck@sourcemage.org>
+	* 0.8.0-pre2 ISO released
+	* sorcery 1.5.1 is used (no more lockexec)
+	* kernel 2.4.23 with XFS patches (raid support, wifi...to be tested)
+	* JFS support added (works now thx Seth:)
+	* A new category appeared in install menu, for help - plain WIP help file
+	  is not present (yet) should work better than pre1 (remember i'm only
+	  temporary ISO guru, so don't hurt me ;))
+
+2003-11-26 Benoit PAPILLAULT <benoit.papillault@sourcemage.org> and Laurent WANDREBECK <lwandrebeck@sourcemage.org>
+	* 0.8.0-pre1 ISO released
+	* biggest change is that gcc 3.3.2 is used.
+	* sorcery 1.5 is used (which is the latest stable version)
+	* isolinux 2.06 is used to boot the ISO.
+	* kernel 2.4.22 with XFS patches (lots of modules, still some to add)
+	* JFS support added (still broken, work in progress)
+
+2003-10-25 Benoit PAPILLAULT <benoit.papillault@sourcemage.org>
+	* 0.7.1 ISO released
+	* biggest change is that devfs is now used on /dev and all necessary changes
+	  have been made and tested
+	* sorcery 1.4 is used (which is the latest stable version)
+	* added /mnt/cdrom and /mnt/floppy mount points to image, iso_root, initrd
+	* sources for driver of several ADSL modem have been added, but you still
+	  need to compile and install them
+	* there are nearly no alien files
+	* <Cancel> menus during installation now work
+
+2003-09-26 Benoit PAPILLAULT <benoit.papillault@sourcemage.org>
+	* 0.7.0 ISO released (seemingly the same as 0.7.0-pre2)
+	* 0.7.0-pre2 ISO released
+	* nearly no alien files (glibc, perl, installwatch, init.d spell have been
+	* timezone selection is now working
+	* unresolved symbols in pcmcia-cs are corrected.
+	* remove some un-needed spells (strace, mktemp, uudeview, dump, termpcap,
+	  busybox)
+	* KEYMAP in /etc/sysconfig/keymap now defaults to "us"
+	* kernel compilation has been restored at install time and is optional
+	  patched)
+
+2003-09-11 Benoit PAPILLAULT <benoit.papillault@sourcemage.org>
+	* 0.7.0-pre1 ISO released
+	* major change: build only from sources based on stable grimoire
+	* use simpleinit-msb/init.d instead of sysvinit
+	* is less than 200 MB
+	* initrd use glibc 2.3.2
+	* initrd menu has been rewritten to ease module selection
+	* initrd memory is corrected freed after use (8MB memory gain)
+	* use kernel 2.4.21 + XFS patch
+	* use gcc 3.2.3
+	* corrected netconf bugs (tested only with Ethernet)
+
+2003-06-16 Benoit PAPILLAULT <benoit.papillault@sourcemage.org> and Laurent WANDREBECK <lwandrebeck@sourcemage.org>
+	* 0.6.0 ISO released (same as 0.6.0-test3)
+
+2003-06-12 Benoit PAPILLAULT <benoit.papillault@sourcemage.org> and Laurent WANDREBECK <lwandrebeck@sourcemage.org>
+	* 0.6.0-test3 ISO released
+	* modified /usr/sbin/sgl.install to correct bug
+	* correct bug #1074 (wrong /usr/src/linux/include
+
+2003-06-06 Benoit PAPILLAULT <benoit.papillault@sourcemage.org> and Laurent WANDREBECK <lwandrebeck@sourcemage.org>
+	* 0.6.0-test2 ISO released
+	* removed kernel compilation, thus saving time
+	* used a compressed initrd (initial ramdisk) thus reducing the ISO size
+	  and enabling the use of initrd on 16Mb machines (correcting bug #3479)
+	* added kernel support for FastTrack? RAID as module
+	* added kernel support for Old Adaptec AIC7xxx as module (bug #2274)
+	* added kernel support for RTC as module
+	* added kernel support for VFAT as module
+	* added kernel support for USB drive as module
+
+2003-05-28 Benoit PAPILLAULT <benoit.papillault@sourcemage.org> and Laurent WANDREBECK <lwandrebeck@sourcemage.org>
+	* 0.6.0-test1 ISO released
+	* First test release of new iso building process:
+	* added kernel support for machines with math coprocessor
+	* added support for XFS filesystem, available at install time
+	* added support for Eci modem (ADSL USB)
+	* added support for Alcatel SpeedTouch? modem (ADSL USB)
+	* updated sorcery
+	* updated grimoire
+
+(insert missing ChangeLogs here...)
+
+2002-11-05 Adam Clark <adamsgl@dhbit.ca>
+	* Beta1
+	* Test RC1 grimoire
+	* Sorcery > 0.9.0.1
+	* gcc 3.2, glibc 2.3.1
+	* i386 binaries
+	* ISO runs on 2.4.19-xfs kernel
+	* more modular kernel for install
+	* slightly smaller ISO, package-wise. Still fully useable as a rescue CD.
+	* Fits on a mini (180MB) CD-ROM
+
+2002-07-01 Adam Clark <adamsgl@dhbit.ca>
+	* A brand new test ISO has just been uploaded to the usual spot:
+	  http://smgl.bccs.net/adam-test-isos - it's the Canada Day release! woohoo!
+	  ;-)
+	* What's more to cheer about is that all but 2 spells of the base-system
+	  have been compiled with gcc3.  Sorcery has been updated to 0.1.7, and
+	  many spells that are marked "USEGCC2" in the devel grimoire were
+	  compiled with gcc3 to make the base system more gcc3 complete.
+	* More information is on the download page, and please read the install
+	  notes so that you can keep a new system mostly-gcc3 even after a rebuild.
+
+2002-06-30 Adam Clark <adamsgl@dhbit.ca>
+	* Finally... *finally* have fixed the /dev perm problems.  It's my own
+	  stupid fault, too... Thank god we haven't called any of these ISOs
+	  "production releases".  =)
+	* Not too much else to report about it other than sorcery/grimoire were
+	  updated to earlier in the day (no sorcery 0.1.7), and this will probably
+	  be the last one before my test ISOs go gcc3.
+
+(insert missing ChangeLogs here...)
+
+2002-05-28 Adam Clark <adamsgl@dhbit.ca> and Wyatt Draggoo <wyatt@draggoo.com>
+	* Whaddaya know, a bunch of work between Wyatt and myself, and voila, the
+	  ISO gets into a bit better shape!
+	* There's now a -2 test ISO for today, and it's smaller than -1.
+
+2002-05-27 Adam Clark <adamsgl@dhbit.ca> and Wyatt Draggoo <wyatt@draggoo.com>
+	* Had a chance to do a bunch of work on the test ISO today, and now we've
+	  got an ISO that's up-to-date and has been tested to work.
+
+2002-05-07 Adam Clark <adamsgl@dhbit.ca>
+	* I decided to get a bunch of things with my test ISO cleaned up, and the
+	  results of a little bit of work are now available at:
+	  http://smgl.bccs.net/adam-test-isos
+	* I've also posted the changes that were made since the 0416-2 ISO so that
+	  everyone's clear about what has been done.
+
+2002-04-23 Adam Clark <adamsgl@dhbit.ca>
+	* In an effort to learn a little bit about the install ISO and to see if I
+	  could put things together perhaps to help the SGL ISO effort out, I came
+	  up with a muchly updated ISO, which surprisingly enough, worked on my own
+	  system.
+	* This new ISO uses kernel 2.4.18, sorcery and the grimoire are up-to-date
+	  as of April 16, the CD installs from a bzip2'ed tarball instead of direct
+	  file copying (to save on all the CD-ROM head thrashing), "sorcery
+	  rebuild" shouldn't have any problems currently, and hopefully the
+	  permission issues in /dev are resolved.
+	* Oh, and while I did change around the scripts to say
+	  "Source Mage GNU/Linux", don't take too much into that yet... I was just
+	  going by the website vote.
+	* Lastly, I did contact Wyatt about this as soon as I had made the ISO on
+	  the 16th, yet I haven't heard from him or seen him online since then - I
+	  did want to make it known that I wasn't trying to create anything to
+	  'compete' or otherwise distract from the official SGL ISO... I just did
+	  a few things to freshen up the ISO a bit and if people want a copy of it,
+	  well, great.  =)
 
 ===========================================================
 People who have contributed before this ChangeLog was kept:
