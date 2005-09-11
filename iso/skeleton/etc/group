@@ -1,0 +1,13 @@
+root:x:0:
+bin:x:1:
+tty:x:10:
+sys:x:11:
+kmem:x:12:
+ppp:x:13:
+lp:x:14:
+floppy:x:15:
+disk:x:16:
+audio:x:17:
+wheel:x:25:
+users:x:1000:
+nogroup:x:65534:

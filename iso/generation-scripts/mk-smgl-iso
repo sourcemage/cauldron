@@ -1,0 +1,10 @@
+#!/bin/bash
+. ${0%/*}/config
+echo "Warning: This is work in progress. Currently untested" 2>/dev/null
+
+echo "checking for spells required for the generation process..."
+while read -u 3 spell ; do
+  gaze installed $spell || cast $spell
+done 3<$STATE_DIR/smgl.genspells
+./mkinitrd
+./mkiso

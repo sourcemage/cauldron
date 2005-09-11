@@ -1,0 +1,4 @@
+image=__BOOTLOC__/vmlinux-__KVER__
+    label=linux-__KVER__
+    read-only
+

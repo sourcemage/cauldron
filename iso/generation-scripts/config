@@ -1,0 +1,33 @@
+#!/bin/bash
+SCRIPTDIR=${0%/*}
+if [[ "${SCRIPTDIR:0:1}" != "/" ]] ;then
+  SCRIPTDIR=$(pwd)/$SCRIPTDIR # turn into absolute path
+fi
+# all paths should be absolute
+CACHE_DIR=/var/cache/sorcery
+STATE_DIR=$SCRIPTDIR/../data
+SKELETON=$SCRIPTDIR/../skeleton
+
+ISO_BRANCH=${ISO_BRANCH:-devel}
+ARCH=${ARCH:-i486-pc-linux-gnu}
+ISO_ARCH=${ISO_ARCH:-x86}
+  # generic i386 and family
+SVERSION=${SVERSION:-stable}
+GVERSION=${GVERSION:-test}
+KVERSION=${KVERSION:-"2.6"}
+KERNEL_VERSION=${KERNEL_VERSION:-2.6.13}
+if [[ $KERNEL_VERSION == *.*.*.* ]] ;then
+  KERNEL_MVERSION=${KERNEL_MVERSION:-${KERNEL_VERSION%.*}}
+  KERNEL_PATCHES=${KERNEL_PATCHES:-"patch-$KERNEL_VERSION"}
+else
+  KERNEL_MVERSION=${KERNEL_MVERSION:-$KERNEL_VERSION}
+  # leave KERNEL_PATCHES unset if unset, otherwise don't change.
+fi
+ISO_VERSION=${ISO_VERSION:-devel-$(date -u +%Y%m%d%H)}
+IGNORE_FATAL=${IGNORE_FATAL:-yes}
+
+INITRDROOT=${INITRDROOT:-/theinitrd}
+ISO_DIR=${ISO_DIR:-/iso-root} # kept around for easy debugging
+
+ISO_STATE_DIR=$ISO_DIR/var/lib/smgl.install
+. $SCRIPTDIR/misc

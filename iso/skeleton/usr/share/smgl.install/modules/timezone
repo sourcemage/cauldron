@@ -1,0 +1,80 @@
+#!/bin/bash
+
+#timezone selection stuff
+
+function timezone_screen() {
+  tz_menu
+}
+
+
+tz_menu()  {
+
+  local selectedTZ="/usr/share/zoneinfo"
+
+  while [ -d $selectedTZ ] ;do
+    if [[ "$selectedTZ" == "/usr/share/zoneinfo" ]] ;then
+      selectedTZ=$selectedTZ/$( run_dialog --title "Time Zone Selection Menu" \
+        --menu "Select a timezone or a directory to look in"  \
+        0 60 0 $(tz_show $selectedTZ)                             ) ||
+      return 1 # fail out when the dialog is aborted
+    else # Don't show ".." if we're at top level
+      local answer
+      answer=$( run_dialog --title "Time Zone Selection Menu"    \
+        --menu "Select timezone or directory (we're in $selectedTZ)" \
+        0 70 0 ".." "Up one level" $(tz_show $selectedTZ)         ) ||
+      return 1
+      if [[ "$answer" == ".." ]] ;then
+        selectedTZ=${selectedTZ%/*}
+      else
+        selectedTZ=$selectedTZ/$answer
+      fi
+    fi
+  done
+
+  if ! [ -f "$selectedTZ" ]; then
+    debug_log "timezone" "got invalid time zone $selectedTZ"
+    return 2 # This should _never_ happen
+  fi
+  # if we've reached this point, we probably have a valid time zone
+  debug_log "timezone" "selected time zone $selectedTZ"
+
+  # configure the local time zone
+  ln  -sf  "$selectedTZ" "${FINALFILES}/etc/localtime"
+  # and /etc/ is writable now too
+  ln  -sf  "$selectedTZ" /etc/localtime
+  fill_dependency timezone "$selectedTZ"
+
+  if run_dialog                    \
+       --title "GMT or local time" \
+       --yes-label "local"         \
+       --no-label  "GMT"           \
+       --yesno "Should the hardware clock store time in universal time
+(UTC/GMT) or in local time? In universal it doesn't have
+to be re-set for dailight saving time, but it messes up
+broken OS's like MS Windows."      \
+        8 60                 ;then
+    debug_log "timezone" "selected local time in hwclock"
+    sed -i 's/^UTC=.*$/UTC=no/' ${FINALFILES}/etc/sysconfig/hwclock
+  else
+    debug_log "timezone" "selected GMT in hwclock"
+    sed -i 's/^UTC=.*$/UTC=yes/' ${FINALFILES}/etc/sysconfig/hwclock
+  fi
+}
+
+tz_show()  {
+  #TODO: turn this into one from the lists
+
+  local line
+  ls -1 $1 |
+  while read line ; do # SUBSHELL
+    if  [  -d  $1/$line  ] ;then
+      echo $line
+      echo "Directory"
+    else
+      if [[ "$(file -b $1/$line)" == "timezone data" ]] ;then
+        echo $line
+        echo "Timezone"
+      fi
+    fi
+  done
+}

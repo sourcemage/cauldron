@@ -1,0 +1,213 @@
+#!/bin/bash
+
+# 10 so it gets sources first, fwiw
+#this file contains all the functions that might be needed by other
+# modules
+#common functions
+
+# wrapper for dialog, should eventually replace the ugly ${DIALOG[*]}
+function run_dialog() {
+  echo "Waiting to enable you to see error messages and stuff" >&2
+  sleep 2 #enough to hit Scroll Lock
+  debug_log "common" "run_dialog called with the following arguments:"
+  local arg
+  for arg in "$@" ;do
+    debug_log "dialog_param" "$arg"
+  done
+  "${DIALOG[@]}" "$@"
+  # TODO: Was too lazy to really make this do something, eventually
+  #       should define all the dialog stuff here
+}
+
+# press_enter: display a single line and wait for the user to press enter
+# SECTION: MISC
+function press_enter() {
+  read -p "Press enter..."
+}
+
+# explode(): split up a string into an array at a given delimiter
+# (stolen from sorcery's libmisc)
+# $1: string to explode
+# $2: string to cut at
+# $3: name of the array to put the result into
+#
+# Note: The array you want the fields put into must be
+# declared before you call this function.
+# EXAMPLE
+#
+# my_array=()
+# explode "a_string_to_explode" "_" "my_array"
+# echo my_array[*]
+#
+# Produces "a" "string" "to" "explode".
+#
+# also comes in handy as
+# explode "$(list_parts)" $'\n' "LIST_PARTS"
+#---------------------------------------------------------------------
+function explode()
+{ # $1==string to explode, $2==delimiter, $3==name of array to put it in
+
+  [[ "$3" ]] || return 1
+  local l=$1
+  local i=0
+  while [[ $l ]]; do
+    local result=${l%%$2*}
+    l=${l#"$result"}
+    l=${l#$2}
+    eval "$3[$i]=\"$result\""
+    let i++
+  done
+  # this adds an empty array element at the end if the line ended in $2
+  local lc=${1//\*$2/true}
+  if [ "$lc" = "true" ]; then
+    eval "$3[$i]=\"\""
+  fi
+}
+
+#inputbox: creates a simple input box based off the two passed parameters
+function inputbox()  {
+
+  run_dialog  --nocancel --inputbox "$1" \
+    $(( $( echo "$1" | wc -l) + 6)) 60 "$2"
+
+}
+
+#chroot_cmd: Creates a chrooted environment
+# usage: chroot_cmd cmd args...
+function chroot_cmd() {
+
+#  mount --bind /dev  "${TARGET}/dev"
+#  mount --bind /proc "${TARGET}/proc"
+#  mount --bind /var/cache/sorcery "${TARGET}/var/cache/sorcery"
+
+  debug_log "common" "chroot_cmd called with the following arguments:"
+  local arg
+  for arg in "$@" ;do
+    debug_log "chroot_param" "$arg"
+  done
+
+  chroot "${TARGET}" "$@"
+
+#  umount "${TARGET}/dev"
+#  umount "${TARGET}/proc"
+#  umount "${TARGET}/var/cache/sorcery"
+
+}
+
+#confirm: displays a confirm dialog
+#basically "do you want to ... <yes> <no>"
+#$1 is the question, the other args can be options to dialog
+# SECTION: MISC
+function confirm()  {
+
+#  if  [ "$CONFIRM"  != "on" ]; then
+#    [  -z  "$2"  ]
+    # return false if there probably was a --defaultno in $2
+#  else
+    local query="$1"
+    shift
+    run_dialog "$@" --yesno  "$query" 6 60
+#  fi
+
+}
+
+# displays a message
+function display_message() {
+  run_dialog --msgbox "$1" 10 60
+}
+
+function debug_log() {
+  local func=$1
+  shift
+  echo "$(date +%H:%M:%S) ${func}($$): $*" >>${INSTALLER_DEBUG}
+}
+
+# deprecated
+function debug_screen() {
+#$1 is the message to show
+  display_message "DEBUG: $1"
+}
+
+#adding some functions for dependency management
+# $1: Dependency to fill
+# $2: [Optional] extra info to save
+# should always return success
+function fill_dependency() {
+  mkdir -p $DEPENDS_DIR
+  echo "${2:-fill}" >>${DEPENDS_DIR}/$1
+}
+
+# Returns the extra info saved with a dependency (only the latest)
+# $1: Dependency to check
+# stdout: the info
+function get_dependency() {
+  tail -n 1 ${DEPENDS_DIR}/$1
+}
+
+#looks through the depends file to see if your requested key exists
+# $1: Dependency to check
+# $2: [Optional] extra info to check for (regex)
+# Returns 0 on found, 1 on not fulfilled, 2 on extra info not found
+function check_dependency() {
+  if [ -e ${DEPENDS_DIR}/$1 ] ;then
+    if grep -q "$2" ${DEPENDS_DIR}/$1 ;then
+      return 0; # if $2 is not given, "" matches anything
+    else
+      return 2;
+    fi
+  else
+    return 1;
+  fi
+}
+
+
+#ask the user if should continue, if yes, write the depends and note that it's
+# at user's own risk
+# otherwise fall out to the main menu?
+# $1 is depends key
+function interactive_do_depends() {
+  if check_dependency $1; then
+#    debug_screen "successful depends find"
+    echo "successfully found fulfilled $1"
+    return 0
+  else
+    if confirm "Depends $1 not fulfilled. Force fulfill (only way to continue)?"
+    then
+      #ok was selected
+      fill_dependency $1 force
+      return 0
+    else
+      return 1
+    fi
+  fi
+}
+
+# Blocks until specified stuff is fulfilled
+function wait_depends() {
+  while ! check_dependency $* ;do
+    sleep 10
+  done
+}
+
+#dkowis discovered dialog's progress bar!
+# Stdin is each element new line seperated
+# $1 is the total amount
+# $2 is the title
+# $3 is the Initial text to display in the dialog
+# $4 is the optional prefix "Doing $LINE..."
+function progress_bar() {
+    local COUNT=0
+    local LINE
+    local PCT
+    while read LINE; do
+        (( COUNT++ ))
+        PCT=$(( $COUNT * 100 / ${1} ))
+        if [ "${4}" != "" ]; then
+            echo "XXX"
+            echo "${4} $LINE..."
+            echo "XXX"
+        fi
+        echo $PCT
+    done | run_dialog --title "${2}" --gauge "${3}" 10 70 0
+}
+

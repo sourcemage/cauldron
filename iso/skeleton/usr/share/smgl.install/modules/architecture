@@ -1,0 +1,20 @@
+#!/bin/bash
+# file for architecture optimizations
+
+function arch_screen() {
+
+# TODO: add sensible depends
+
+  cat <<EOF >$TARGET/arch_menu
+#!/bin/bash
+exit() {
+  true
+}
+. /usr/sbin/sorcery -v >/dev/null
+optimize_architecture
+EOF
+  chmod +x $TARGET/arch_menu
+  chroot_cmd /arch_menu
+  rm -f $TARGET/arch_menu
+
+}

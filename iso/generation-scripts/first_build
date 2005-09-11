@@ -1,0 +1,5 @@
+#!/bin/bash
+. ${0%/*}/config
+${0%/*}/listparse
+${0%/*}/caster -c $( <$STATE_DIR/list.reqd )
+${0%/*}/caster -c $( <$STATE_DIR/list.all )

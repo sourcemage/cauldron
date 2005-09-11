@@ -1,0 +1,110 @@
+  listing of globals used in the installer
+  Please specify:
+    name
+    contents
+    set by
+    used by (if sensible)
+
+name	: ARCH
+function: specify architecture the ISO is for
+contents: i386, i486(can we call those x86?), x86_64, ppc
+set by	: initialization, possibly config file (put in by template in isogen)
+used by	: many
+
+name	: CONFIRM
+function: toggle if user wants to see confirmation dialogs
+contents: any non-empty string for on
+set by	: main menu I think
+used by	: confirm() - this function is used in places where it should
+          ALWAYS be seen... this "feature" ought to be trashed for now
+
+name	: DATA_DIR
+function: directory for static data (the one in p4)
+contents: I think I'll make it /usr/share/installer
+set by	: initialization
+used by	: subroutines using data, sourcing modules
+
+name	: DEBUG
+function: toggle if we are in debug mode
+contents: any non-empty string
+set by	: main menu
+used by	: a whole bunch of stuff
+
+name	: DEPENDS_DIR
+function: specify directory to save depends in
+contents: /tmp/installer_depends
+set by	: initialization
+used by	: depends functions
+
+name	: DIALOG
+function: array containing the dialog command and its args
+contents: dialog --backtitle ... --stdout --trim
+set by	: initialization
+used by	: DO NOT USE. Use run_dialog instead.
+
+name	: EDITOR
+function: specify editor to use for edits during install
+contents: nano, elvis or jed
+set by	: NLS menu
+used by	: mostly bootloader
+
+name	: FINALFILES
+function: Specify a directory for files that'll get copied onto the system
+	  at the very end of the install (mostly useful for /etc files)
+contents: /tmp/finalfiles
+set by	: initialization
+used by	: everything that writes /etc files basically
+
+name	: INSTALLER_DEBUG
+function: specify debug file for the installer
+contents: /tmp/installer_debug
+set by	: initialization
+used by	: debug_log() and the places where it's still used manually
+
+name	: LANG
+function: specify language for multi-lang programs
+contents: standard locale name
+set by	: nativeLanguageSupport
+used by	: external programs with locales
+
+name	: SI_QUEUE_DIR
+function: directory for spell queues (semi-private)
+contents: /tmp/spellinstall
+set by	: spellinstaller, initialization
+used by	: the si_ functions
+
+name	: SI_SPELL_QUEUE
+function: file for the regular queue (semi-private)
+contents: /tmp/spellinstall/queue
+set by	: spellinstaller, initialization
+used by	: the si_ functions
+
+name	: STATE_DIR
+function: directory for data created at ISO-creation-time (pre-gen lists)
+contents: probably /var/lib/installer
+set by	: initialization
+used by	: depends functions
+
+name	: TARGET
+function: specify where to install to
+contents: usually /mnt/root
+set by	: initialization
+used by	: everywhere
+
+name	: TEMPLATE_DIR
+function: specify a directory for the templates for e.g. fstab
+contents: /usr/share/smgl.install/templates probably
+set by	: initialization
+used by	: basically all calls to run_templates and in disk structure
+
+name	: TMP_DR
+function: specify temp dir
+contents: /tmp
+set by	: initialization
+used by	: TODO: everywhere /tmp is referenced
+
+name	: INSTALLER_VERSION
+function: specify installer's version
+contents: e.g. 0.9.5-test2
+set by	: $STATE_DIR/version
+used by	: only creation of /etc/release

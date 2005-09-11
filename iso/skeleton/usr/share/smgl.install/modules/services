@@ -1,0 +1,60 @@
+#!/bin/bash
+
+#optional services
+function services_screen() {
+  local SCRIPTLIST=()
+  sv_get_scripts
+  sv_choose_scripts &&
+  sv_enable_scripts
+}
+
+# Function to find all installed init scripts
+# alternately stores the name of the script, description, and on|off
+sv_get_scripts() {
+  local i=0
+  local line
+  
+  find ${TARGET}/etc/init.d/runlevels/ -mindepth 2 \
+       -not -name 'runlevel.config' >$TMP_DIR/iscripts.list.$$
+  while read line ;do
+    SCRIPTLIST[i++]="${line##*/}"
+    local helper=${line##*%}
+    SCRIPTLIST[i++]="Runlevel ${helper%%/*}" # extract stuff between % and /
+    if test -x $line ;then
+      SCRIPTLIST[i++]="on"
+    else
+      SCRIPTLIST[i++]="off"
+    fi
+  done <$TMP_DIR/iscripts.list.$$ #Can't use a pipe, we'd get a subshell
+  rm -f $TMP_DIR/iscripts.list.$$
+}
+
+sv_choose_scripts() {
+  local HELP="This is the list of all init scripts on the system.
+An X means they are enabled (usually for a good reason)"
+
+  run_dialog --title "Select init scripts to be ran at boot time" \
+             --single-quoted --checklist "$HELP" 10 60 0          \
+             "${SCRIPTLIST[@]}" | tr ' ' $'\n' >$TMP_DIR/enabled-scripts   &&
+             # stupid dialog gives us a space-seperated list
+
+  find ${TARGET}/etc/init.d/runlevels/ -mindepth 2 \
+       -not -name 'runlevel.config' | sed 's:^.*/::' >$TMP_DIR/all-scripts &&
+  cat $TMP_DIR/all-scripts $TMP_DIR/enabled-scripts |
+    sort | uniq -u >$TMP_DIR/disabled-scripts                              &&
+  # filter out only lines appearing exactly once
+  # All lines appearing only once must be in all- but not in enabled-
+  rm -f $TMP_DIR/all-scripts
+}
+
+sv_enable_scripts() {
+  local line
+
+  while read line ;do
+    chroot_cmd telinit bootenable "$line" <&2
+  done <$TMP_DIR/enabled-scripts # we hope stderr is the terminal
+  while read line ;do
+    chroot_cmd telinit bootdisable "$line" <&2
+  done <$TMP_DIR/disabled-scripts
+  rm -f $TMP_DIR/enabled-scripts $TMP_DIR/disabled-scripts
+}

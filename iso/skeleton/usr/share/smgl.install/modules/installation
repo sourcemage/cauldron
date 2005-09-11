@@ -1,0 +1,127 @@
+#!/bin/bash
+
+# requires: /etc/sorcery/local/depends/linux - file to specify linux version to build in the system
+
+function setup_target() {
+  in_start
+}
+
+function install_screen() {
+  in_finish
+
+  # This is the place for release-note bigass warnings
+  run_dialog --msgbox "After you have booted into your system,
+have configured sorcery to your liking,
+and network is working, please run \"sorcery rebuild\"
+once to ensure everything is built tailored to your system,
+and to configure all the spells. This takes longer the more
+spells are installed, so it is a good idea to do it soon." 15 65
+}
+
+# This one returns a nice list of libraries that a binary is linked against,
+# perfect for feeding into cp. Thanks to Seth for this one!
+in_libscan() {
+  ldd "$1" 2> /dev/null |
+   cut -d'>' -f2 |
+   cut -d' ' -f2 |
+   grep '^/'
+   echo /lib/ld-2.* # change this on glibc major version bumps.
+   # included so we always have something for cp to copy
+}
+
+in_install_prog() {
+  local prog progpath
+  for prog in $* ;do
+    progpath=$( which $prog )         &&
+    cp --parents -f $progpath $TARGET &&
+    cp --parents -f $( in_libscan $progpath ) $TARGET
+  done
+}
+
+in_start() {
+
+  echo "Starting installation of smgl to disk"
+  mkdir -p ${TARGET} #Though, when this one doesn't exist, we're in trouble
+
+  mkdir -p $TARGET/var/state/sorcery
+  >$TARGET/var/state/sorcery/packages #start with no spells installed
+
+  # Set up directories
+  si_wait smgl-fhs
+
+  local dirctry
+  while read dirctry ;do
+    if [[ "${dirctry:0:1}" != "#" ]] ;then #ignore comment lines
+      mkdir -p ${TARGET}/$dirctry
+    fi
+  done <${DATA_DIR}/directories
+
+  local symtarget
+  while read dirctry symtarget ;do
+    if [[ "${dirctry:0:1}" != "#" ]] ;then #ignore comment lines
+      ln -sf $dirctry ${TARGET}/$symtarget
+    fi
+  done <${DATA_DIR}/symlinks
+
+  # do /proc and /dev - lazy
+  mount --rbind /dev ${TARGET}/dev
+  mount -t proc proc $TARGET/proc
+
+  # Install sorcery
+  pushd /tmp >/dev/null                                    &&
+  tar -xjf /var/cache/sorcery/sorcery-$SORCERY_VERSION.tar.bz2 &&
+  cd sorcery                                               &&
+  ./install ${TARGET}                                      &&
+  popd >/dev/null                                          &&
+  rm -rf /tmp/sorcery                                      &&
+
+  # Copy sources
+  cp --parents -f /var/spool/sorcery/* ${TARGET}           &&
+
+  # Install grimoires
+  mkdir -p ${TARGET}/var/lib/sorcery/codex                 &&
+  tar -xjf /var/lib/sorcery/codex/$GRIMOIRE_VERSION.tar.bz2 -C \
+      ${TARGET}/var/lib/sorcery/codex                      &&
+  echo "GRIMOIRE_DIR[0]=/var/lib/sorcery/codex/$GRIMOIRE_VERSION" \
+       >${TARGET}/etc/sorcery/local/grimoire
+
+  # Install alien config files
+  cp --parents -f \
+    /etc/{passwd,group,shadow,ld.so.conf,issue,modules,modules.conf,nsswitch.conf,shells} \
+    ${TARGET}
+
+  # Install binaries that may be needed (for whatever it's worth,
+  #  we'll be waiting for the basesystem to be there for most purposes anyway)
+  in_install_prog bash ldconfig bzip2 tar
+  chroot_cmd ldconfig
+
+  si_queue_now basesystem # TODO: This is overkill - not all needed during
+                          # install
+  si_queue_now special:basics
+  si_queue_now special:compile_env #make, gcc etc
+
+  si_queue $( cat $DATA_DIR/install-list | sed 's/#.*$//' |
+    grep -v '^[[:blank:]]*$' )
+
+  fill_dependency first_install
+}
+
+in_finish() {
+  # Wait for instalations to finish
+  si_flush
+  # Install /etc files
+  pushd ${FINALFILES} >/dev/null
+  cp --parents -r -f * $TARGET
+  popd >/dev/null
+
+  # TODO: install bootloader - here?
+  cp /etc/sourcemage_version ${TARGET}/etc/sourcemage-release
+  echo "Installed from CD using installer v. $INSTALLER_VERSION on $(date)" \
+    >>${TARGET}/etc/sourcemage-release
+  ln -sf sourcemage-release ${TARGET}/etc/release
+  run_dialog --msgbox "The system and all the configuration you have selected
+have been installed. The only thing left to do is to enter
+the password for the root account." 9 60
+  chroot_cmd passwd root
+  fill_dependency final_install
+}

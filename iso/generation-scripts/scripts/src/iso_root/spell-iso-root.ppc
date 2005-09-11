@@ -1,7 +1,0 @@
-# spell list to install on the ISO. specific to ppc architecture
-# this file is used by mk-iso-root only
-
-mac-fdisk
-yaboot
-mktemp
-hfsutils

@@ -1,0 +1,1 @@
+mkisofs -quiet -R -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o $1 $2

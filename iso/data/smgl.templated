@@ -1,0 +1,9 @@
+${SKELETON}/etc/issue
+${SKELETON}/etc/sorcery/local/depends/linux.p
+${SKELETON}/etc/sourcemage_version
+${SKELETON}/isolinux/isolinux.cfg
+${SKELETON}/isolinux/isolinux.msg
+${SKELETON}/usr/share/smgl.install/install-list
+${SKELETON}/usr/share/smgl.install/optional-list
+${SKELETON}/var/lib/smgl.install/version
+${STATE_DIR}/iso.packages

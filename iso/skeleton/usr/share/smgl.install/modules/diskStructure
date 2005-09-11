@@ -1,0 +1,501 @@
+#!/bin/bash
+
+# TODO: give all those functions an unique prefix
+
+# a submenu for Disk structure
+# Partitioning
+# mounting - RAID
+
+# ---------------- main menu ----------------------
+
+function disk_structure_screen() {
+  # do things here to display the menu items for setting up disks
+
+  local ICOMMAND="A" # always default to previous selection
+  local DONE=false
+  while ! $DONE ;do
+
+    local TEXT="Please create at least a root partition. A boot
+partition is recommended, for RAID and some filesystems
+it is mandatory. Lilo can only boot from a RAID 1 array
+and xfs or reiserfs formatting can cause problems with
+the MBR. Grub can boot from any filesystem, but still
+cannot boot from RAID unless it is RAID 1 or has a
+separate boot partition"
+    ICOMMAND=`run_dialog              \
+      --ok-label "Select"             \
+      --title  "Disk structure menu"  \
+      --default-item  $ICOMMAND       \
+      --item-help                     \
+      --menu "$TEXT"                  \
+      13 60 0                         \
+      "A" "[*]Partition Disks"   "Create partitions on your drives" \
+      "B" "[*]Make MD RAID Devices" "Create RAID devices using mdadm"    \
+      "C" "Format and/or mount filesystems" "Define where the partitions should go" \
+      "D" "Done"        "We're all done here, let's get on with it" ` ||
+    return 1 #return with a failure if canceled
+
+    case $ICOMMAND in
+      A)
+        fdisc_menu # do the partitioning 
+      ;; # maybe partitions are already created
+      B)
+        create_md_device # Make ourselves some MD devices! 
+      ;;
+      C)
+        mount_menu # do the mounting
+      ;;
+      D)
+        if interactive_do_depends disk-root; then
+          rm -f $FINALFILES/etc/fstab
+          cat $TEMPLATE_DIR/fstab.first /tmp/fstab $TEMPLATE_DIR/fstab.last \
+            >$FINALFILES/etc/fstab
+          fill_dependency disk
+          DONE=true
+        fi
+      ;;
+    esac
+  done
+
+#check for swap partition!
+  if ! check_dependency disk-swap; then
+    if confirm "Do you want to make a swapfile? (swap == virtual memory)
+You have no dedicated swap partition."; then
+      mk_swap_file
+    fi
+  fi
+
+}
+
+# ------------ partitioning part --------------------------
+
+list_discs()  {
+
+  # sfdisk reads /proc/partitions for discs so it is the same as cat
+  # /proc/partitions but better output
+
+  # however, sfdisk -s outputs an error messages on ppc about
+  # unrecognized msdos partitions. we ignore it with 2>/dev/null
+
+  # TODO: sanitize devfs partition names
+
+  local DISK
+
+  sfdisk -s 2>/dev/null | grep '^/dev' | cut -d : -f1 |
+  while read DISK; do #WARNING: This is a subshell.
+  # a cdrom has no geometry allowing us to remove it from the list
+    if ! sfdisk -qg "${DISK}" | grep -q "cannot get geometry"; then
+      echo  "${DISK}"
+      echo  "Size $( sfdisk -sq "${DISK}" )"
+    fi
+  done
+
+}
+
+select_disc()  {
+
+  local -a LIST_DISCS
+  explode "$(list_discs)" $'\n' "LIST_DISCS"
+
+  local DISC
+
+  if [ "${DEBUG}" = "yes" ]; then
+    for DISC in "${LIST_DISCS[@]}";
+    do
+      echo "DISC=${DISC}" >&2
+      done
+    read -p "press enter..." >&2
+  fi &&
+
+  run_dialog \
+    --title "Disk Selection Menu"                                     \
+    --menu  "Please select a disk to partition. Sizes are in blocks." \
+    7 60 0                                                            \
+    "${LIST_DISCS[@]}" # 2 entries per disk - name and size
+
+}
+
+fdisc_menu()  {
+
+  local DISC=`select_disc` &&
+  if [ "$ARCH" = "ppc" ]; then
+    display_message "Remember you need to create a bootstrap partition first
+(type 'b' at the prompt)."
+    debug_log "diskStructure" "Running mac-fdisk on $DISC"
+    mac-fdisk "$DISC"
+  else
+    PROG=`run_dialog                                                  \
+      --title "Partitioning Menu"                                     \
+      --menu  "Please choose the program for partitioning $DISC"      \
+      13 60 0                                                         \
+      "cfdisk" "Menu-driven partitioning program. Easy to use."       \
+      "fdisk"  "Text-based. A little harder to use, more features"    \
+      "parted" "Text-based. Many features, such as moving partitions" ` &&
+
+    if ! ${PROG} "${DISC}"; then
+      press_enter
+    fi
+  fi
+}
+# --------------------- NEW RAID STUFF ----------------------
+
+dsr_show_warning() {
+  run_dialog --title "WARNING!" \
+    --msgbox "If you plan on mounting the device you're about to create as
+/ (the root), you need to ensure that you make the
+partition types \"Linux raid autodetect\" (ID 0xFD).
+Otherwise your system will not boot!" 20 60
+}
+
+dsr_device_name() {
+  run_dialog --title "Multiple Disk Device Name" \
+  --inputbox "Enter the fully qualified device name (ex /dev/md0)" 0 0 \
+  "/dev/md0"
+}
+
+dsr_raid_level_menu() {
+  run_dialog --title "Select RAID level" \
+    --single-quoted \
+    --radiolist "Select a RAID level" 0 0 0 \
+    "0" "Striping" off \
+    "1" "Mirroring" off \
+    "2" "Hamming code ECC" off \
+    "3" "Parallel transfer with parity" off \
+    "4" "Independent Data disks with shared Parity disk" off \
+    "5" "Independent data disks with distributed parity" off \
+    "6" "Independent data disks with dual distributed parity" off
+}
+
+dsr_choose_partitions() {
+  LIST_PARTS=()
+  # Use sed to append an "off" line to every entry
+  explode "$(list_parts | sed 's/^\(Size: .*\)$/\1\noff/')" $'\n' \
+    "LIST_PARTS"
+
+  run_dialog --title "Select partitons to create a RAID device from" \
+  --separate-output \
+  --checklist "Mark partitions to be made into the RAID array" 0 0 0 \
+  "${LIST_PARTS[@]}" |
+    sed 's:^:/dev/:'
+}
+
+# Arguments:
+# $1: name of md device to create
+# $2: raid level
+# $3: newline-seperated list of devices
+dsr_sanity_check() {
+  local ERROR_FILE=/tmp/raid-errors.$$
+  rm -f $ERROR_FILE
+
+  local P_COUNT=`echo $3 | wc -l `
+
+  debug_log "diskStructure" "Checking RAID settings: DEVICE=$1, LEVEL=$2"
+  debug_log "diskStructure" "Generating from $P_COUNT partitions: $3"
+
+  #verify raid level device count
+  local COUNT_CHECK=0
+  case $LEVEL in
+    0|1) COUNT_CHECK=2
+    ;;
+    2|3|4|5) COUNT_CHECK=3
+    ;;
+    6) COUNT_CHECK=4
+    ;;
+  esac
+
+  #ensure they entered a device!
+  if [ "$1" = "" ] ; then
+    echo "You must specify a device to create!" >>$ERROR_FILE
+  fi
+
+  if [ $P_COUNT -lt $COUNT_CHECK ] ; then
+    echo "RAID level $LEVEL must have at least $COUNT_CHECK devices" \
+      >>$ERROR_FILE
+  fi
+
+  #verify selected devices are block devices
+  local DEVICES
+  for DEVICES in $DEVICE_NAME $PARTS ; do
+    if [ ! -b "$DEVICES" ] ; then
+      echo "$DEVICES is not a block device!" >>$ERROR_FILE
+    fi
+  done
+
+  if [ -e $ERROR_FILE ] ;then
+    run_dialog --title "Failed to create MD device" --textbox \
+      $ERROR_FILE 10 50
+    return 1
+  fi
+}
+
+dsr_make_raid_config() {
+  #generate the mdadm.conf
+  echo 'DEVICE /dev/hd*[0-9] /dev/sd*[0-9]' > ${TARGET}/etc/mdadm.conf
+  mdadm --detail --scan >> ${TARGET}/etc/mdadm.conf
+}
+
+create_md_device() {
+  dsr_show_warning                      &&
+  local DEVICE_NAME=`dsr_device_name`   &&
+  local LEVEL=`dsr_raid_level_menu`     &&
+  local PARTS="`dsr_choose_partitions`" &&
+  dsr_sanity_check "$DEVICE_NAME" "$LEVEL" "$PARTS" &&
+  if mdadm --create $DEVICE_NAME --level=$LEVEL --raid-devices=$P_COUNT $PARTS
+  then
+    dsr_make_raid_config &&
+    debug_log "Successfully generated md device."
+    si_queue mdadm
+  else
+    echo "failed to make the md device"
+    press_enter
+  fi
+}
+
+# ---------------- formatting and mounting ------------------
+
+list_parts()  {
+  # TODO: sanitize
+  # grepping a non-existant file gives an error
+  local PARTITION SIZE
+  touch /tmp/fstab
+   cat /proc/partitions | awk '$3 !~ /^1$/ {print $4 " " $3}' | grep -v ram |
+     grep -v disc | grep -v name | grep '^[^ ]*[0-9]' |
+     while read PARTITION SIZE ;do #SUBSHELL!
+       if [[ -n "$PARTITION" ]] && ! grep -q "^/dev/$PARTITION	" /tmp/fstab
+       then # don't do nil strings, don't do partitions we mounted already
+         echo "$PARTITION"
+         echo "Size: $(( SIZE / 1024 ))MB"
+# TODO: add type recognition
+# This old code did it:
+
+#      if ! sfdisk -s | grep -q /dev/$PARTITION\: && !  echo  $FS_LIST | grep -q $PARTITION\  && ! `grep device /etc/raidtab | grep -q $PARTITION\ ` ;then
+#        echo  "/dev/${PARTITION}"
+#        if [[ `uname -r` == 2.6.* ]] ;then
+#          if [[ $PARTITION == md* ]] ;then
+#            echo  "Size `sfdisk -sq /dev/$PARTITION` Type RAID array" ||
+#              echo "size and type unknown"
+#          else
+#            echo  "Size $(sfdisk -sq /dev/$PARTITION` Type `sfdisk -lq | grep $PARTITION\ |
+#              awk '{print $(NF-1) " " $NF}' | sed -e s/[0123456789].[\ ]//g) " ||
+#              echo "size and type unknown"
+#          fi
+
+              # 2.4.25 wrongly tries to list removable media (cdroms,
+              # etc) which have no geometry so to avoid a lot of errors,
+              # I modified the check, but some weird mojo wouldn't let
+              # the "backticks within backticks" work so I used both ` `
+              # and $()
+
+#        elif [[ $PARTITION == md* ]] ;then
+#          echo  "Size `sfdisk -sq /dev/$PARTITION` Type RAID array " ||
+#          echo "size and type unknown"
+#        else
+#          echo  "Size `sfdisk -sq /dev/$PARTITION` Type `sfdisk -lq $(echo /dev/$PARTITION |
+#            sed -e s/part[0123456789]*/disc/) | grep $PARTITION\  | awk '{print $(NF-1) " " $NF}' |
+#            sed -e s/[0123456789].[\ ]//g` " ||
+#            echo "size and type unknown"
+#        fi
+#      fi
+      fi
+    done
+}
+
+get_part()  {
+
+  LIST_PARTS=()
+  explode "$(list_parts)" $'\n' "LIST_PARTS"
+
+  if [ "${DEBUG}" = "yes" ]; then
+    for PART in "${LIST_PARTS[@]}";
+    do
+      echo "PART=${PART}" >&2
+    done
+    read -p "press enter..."
+  fi
+
+  run_dialog                                                   \
+    --title "Partition Selection Menu"                         \
+    --menu  "Select a partition to mount. Sizes are in blocks" \
+    7 60 0                                                     \
+    "${LIST_PARTS[@]}"
+
+}
+
+get_filesystem()  {
+
+  run_dialog                                               \
+    --title "Filesystem Selection Menu"                    \
+    --menu  "Please select what filesystem to use for $1"  \
+    7 60 0                                                 \
+    "ext2"      "Second Extended file system"              \
+    "ext3"      "Second Extended journaling file system"   \
+    "reiserfs"  "Reiserfs journaling file system"          \
+    "xfs"       "XFS journaling file system"               \
+    "jfs"       "JFS journaling file system"               \
+    "swap"      "Swap partition"
+
+}
+
+get_mount_point()  {
+
+  if ! check_dependency disk-root  ;then
+    echo "/"
+  elif  [  "$2"  ==  "swap"  ];  then
+    echo "none"
+  else
+    inputbox  "Please choose where to mount $1 (type $2)"  "/"
+  fi
+  #TODO: add sanity checking (/etc, /lib, ...)
+}
+
+get_mkfs_cmd() {
+  if $3 ;then # check for errors
+    case $1 in
+          ext2)  echo  "mke2fs -c $2"    ;;
+          ext3)  echo  "mke2fs -c -j $2" ;;
+      reiserfs)  echo  "badblocks -o /tmp/badblocks $2 ; mkreiserfs -B /tmp/badblocks $2"   ;;
+           xfs)  echo  "mkfs.xfs -f $2"     ;; # no badblocks handling
+           jfs)  echo  "mkfs.jfs -c $2"     ;;
+          swap)  echo  "mkswap -c $2"    ;;
+             *)  false                ;;
+    esac
+  else
+    case $1 in
+          ext2)  echo  "mke2fs $2"     ;;
+          ext3)  echo  "mke2fs -j $2"  ;;
+      reiserfs)  echo  "mkreiserfs $2" ;;
+           xfs)  echo  "mkfs.xfs -f $2"   ;; #ignore existing partition
+           jfs)  echo  "mkfs.jfs $2"   ;;
+          swap)  echo  "mkswap $2"     ;;
+             *)  false                 ;;
+    esac
+  fi
+}
+
+# Returns the spell needed to provide support for given fs
+get_fs_spell() {
+  case $1 in
+# e2fsprogs is installed anyway, it includes fsck
+    reiserfs)  echo "reiserfsprogs" ;;
+         xfs)  echo "xfsprogs"      ;;
+         jfs)  echo "jfsutils"      ;;
+  esac
+}
+
+get_mount_opts()  {
+
+  case  $1  in
+    reiserfs)  echo "defaults,notail,noatime"  ;;
+        swap)  echo "defaults"                 ;;
+           *)  echo "defaults,noatime"         ;;
+  esac
+}
+
+mount_fsys()  {
+
+  local MPOINT="${TARGET}$3"
+  case  $2  in
+    swap)
+          #TODO: would anyone ever not want swap turned on during install?
+          swapon "$1"               &&
+          fill_dependency disk-swap $1 ||
+          echo "Activating swap failed. This is non-fatal. Continuing anyway."
+          true
+    ;;
+       *)
+          mkdir -p $MPOINT                                               &&
+          mount -t $2 -o "$4" "$1" "$MPOINT"                             &&
+          case  $3  in
+                /)
+                   fill_dependency disk-root $1
+                ;;
+            /boot)
+                   fill_dependency disk-boot $1
+                ;;
+                *) true      ;;
+          esac                                                           &&
+          debug_log "diskStructure" "Nicely mounted $1 as $2 to $MPOINT" ||
+          {
+            press_enter
+            debug_log "diskStructure" "Mounting $1 as $2 to $MPOINT failed."
+            return 1
+          }
+    ;;
+  esac
+}
+
+get_fstab_opts()  {
+
+  case $2 in
+    /)  echo "$(get_mount_opts $1)	0 1"  ;;
+    *)  echo "$(get_mount_opts $1)	0 2"  ;;
+  esac
+
+}
+
+make_fstab_line()  {
+  # TODO: this is a hack
+  echo "$1	$3	$2	$4"
+}
+
+mount_menu()  {
+  if ! check_dependency disk-root  ;then
+    display_message "Please first mount the partition that will be /
+then mount \"up the tree\" (/usr before /usr/share)"
+  fi
+
+# TODO: make this code look nicer at least... maybe add some ribbons
+
+  local CHECK PART FSYS MPOINT MKFSCMD QUESTION MNT_OPTS FSTAB_OPTS
+
+   CHECK=false
+    PART=/dev/`get_part`               &&
+    FSYS=`get_filesystem   $PART`      &&
+  MPOINT=`get_mount_point $PART $FSYS` &&
+  if confirm "Do you want to check $PART for errors?" --defaultno ;then
+    CHECK=true
+  fi                                         &&
+  if confirm "Do you want to format $PART?" ;then
+    MKFSCMD=`get_mkfs_cmd $FSYS $PART $CHECK`      &&
+    QUESTION="This is the command to create the filesystem,
+as far as I can figure it out.
+If you want to change anything, you can now.
+If you don't know what to do, just hit OK."        &&
+    MKFSCMD=$( inputbox "$QUESTION" "${MKFSCMD}" ) &&
+    eval "$MKFSCMD"                                &&
+    # save the command for debugging:
+    debug_log "diskStructure" \
+      "Successfully formatted $PART as $FSYS with $MKFSCD" ||
+    {
+      debug_log "diskStructure" \
+        "Formatting failed on $PART as $FSYS using $MKFSCMD"
+      echo "Creating filesystem failed."
+      return 1
+    }
+  elif $CHECK ;then
+    badblocks $PART
+  fi                                              &&
+    MNT_OPTS=`get_mount_opts $FSYS $MPOINT` &&
+  mount_fsys $PART $FSYS $MPOINT "$MNT_OPTS"      &&
+  FSTAB_OPTS=`get_fstab_opts $FSYS $MPOINT` &&
+  make_fstab_line $PART $FSYS $MPOINT "$FSTAB_OPTS" >>/tmp/fstab &&
+  si_queue $( get_fs_spell $FSYS )
+  # And this spell should not get installed before disks are done and basic
+  # stuff is there
+}
+
+mk_swap_file()  {
+
+  local DEVICE=`inputbox "Where should the swapfile go?" "/.swapfile"` &&
+  local SWAPFILE="$TARGET$DEVICE"                                      &&
+  local SIZE=`inputbox "How big do you want it to be? (in MB)" "1024"` &&
+
+  if confirm "Okay. Swapfile at $DEVICE, size $SIZE. That right, boss?" ;then
+    dd  if=/dev/zero of=$SWAPFILE bs=1M count=$SIZE &&
+      mkswap      $SWAPFILE                         &&
+      chmod  000  $SWAPFILE                         &&
+    make_fstab_line $DEVICE "swap" "swap" "defaults\t0 2" >>/tmp/fstab &&
+    fill_dependency disk-swap file||
+    press_enter
+  fi
+}

@@ -1,0 +1,113 @@
+#!/bin/bash
+
+#---------------------------------------------------------------------
+## @param full path of binary to check
+## @Stdout libraries with full path
+## echos all libs that the given file is linked against (not ld-linux)
+#---------------------------------------------------------------------
+function libscan() {
+  ldd "$1" 2> /dev/null |
+   cut -d'>' -f2 |
+   cut -d' ' -f2 |
+   grep '^/'
+}
+
+#---------------------------------------------------------------------
+## Tries to find the given binary and copy it and its required libs
+## onto the initrd at the same paths they are in the parent system.
+#---------------------------------------------------------------------
+function install_prog() {
+  local prog progpath
+  for prog in $* ;do
+    progpath=$( which $prog )         &&
+    cp --parents -f $progpath $INITRDROOT &&
+    cp --parents -f $( libscan $progpath ) $INITRDROOT
+  done
+}
+
+
+#---------------------------------------------------------------------
+## @param path to initrd directory
+## @param path to store gzip-compressed initrd image
+## @Description
+## This function creates a loopback-mountable filesystem from the
+## given initrd and passes it through gzip compression
+#---------------------------------------------------------------------
+function mk_initrd_file() {
+  local initrd_size tmp_file tmp_mountdir
+  initrd_size=$(du -ks ${INITRDROOT} | cut -d$'\t' -f1)
+  initrd_size="$(( initrd_size / 5 + initrd_size ))" # add 20% to allow for e2fs
+  tmp_file="/tmp/initrd.$$"
+  tmp_mountdir="/tmp/initrdmpoint.$$"
+
+  rm -rf $tmp_file $tmp_mountdir
+  dd if=/dev/zero of=$tmp_file bs=1024 count=$initrd_size
+  mke2fs -q -b 1024 -i 1024 -F $tmp_file
+
+  mkdir -p $tmp_mountdir
+  mount $tmp_file $tmp_mountdir -o loop
+  cp -a $1/* $tmp_mountdir
+  umount $tmp_mountdir
+
+  gzip -c $tmp_file >$2
+
+  rm -rf $tmp_file $tmp_mountdir
+  echo "initrd is compressed $(du -ks $2 | cut -d$'\t' -f1)K, uncompressed ${initrd_size}K."
+}
+
+. ${0%/*}/config
+OLDWD=$(pwd)
+
+rm -rf $INITRDROOT
+mkdir -p $INITRDROOT
+
+while read line ; do
+  mkdir -p ${INITRDROOT}/${line}
+done <${STATE_DIR}/initrd.dirs
+
+while read line ; do
+  if [[ ${line:0:1} == '/' ]] ;then
+    cp -a --parents ${line} ${INITRDROOT}
+  else
+    install_prog $line
+  fi
+done <${STATE_DIR}/initrd.files
+cp --parents /lib/ld-2.* $INITRDROOT
+# the ld-linux symlink is made by ldconfig later
+
+pushd $INITRDROOT/dev >/dev/null
+ $SKELETON/sbin/MAKEDEV generic-nopty
+popd >/dev/null
+
+pushd /lib/modules/${KERNEL_VERSION}/kernel >/dev/null
+ mkdir -p ${INITRDROOT}/lib/modules/${KERNEL_VERSION}/kernel
+ while read line ; do
+   cp -pr --parents ./${line} ${INITRDROOT}/lib/modules/${KERNEL_VERSION}/kernel
+#    2>/dev/null #no error if what we're copying isn't in the kernel
+   # remove this when you're making an official ISO - we are.
+ done <${STATE_DIR}/initrd.kernel
+popd >/dev/null
+cp -dp --parents /lib/modules/$KERNEL_VERSION/* $INITRDROOT 2>/dev/null
+# modules.*map etc. ; /dev/null to omit "is a directory" warning for modules/
+
+cp -af ${SKELETON}/initrd/* ${INITRDROOT}
+
+[ -e ${STATE_DIR}/initrd.patch ] &&
+ patch -d ${INITRDROOT} -p0 <${STATE_DIR}/initrd.patch
+
+cp /sbin/ldconfig ${INITRDROOT}
+chroot ${INITRDROOT} /ldconfig
+rm ${INITRDROOT}/ldconfig
+
+# Backwards-compatible with 2.4 with .old files
+cp /sbin/depmod /sbin/depmod.old ${INITRDROOT}
+chroot ${INITRDROOT} /depmod ${KERNEL_VERSION}
+rm -f ${INITRDROOT}/depmod ${INITRDROOT}/depmod.old
+
+[ -x ${STATE_DIR}/initrd.command ] &&
+ . ${STATE_DIR}/initrd.command
+
+# The initrd is complete now.
+
+mk_initrd_file $INITRDROOT $STATE_DIR/initrd.gz
+rm -rf ${INITRDROOT}

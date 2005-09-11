@@ -1,9 +1,314 @@
+2005-09-11 Karsten Behrmann <BearPerson@sourcemage.org>
+	* skeleton/etc/sysconfig/*: update from init.d spell and add comments
+	* config: kernel version bump to 2.6.13
+	* config-2.6.ppc: add ppc config
+
+2005-09-10 Karsten Behrmann <BearPerson@sourcemage.org>
+	* config-2.6: configure for 2.6.13
+	* initrd.files: add find, per request of afrayedknot
+	* caster: strip leading /
+	* mkinitrd, initrd/sbin/smgl.init, optionalSpell: not use devfs anymore
+	* inittab, skeleton/bin/login-shell.sh: proper login shells on tty[2-6]
+	* modules/kernel: fix typo in sed expression
+	* 30spellInstall: fix bug 9654
+	* config, smgl.install, linux.p: work with 2-dot-versions (no patch) too
+
+2005-09-09 Karsten Behrmann <BearPerson@sourcemage.org>
+	* diskStructure: beautified code, renamed and prefixed functions,
+	  moved functions around, auto-install mdadm when raid is used
+	* optionalSpell, mkiso: add version info to optional spell list
+	* optionalSpell, iso.dirs: added workaround if we can't unmount bind-
+	  mounted $TARGET/dev
+	* lilo.conf, grub.conf: temporarily added devfs=nomount
+	* integrated new RAID stuff
+
+2005-09-08 Karsten Behrmann <BearPerson@sourcemage.org>
+	* 30spellinstall: actually run conflicts
+	* optionalSpell: add a few essential devices statically even in udev
+
+2005-09-07 David Kowis <dkowis@sourcemage.org>
+	* Integrated the MD functions into the diskStructure file
+	* Added some sanity checking to the process
+	* Created raidFunctions for expirementation, all those functions can be
+	integrated into the diskStructre module
+	* Mofified the todo a bit, marking things done and making more notes
+	* diskStructure: Fixed bug #9642
+
+2005-09-07 Karsten Behrmann <BearPerson@sourcemage.org>
+	* initrd/etc/fstab: add blank to silence warnings (bug #9639)
+	* initrd/sbin/smgl.init: lazy unmount /dev - hope to quench devfs errs
+	* 30spellinstall: fix broken ldconfig call
+	* nativeLanguageSupport: fix wrong variable name (bug #9661)
+	* iso.mkfscommand.ppc: added mkfs command for ppc
+	* iso.packages, install-list, optional-list: modified for ppc
+	* smgl.multi, smgl.templated: add new files to be processed for ppc
+	* data/map.hfs, skeleton/yaboot.ppc/{ofboot.b,yaboot.conf,yaboot.msg}:
+	  added files for yaboot, courtesy to benoit
+	* mkprep: enabled multi'ing of entire directories
+
+2005-09-05 Karsten Behrmann <BearPerson@sourcemage.org>
+	* kernel: make it work with compile and copy, employ new linux spell
+	* data/linux.p: turn into symlink to the skeleton version
+	* smgl.patterns, smgl.templated, gen-scripts/config,
+	  skeleton/etc/sorcery/local/depends/linux.p:
+	  add stuff for nice one-config-file setting of linux spell version
+	* caster: g++ workaround: -pcmcia-cs, +parted; fix log diffing
+	* mkprep: work around silly mv warning
+	* installer.sh: fix bug #9653
+	* 10common: move a bit of code for cleanup
+	* 30spellinstall: fix typo in var name, remove useless linux workaround
+	* bootloader: add --no-floppy to grub-install
+	* optionalSpell: move code around, remove old code
+	* templates/fstab.first: add comment about /dev/shm on tmpfs
+	* templates/grub.conf: add lba, add generic latest-kernel option
+
+2005-08-28 Karsten Behrmann <BearPerson@sourcemage.org>
+	* initrd.files: add ls, lsmod, rmmod, per request from afk
+	* data/linux.p: add base linux.p for for-cache casts
+	* data/iso.command: create empty /etc/modules too
+	* smgl.genspells: add linux - we need the modules for the initrd
+	* caster: add force usage of p4's kernel configs
+	* mkprep: add sanity checks; make choose_multi work as the docs say
+	* skeleton/etc/inittab: fix stupid typo (5 times tty2)
+	* skeleton/initrd/sbin/smgl.init: unmount /dev before init'ing
+	* 30spellinstall: run ldconfig with path, don't rely on it getting found
+
+2005-08-26 Karsten Behrmann <BearPerson@sourcemage.org>
+	* skeleton/etc/group: add wheel group, set "users" GID up to 1000
+
+2005-08-24 Karsten Behrmann <BearPerson@sourcemage.org>
+	* caster: fix missing fi, use sorcery functions
+	* first_build: fix missing % in expansion
+	* docs/README: Add general instructions on using the ISO genscripts
+	* docs/isogen-config: describe config file
+
+2005-08-23 Karsten Behrmann <BearPerson@sourcemage.org>
+	* mkinitrd, mkiso: add comments to code, beautify code
+	* docs/isogen/config-files: start documentation of configuration
+	                            interface
+
+2005-08-22 Karsten Behrmann <BearPerson@sourcemage.org>
+	* caster: add temporary workarounds for "g++ dependencies"
+	          add sanity check if >10 spells are to be dispelled
+	* config: refer to absolute paths, would not build otherwise
+	          fix typo in variable assignment
+	* diskStructure: add cancel button to get back to main menu cleanly
+
+2005-08-18 Karsten Behrmann <BearPerson@sourcemage.org>
+	* mkiso: add filter to get all depended-upon spells on the ISO too,
+	         fixing the problem "gcc33 missing on ISO" et al
+	* bootloader: wrong .patterns file referenced, add --no-floppy, fixing
+	              problems with patterns staying in the config file and
+	              it taking too long when a floppy is in a drive
+	* nativeLanguageSupport: sort lists alphabetically
+
+2005-08-18 Thibaut Fernagut <t.fernagut@h0m3.be>
+	* doc/README: created instructions for generating chroots
+
+2005-08-14 Karsten Behrmann <BearPerson@sourcemage.org>
+	* caster: several small changes, improved install log change tracking
+	* generation-scripts/*: more minor fixes
+
+2005-08-14 Karsten Behrmann <BearPerson@sourcemage.org>
+	* data/, generation-scripts/: big re-org
+	* generation-scripts/*: minor changes because of re-org
+
+2005-08-12 Karsten Behrmann <BearPerson@sourcemage.org>
+	* mkiso: tiny fix
+	* skeleton/etc/inittab: root shells on tty[2-6]
+	* installer.sh: tidy up reset_installer, clobber a lot of globals
+	* modules/30spellinstall: tiny fix
+	* modules/kernel: another step towards linux-new support
+
+2005-08-09 Karsten Behrmann <BearPerson@sourcemage.org>
+	* iso.packages: remove udevd and devfsd
+	* mkiso: static /dev, add code for conflicts handling
+	* installer.sh: remove senseless comments, remove $GUIDE, rephrase
+	* modules/30spellinstall: redo circular depends code, add conflicts
+	* skeleton/etc/groups: removed burning group
+
+2005-07-19 Karsten Behrmann <BearPerson@sourcemage.org>
+	* 30spellinstall: re-add gauge for cache copying(#9276)
+	* diskStructure: fix up recognition of already-mounted partitions(#9274)
+	* installer.sh: fix bug 9278
+	* iso.packages: fix bug 9271, will fix bug 9263 too
+
+2005-07-18 Karsten Behrmann <BearPerson@sourcemage.org>
+	* 10common, timezone: coding style fixes
+	* services: fix stupid bug #9260
+
+2005-07-18 Karsten Behrmann <BearPerson@sourcemage.org>
+	* data/internal_version: added a facility to trigger automatic ISO gen
+	* iso.packages, install-list, nativeLanguageSupport: revert from kbd
+	  back to console-{data,tools} (see bugs #9251 and #9250)
+
+2005-07-17 Karsten Behrmann <BearPerson@sourcemage.org>
+	* config-2.6: Don't timestamp kernel messages, configure for i486
+	* optional-list, iso.packages: removed a few spells to reduce ISO size
+	  for the devel period
+	* mkiso: fix copying of grimoire version
+	* installer.sh: fixed aborting main loop,
+	  added usage of sorcery's dialogrc
+	* $DATA/directories: added workarounds for those missing in smgl-fhs
+	* 10common: added debug logging
+	* 30spellinstall: fixed depth parsing with fake spells,
+	  fix /var/state/sorcery/packages entry
+	* bootloader, installation, kernel, network: minor fixes
+	* diskStructure: disabled display of already mounted partitions
+	* optionalSpell, services, syslog: syntax fixes
+
+2005-07-16 Karsten Behrmann <BearPerson@sourcemage.org>
+	* <various>: minor fixes that turned up on generation and testing
+	* diskStructure: major fixing and testing
+
+2005-07-15 Karsten Behrmann <BearPerson@sourcemage.org>
+	* <various files>: small typo fixes seen on the first ISO generatings
+
+2005-07-15 Karsten Behrmann <BearPerson@sourcemage.org>
+	* config-2.6: removed framebuffer support
+	* initrd.files: removed path from binaries, new handling detects it
+	* initrd.kernel: added a few modules that may be of importance directly
+	  after booting
+	* g-s/config: removed SYSROOT (a bother, not really used)
+	  configured for devel ISOs
+	* mkinitrd: added automatic library copying,
+	  removed automatic su (this will be ran as root anyway)
+	* mkiso: now works with any sorcery/grimoire version, minor changes
+	* mkprep: any sorcery/grimoire, check for required spells
+
+2005-07-15 Karsten Behrmann <BearPerson@sourcemage.org>
+	* modules/nativeLanguageSupport: style fixes a la dufflebunk
+	* modules/installation: support other-than-stable sorcery and grimoires
+	* installer.sh, modules/patterns: small style changes
+	* data/config-2.6: auto-mount and support devfs
+
+2005-07-14 Karsten Behrmann <BearPerson@sourcemage.org>
+	* installer.sh: minor syntax error correction
+	* nativeLanguageSupport: font no longer shows the full path,
+	  language had a problem finding languages, fixed
+	* diskStructure: enlarged dialog window to contain text and menu
+	  minor cosmetic code changes
+	* timezone: fixed bug preventing timezones from getting found
+	* config-2.6: make oldconfig'ed up to 2.6.12.2, minor changes
+
+2005-07-14 Karsten Behrmann <BearPerson@sourcemage.org>
+	* install-list, iso.packages: replaced console-{data,tools} with kbd
+	* generation-scripts/mkprep: use cp -a instead of cp -r
+
+2005-07-14 Karsten Behrmann <BearPerson@sourcemage.org>
+	* generation-scripts/mkiso: Added a function for files specifically
+	  needed by the installer
+	* ChangeLog: made some entries more specific
+
+2005-07-10 Karsten Behrmann <BearPerson@sourcemage.org>
+	* ChangeLog: Integrated from proj4
+	* skeleton: integrated new installer
+
+2005-07-08 Karsten Behrmann <BearPerson@sourcemage.org>
+	* modules: minor fixes, small rewrites
+	* doc/installer: create a list of globals and of depends used
+
+2005-07-03 Karsten Behrmann <BearPerson@sourcemage.org>
+	* diskStructure: simplified partition listing code
+	* kernel: write a few functions to make this really able to install
+	  a kernel
+
+2005-06-27 Karsten Behrmann <BearPerson@sourcemage.org>
+	* nativeLanguageSupport: revamp - The usual: remove global variables,
+	  add depends, use misc functions
+
+2005-06-18 Karsten Behrmann <BearPerson@sourcemage.org>
+	* services: rewrite.
+
+2005-06-15 Karsten Behrmann <BearPerson@sourcemage.org>
+	* newinstall: Replaced old installation code by other code that leaves
+	  a few workarounds to other sections of the code and does not do a few
+	  things that I couldn't see any sense in yet.
+
+2005-06-12 Karsten Behrmann <BearPerson@sourcemage.org>
+	* TODO: revised plan what to do until 0.9.5
+	* newinstall: Added a first replacement of the general installation
+	  code
+
+2005-06-05 Karsten Behrmann <BearPerson@sourcemage.org>
+	* root-bear/caster: added alien checking
+
+2005-06-05 Karsten Behrmann <BearPerson@sourcemage.org>
+	* <several files>: Syntax checking and fix
+
+2005-06-02 Karsten Behrmann <BearPerson@sourcemage.org>
+	* <several files>: small changes, indent changes
+
+2005-06-02 Karsten Behrmann <BearPerson@sourcemage.org>
+	* <ISO spell lists>: Updated, added smgl-fhs
+
+2005-05-22 Karsten Behrmann <BearPerson@sourcemage.org>
+	* modules/spellinstaller: added new installer routines
+
+2005-05-21 Karsten Behrmann <BearPerson@sourcemage.org>
+	* modules/network: re-org
+
+2005-05-21 David Kowis <dkowis@sourcemage.org>
+	* modules/optionalSpell: re-write
+	* modules/optionalSpell: added a query to install the source cache
+	* modules/common: added a progress_bar function for progress bars
+	* modules/optionalSpell: went back and changed the progress bar to use the
+	common function
+
+2005-05-11 Karsten Behrmann <BearPerson@sourcemage.org>
+	* modules/bootloader: re-org
+
+2005-05-03 Karsten Behrmann <BearPerson@sourcemage.org>
+	* modules/patterns: added template handling code
+
+2005-05-01 Karsten Behrmann <BearPerson@sourcemage.org>
+	* modules/diskStructure: full re-org and half re-write
+
+2005-04-30 Karsten Behrmann <BearPerson@sourcemage.org>
+	* installer.sh: changed depends to use seperate files
+	* ChangeLog: Added David (lazy bum, document your changes)
+
+2005-03-15 David Kowis <dkowis@shlrm.org>
+	* everything: wrote new installer, did all kinds of stuff
+
+2005-03-14 Karsten Behrmann <BearPerson@sourcemage.org>
+	* root-bear/create-chroot: added a raw script to make chroots
+
+2005-03-07 Karsten Behrmann <BearPerson@sourcemage.org>
+	* various files: Added fixes and experience from setting up at David's
+
+2005-03-04 Karsten Behrmann <BearPerson@sourcemage.org>
+	* multiple stuff: minor fixes
+
+2005-02-26 Karsten Behrmann <BearPerson@sourcemage.org>
+	* bearscripts/...: moved stuff around, added multi-file support
+
 2005-02-10 Karsten Behrmann <BearPerson@sourcemage.org>
 	* ChangeLog: added before-changelog credits
+
+2005-02-09 Karsten Behrmann <BearPerson@sourcemage.org>
+	* skeleton/CONTRIB: created
+	* root-bear: added a list of chroot-vital spells
+
+2005-02-07 Karsten Behrmann <BearPerson@sourcemage.org>
+	* skeleton/etc/shells: added
+
+2005-02-02 Karsten Behrmann <BearPerson@sourcemage.org>
+	* root-bear: added my chroot maintenance scripts
 
 2005-01-27 Karsten Behrmann <BearPerson@sourcemage.org>
 	* really everything: moved everything not related
 	  to the current scripts to branches
+2005-01-27 Karsten Behrmann <BearPerson@sourcemage.org>
+	* everything: branch back from devel
+	* really everything: moved everything not related
+	  to the current scripts to branches
+
+2005-01-26 Karsten Behrmann <BearPerson@sourcemage.org>
+	* genscript/mk-smgl-iso: added sanity checks
+	* genscript/mkiso: Moved template into own function,
+	  added only_arch functionality
+	* root-bear/...: more work on the scripts
 
 2005-01-26 Karsten Behrmann <BearPerson@sourcemage.org>
 	* genscript/mk-smgl-iso: added sanity checks
@@ -17,12 +322,10 @@
 2005-01-15 Karsten Behrmann <BearPerson@sourcemage.org>
 	* etc/passwd, etc/shadow: removed unneeded sshd user
 	* smgl.install: beautified GMT/Localtime prompt
+	* isolinux.msg: replace ^O with real escape char, fix bug 7982
 
 2005-01-15 David Kowis <dkowis@shlrm.org>
 	* smgl.install: added documentation and comments on splitting
-
-2005-01-15 Karsten Behrmann <BearPerson@sourcemage.org>
-	* isolinux.msg: replace ^O with real escape char, fix bug 7982
 
 2005-01-14 Karsten Behrmann <BearPerson@sourcemage.org>
 	* almost everything: updated to fixes that came up during 
@@ -43,15 +346,43 @@
 	* skeleton: added a few needed files and symlinks
 	* generation-scripts, data: moved my scripts over
 
+2005-01-08 Karsten Behrmann <BearPerson@sourcemage.org>
+	* skeleton: added a few needed files and symlinks
+	* everything: thoroughly tested, modified and added
+	* generation-scripts, data: branch to devel
+
 2005-01-06 Karsten Behrmann <BearPerson@sourcemage.org>
 	* skeleton/initrd/smgl.init: removed the need for cat
+	* iso.packages: added isolinux.bin and linux
+	* mkiso: added special case for the linux spell
+	* initrd.files: added some files needed by smgl.init
+	* initrd.kernel: removed filesystem stuff
+
+2005-01-06 Karsten Behrmann <BearPerson@sourcemage.org>
+	* skeleton/initrd/smgl.init: removed the need for cat
+
+2005-01-05 Karsten Behrmann <BearPerson@sourcemage.org>
+	* mkiso: further writing - added templates
+	* iso.templates, smgl.templates: add
 
 2005-01-02 Karsten Behrmann <BearPerson@sourcemage.org>
 	* skeleton: populated the skeleton a little...
 
+2005-01-01 Karsten Behrmann <BearPerson@sourcemage.org>
+	* mkinitrd: tested, fixed some bugs, removed debugging
+	* mkiso: added first stuff
+	* iso.packages: carried in defaults
+
 2004-12-21 Karsten Behrmann <BearPerson@sourcemage.org>
 	* skeleton/isolinux.cfg: added the vga option, fix bug #7642.
 	* ChangeLog: created
+
+2004-12-18 Karsten Behrmann <BearPerson@sourcemage.org>
+	* mkinitrd: added ldconfig
+
+2004-12-17 Karsten Behrmann <BearPerson@sourcemage.org>
+	* mkinitrd: added initrd fs making stuff
+	* mkinitrd: added my creation script stub
 
 2004-10-26 Benoit PAPILLAULT <benoit.papillault@sourcemage.org>
 	* 0.9.3 x86/PPC ISOs released
@@ -179,12 +510,6 @@
 	* bootmisc: the script with commands to free initrd memory for the installer
 
 2004-04-07 hgg <hgreig@bigpond.net.au>
-	* smgl.install: typos corrected, &&'s used to stop continuation when menu is
-	  escaped grub and lilo fixes, udev fixes, untracked file fixes, change menu
-	  item for kernel so it is escapable/cancellable; architecture, optimization
-	  menus fixed
-
-2004-04-07 hgg <hgreig@bigpond.net.au>
 	* srcmage.txt: the txt file read by isolinux
 	* isolinux.cfg: isolinux config
 	* f1.txt: graphical modes readable from isolinux prompt
@@ -217,6 +542,12 @@
 	  Rename many, many variables from LINE and LIST (etc) to be more
 	  reflective of their job.
 	  More debugging added, some refinement.
+
+2004-04-07 hgg <hgreig@bigpond.net.au>
+	* smgl.install: typos corrected, &&'s used to stop continuation when menu is
+	  escaped grub and lilo fixes, udev fixes, untracked file fixes, change menu
+	  item for kernel so it is escapable/cancellable; architecture, optimization
+	  menus fixed
 
 2004-04-02 hgg <hgreig@bigpond.net.au>
 	* smgl.init: pivot_root fixes, making writable dirs and new cdrom scan

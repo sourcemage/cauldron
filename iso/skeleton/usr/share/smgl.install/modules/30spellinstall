@@ -1,0 +1,210 @@
+#!/bin/bash
+# Contains the spell installation functions, as specified on the wiki.
+# Non-backgrounding version
+
+# NEEDS: a /var/state/sorcery/depends containing all depends between
+#        spells that could be installed
+#        a /var/state/sorcery/packages containing all spells that could
+#        get installed and their versions
+#        /var/state/smgl.install/depends containing lines of the form
+#        spell;conflicts_with
+
+# --------------public----------------------
+
+SI_QUEUE_DIR=/tmp/spellinstall
+SI_UNLOOP_FILE=$SI_QUEUE_DIR/antiloop
+SI_UNLOOP_FILE2=$SI_QUEUE_DIR/antiloop2
+SI_SPELL_QUEUE=$SI_QUEUE_DIR/queue
+SI_CONFLICTS=$SI_QUEUE_DIR/conflicts
+
+
+# Marks a spell for installation. Does not install it.
+# args: the spells
+# $1 (if a number) recursion depth - to recognize loops
+si_queue() {
+  mkdir -p ${SI_QUEUE_DIR}
+  touch $SI_UNLOOP_FILE
+  local spell
+  for spell in "$@" ;do
+    if ! grep -q "^$spell$" $SI_UNLOOP_FILE ;then
+      echo "$spell" >>$SI_UNLOOP_FILE
+      # No spell gets handled twice, => no infinite loops on circular deps
+      si_queue $( si_get_dependencies $spell )
+      si_run_conflicts $spell
+      echo "$spell" >>${SI_SPELL_QUEUE}
+    fi
+  done
+}
+
+# (currently) installs a spell
+# args: the spells to install
+# TODO: Could get a nice progress bar too
+si_queue_now() {
+  touch $SI_UNLOOP_FILE2
+  local spell
+  for spell in "$@" ;do
+    if ! grep -q "^$spell$" $SI_UNLOOP_FILE2 ;then
+      echo "$spell" >>$SI_UNLOOP_FILE2
+      si_queue_now $( si_get_dependencies $spell )
+      si_run_conflicts $spell
+      si_install_spell $spell
+    fi
+  done
+}
+
+# ditto
+# args: the spells to install
+si_wait() {
+  si_queue_now "$@"
+}
+
+# Returns 1 if the spell is queued, 4 if it is installed,
+# 10 if it would conflict with a queued/installed spell, 0 (true) otherwise
+# $1: the spell
+si_query() {
+  if grep -q "^$1:" ${TARGET}/var/state/sorcery/packages ;then
+    return 4
+  elif grep -q "^$1$" $SI_SPELL_QUEUE ;then
+    return 1
+  elif grep -q "^$1$" $SI_CONFLICTS ;then
+    return 10
+  else
+    return 0
+  fi
+}
+
+# Casts all spells remaining in the queue
+# no arguments
+si_flush() {
+  if ! [ -e $SI_SPELL_QUEUE ] ;then
+    return 0 #no queue, empty queue
+  fi
+
+  # This will stop working the moment we're multitasking, but it works for now
+  local spell
+  while read spell ;do
+    si_install_spell $spell
+  done <$SI_SPELL_QUEUE
+  >${SI_SPELL_QUEUE} #empty queue, we've done these
+}
+
+# --------------private-------------------
+
+# Our own conflicts handling.
+# Quite cheap, but ought to do its job.
+# $1: spell to check conflicts of.
+# Appends any conflicts found to the end of $SI_CONFLICTS.
+
+function si_run_conflicts() {
+  grep "^$1;" $STATE_DIR/conflicts |
+    cut -d';' -f2 >>$SI_CONFLICTS
+}
+
+# Cheapo checking dependencies.
+# Echos any spells that $1 directly depends on
+
+si_get_dependencies() {
+  grep "^$1:[^:]*:on:" /var/state/sorcery/depends |
+  cut -d: -f2 |
+  sed 's/(.*$//' # cut j2sdk-bin(JAVA) to j2sdk-bin
+}
+
+# If we want any (backgrounded) action filed like a spell.
+# Fake spells should be calles "special:<name>", the colon
+# making sure no real spell can have the same name.
+
+# WARNING: Should always return true if it is a fake spell.
+# Returning false is reserved for real spells.
+si_run_fake_spell() {
+  case $1 in
+    "special:caches")
+                     # Okay, since not much can fail here,
+                     # I guess using the Pretty Gauge is ok even in devel
+                     local TOTALFILES=`ls -1 /var/cache/sorcery | wc -l`
+                     cp --parents -v /var/cache/sorcery/* ${TARGET} |
+                       progress_bar $TOTALFILES "Installing Source Caches..." \
+                        "Installing Source Cache" "Installing"
+                     fill_dependency install_caches
+                     return 0
+                   ;;
+    "special:basics")
+                     fill_dependency basic_system
+                     return 0
+                   ;;
+    "special:compile_env")
+                          chroot_cmd scribe reindex
+                          fill_dependency compile_system
+                          return 0
+                        ;;
+    special:*)
+              return 0
+            ;;
+  esac
+  return 1
+}
+
+# Theses functions solely exists to quickfix spells that don't work properly
+# $1: spell to install
+si_pre_workaround() {
+  case $1 in
+    "example")
+              cp ${TARGET}/etc/passwd /tmp/backuppass
+            ;;
+  esac
+}
+
+si_post_workaround() {
+  case $1 in
+       "bash")
+              cp --parents -a /etc/profile* $TARGET
+            ;;
+    "example")
+              cp /tmp/backuppass ${TARGET}/etc/passwd
+              chroot_cmd mk_example_key
+            ;;
+    "openssh")
+              rm -f ${TARGET}/etc/ssh/*host*
+              chroot_cmd ssh-keygen -t rsa1 -f /etc/ssh/ssh_host_key -N ""
+              chroot_cmd ssh-keygen -t rsa -f /etc/ssh/ssh_host_key -N ""
+              chroot_cmd ssh-keygen -t dsa -f /etc/ssh/ssh_host_key -N ""
+            ;;
+  esac
+}
+
+# $1: the spell to install
+si_install_spell() {
+
+  debug_log "spellinstall" "considering to install $1"
+
+  if si_run_fake_spell $1 ;then
+    return 0 #is a fake spell, nothing left to do
+  fi
+
+  if grep -q "^$1:" ${TARGET}/var/state/sorcery/packages ;then
+    return 0 #already installed
+  fi
+
+  echo "Installing $1..." >&2
+
+  # TODO: The backgrounded version should be locking now,
+  #       and logging the current spell
+  si_pre_workaround $1        &&
+
+  local VERSION               &&
+  VERSION=$(grep "^$1:" /var/state/sorcery/packages | cut -d: -f4) &&
+  if [ -z $VERSION ] ;then
+    echo "The spell $1 does not seem to be on this CD!?" >&2
+    return 1
+  fi                          &&
+  # TODO: I don't like using *'s
+  tar -xjp -C ${TARGET} -f /var/cache/sorcery/$1-${VERSION}-*.tar.bz2 &&
+    if [[ "$1" != "smgl-fhs" ]] ;then
+      chroot_cmd /sbin/ldconfig
+    fi                        &&
+
+  si_post_workaround $1       &&
+
+  echo "$1:$(date +%Y%m%d):installed:${VERSION}" \
+    >>${TARGET}/var/state/sorcery/packages &&
+  debug_log "spellinstall" "successfully installed $1"
+}

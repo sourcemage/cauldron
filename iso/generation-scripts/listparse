@@ -1,0 +1,19 @@
+#!/bin/bash
+
+# Generates list of all spells which we need caches for as well as
+# a list of all spells that should not be dispelled from the chroot
+# (all others are). They are stored in $STATE_DIR==../data
+
+. ${0%/*}/config
+
+if ! [ -e $STATE_DIR/list.reqd ] ;then
+  gaze installed | cut -d: -f1 >$STATE_DIR/list.reqd
+fi
+
+cat $STATE_DIR/iso.packages |
+grep "unpack " | grep -v "end_unpack" |
+sed "s/\(begin_\)\?unpack //" >/tmp/iso-list
+cat /tmp/iso-list $STATE_DIR/install-list $STATE_DIR/optional-list |
+  sed -e 's/#.*$//' -e 's/[[:blank:]]*$//' | grep -v "^$" |
+  sort -u >$STATE_DIR/list.all
+rm /tmp/iso-list

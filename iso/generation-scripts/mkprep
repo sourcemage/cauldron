@@ -1,0 +1,109 @@
+#!/bin/bash
+SCRIPTDIR=${0%/*}
+[ -e /etc/smgl-isogen.conf ] && . /etc/smgl-isogen.conf
+. $SCRIPTDIR/config
+
+if [ $# -lt 1 ] || [[ "$1" == "/" ]] ;then
+  echo "usage: $0 <path_to_p4_in_chroot>"
+  exit 1
+fi
+
+if [[ ${1: -8} != "/root/p4" ]] ;then
+  echo "WARNING! The parameter of this script ($1) is supposed to be"
+  echo "the directory where the scripts should be copied to. The recommended"
+  echo "location is /root/p4 inside the chroot."
+  echo "This directory will be rm -r'ed."
+  echo ""
+  read -t 10 -p "Do you still want to continue? [n]" -n 1 SANITY
+  echo
+  [[ "$SANITY" == "y" ]] || exit 2
+fi
+
+function choose_multi()
+{
+  local basicname foundname tempname
+  if [[ -z $1 ]] ;then
+    echo "choose_multi called on no file!"
+    return 1
+  fi # Things get really evil otherwise
+  basicname="$1"
+  tempname="$1"
+  while [ $# -gt 0 ] ;do
+    shift
+    [ -e "$tempname" ] && foundname="$tempname"
+    tempname="${tempname}.$1"
+  done
+  if [[ "$foundname" ]] && [[ "$foundname" != "$basicname" ]] ;then
+    mv "$foundname" "$basicname"
+  fi
+  rm -rf "$basicname".*
+  if [[ "$(readlink $basicname)" == "no/../op" ]] ;then
+    rm -f "$basicname"
+  fi
+}
+
+function process_templates()
+{
+  local pattern
+  local line
+  cp $1  ${TMP_DIR}/tmp.template
+  while read line ; do
+    eval pattern="$line"
+    sed -i "s/$pattern/g" ${TMP_DIR}/tmp.template
+  done <${STATE_DIR}/smgl.patterns
+  cat ${TMP_DIR}/tmp.template |
+  grep -v "^__SMGL_TEMPLATE_NOT_${ISO_ARCH}__" |
+  grep -v "^__SMGL_TEMPLATE_NOT_${ISO_BRANCH}__" |
+  sed 's/^__SMGL_TEMPLATE_NOT_[^_]*__//' |
+  sed "s/^__SMGL_TEMPLATE_ONLY_${ISO_ARCH}__//" |
+  sed "s/^__SMGL_TEMPLATE_ONLY_${ISO_BRANCH}__//" |
+  grep -v "^__SMGL_TEMPLATE_ONLY_[^_]*__" >$1
+  rm ${TMP_DIR}/tmp.template
+}
+
+rm -rf $1
+mkdir -p $1
+cp -a --no-preserve=ownership $SCRIPTDIR/../* $1
+
+# redefine
+STATE_DIR=$1/data
+SKELETON=$1/skeleton
+SCRIPTS=$1/generation-scripts
+
+cp -a --no-preserve=ownership $SCRIPTDIR/../../ChangeLog $SKELETON
+{
+  cat /etc/smgl-isogen.conf 2>/dev/null
+  echo "ISO_VERSION=$ISO_VERSION"
+  # Set ISO version to version of copy
+  # (avoiding different $(date)'s for templates->files and the .iso file)
+  cat $SCRIPTDIR/config
+} >$SCRIPTS/config
+
+choose_multi $STATE_DIR/smgl.multi $ISO_ARCH
+choose_multi $STATE_DIR/smgl.templated $ISO_ARCH
+choose_multi $STATE_DIR/smgl.patterns $ISO_ARCH
+process_templates $STATE_DIR/smgl.multi
+process_templates $STATE_DIR/smgl.templated
+
+while read line ;do
+  eval choose_multi $line
+  # so $SKELETON etc. get a chance to expand
+done <$STATE_DIR/smgl.multi
+
+while read line ;do
+  eval help="$line"
+  process_templates "$help"
+done <$STATE_DIR/smgl.templated
+
+#if ! [ -e ${STATE_DIR}/linux-ISO.tar.bz2 ] ;then
+#  echo "Missing a linux tarball for the ISO, generating one"
+#  gaze install linux | tar --no-recursion -cjf ${STATE_DIR}/linux-ISO.tar.bz2 -T -
+#fi
+if ! [ -e $1/../$GVERSION.tar.bz2 ] ;then
+  echo "Missing grimoire tarball, fetching..."
+  wget -O $1/../$GVERSION.tar.bz2 "http://codex.sourcemage.org/$GVERSION.tar.bz2"
+fi
+if ! [ -e $1/../sorcery-$SVERSION.tar.bz2 ] ;then
+  echo "Missing sorcery tarball, getting..."
+  wget -O $1/../sorcery-$SVERSION.tar.bz2 "http://download.sourcemage.org/sorcery/sorcery-$SVERSION.tar.bz2"
+fi

@@ -1,0 +1,17 @@
+# WORKAROUND until smgl-fhs remembers about these
+# maybe it's excludes cutting us though
+/dev
+/dev/pts
+/dev/shm
+/home
+/proc
+# Heck, no special permissions, who cares...
+/root
+/sys
+# </WORKAROUND>
+/etc/skel
+/etc/sorcery/local
+/mnt/cdrom
+/mnt/floppy
+/usr/games
+/var/lib/sorcery/codex

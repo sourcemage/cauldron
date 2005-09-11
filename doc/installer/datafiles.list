@@ -1,0 +1,96 @@
+This is a list of files that the installer uses and requires to exist on the ISO
+(files within [] are used, but not strictly required)
+In this file, * is to be understood as a wildcard meaning that all files
+in the preceding path get used, while @ refers only to the files mentioned in
+the description.
+
+$DATA_DIR/directories
+  list of directories to create on the installed system,
+  in addition to smgl-fhs.
+
+[$DATA_DIR/install.guide]
+  the install guide to print for "Installation and help notes"
+
+$DATA_DIR/modules/*
+  the installer modules
+
+$DATA_DIR/symlinks
+  list of symlinks to create (format "$link $target")
+
+$DATA_DIR/templates/@
+  Files playing template for on-the-fly generated files
+  Currently used:
+  - patterns (files specifying which "macro" to replace with what
+    bootloader.patterns: patterns in the bootloader configs
+    nls.patterns: patterns in the editor, locale etc. files
+  - files used as templates:
+    fstab.first: file prepended to the "meaty" section of fstab
+    fstab.last: appended to the end of fstab
+    editor.sh: file to set $EDITOR
+    lc.sh: sets $LANG
+    grub.conf: raw grub config (becomes menu.lst)
+    lilo.conf: raw lilo config
+    yaboot.conf.last: the last few lines of the yaboot conf, the rest is
+      auto-generated.
+
+$STATE_DIR/conflicts
+  lines of the form $SPELL;$SPELL2
+  meaning when $SPELL is cast, $SPELL2 cannot get cast anymore (conflicting)
+
+$STATE_DIR/optionalSpellList
+  list of optional spells and descriptions. format:
+  "spell" "short description" "off"
+  note that they are set in quotes, have to escape special chars,
+  and that the last field is "off".
+
+[$STATE_DIR/version]
+  defines installer and sorcery/grimoire versions
+
+/boot/config-*
+  the ISO kernel config (ONE file)
+
+[/etc/sorcery/dialogrc]
+  stolen dialogrc from sorcery for nice colors (sorcery installs this)
+
+/etc/sourcemage_version
+  file to specify installer version and to identify CD to the initrd
+
+/etc/sysconfig/*
+  the sysconfig files that could have to get changed during the install.
+  They are:
+    keymap
+    devices
+    facilities (for the logging facility)
+
+/etc/@
+  real aliens to install:
+  passwd, group, shadow, ld.so.conf, issue, modules, modules.conf
+  nsswitch.conf, shells
+
+/sbin/MAKEDEV
+  the MAKEDEV script to make a static /dev
+
+/var/cache/sorcery/sorcery-$SORCERY_VERSION.tar.bz2
+  a copy of sorcery
+
+/var/lib/sorcery/codex/$GRIMOIRE_VERSION.tar.bz2
+  a copy of the grimoire to use
+
+/var/state/sorcery/depends
+  a /v/s/s/depends file covering every optional and required spell,
+  such as would be created by casting every spell and
+  dispel --no-reap-depends'ing it again.
+
+/var/state/sorcery/packages
+  a /v/s/s/packages covering every optional and required spell,
+  even those conflicting with each other. You need to create this one
+  manually/through a script. Sorcery provides no way to get this, why should it.
+
+/var/spool/sorcery/linux-2.6.12.tar.bz2
+  for example, the tarball for the main kernel release
+
+/var/spool/sorcery/patch-2.6.12.3.bz2
+  another example, the patch up to the real version
+
+[/var/spool/sorcery/*]
+  sources to install to the system
