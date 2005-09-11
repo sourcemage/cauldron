@@ -13,17 +13,23 @@ function services_screen() {
 sv_get_scripts() {
   local i=0
   local line
-  
+
   find ${TARGET}/etc/init.d/runlevels/ -mindepth 2 \
        -not -name 'runlevel.config' >$TMP_DIR/iscripts.list.$$
+
+  >$TMP_DIR/prevenabled-scripts
+  >$TMP_DIR/prevdisabled-scripts
+
   while read line ;do
     SCRIPTLIST[i++]="${line##*/}"
     local helper=${line##*%}
     SCRIPTLIST[i++]="Runlevel ${helper%%/*}" # extract stuff between % and /
     if test -x $line ;then
       SCRIPTLIST[i++]="on"
+      echo "${line##*/}" >>$TMP_DIR/prevenabled-scripts
     else
       SCRIPTLIST[i++]="off"
+      echo "${line##*/}" >>$TMP_DIR/prevdisabled-scripts
     fi
   done <$TMP_DIR/iscripts.list.$$ #Can't use a pipe, we'd get a subshell
   rm -f $TMP_DIR/iscripts.list.$$
@@ -51,10 +57,13 @@ sv_enable_scripts() {
   local line
 
   while read line ;do
-    chroot_cmd telinit bootenable "$line" <&2
-  done <$TMP_DIR/enabled-scripts # we hope stderr is the terminal
+    grep -q "^$line$" $TMP_DIR/prevenabled-scripts || # no already-enabled ones
+    chroot_cmd telinit bootenable "$line" <&2 # we hope stderr is the terminal
+  done <$TMP_DIR/enabled-scripts
   while read line ;do
+    grep -q "^$line$" $TMP_DIR/prevdisabled-scripts ||
     chroot_cmd telinit bootdisable "$line" <&2
   done <$TMP_DIR/disabled-scripts
   rm -f $TMP_DIR/enabled-scripts $TMP_DIR/disabled-scripts
+  rm -f $TMP_DIR/prevenabled-scripts $TMP_DIR/prevdisabled-scripts
 }

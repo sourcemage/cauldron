@@ -84,6 +84,8 @@ in_start() {
       ${TARGET}/var/lib/sorcery/codex                      &&
   echo "GRIMOIRE_DIR[0]=/var/lib/sorcery/codex/$GRIMOIRE_VERSION" \
        >${TARGET}/etc/sorcery/local/grimoire
+  echo "FROM_URL=http://codex.sourcemage.org/$GRIMOIRE_VERSION.tar.bz2" \
+       >$TARGET/var/lib/sorcery/codex/$GRIMORE_VERSION/GRIMOIRE
 
   # Install alien config files
   cp --parents -f \

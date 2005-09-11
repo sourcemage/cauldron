@@ -19,6 +19,7 @@
 /var/run
 /var/log
 /var/lock
+/var/lock/lvm
 /var/lib
 /var/lib/nfs
 /var/cache/sorcery

@@ -4,6 +4,13 @@
 	* config: kernel version bump to 2.6.13
 	* config-2.6.ppc: add ppc config
 	* kernel: finally fix bug 9735 - darn double typo
+	* iso.dirs: hopefully fix bug 9730
+	* installer.sh: fix bugs 9740, 9656, 9741, (9496, 6859)
+	* 10common: confirm: dynamically do size of query window
+	* 30spellinstall: fix bug 9651, 9647, 8128
+	* diskStructure: fix bug 9646
+	* installation: fix bug 9248
+	* services: fix bug 9655
 
 2005-09-10 Karsten Behrmann <BearPerson@sourcemage.org>
 	* config-2.6: configure for 2.6.13

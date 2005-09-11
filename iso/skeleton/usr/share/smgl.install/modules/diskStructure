@@ -11,6 +11,17 @@
 function disk_structure_screen() {
   # do things here to display the menu items for setting up disks
 
+  if check_dependency disk ;then
+    # Whoops! We already have stuff starting to install
+    confirm "WARNING! Data is already being installed to the
+partition structure you have set up. Very bad things
+happen when you mount new partitions on top of them.
+It is *highly* recommended that you choose
+\"restart installer\" from the main menu if you have to
+repartition, and start from scratch." --defaultno ||
+    return 1
+  fi
+
   local ICOMMAND="A" # always default to previous selection
   local DONE=false
   while ! $DONE ;do
@@ -64,6 +75,8 @@ You have no dedicated swap partition."; then
       mk_swap_file
     fi
   fi
+
+  return 0 # When we've reached this point, always return success.
 
 }
 

@@ -105,8 +105,9 @@ function confirm()  {
     # return false if there probably was a --defaultno in $2
 #  else
     local query="$1"
+    local length=$(( $( echo "$1" | wc -l) + 4))
     shift
-    run_dialog "$@" --yesno  "$query" 6 60
+    run_dialog "$@" --yesno  "$query" $length 60
 #  fi
 
 }

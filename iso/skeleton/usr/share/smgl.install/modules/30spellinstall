@@ -118,10 +118,13 @@ si_get_dependencies() {
 si_run_fake_spell() {
   case $1 in
     "special:caches")
-                     # Okay, since not much can fail here,
-                     # I guess using the Pretty Gauge is ok even in devel
                      local TOTALFILES=`ls -1 /var/cache/sorcery | wc -l`
-                     cp --parents -v /var/cache/sorcery/* ${TARGET} |
+                     local file
+                     for file in /var/cache/sorcery/* ; do
+                       # Sacrifice some performance for prettiness ;-)
+                       cp --parents $file ${TARGET}
+                       echo $file
+                     done |
                        progress_bar $TOTALFILES "Installing Source Caches..." \
                         "Installing Source Cache" "Installing"
                      fill_dependency install_caches
@@ -132,6 +135,7 @@ si_run_fake_spell() {
                      return 0
                    ;;
     "special:compile_env")
+                          check_dependency compile_system ||
                           chroot_cmd scribe reindex
                           fill_dependency compile_system
                           return 0
@@ -167,6 +171,9 @@ si_post_workaround() {
               chroot_cmd ssh-keygen -t rsa1 -f /etc/ssh/ssh_host_key -N ""
               chroot_cmd ssh-keygen -t rsa -f /etc/ssh/ssh_host_key -N ""
               chroot_cmd ssh-keygen -t dsa -f /etc/ssh/ssh_host_key -N ""
+            ;;
+      "gnupg")
+              mkdir -p -m 700 $TARGET/root/.gnupg
             ;;
   esac
 }

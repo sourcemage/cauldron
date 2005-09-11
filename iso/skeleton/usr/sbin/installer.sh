@@ -112,7 +112,7 @@ final_screen() {
 shell() {
 
   echo  "Press CTRL-D or type exit to return to the installer"
-  /bin/bash
+  /bin/bash -l
 
 }
 
@@ -213,6 +213,7 @@ which they appear."
           --item-help --menu "$MENU_DESCRIPTION"    \
           8 60 0                                    \
           "A" "[*]Introduction" "Read about the advantages of using Source Mage GNU/Linux" \
+          "?" "[*]Installation and help notes" "A help text on the installer" \
           "B" "[*]Native Language Support" "Select default language, keymap, and console fonts" \
           "C" "Disk Structure" "Partition, format, and mount your disk" \
           "D" "Select Timezone" "Select this box's timezone" \
@@ -228,11 +229,11 @@ which they appear."
           "S" "[*]Shell" "Shell out perhaps to load modules" \
           "T" "[*]Toggle Confirm" "Toggles display of prompts. Do NOT use." \
           "R" "[*]Restart Installation" "Resets everything and begins installation again" \
-          "Z" "[*]Toggle Debug" "Toggles the debug flag" \
-          "?" "[*]Installation and help notes" "A help text on the installer")
+          "Z" "[*]Toggle Debug" "Toggles the debug flag" )
 
     case $ICOMMAND in
       A) intro_screen     ;;
+      ?) display_install_help ;;
       B) nls_screen       ;;
       C) disk_structure_screen ;;
       D) timezone_screen  ;;
@@ -247,10 +248,9 @@ which they appear."
 # nothing else, so has to be run after target is fully set up.
       X) final_screen     ;;
       S) shell            ;;
-      T) toggle_sanity    ;;
+      T) toggle_confirm   ;;
       R) reset_installer  ;;
       Z) toggle_debug     ;;
-      ?) install_help_screen
     esac
 
     RETURNVALUE=$?
@@ -299,6 +299,7 @@ increment_menu_pointer() {
 main()  {
 
   export  PATH="/bin:/usr/bin:/sbin:/usr/sbin"
+  export  HOME="/root"
 
 # mount /proc (needed later for /proc/partitions for instance)
 
@@ -371,7 +372,7 @@ DIALOG=( "dialog" "--backtitle" \
          "Source Mage GNU/Linux Installer v. ${INSTALLER_VERSION}" \
          "--stdout" "--trim")
 
-trap  ":"  INT QUIT
+trap  "true"  INT QUIT
 
 # start the installation process
 main
