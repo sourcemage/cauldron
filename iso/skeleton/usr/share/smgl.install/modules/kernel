@@ -67,7 +67,7 @@ Alternatively, I can just use the linux defaults." 8 65 \
   fi
 
   sed -i -e 's/^MAKEMODE=.*/MAKEMODE="menuconfig"/' \
-         -e 's/^CONFIG_KERNEL=.*/CONFIG_KERNEL="y"/'
+         -e 's/^CONFIG_KERNEL=.*/CONFIG_KERNEL="y"/' \
     $TARGET/etc/sorcery/local/depends/linux.p
 
   chroot_cmd cast -c linux &&

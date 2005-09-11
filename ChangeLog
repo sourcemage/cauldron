@@ -3,6 +3,7 @@
 	* skeleton/etc/sysconfig/*: update from init.d spell and add comments
 	* config: kernel version bump to 2.6.13
 	* config-2.6.ppc: add ppc config
+	* kernel: finally fix bug 9735 - darn double typo
 
 2005-09-10 Karsten Behrmann <BearPerson@sourcemage.org>
 	* config-2.6: configure for 2.6.13
