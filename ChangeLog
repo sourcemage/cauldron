@@ -1,4 +1,5 @@
 2005-09-11 Karsten Behrmann <BearPerson@sourcemage.org>
+	* repository: branch to devel
 	* skeleton/etc/sysconfig/*: update from init.d spell and add comments
 	* config: kernel version bump to 2.6.13
 	* config-2.6.ppc: add ppc config
