@@ -1,5 +1,9 @@
 2005-09-13 Karsten Behrmann <BearPerson@sourcemage.org>
 	* installer.sh: fix bug 9761
+	* install-list, optional-list: remove spells that are included as
+	  dependencies of others anyway
+	* modules/installation: add which (work around bug 9752 + 9737)
+	* kernel: workaround bug 9733, fix bug 9734
 
 2005-09-11 Karsten Behrmann <BearPerson@sourcemage.org>
 	* repository: branch to devel

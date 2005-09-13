@@ -23,7 +23,6 @@ kn_copy_kernel() {
 
   echo "Waiting for the tools needed for kernel installation to install..."
   si_wait "special:compile_env"
-  si_queue_now linux
 
   # install the config used for this kernel
   cp -f /boot/config-* ${TARGET}/etc/sorcery/local/kernel.config
@@ -31,7 +30,14 @@ kn_copy_kernel() {
   cp --parents /etc/sorcery/local/depends/linux.p $TARGET
   echo 'INTERNAL_ISO_VAR="yes"' >>$TARGET/etc/sorcery/local/depends/linux.p
 
+  touch $TARGET/etc/sorcery/local/makefile.patches
+
+  export PROMPT_DELAY=0
   chroot_cmd cast -c linux &&
+  unset PROMPT_DELAY       &&
+
+  si_queue_now linux       &&
+  # install the meat after the linux spell has done its thing
 
   rm -f $TARGET/etc/sorcery/local/depends/linux.p \
     ${TARGET}/etc/sorcery/local/kernel.config \
@@ -69,6 +75,8 @@ Alternatively, I can just use the linux defaults." 8 65 \
   sed -i -e 's/^MAKEMODE=.*/MAKEMODE="menuconfig"/' \
          -e 's/^CONFIG_KERNEL=.*/CONFIG_KERNEL="y"/' \
     $TARGET/etc/sorcery/local/depends/linux.p
+
+  touch $TARGET/etc/sorcery/local/makefile.patches
 
   chroot_cmd cast -c linux &&
 

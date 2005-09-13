@@ -94,7 +94,8 @@ in_start() {
 
   # Install binaries that may be needed (for whatever it's worth,
   #  we'll be waiting for the basesystem to be there for most purposes anyway)
-  in_install_prog bash ldconfig bzip2 tar
+  in_install_prog bash ldconfig bzip2 tar which
+  # "which" is a workaround to bug 9737 / 9752 (remove on sorcery 2.12.5)
   chroot_cmd ldconfig
 
   si_queue_now basesystem # TODO: This is overkill - not all needed during
