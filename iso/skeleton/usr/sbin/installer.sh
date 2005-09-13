@@ -233,7 +233,6 @@ which they appear."
 
     case $ICOMMAND in
       A) intro_screen     ;;
-      ?) display_install_help ;;
       B) nls_screen       ;;
       C) disk_structure_screen ;;
       D) timezone_screen  ;;
@@ -251,6 +250,7 @@ which they appear."
       T) toggle_confirm   ;;
       R) reset_installer  ;;
       Z) toggle_debug     ;;
+      ?) display_install_help ;;
     esac
 
     RETURNVALUE=$?

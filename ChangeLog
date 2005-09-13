@@ -1,3 +1,6 @@
+2005-09-13 Karsten Behrmann <BearPerson@sourcemage.org>
+	* installer.sh: fix bug 9761
+
 2005-09-11 Karsten Behrmann <BearPerson@sourcemage.org>
 	* repository: branch to devel
 	* skeleton/etc/sysconfig/*: update from init.d spell and add comments
