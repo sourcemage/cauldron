@@ -49,10 +49,10 @@ in_start() {
   # Set up directories
   si_wait smgl-fhs
 
-  local dirctry
-  while read dirctry ;do
+  local dirctry perms
+  while read dirctry perms ;do
     if [[ "${dirctry:0:1}" != "#" ]] ;then #ignore comment lines
-      mkdir -p ${TARGET}/$dirctry
+      mkdir -m ${perms:-0755} -p ${TARGET}/$dirctry
     fi
   done <${DATA_DIR}/directories
 
@@ -85,7 +85,7 @@ in_start() {
   echo "GRIMOIRE_DIR[0]=/var/lib/sorcery/codex/$GRIMOIRE_VERSION" \
        >${TARGET}/etc/sorcery/local/grimoire
   echo "FROM_URL=http://codex.sourcemage.org/$GRIMOIRE_VERSION.tar.bz2" \
-       >$TARGET/var/lib/sorcery/codex/$GRIMORE_VERSION/GRIMOIRE
+       >$TARGET/var/lib/sorcery/codex/$GRIMOIRE_VERSION/GRIMOIRE
 
   # Install alien config files
   cp --parents -f \
@@ -94,8 +94,8 @@ in_start() {
 
   # Install binaries that may be needed (for whatever it's worth,
   #  we'll be waiting for the basesystem to be there for most purposes anyway)
-  in_install_prog bash ldconfig bzip2 tar which
-  # "which" is a workaround to bug 9737 / 9752 (remove on sorcery 2.12.5)
+  in_install_prog bash ldconfig bzip2 tar
+
   chroot_cmd ldconfig
 
   si_queue_now basesystem # TODO: This is overkill - not all needed during

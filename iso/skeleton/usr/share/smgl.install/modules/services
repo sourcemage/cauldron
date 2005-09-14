@@ -38,11 +38,13 @@ sv_get_scripts() {
 sv_choose_scripts() {
   local HELP="This is the list of all init scripts on the system.
 An X means they are enabled (usually for a good reason)"
+  local SCRIPTS
 
-  run_dialog --title "Select init scripts to be ran at boot time" \
+  SCRIPTS=$(run_dialog --title "Select init scripts to be run at boot time" \
              --single-quoted --checklist "$HELP" 10 60 0          \
-             "${SCRIPTLIST[@]}" | tr ' ' $'\n' >$TMP_DIR/enabled-scripts   &&
-             # stupid dialog gives us a space-seperated list
+             "${SCRIPTLIST[@]}")                                           &&
+  echo $SCRIPTS | tr ' ' $'\n' >$TMP_DIR/enabled-scripts                   &&
+  # dialog gives us a space-seperated list
 
   find ${TARGET}/etc/init.d/runlevels/ -mindepth 2 \
        -not -name 'runlevel.config' | sed 's:^.*/::' >$TMP_DIR/all-scripts &&

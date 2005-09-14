@@ -5,9 +5,10 @@
 /dev/shm
 /home
 /proc
-# Heck, no special permissions, who cares...
-/root
+/root 0700
+/tmp 1777
 /sys
+/var/run
 # </WORKAROUND>
 /etc/skel
 /etc/sorcery/local

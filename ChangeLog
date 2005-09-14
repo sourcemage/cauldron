@@ -1,3 +1,10 @@
+2005-09-14 Karsten Behrmann <BearPerson@sourcemage.org>
+	* smgl.install/directories: add /var/run - fix bug 9766
+	* installation: typo, fix bug 9248 ; remove which workaround
+	* both of the above: add permission modes, fix bug 9774
+	* modules/services: catch dialog exit code, fix bug 9769
+	* optional-list: add sorcery-pubkeys, fix bug 9768
+
 2005-09-13 Karsten Behrmann <BearPerson@sourcemage.org>
 	* installer.sh: fix bug 9761
 	* install-list, optional-list: remove spells that are included as
