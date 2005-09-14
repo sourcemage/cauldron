@@ -6,9 +6,25 @@
 /home
 /proc
 /root 0700
-/tmp 1777
 /sys
+/tmp 1777
+/usr/src
+/var/cache
+/var/cache/fonts
+/var/cache/man
+/var/cache/www
 /var/run
+/var/lock
+/var/log
+/var/spool
+/var/spool/lpd
+/var/spool/mqueue
+/var/spool/news
+/var/spool/rwho
+/var/spool/uucp
+/var/state
+/var/tmp 1777
+/var/yp
 # </WORKAROUND>
 /etc/skel
 /etc/sorcery/local

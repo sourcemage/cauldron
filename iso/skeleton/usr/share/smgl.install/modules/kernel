@@ -32,6 +32,8 @@ kn_copy_kernel() {
 
   touch $TARGET/etc/sorcery/local/makefile.patches
 
+  echo "Setting up kernel source tree... (needed by some compiles)"
+
   export PROMPT_DELAY=0
   chroot_cmd cast -c linux &&
   unset PROMPT_DELAY       &&

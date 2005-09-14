@@ -10,12 +10,14 @@ function install_screen() {
   in_finish
 
   # This is the place for release-note bigass warnings
-  run_dialog --msgbox "After you have booted into your system,
-have configured sorcery to your liking,
-and network is working, please run \"sorcery rebuild\"
-once to ensure everything is built tailored to your system,
-and to configure all the spells. This takes longer the more
-spells are installed, so it is a good idea to do it soon." 15 65
+  run_dialog --msgbox \
+"Once you have booted your new system, it's recommmended to:
+* ensure that networking is up
+* run \"sorcery update\" to update the sorcery scripts
+* run \"scribe update\" to update the spell lists
+* configure sorcery (run \"sorcery\", go to Options)
+* run \"sorcery rebuild\" to build everything with your
+  chosen optimizations" 15 65
 }
 
 # This one returns a nice list of libraries that a binary is linked against,

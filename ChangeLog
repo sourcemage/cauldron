@@ -1,9 +1,11 @@
 2005-09-14 Karsten Behrmann <BearPerson@sourcemage.org>
-	* smgl.install/directories: add /var/run - fix bug 9766
+	* smgl.install/directories: add several excluded dirs - fix bug 9766
 	* installation: typo, fix bug 9248 ; remove which workaround
+	  reword post-install instructions, bug 9652
 	* both of the above: add permission modes, fix bug 9774
 	* modules/services: catch dialog exit code, fix bug 9769
 	* optional-list: add sorcery-pubkeys, fix bug 9768
+	* kernel: add explanatory message, fixing bug 9734
 
 2005-09-13 Karsten Behrmann <BearPerson@sourcemage.org>
 	* installer.sh: fix bug 9761
