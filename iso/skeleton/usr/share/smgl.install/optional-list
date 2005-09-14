@@ -41,14 +41,13 @@ bison
 device-mapper
 dhcpcd
 flex
-#glib
 m4
-mktemp
 __SMGL_TEMPLATE_NOT_ppc__nasm
 ppp
 rp-pppoe
 slang
 wireless_tools
+pcmcia-cs
 __SMGL_TEMPLATE_NOT_ppc__lilo
 __SMGL_TEMPLATE_NOT_ppc__grub
 sysklogd

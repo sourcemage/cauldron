@@ -4,8 +4,9 @@
 	  reword post-install instructions, bug 9652
 	* both of the above: add permission modes, fix bug 9774
 	* modules/services: catch dialog exit code, fix bug 9769
-	* optional-list: add sorcery-pubkeys, fix bug 9768
+	* optional-list: add sorcery-pubkeys (9768) ; add pcmcia-cs (9767)
 	* kernel: add explanatory message, fixing bug 9734
+	* iso.packages: add wireless_tools (9767)
 
 2005-09-13 Karsten Behrmann <BearPerson@sourcemage.org>
 	* installer.sh: fix bug 9761

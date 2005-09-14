@@ -18,6 +18,7 @@
 /var/log
 /var/spool
 /var/spool/lpd
+/var/spool/mail
 /var/spool/mqueue
 /var/spool/news
 /var/spool/rwho

@@ -94,7 +94,7 @@ unpack texinfo
 unpack util-linux
 unpack wget
 unpack which
-##unpack wireless_tools # Really?
+unpack wireless_tools
 unpack xfsprogs
 ##unpack xinetd
 unpack zlib
