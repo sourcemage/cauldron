@@ -3,6 +3,7 @@ bash
 chroot
 ls
 find
+mknod
 mount
 umount
 uname

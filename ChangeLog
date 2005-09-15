@@ -1,5 +1,6 @@
 2005-09-15 Karsten Behrmann <BearPerson@sourcemage.org>
 	* kernel: fix spellinstaller thinking linux is already installed
+	* initrd.files: add mknod
 
 2005-09-14 Karsten Behrmann <BearPerson@sourcemage.org>
 	* smgl.install/directories: add several excluded dirs - fix bug 9766
