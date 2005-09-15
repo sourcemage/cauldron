@@ -38,6 +38,9 @@ kn_copy_kernel() {
   chroot_cmd cast -c linux &&
   unset PROMPT_DELAY       &&
 
+  sed -i '/^linux:/d' $TARGET/var/state/sorcery/packages &&
+  # we don't want the spellinstaller to think it is already installed
+
   si_queue_now linux       &&
   # install the meat after the linux spell has done its thing
 
