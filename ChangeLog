@@ -3,6 +3,7 @@
 	* skeleton/etc/group: add mail group
 	* smgl.install/directories, installation: make /var/spool/mail mode
 	  3775, owner root.mail (bug 8653)
+	* installer.sh: make reset_install also reset spell stuff
 
 2005-09-15 David Kowis <dkwois@sourcemage.org>
 	* diskStructure: Fixed the raid partition checking
