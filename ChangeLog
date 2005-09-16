@@ -1,3 +1,6 @@
+2005-09-16 Karsten Behrmann <BearPerson@sourcemage.org>
+	* diskStructure: fix the fix
+
 2005-09-15 David Kowis <dkwois@sourcemage.org>
 	* diskStructure: Fixed the raid partition checking
 

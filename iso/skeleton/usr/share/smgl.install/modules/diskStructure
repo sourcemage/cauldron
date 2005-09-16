@@ -200,7 +200,7 @@ dsr_sanity_check() {
   local ERROR_FILE=/tmp/raid-errors.$$
   rm -f $ERROR_FILE
 
-  local P_COUNT=`echo $3 | wc `
+  local P_COUNT=`echo $3 | wc -w`
 
   debug_log "diskStructure" "Checking RAID settings: DEVICE=$1, LEVEL=$2"
   debug_log "diskStructure" "Generating from $P_COUNT partitions: $3"
