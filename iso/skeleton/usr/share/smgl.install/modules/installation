@@ -51,10 +51,10 @@ in_start() {
   # Set up directories
   si_wait smgl-fhs
 
-  local dirctry perms
-  while read dirctry perms ;do
+  local dirctry perms owner group
+  while read dirctry perms owner group ;do
     if [[ "${dirctry:0:1}" != "#" ]] ;then #ignore comment lines
-      mkdir -m ${perms:-0755} -p ${TARGET}/$dirctry
+      install -d -o ${owner:-root} -g ${group:-root} -m ${perms:-0755} -p ${TARGET}/$dirctry
     fi
   done <${DATA_DIR}/directories
 

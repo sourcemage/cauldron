@@ -8,6 +8,7 @@ lp:x:14:
 floppy:x:15:
 disk:x:16:
 audio:x:17:
+mail:x:20:
 wheel:x:25:
 users:x:1000:
 nogroup:x:65534:

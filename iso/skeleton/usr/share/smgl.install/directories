@@ -1,3 +1,9 @@
+# Extra directories to create during install.
+# Syntax:
+# /path [mode [owner [group]]]
+# Only lines prefixed with a '#' /as first char/ are ignored
+# No empty lines, no comments starting in the middle of a line
+#
 # WORKAROUND until smgl-fhs remembers about these
 # maybe it's excludes cutting us though
 /dev
@@ -18,7 +24,7 @@
 /var/log
 /var/spool
 /var/spool/lpd
-/var/spool/mail
+/var/spool/mail 3775 root mail
 /var/spool/mqueue
 /var/spool/news
 /var/spool/rwho
