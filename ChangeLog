@@ -1,3 +1,6 @@
+2005-09-15 David Kowis <dkwois@sourcemage.org>
+	* diskStructure: Fixed the raid partition checking
+
 2005-09-15 Karsten Behrmann <BearPerson@sourcemage.org>
 	* kernel: fix spellinstaller thinking linux is already installed
 	* initrd.files: add mknod
