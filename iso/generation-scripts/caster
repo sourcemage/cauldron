@@ -44,7 +44,7 @@ function try_get_install_log() {
     echo $? >$rclog
     # This is a subshell. We can't just set a variable.
     # Exit code of a pipe is the exit code of the last command, here: "sort".
-  } 2>/dev/null | grep -v "$TABLET_PATH" | sort
+  } 2>/dev/null | grep -v "$TABLET_PATH" | grep -v "does not exist" | sort
   rc=$(cat $rclog)
   rm -f $rclog
   return $rc
