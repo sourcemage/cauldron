@@ -1,3 +1,4 @@
 $SKELETON/isolinux $ISO_ARCH
 $SKELETON/yaboot $ISO_ARCH
 $STATE_DIR/iso.mkfscommand $ISO_ARCH
+$STATE_DIR/config-2.6 $ISO_ARCH
