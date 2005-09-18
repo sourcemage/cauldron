@@ -1,3 +1,6 @@
+2005-09-18 Karsten Behrmann <BearPerson@sourcemage.org>
+	* kernel: clean up modded spell conf files more thoroughly
+
 2005-09-17 Karsten Behrmann <BearPerson@sourcemage.org>
 	* caster: remove "install log does not exist" messages
 	* config-2.6.ppc: start off with proj3's config, plus compiled-in scsi

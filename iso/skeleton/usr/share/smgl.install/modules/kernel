@@ -28,26 +28,30 @@ kn_copy_kernel() {
   cp -f /boot/config-* ${TARGET}/etc/sorcery/local/kernel.config
 
   cp --parents /etc/sorcery/local/depends/linux.p $TARGET
-  echo 'INTERNAL_ISO_VAR="yes"' >>$TARGET/etc/sorcery/local/depends/linux.p
 
   touch $TARGET/etc/sorcery/local/makefile.patches
 
   echo "Setting up kernel source tree... (needed by some compiles)"
 
   export PROMPT_DELAY=0
-  chroot_cmd cast -c linux &&
-  unset PROMPT_DELAY       &&
+  export INTERNAL_ISO_VAR="yes"
+  chroot_cmd cast -c linux
+  local rc=$? # We want the following statements to execute on fail and success
+
+  unset PROMPT_DELAY
+  unset INTERNAL_ISO_VAR
+  rm -f $TARGET/etc/sorcery/local/depends/linux.p \
+    ${TARGET}/etc/sorcery/local/kernel.config \
+    ${TARGET}/usr/src/linux*/.spell-config.p
+  # We don't want the linux spell to pick up our borked config
+
+  (( rc )) && return $rc # If linux cast failed, fail out now
 
   sed -i '/^linux:/d' $TARGET/var/state/sorcery/packages &&
   # we don't want the spellinstaller to think it is already installed
 
   si_queue_now linux       &&
   # install the meat after the linux spell has done its thing
-
-  rm -f $TARGET/etc/sorcery/local/depends/linux.p \
-    ${TARGET}/etc/sorcery/local/kernel.config \
-    ${TARGET}/usr/src/linux/.spell-config.p &&
-  # We don't want the linux spell to pick up our borked config
 
   debug_log "kernel" "copying pre-made kernel"
 }
@@ -83,12 +87,15 @@ Alternatively, I can just use the linux defaults." 8 65 \
 
   touch $TARGET/etc/sorcery/local/makefile.patches
 
-  chroot_cmd cast -c linux &&
+  chroot_cmd cast -c linux
+  local rc=$?
 
   rm -f $TARGET/etc/sorcery/local/depends/linux.p \
     ${TARGET}/etc/sorcery/local/kernel.config \
-    ${TARGET}/usr/src/linux/.spell-config.p &&
+    ${TARGET}/usr/src/linux*/.spell-config.p
   # We don't want the linux spell to pick up our borked config
+
+  (( rc )) && return $rc
 
   debug_log "kernel" "compiling custom kernel"
 }
