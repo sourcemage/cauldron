@@ -12,7 +12,7 @@ function pre_workaround()
 {
 # The place for workarounds needed before a spell so it casts nicely.
   case $1 in
-    "irssi"|"grub"|"parted"|"syslinux"|"syslog-ng")
+    "irssi"|"grub"|"parted"|"syslinux"|"syslog-ng"|"uptimed")
       cast g++ # The ole autoconf workaround
       ;;
     "linux")
@@ -20,6 +20,9 @@ function pre_workaround()
       cp $STATE_DIR/config-$KVERSION /etc/sorcery/local/kernel.config
       rm -f /usr/src/linux-*/.spell-config.p
       ;; #We want to use our preset kernel version and config
+    "openssh")
+      rm -rf /etc/ssh
+      ;; # The dir is protected by sorcery, it won't reap it by itself
   esac
   true
 }

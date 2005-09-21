@@ -1,4 +1,5 @@
 2005-09-21 Karsten Behrmann <BearPerson@sourcemage.org>
+	* caster: add workaround for openssh: remove /etc/ssh (bug 9796)
 	* repository: cleaned integration history from test
 
 2005-09-18 Karsten Behrmann <BearPerson@sourcemage.org>
