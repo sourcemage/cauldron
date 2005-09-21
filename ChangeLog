@@ -1,3 +1,6 @@
+2005-09-21 Karsten Behrmann <BearPerson@sourcemage.org>
+	* repository: cleaned integration history from test
+
 2005-09-18 Karsten Behrmann <BearPerson@sourcemage.org>
 	* kernel: clean up modded spell conf files more thoroughly
 

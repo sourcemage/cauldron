@@ -6,4 +6,6 @@ ${SKELETON}/isolinux/isolinux.msg
 ${SKELETON}/usr/share/smgl.install/install-list
 ${SKELETON}/usr/share/smgl.install/optional-list
 ${SKELETON}/var/lib/smgl.install/version
+${SKELETON}/yaboot/yaboot.conf
+${SKELETON}/yaboot/yaboot.msg
 ${STATE_DIR}/iso.packages
