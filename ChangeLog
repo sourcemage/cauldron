@@ -1,4 +1,7 @@
 2005-09-21 Karsten Behrmann <BearPerson@sourcemage.org>
+	* mkiso: fix dependency-following code, (bug 9807 and hopefully 9806)
+
+2005-09-21 Karsten Behrmann <BearPerson@sourcemage.org>
 	* caster: add workaround for openssh: remove /etc/ssh (bug 9796)
 	* repository: cleaned integration history from test
 

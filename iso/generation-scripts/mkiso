@@ -252,6 +252,9 @@ function generate_sufficient_spells_list() {
   NUM_LINES=0
   > $TMP_DIR/alldeps
   while [ "$NUM_LINES" != "$(wc -l $TMP_DIR/allspells)" ] ;do
+    NUM_LINES=$(wc -l $TMP_DIR/allspells)
+    # When nothing here sees new spells, stop.
+    # The last run will include their depends info
     local spell
     while read spell ;do
       grep "^$spell:[^:]*:on" /var/state/sorcery/depends
@@ -266,7 +269,6 @@ function generate_sufficient_spells_list() {
     cat $TMP_DIR/oldspells $TMP_DIR/morespells | sort -u >$TMP_DIR/allspells
     rm -f $TMP_DIR/oldspells $TMP_DIR/morespells
 
-    NUM_LINES=$(wc -l $TMP_DIR/allspells)
   done # repeat until number of lines does not change anymore
 }
 
