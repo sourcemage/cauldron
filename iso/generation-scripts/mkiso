@@ -345,6 +345,6 @@ create_statefiles
 rm -r ${TMP_DIR}
 
 # all ready
-echo "generating ISO, outputting to /smgl-$ISO_VERSION-$ISO_ARCH-$KERNEL_VERSION-newgen.iso"
+echo "generating ISO, outputting to /$ISO_FILENAME"
 # ISO ends up in the / directory of the chroot
-. ${STATE_DIR}/iso.mkfscommand /smgl-$ISO_VERSION-$ISO_ARCH-$KERNEL_VERSION-newgen.iso $ISO_DIR
+. ${STATE_DIR}/iso.mkfscommand /$ISO_FILENAME $ISO_DIR

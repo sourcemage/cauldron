@@ -1,5 +1,9 @@
 2005-09-21 Karsten Behrmann <BearPerson@sourcemage.org>
 	* mkiso: fix dependency-following code, (bug 9807 and hopefully 9806)
+	* smgl.templated: only process yaboot files when they are used && exist
+	* config, mkiso: change ISO filename to conform more to standard
+	* first_build: don't build base spells twice
+	* smgl.install/symlinks: add /usr/man symlink ( in response to 5553)
 
 2005-09-21 Karsten Behrmann <BearPerson@sourcemage.org>
 	* caster: add workaround for openssh: remove /etc/ssh (bug 9796)
