@@ -110,6 +110,16 @@ load_module()  {
 #    sleep 2
 }
 
+test_cdrom() {
+  local found=false
+  mount -n -r -t iso9660 $1 $MOUNT 2>/dev/null
+  if [ -f $ID ] ;then
+    found=true
+  fi
+  umount -n $MOUNT 2>/dev/null
+  $found
+}
+
 # at the end SMGL_CD is defined to the device where the SMGL CD is found
 # or else SMGL_CD is undefined
 
@@ -122,17 +132,30 @@ scan_cdroms()  {
       handler=${handler%/media}
       device=/dev/${handler##*/}
 
-      mount -n -r -t iso9660 $device $MOUNT 2>/dev/null
-      if [ -f $ID ]; then
-        umount -n $MOUNT 2>/dev/null
+      test_cdrom $device &&
+      {
         SMGL_CD=$device
         return
-      else
-        umount -n $MOUNT 2>/dev/null
-
-      fi
+      }
     fi
   done
+
+  echo "Trying harder to find the SMGL CD..."
+  # Next try: look at all /proc/partitions stuff, make devices if neccessary
+  local major minor blocks name
+  while read major minor blocks name ;do
+    (( major )) 2>/dev/null || continue # Don't process non-numeric lines
+
+    [ -b /dev/$name ] ||
+    mknod /dev/$name b $major $minor
+
+    test_cdrom /dev/$name &&
+    {
+      SMGL_CD=/dev/$name
+      return
+    }
+
+  done </proc/partitions
 }
 
 
