@@ -9,6 +9,17 @@
 # optional spell stuff
 function optional_screen() {
 
+  need_dependency disk          &&
+  need_dependency install_start &&
+  need_dependency linux         &&
+  need_dependency syslog        &&
+  need_dependency bootloader    &&
+  need_dependency network       ||
+  {
+    echo "Declining to do final configuration due to missing dependencies..."
+    return 1
+  }
+
   if ! check_dependency dev_format ||
    run_dialog --defaultno --yesno "Do you want to reconfigure /dev?" ;then
     opt_choose_dev

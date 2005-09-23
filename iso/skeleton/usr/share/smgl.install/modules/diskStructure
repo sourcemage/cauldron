@@ -57,7 +57,7 @@ separate boot partition"
         mount_menu # do the mounting
       ;;
       D)
-        if interactive_do_depends disk-root; then
+        if need_dependency disk-root; then
           rm -f $FINALFILES/etc/fstab
           cat $TEMPLATE_DIR/fstab.first /tmp/fstab $TEMPLATE_DIR/fstab.last \
             >$FINALFILES/etc/fstab

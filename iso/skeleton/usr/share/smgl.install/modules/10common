@@ -166,13 +166,12 @@ function check_dependency() {
 # at user's own risk
 # otherwise fall out to the main menu?
 # $1 is depends key
-function interactive_do_depends() {
+function need_dependency() {
   if check_dependency $1; then
-#    debug_screen "successful depends find"
-    echo "successfully found fulfilled $1"
     return 0
   else
-    if confirm "Depends $1 not fulfilled. Force fulfill (only way to continue)?"
+    if confirm "The selected step needs $1 to be done first.
+Do you want to continue anyway and skip $1?"
     then
       #ok was selected
       fill_dependency $1 force

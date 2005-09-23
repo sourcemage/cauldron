@@ -8,9 +8,10 @@
 
 #bootloader stuff
 function bootloader_screen() {
-#check the depends
+  need_dependency disk          &&
+  need_dependency install_start &&
+  need_dependency kernel        &&
   config_bootloader
-#write depends
 }
 
 # usage: create_etc_mtab
@@ -89,7 +90,9 @@ config_bootloader() {
   si_wait $BOOTLOADER
 
   bl_${BOOTLOADER}_config $TARGET_DEV  &&
-  bl_${BOOTLOADER}_install $TARGET_DEV
+  bl_${BOOTLOADER}_install $TARGET_DEV &&
+
+  fill_dependency bootloader $BOOTLOADER
 
 }
 

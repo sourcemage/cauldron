@@ -2,6 +2,8 @@
 
 #optional services
 function services_screen() {
+  need_dependency install_finish ||
+  return 1
   local SCRIPTLIST=()
   sv_get_scripts
   sv_choose_scripts &&

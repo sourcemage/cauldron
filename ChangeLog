@@ -1,5 +1,6 @@
 2005-09-23 Karsten Behrmann <BearPerson@sourcemage.org>
 	* templates/{lilo,grub}.conf: switch to new kernel naming scheme
+	* modules/*: Add dependencies between steps (bug 8208)
 
 2005-09-22 Karsten Behrmann <BearPerson@sourcemage.org>
 	* mkiso: fix dependency-following code, (bug 9807 and hopefully 9806)

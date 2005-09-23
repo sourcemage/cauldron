@@ -3,6 +3,8 @@
 #timezone selection stuff
 
 function timezone_screen() {
+  need_dependency disk &&
+  need_dependency install_start &&
   tz_menu
 }
 

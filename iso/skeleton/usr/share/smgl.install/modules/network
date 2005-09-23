@@ -2,11 +2,12 @@
 
 #network stuff
 function network_screen() {
+  need_dependency disk          &&
+  need_dependency install_start &&
   nw_main
 }
 
 nw_ethernet()  {
-
 
 # To be considered: Do these need to be here? We have the optional spell menu,
 # after all. Maybe semi-intelligently queue those needed? (as in "wlan0" or
@@ -21,11 +22,6 @@ nw_ethernet()  {
   # configure netconf on the CD (requires a writable /etc) and next
   # copy the configuration to the target.
 
-  # Here was a workaround to bug #7459. Is it still needed? (Bear, 2005-05-21)
-  #  mkdir -p /tmp/empty-dir &&
-  #  cd /tmp/empty-dir &&
-
-  sleep 2
   netconf &&
   cp -af --parents /etc/sysconfig/network "${TARGET}" &&
   debug_log "network" "Running netconf"               &&

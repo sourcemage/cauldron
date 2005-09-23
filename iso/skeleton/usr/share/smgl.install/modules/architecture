@@ -3,7 +3,9 @@
 
 function arch_screen() {
 
-# TODO: add sensible depends
+  need_dependency disk          &&
+  need_dependency install_start ||
+  return 1
 
   cat <<EOF >$TARGET/arch_menu
 #!/bin/bash

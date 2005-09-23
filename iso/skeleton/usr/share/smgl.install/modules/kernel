@@ -2,6 +2,9 @@
 
 kernel_screen()  {
 
+  need_dependency disk &&
+  need_dependency install_start &&
+
   if run_dialog --yes-label "copy" --no-label "compile" \
        --nocancel --yesno                               \
 "Would you like to configure and compile a custom kernel,
@@ -53,6 +56,7 @@ kn_copy_kernel() {
   si_queue_now linux       &&
   # install the meat after the linux spell has done its thing
 
+  fill_dependency linux copy &&
   debug_log "kernel" "copying pre-made kernel"
 }
 
@@ -97,5 +101,6 @@ Alternatively, I can just use the linux defaults." 8 65 \
 
   (( rc )) && return $rc
 
+  fill_dependency linux compile &&
   debug_log "kernel" "compiling custom kernel"
 }

@@ -2,9 +2,9 @@
 
 #module for syslog stuff
 function logger_screen() {
-#check for dependencies
-	syslog # let's just blindly call this for now
-#write out good dependency
+  need_dependency disk          &&
+  need_dependency install_start &&
+  syslog # let's just blindly call this for now
 }
 
 syslog()  {
@@ -26,7 +26,8 @@ syslog()  {
               "off" "don't want/need a system logger")    &&
   debug_log "syslog" "Chose \"$logger\" as system logger" &&
   si_queue $logger                                        &&
-  sed -i "s/^syslog=.*$/syslog=$logger/" ${FINALFILES}/etc/sysconfig/facilities &&
+  sed -i "s/^syslog=.*$/syslog=$logger/" \
+    ${FINALFILES}/etc/sysconfig/facilities                &&
   fill_dependency syslog $logger
 
 }

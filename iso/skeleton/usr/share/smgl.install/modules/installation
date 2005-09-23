@@ -7,7 +7,20 @@ function setup_target() {
 }
 
 function install_screen() {
-  in_finish
+  need_dependency disk          &&
+  need_dependency install_start &&
+  need_dependency timezone      &&
+  need_dependency linux         &&
+  need_dependency syslog        &&
+  need_dependency bootloader    &&
+  need_dependency network       &&
+  need_dependency dev_format    ||
+  {
+    echo "Not all dependencies fulfilled, refusing to finish install"
+    return 1
+  }
+
+  in_finish &&
 
   # This is the place for release-note bigass warnings
   run_dialog --msgbox \
@@ -109,7 +122,7 @@ in_start() {
   si_queue $( cat $DATA_DIR/install-list | sed 's/#.*$//' |
     grep -v '^[[:blank:]]*$' )
 
-  fill_dependency first_install
+  fill_dependency install_start
 }
 
 in_finish() {
@@ -129,5 +142,5 @@ in_finish() {
 have been installed. The only thing left to do is to enter
 the password for the root account." 9 60
   chroot_cmd passwd root
-  fill_dependency final_install
+  fill_dependency install_finish
 }
