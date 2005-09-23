@@ -81,8 +81,10 @@ CHANGE_LIST=/tmp/spell.change.$$
 rm -f $SUCCESS_LIST $FAIL_LIST $CHANGE_LIST
 for spell in $@ ; do
   codex_set_current_spell_by_name $spell
+  cachefile=${INSTALL_CACHE}/${SPELL}-${VERSION}-${HOST}.tar${EXTENSION}
   if [ $RECAST ] ||
-     ! test -e ${INSTALL_CACHE}/${SPELL}-${VERSION}-${HOST}.tar${EXTENSION}
+     ! test -e $cachefile ||
+     test $UPDATED -gt $(stat -c "%y" $cachefile | cut -d' ' -f1 | tr -d '-')
   then
 
     rm -f /tmp/old-install-log
@@ -93,15 +95,14 @@ for spell in $@ ; do
     prepare_cast
     pre_workaround $spell
     cast --deps $spell
-    cast $RECAST $spell
+    cast -c $spell
     rc=$?
     post_workaround $spell
-    if ! [ -e ${INSTALL_CACHE}/${SPELL}-${VERSION}-${HOST}.tar${EXTENSION} ]
+    if ! [ -e $cachefile ]
     then
       if gaze install $spell >/dev/null ;then
         message "Forcing generation of cache"
-        gaze install-full $spell | tar --no-recursion -cjf \
-          ${INSTALL_CACHE}/${SPELL}-${VERSION}-${HOST}.tar${EXTENSION} -T -
+        gaze install-full $spell | tar --no-recursion -cjf $cachefile -T -
       fi
     fi
 
@@ -110,7 +111,7 @@ for spell in $@ ; do
     # again, preserving exit status from gaze install
     if [ -e /tmp/old-install-log ] && 
      ! diff /tmp/old-install-log /tmp/new-install-log >/dev/null ;then
-      message "OOPS... Spell $SPELL_COLOR$SPELL$DEFAULT_COLOR\
+      message "OOPS... Spell ${SPELL_COLOR}${SPELL}${DEFAULT_COLOR}\
 install log suddenly changed..."
       datestr=$(date +%s)
       cp /tmp/old-install-log ~/broken-logs/${SPELL}-${datestr}-pre

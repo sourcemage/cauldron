@@ -3,6 +3,8 @@
 	* modules/*: Add dependencies between steps (bug 8208)
 	* initrd/sbin/smgl.init: look harder for CD - check /proc/partitions
 	* mkinitrd: remove loop device when we're done with it
+	* misc/release.sh, gen-scripts/config: centralize version
+	* caster: check for $UPDATED
 
 2005-09-22 Karsten Behrmann <BearPerson@sourcemage.org>
 	* mkiso: fix dependency-following code, (bug 9807 and hopefully 9806)
