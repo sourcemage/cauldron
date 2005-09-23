@@ -1,4 +1,7 @@
-2005-09-21 Karsten Behrmann <BearPerson@sourcemage.org>
+2005-09-23 Karsten Behrmann <BearPerson@sourcemage.org>
+	* templates/{lilo,grub}.conf: switch to new kernel naming scheme
+
+2005-09-22 Karsten Behrmann <BearPerson@sourcemage.org>
 	* mkiso: fix dependency-following code, (bug 9807 and hopefully 9806)
 	* smgl.templated: only process yaboot files when they are used && exist
 	* config, mkiso: change ISO filename to conform more to standard
