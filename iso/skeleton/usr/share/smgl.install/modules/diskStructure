@@ -196,14 +196,13 @@ dsr_choose_partitions() {
 # $1: name of md device to create
 # $2: raid level
 # $3: newline-seperated list of devices
+# $4: count of selected partitions
 dsr_sanity_check() {
   local ERROR_FILE=/tmp/raid-errors.$$
   rm -f $ERROR_FILE
 
-  local P_COUNT=`echo $3 | wc -w`
-
   debug_log "diskStructure" "Checking RAID settings: DEVICE=$1, LEVEL=$2"
-  debug_log "diskStructure" "Generating from $P_COUNT partitions: $3"
+  debug_log "diskStructure" "Generating from $4 partitions: $3"
 
   #verify raid level device count
   local COUNT_CHECK=0
@@ -221,7 +220,7 @@ dsr_sanity_check() {
     echo "You must specify a device to create!" >>$ERROR_FILE
   fi
 
-  if [ $P_COUNT -lt $COUNT_CHECK ] ; then
+  if [ $4 -lt $COUNT_CHECK ] ; then
     echo "RAID level $LEVEL must have at least $COUNT_CHECK devices" \
       >>$ERROR_FILE
   fi
@@ -252,7 +251,9 @@ create_md_device() {
   local DEVICE_NAME=`dsr_device_name`   &&
   local LEVEL=`dsr_raid_level_menu`     &&
   local PARTS="`dsr_choose_partitions`" &&
-  dsr_sanity_check "$DEVICE_NAME" "$LEVEL" "$PARTS" &&
+  local P_COUNT=`echo $PARTS | wc -w`   &&
+  
+  dsr_sanity_check "$DEVICE_NAME" "$LEVEL" "$PARTS" "$P_COUNT" &&
   if mdadm --create $DEVICE_NAME --level=$LEVEL --raid-devices=$P_COUNT $PARTS
   then
     dsr_make_raid_config &&

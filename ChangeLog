@@ -1,3 +1,6 @@
+2005-09-25 David Kowis <dkowis@sourcemage.org>
+	* diskStructure: Fixed the RAID partition count
+
 2005-09-25 Karsten Behrmann <BearPerson@sourcemage.org>
 	* repository: merge back changes for parallelized installer
 	* iso.mkfscommand.ppc: add -q to silence
