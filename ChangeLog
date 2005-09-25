@@ -3,6 +3,7 @@
 	* iso.mkfscommand.ppc: add -q to silence
 	* caster: force cache generation on stale cache
 	* bootloader: fix wrong dependency name for kernel/linux
+	* config-2.6: add missing IDE/SCSI drivers
 
 2005-09-24 Karsten Behrmann <BearPerson@sourcemage.org>
 	* inittab, skeleton/usr/sbin/bg-install.sh: Added backgrounded spell
