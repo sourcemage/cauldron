@@ -1,5 +1,7 @@
 #!/bin/bash
 
+LOCK_DIR=/tmp/lock-dir
+
 # 10 so it gets sources first, fwiw
 #this file contains all the functions that might be needed by other
 # modules
@@ -76,10 +78,6 @@ function inputbox()  {
 # usage: chroot_cmd cmd args...
 function chroot_cmd() {
 
-#  mount --bind /dev  "${TARGET}/dev"
-#  mount --bind /proc "${TARGET}/proc"
-#  mount --bind /var/cache/sorcery "${TARGET}/var/cache/sorcery"
-
   debug_log "common" "chroot_cmd called with the following arguments:"
   local arg
   for arg in "$@" ;do
@@ -87,10 +85,6 @@ function chroot_cmd() {
   done
 
   chroot "${TARGET}" "$@"
-
-#  umount "${TARGET}/dev"
-#  umount "${TARGET}/proc"
-#  umount "${TARGET}/var/cache/sorcery"
 
 }
 
@@ -184,9 +178,26 @@ Do you want to continue anyway and skip $1?"
 
 # Blocks until specified stuff is fulfilled
 function wait_depends() {
-  while ! check_dependency $* ;do
+  while ! check_dependency "$@" ;do
     sleep 10
   done
+}
+
+# Lock specified resource
+# waits until specified resource is not locked, then locks it
+# $1: resource to lock
+function lock_resource() {
+  mkdir -p $LOCK_DIR
+  while [ -e $LOCK_DIR/$1 ] ;do
+    sleep 1
+  done
+  echo $$ >$LOCK_DIR/$1
+}
+
+# Unlock specified resource
+# $1: resource to unlock
+function unlock_resource() {
+  rm -f $LOCK_DIR/$1
 }
 
 #dkowis discovered dialog's progress bar!
@@ -210,4 +221,3 @@ function progress_bar() {
         echo $PCT
     done | run_dialog --title "${2}" --gauge "${3}" 10 70 0
 }
-

@@ -62,7 +62,7 @@ in_start() {
   >$TARGET/var/state/sorcery/packages #start with no spells installed
 
   # Set up directories
-  si_wait smgl-fhs
+  si_install_spell smgl-fhs
 
   local dirctry perms owner group
   while read dirctry perms owner group ;do
@@ -114,10 +114,9 @@ in_start() {
 
   chroot_cmd ldconfig
 
-  si_queue_now basesystem # TODO: This is overkill - not all needed during
-                          # install
-  si_queue_now special:basics
-  si_queue_now special:compile_env #make, gcc etc
+  si_queue basesystem
+  si_queue_now Iso.Compile_env #make, gcc etc
+  si_queue_now Iso.Basics #This one ends up first
 
   si_queue $( cat $DATA_DIR/install-list | sed 's/#.*$//' |
     grep -v '^[[:blank:]]*$' )

@@ -41,7 +41,7 @@ function optional_screen() {
   if ! check_dependency install_caches && # Don't ask again
      confirm "Install extra cache files? Makes it easier to install a program you forgot
 without having to get out the ISO again. (recommended)" ;then
-    si_queue special:caches
+    si_queue Iso.Caches
   fi
   rm -f /tmp/prunedOptionalList
 

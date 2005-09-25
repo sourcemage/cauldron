@@ -185,8 +185,12 @@ reset_installer() {
 toggle_debug() {
 
   if [ "${DEBUG}" = "yes" ]; then
+    rm -f $SI_QUEUE_DIR/debug
     DEBUG="no"
   else
+    mkdir -p $SI_QUEUE_DIR
+    touch $SI_QUEUE_DIR/debug # Debug proper usage of si_wait
+    rm -f $SI_QUEUE_DIR/force_run
     DEBUG="yes"
   fi
 
@@ -330,6 +334,10 @@ main()  {
   mkdir -p $DEPENDS_DIR $FINALFILES
   cp --parents /etc/sysconfig/* ${FINALFILES}
 
+  if [[ "$1" == "-e" ]] ;then
+    return # to just fetch environment
+  fi
+
   display_install_menu
 
 }
@@ -378,4 +386,4 @@ DIALOG=( "dialog" "--backtitle" \
 trap  "true"  INT QUIT
 
 # start the installation process
-main
+main "$@"

@@ -25,7 +25,7 @@ kn_copy_kernel() {
   local KVERSION=$(uname -r)
 
   echo "Waiting for the tools needed for kernel installation to install..."
-  si_wait "special:compile_env"
+  si_wait Iso.Compile_env gnupg
 
   # install the config used for this kernel
   cp -f /boot/config-* ${TARGET}/etc/sorcery/local/kernel.config
@@ -65,7 +65,7 @@ kn_compile_kernel() {
   run_dialog --cr-wrap --textbox  ${DATA_DIR}/kernel.help 22 60
 
   echo "Waiting for the tools needed for kernel installation to install..."
-  si_wait "special:compile_env"
+  si_wait Iso.Compile_env gnupg
 
   cp --parents /etc/sorcery/local/depends/linux.p $TARGET
 

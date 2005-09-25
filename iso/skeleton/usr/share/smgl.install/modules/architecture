@@ -6,6 +6,7 @@ function arch_screen() {
   need_dependency disk          &&
   need_dependency install_start ||
   return 1
+  si_wait Iso.Basics smgl-archspecs gcc
 
   cat <<EOF >$TARGET/arch_menu
 #!/bin/bash

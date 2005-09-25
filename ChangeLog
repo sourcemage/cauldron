@@ -1,7 +1,20 @@
 2005-09-25 Karsten Behrmann <BearPerson@sourcemage.org>
+	* repository: merge back changes for parallelized installer
 	* iso.mkfscommand.ppc: add -q to silence
 	* caster: force cache generation on stale cache
 	* bootloader: fix wrong dependency name for kernel/linux
+
+2005-09-24 Karsten Behrmann <BearPerson@sourcemage.org>
+	* inittab, skeleton/usr/sbin/bg-install.sh: Added backgrounded spell
+	  installing daemon
+	* skeleton/var/state/sorcery/depends: add initial depends between
+	  special spells
+	* install.sh: add option to just load the environment
+	* mkiso: switch conflicts file seperator char to ':'
+	* 10common: add rudimentary locking functions
+	* 30spellinstall: re-org for background capability
+	* modules/{architecture,bootloader,kernel}:
+	  add appropriate si_wait calls
 
 2005-09-23 Karsten Behrmann <BearPerson@sourcemage.org>
 	* templates/{lilo,grub}.conf: switch to new kernel naming scheme

@@ -215,7 +215,7 @@ function create_statefiles() {
     rm -f $TMP_DIR/optlist
 
     function conflicts() { #redefinition
-      echo "$SPELL;$1"
+      echo "$SPELL:$1"
     }
     while read spell ; do
       codex_set_current_spell_by_name $spell >/dev/null
@@ -231,7 +231,7 @@ function create_statefiles() {
     # $TMP_DIR/allspells has been generated just before we copied cache files
   )
 
-  cp $TMP_DIR/alldeps $ISO_DIR/var/state/sorcery/depends
+  cat $TMP_DIR/alldeps >>$ISO_DIR/var/state/sorcery/depends
 }
 
 #---------------------------------------------------------------------

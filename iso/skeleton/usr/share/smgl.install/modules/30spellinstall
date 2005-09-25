@@ -1,69 +1,94 @@
 #!/bin/bash
-# Contains the spell installation functions, as specified on the wiki.
-# Non-backgrounding version
+# Contains the spell installation functions, as specified on sourcemage.org
+# backgrounding version
 
 # NEEDS: a /var/state/sorcery/depends containing all depends between
 #        spells that could be installed
 #        a /var/state/sorcery/packages containing all spells that could
 #        get installed and their versions
-#        /var/state/smgl.install/depends containing lines of the form
+#        /var/state/smgl.install/conflicts containing lines of the form
 #        spell;conflicts_with
 
 # --------------public----------------------
 
 SI_QUEUE_DIR=/tmp/spellinstall
-SI_UNLOOP_FILE=$SI_QUEUE_DIR/antiloop
-SI_UNLOOP_FILE2=$SI_QUEUE_DIR/antiloop2
 SI_SPELL_QUEUE=$SI_QUEUE_DIR/queue
 SI_CONFLICTS=$SI_QUEUE_DIR/conflicts
+SI_INSTALLING=$SI_QUEUE_DIR/installing
 
 
 # Marks a spell for installation. Does not install it.
 # args: the spells
-# $1 (if a number) recursion depth - to recognize loops
 si_queue() {
   mkdir -p ${SI_QUEUE_DIR}
-  touch $SI_UNLOOP_FILE
-  local spell
-  for spell in "$@" ;do
-    if ! grep -q "^$spell$" $SI_UNLOOP_FILE ;then
-      echo "$spell" >>$SI_UNLOOP_FILE
-      # No spell gets handled twice, => no infinite loops on circular deps
-      si_queue $( si_get_dependencies $spell )
-      si_run_conflicts $spell
-      echo "$spell" >>${SI_SPELL_QUEUE}
-    fi
-  done
+  >$SI_QUEUE_DIR/tmpqueue
+  >$SI_QUEUE_DIR/tmpqueue.unloop
+
+  recursively_make_queue $SI_QUEUE_DIR/tmpqueue "$@"
+
+  si_run_conflicts $(cat $SI_QUEUE_DIR/tmpqueue)
+
+  lock_resource SI_SPELL_QUEUE
+  # Resource is called SI_SPELL_QUEUE, not $SI_SPELL_QUEUE
+  cat $SI_QUEUE_DIR/tmpqueue >>${SI_SPELL_QUEUE}
+  unlock_resource SI_SPELL_QUEUE
+
+  rm -f $SI_QUEUE_DIR/tmpqueue $SI_QUEUE_DIR/tmpqueue.unloop
 }
 
 # (currently) installs a spell
 # args: the spells to install
 # TODO: Could get a nice progress bar too
 si_queue_now() {
-  touch $SI_UNLOOP_FILE2
-  local spell
-  for spell in "$@" ;do
-    if ! grep -q "^$spell$" $SI_UNLOOP_FILE2 ;then
-      echo "$spell" >>$SI_UNLOOP_FILE2
-      si_queue_now $( si_get_dependencies $spell )
-      si_run_conflicts $spell
-      si_install_spell $spell
-    fi
-  done
+  mkdir -p ${SI_QUEUE_DIR}
+  >$SI_QUEUE_DIR/tmpqueue
+  >$SI_QUEUE_DIR/tmpqueue.unloop
+
+  recursively_make_queue $SI_QUEUE_DIR/tmpqueue "$@"
+
+  si_run_conflicts $(cat $SI_QUEUE_DIR/tmpqueue)
+
+  lock_resource SI_SPELL_QUEUE
+  cat $SI_SPELL_QUEUE >>$SI_QUEUE_DIR/tmpqueue # The other way around here
+  mv $SI_QUEUE_DIR/tmpqueue $SI_SPELL_QUEUE
+  unlock_resource SI_SPELL_QUEUE
+
+  rm -f $SI_QUEUE_DIR/tmpqueue.unloop
 }
 
 # ditto
 # args: the spells to install
 si_wait() {
   si_queue_now "$@"
+  local spell
+  for spell in "$@" ;do
+    si_query $spell
+    while [[ $? != 3 ]] ;do
+      echo -en '\r\033[2K'
+      echo -n "waiting for $spell... (now installing $(cat $SI_INSTALLING))"
+      test -e $SI_QUEUE_DIR/debug && touch $SI_QUEUE_DIR/force_run
+      sleep 1
+      si_query $spell
+    done
+    echo -en '\r\033[2K'
+    echo "done  with  $spell."
+  done
+  true
 }
 
-# Returns 1 if the spell is queued, 4 if it is installed,
-# 10 if it would conflict with a queued/installed spell, 0 (true) otherwise
+# Returns 1 if the spell is queued, 2 if it is getting installed,
+# 3 if it is installed, 10 if it would conflict with a queued/installed spell
+# 0 (true) otherwise
 # $1: the spell
 si_query() {
-  if grep -q "^$1:" ${TARGET}/var/state/sorcery/packages ;then
-    return 4
+  touch $SI_INSTALLING $SI_SPELL_QUEUE $SI_CONFLICTS
+
+  if si_get_fake_spell "$1" ;then
+    return 3
+  elif grep -q "^$1:" ${TARGET}/var/state/sorcery/packages ;then
+    return 3
+  elif grep -q "^$1$" $SI_INSTALLING ;then
+    return 2
   elif grep -q "^$1$" $SI_SPELL_QUEUE ;then
     return 1
   elif grep -q "^$1$" $SI_CONFLICTS ;then
@@ -76,19 +101,50 @@ si_query() {
 # Casts all spells remaining in the queue
 # no arguments
 si_flush() {
-  if ! [ -e $SI_SPELL_QUEUE ] ;then
-    return 0 #no queue, empty queue
-  fi
+  echo "Waiting for all spells left to complete..."
+  while [ -s $SI_SPELL_QUEUE ] ;do
+    test -e $SI_QUEUE_DIR/debug && touch $SI_QUEUE_DIR/force_run
+      echo -en '\r\033[2K'
+      echo -n "installing $(cat $SI_INSTALLING)..."
+    sleep 1
+  done
+}
 
-  # This will stop working the moment we're multitasking, but it works for now
-  local spell
-  while read spell ;do
-    si_install_spell $spell
-  done <$SI_SPELL_QUEUE
-  >${SI_SPELL_QUEUE} #empty queue, we've done these
+# Casts top of queue and removes it
+# no arguments
+si_pop() {
+  if test -s $SI_SPELL_QUEUE ;then
+    spell=$(head -n 1 $SI_SPELL_QUEUE)
+    si_install_spell "$spell"
+    lock_resource SI_SPELL_QUEUE
+    sed -i "/^$spell$/d" $SI_SPELL_QUEUE
+    unlock_resource SI_SPELL_QUEUE
+    return 0
+  else
+    return 1
+  fi
 }
 
 # --------------private-------------------
+
+# Cycles down the dependency tree, puts the spell and its dependencies
+# sorted dependency-first into a file
+# args: $1: filename to put the queue in
+# Internally uses $1.unloop as file to check for loops - make sure
+# it exists and is empty before calling
+recursively_make_queue() {
+  local spell
+  local queue=$1
+  shift
+  for spell in "$@" ;do
+    if ! grep -q "^$spell$" $queue.unloop ;then
+      echo "$spell" >>$queue.unloop
+      # No spell gets handled twice, => no infinite loops on circular deps
+      recursively_make_queue $queue $( si_get_dependencies $spell )
+      echo "$spell" >>$queue
+    fi
+  done
+}
 
 # Our own conflicts handling.
 # Quite cheap, but ought to do its job.
@@ -96,8 +152,11 @@ si_flush() {
 # Appends any conflicts found to the end of $SI_CONFLICTS.
 
 function si_run_conflicts() {
-  grep "^$1;" $STATE_DIR/conflicts |
-    cut -d';' -f2 >>$SI_CONFLICTS
+  local spell
+  for spell in "$@" ;do
+    grep "^$spell:" $STATE_DIR/conflicts |
+      cut -d':' -f2 >>$SI_CONFLICTS
+  done
 }
 
 # Cheapo checking dependencies.
@@ -110,41 +169,64 @@ si_get_dependencies() {
 }
 
 # If we want any (backgrounded) action filed like a spell.
-# Fake spells should be calles "special:<name>", the colon
-# making sure no real spell can have the same name.
+# Fake spells should be calles "Iso.<name>",
+# we hope no real spell has the same name.
 
-# WARNING: Should always return true if it is a fake spell.
-# Returning false is reserved for real spells.
+# Returns true when $1 is a fake spell
+si_is_fake_spell() {
+  [[ "$1" == Iso.* ]]
+}
+
+# Return true when the given fake spell is "installed"
+si_get_fake_spell() {
+  case $1 in
+    "Iso.Caches")
+                 check_dependency install_caches
+               ;;
+    "Iso.Basics")
+                 check_dependency basic_system
+               ;;
+    "Iso.Compile_env")
+                      check_dependency compile_system
+                    ;;
+    Iso.*)
+          return 0
+        ;;
+    *)
+      return 1
+    ;;
+  esac
+}
+
 si_run_fake_spell() {
   case $1 in
-    "special:caches")
-                     local TOTALFILES=`ls -1 /var/cache/sorcery | wc -l`
-                     local file
-                     for file in /var/cache/sorcery/* ; do
-                       # Sacrifice some performance for prettiness ;-)
-                       cp --parents $file ${TARGET}
-                       echo $file
-                     done |
-                       progress_bar $TOTALFILES "Installing Source Caches..." \
-                        "Installing Source Cache" "Installing"
-                     fill_dependency install_caches
-                     return 0
-                   ;;
-    "special:basics")
-                     fill_dependency basic_system
-                     return 0
-                   ;;
-    "special:compile_env")
-                          check_dependency compile_system ||
-                          chroot_cmd scribe reindex
-                          fill_dependency compile_system
-                          return 0
-                        ;;
-    special:*)
-              return 0
-            ;;
+    "Iso.Caches")
+                 local TOTALFILES=`ls -1 /var/cache/sorcery | wc -l`
+                 local file
+                 for file in /var/cache/sorcery/* ; do
+                   # Sacrifice some performance for prettiness ;-)
+                   cp --parents $file ${TARGET}
+                   echo $file
+                 done |
+                   progress_bar $TOTALFILES "Installing Source Caches..." \
+                    "Installing Source Cache" "Installing"
+                 fill_dependency install_caches
+               ;;
+    "Iso.Basics")
+                 fill_dependency basic_system
+               ;;
+    "Iso.Compile_env")
+                      check_dependency compile_system ||
+                      chroot_cmd scribe reindex
+                      fill_dependency compile_system
+                    ;;
+    Iso.*)
+          return 0
+        ;;
+    *)
+      return 1
+    ;;
   esac
-  return 1
 }
 
 # Theses functions solely exists to quickfix spells that don't work properly
@@ -183,8 +265,9 @@ si_install_spell() {
 
   debug_log "spellinstall" "considering to install $1"
 
-  if si_run_fake_spell $1 ;then
-    return 0 #is a fake spell, nothing left to do
+  if si_is_fake_spell $1 ;then
+    si_run_fake_spell $1
+    return $? #nothing left to do
   fi
 
   if grep -q "^$1:" ${TARGET}/var/state/sorcery/packages ;then
@@ -192,13 +275,13 @@ si_install_spell() {
   fi
 
   echo "Installing $1..." >&2
+  echo "$1" >$SI_INSTALLING
 
   # TODO: The backgrounded version should be locking now,
   #       and logging the current spell
   si_pre_workaround $1        &&
 
-  local VERSION               &&
-  VERSION=$(grep "^$1:" /var/state/sorcery/packages | cut -d: -f4) &&
+  local VERSION=$(grep "^$1:" /var/state/sorcery/packages | cut -d: -f4) &&
   if [ -z $VERSION ] ;then
     echo "The spell $1 does not seem to be on this CD!?" >&2
     return 1
@@ -213,5 +296,6 @@ si_install_spell() {
 
   echo "$1:$(date +%Y%m%d):installed:${VERSION}" \
     >>${TARGET}/var/state/sorcery/packages &&
-  debug_log "spellinstall" "successfully installed $1"
+  debug_log "spellinstall" "successfully installed $1" &&
+  >$SI_INSTALLING # Clear file
 }
