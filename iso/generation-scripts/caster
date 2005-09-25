@@ -79,7 +79,7 @@ SUCCESS_LIST=/tmp/spell.success.$$
 FAIL_LIST=/tmp/spell.fail.$$
 CHANGE_LIST=/tmp/spell.change.$$
 rm -f $SUCCESS_LIST $FAIL_LIST $CHANGE_LIST
-for spell in $@ ; do
+for spell in "$@" ; do
   codex_set_current_spell_by_name $spell
   cachefile=${INSTALL_CACHE}/${SPELL}-${VERSION}-${HOST}.tar${EXTENSION}
   if [ $RECAST ] ||
@@ -98,8 +98,9 @@ for spell in $@ ; do
     cast -c $spell
     rc=$?
     post_workaround $spell
-    if ! [ -e $cachefile ]
-    then
+    if ! test -e $cachefile || test $(date +%Y%m%d) -gt \
+      $(stat -c "%y" $cachefile | cut -d' ' -f1 | tr -d '-')
+    then # nonexisting or stale cache
       if gaze install $spell >/dev/null ;then
         message "Forcing generation of cache"
         gaze install-full $spell | tar --no-recursion -cjf $cachefile -T -

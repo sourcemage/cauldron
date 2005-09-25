@@ -1,4 +1,6 @@
 2005-09-25 Karsten Behrmann <BearPerson@sourcemage.org>
+	* iso.mkfscommand.ppc: add -q to silence
+	* caster: force cache generation on stale cache
 	* bootloader: fix wrong dependency name for kernel/linux
 
 2005-09-23 Karsten Behrmann <BearPerson@sourcemage.org>
