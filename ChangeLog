@@ -1,3 +1,6 @@
+2005-09-25 Karsten Behrmann <BearPerson@sourcemage.org>
+	* bootloader: fix wrong dependency name for kernel/linux
+
 2005-09-23 Karsten Behrmann <BearPerson@sourcemage.org>
 	* templates/{lilo,grub}.conf: switch to new kernel naming scheme
 	* modules/*: Add dependencies between steps (bug 8208)

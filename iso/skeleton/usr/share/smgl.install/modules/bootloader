@@ -10,7 +10,7 @@
 function bootloader_screen() {
   need_dependency disk          &&
   need_dependency install_start &&
-  need_dependency kernel        &&
+  need_dependency linux         &&
   config_bootloader
 }
 
