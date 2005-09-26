@@ -189,7 +189,7 @@ dsr_choose_partitions() {
   --separate-output \
   --checklist "Mark partitions to be made into the RAID array" 0 0 0 \
   "${LIST_PARTS[@]}" |
-    sed 's:^:/dev/:'
+    sed 's:^:/dev/:g'
 }
 
 # Arguments:
