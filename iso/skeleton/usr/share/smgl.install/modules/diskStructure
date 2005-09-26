@@ -228,6 +228,7 @@ dsr_sanity_check() {
   #verify selected devices are block devices
   local DEVICES
   for DEVICES in $DEVICE_NAME $PARTS ; do
+	echo "$DEVICES is being checked!" >> /tmp/testing
     if [ ! -b "$DEVICES" ] ; then
       echo "$DEVICES is not a block device!" >>$ERROR_FILE
     fi
@@ -246,12 +247,22 @@ dsr_make_raid_config() {
   mdadm --detail --scan >> ${TARGET}/etc/mdadm.conf
 }
 
+dsr_debug() {
+  local RAID_DEBUG=/tmp/raidDebug
+  echo "DEVICE_NAME: $1" > $RAID_DEBUG
+  echo "LEVEL: $2" > $RAID_DEBUG
+  echo "PARTS: $3" > $RAID_DEBUG
+  echo "P_COUNT: $4" > $RAID_DEBUG
+}
+
 create_md_device() {
   dsr_show_warning                      &&
   local DEVICE_NAME=`dsr_device_name`   &&
   local LEVEL=`dsr_raid_level_menu`     &&
   local PARTS="`dsr_choose_partitions`" &&
   local P_COUNT=`echo $PARTS | wc -w`   &&
+
+  dsr_debug "$DEVICE_NAME" "$LEVEL" "$PARTS" "$P_COUNT" &&
   
   dsr_sanity_check "$DEVICE_NAME" "$LEVEL" "$PARTS" "$P_COUNT" &&
   if mdadm --create $DEVICE_NAME --level=$LEVEL --raid-devices=$P_COUNT $PARTS

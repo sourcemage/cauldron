@@ -1,4 +1,8 @@
 2005-09-25 David Kowis <dkowis@sourcemage.org>
+	* diskStructure: Adding more debugging to RAID stuff to figure out why
+	it's still broke.
+
+2005-09-25 David Kowis <dkowis@sourcemage.org>
 	* diskStructure: Fixed the RAID partition count
 
 2005-09-25 Karsten Behrmann <BearPerson@sourcemage.org>
