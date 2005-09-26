@@ -364,13 +364,44 @@ get_filesystem()  {
 get_mount_point()  {
 
   if ! check_dependency disk-root  ;then
+    display_message "Automatically choosing / as first mount point"
     echo "/"
   elif  [  "$2"  ==  "swap"  ];  then
     echo "none"
   else
-    inputbox  "Please choose where to mount $1 (type $2)"  "/"
+    local -a MOUNT_POINTS
+    MOUNT_POINTS=(
+    # Mark for how long texts can get:                         over here v"
+    "/boot"  "Put boot-relevant stuff somewhere special for old BIOS'es"
+    "/home"  "Give users their own partition so they can't fill / up"
+    "/root"  "For the paranoid: extra HD space for recovery when / is full"
+    "/usr"   "Used to seperate system programs from the bulk of the data"
+"/usr/share" "No idea what this is for. Tell BearPerson on IRC :-)"
+    "/var"   "Guarantees that logs or source caches can't fill /"
+    "other"  "own custom mount point (forbidden: /etc, /bin, /sbin, /lib)" )
+
+    # Filter already-mounted partitions
+    local partnum=$(( ${#MOUNT_POINTS[@]} / 2 ))
+    local i
+    for((i=0;i<partnum;i++)) ;do
+      # literal tabs:
+      if grep -q "	${MOUNT_POINTS[2*i]}	" /tmp/fstab ;then
+        unset MOUNT_POINTS[2*i] MOUNT_POINTS[2*i+1]
+        # Luckily, this doesn't move the other entries down
+      fi
+    done
+
+    local MPOINT=$(run_dialog                              \
+      --title "Mount point selection"                      \
+      --menu  "Please select where to mount $1 (type $2)"  \
+      7 80 0                                               \
+      "${MOUNT_POINTS[@]}") &&
+    if [[ "$MPOINT" == "other" ]] ;then
+      inputbox  "Please choose where to mount $1 (type $2)"  "/"
+    else
+      echo "$MPOINT"
+    fi
   fi
-  #TODO: add sanity checking (/etc, /lib, ...)
 }
 
 get_mkfs_cmd() {

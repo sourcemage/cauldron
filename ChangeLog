@@ -1,3 +1,6 @@
+2005-09-26 Karsten Behrmann <BearPerson@sourcemage.org>
+	* diskStructure: added menu for mount points (bug 9348)
+
 2005-09-25 David Kowis <dkowis@sourcemage.org>
 	* diskStructure: After much head bashing, the /dev/ removal needs to be
 	applied globally to the output of a --checklist because we're getting more
