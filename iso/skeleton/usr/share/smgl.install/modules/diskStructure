@@ -150,6 +150,7 @@ fdisc_menu()  {
     fi
   fi
 }
+
 # --------------------- NEW RAID STUFF ----------------------
 
 dsr_show_warning() {
@@ -206,7 +207,7 @@ dsr_sanity_check() {
 
   #verify raid level device count
   local COUNT_CHECK=0
-  case $LEVEL in
+  case $2 in
     0|1) COUNT_CHECK=2
     ;;
     2|3|4|5) COUNT_CHECK=3
@@ -221,14 +222,13 @@ dsr_sanity_check() {
   fi
 
   if [ $4 -lt $COUNT_CHECK ] ; then
-    echo "RAID level $LEVEL must have at least $COUNT_CHECK devices" \
+    echo "RAID level $2 must have at least $COUNT_CHECK devices" \
       >>$ERROR_FILE
   fi
 
   #verify selected devices are block devices
   local DEVICES
-  for DEVICES in $DEVICE_NAME $PARTS ; do
-	echo "$DEVICES is being checked!" >> /tmp/testing
+  for DEVICES in $1 $3 ; do
     if [ ! -b "$DEVICES" ] ; then
       echo "$DEVICES is not a block device!" >>$ERROR_FILE
     fi
@@ -243,16 +243,8 @@ dsr_sanity_check() {
 
 dsr_make_raid_config() {
   #generate the mdadm.conf
-  echo 'DEVICE /dev/hd*[0-9] /dev/sd*[0-9]' > ${TARGET}/etc/mdadm.conf
-  mdadm --detail --scan >> ${TARGET}/etc/mdadm.conf
-}
-
-dsr_debug() {
-  local RAID_DEBUG=/tmp/raidDebug
-  echo "DEVICE_NAME: $1" > $RAID_DEBUG
-  echo "LEVEL: $2" > $RAID_DEBUG
-  echo "PARTS: $3" > $RAID_DEBUG
-  echo "P_COUNT: $4" > $RAID_DEBUG
+  echo 'DEVICE /dev/hd*[0-9] /dev/sd*[0-9]' > $FINALFILES/etc/mdadm.conf
+  mdadm --detail --scan -v >> $FINALFILES/etc/mdadm.conf
 }
 
 create_md_device() {
@@ -262,8 +254,6 @@ create_md_device() {
   local PARTS="`dsr_choose_partitions`" &&
   local P_COUNT=`echo $PARTS | wc -w`   &&
 
-  dsr_debug "$DEVICE_NAME" "$LEVEL" "$PARTS" "$P_COUNT" &&
-  
   dsr_sanity_check "$DEVICE_NAME" "$LEVEL" "$PARTS" "$P_COUNT" &&
   if mdadm --create $DEVICE_NAME --level=$LEVEL --raid-devices=$P_COUNT $PARTS
   then
@@ -286,8 +276,10 @@ list_parts()  {
    cat /proc/partitions | awk '$3 !~ /^1$/ {print $4 " " $3}' | grep -v ram |
      grep -v disc | grep -v name | grep '^[^ ]*[0-9]' |
      while read PARTITION SIZE ;do #SUBSHELL!
-       if [[ -n "$PARTITION" ]] && ! grep -q "^/dev/$PARTITION	" /tmp/fstab
-       then # don't do nil strings, don't do partitions we mounted already
+       if [[ -n "$PARTITION" ]] && ! grep -q "^/dev/$PARTITION	" /tmp/fstab &&
+         ! grep -q "devices=\([^,]*,\)*$PARTITION\(,\|$\)" \
+           $FINALFILES/etc/mdadm.conf
+       then # don't do nil strings, partitions we mounted already, RAID parts
          echo "$PARTITION"
          echo "Size: $(( SIZE / 1024 ))MB"
 # TODO: add type recognition

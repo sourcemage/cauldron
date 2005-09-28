@@ -1,6 +1,9 @@
 2005-09-28 Karsten Behrmann <BearPerson@sourcemage.org>
+	* diskStructure: misnamed variables, add recognition of RAID partitions
+	* bg-install.sh: add dialog stuff
 	* smgl.multi, skeleton/etc/sorcery/local/depends/linux.p.ppc:
 	  add linux config for ppc
+
 2005-09-26 Karsten Behrmann <BearPerson@sourcemage.org>
 	* diskStructure: added menu for mount points (bug 9348)
 

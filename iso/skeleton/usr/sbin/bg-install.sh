@@ -9,6 +9,12 @@ DEPENDS_DIR=$TMP_DIR/installer_depends
 FINALFILES=$TMP_DIR/finalfiles
 INSTALLER_DEBUG=$TMP_DIR/installer_debug
 
+export DIALOGRC=/etc/sorcery/dialogrc # yoohoo! sorcery color scheme!
+
+DIALOG=( "dialog" "--backtitle" \
+         "Source Mage GNU/Linux Installer v. ${INSTALLER_VERSION}" \
+         "--stdout" "--trim")
+
 export PATH="/bin:/usr/bin:/sbin:/usr/sbin"
 export  HOME="/root"
 
