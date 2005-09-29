@@ -1,4 +1,6 @@
 2005-09-29 Karsten Behrmann <BearPerson@sourcemage.org>
+	* misc/release.sh: fix up relative paths for p4
+	* README: added policy on devel releases
 	* ChangeLog: fix formatting
 	* iso.dirs, skeleton/etc/fstab: add /sys
 	* iso.packages, skel/initrd/sbin/smgl.init: enable hotplug
