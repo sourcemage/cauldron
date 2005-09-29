@@ -14,6 +14,7 @@
 /proc
 /root
 /sbin
+/sys
 /tmp
 /var
 /var/run

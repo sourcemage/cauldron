@@ -32,8 +32,11 @@ unpack gdbm
 unpack gettext
 unpack glibc
 unpack grep
+unpack groff
 unpack gzip
-unpack hotplug # Ditto
+begin_unpack hotplug
+  iso_include '/etc/init.d' # overriding the default
+end_unpack hotplug
 __SMGL_TEMPLATE_ONLY_ppc__unpack hfsutils
 unpack iana-etc
 begin_unpack init.d
@@ -57,10 +60,10 @@ __SMGL_TEMPLATE_ONLY_ppc__unpack mktemp
 unpack module-init-tools
 unpack nano
 unpack ncurses
-unpack netconf     # On
-unpack netkit-base # The
-unpack netkit-ping # ISO
-unpack net-tools   # ???
+unpack netconf
+unpack netkit-base
+unpack netkit-ping
+unpack net-tools
 unpack nfs-utils   # Why?
 ##begin_unpack openssh     # Ditto
 ##  iso_exclude '/etc/ssh/*key*'
@@ -72,7 +75,7 @@ unpack pcmcia-cs
 __SMGL_TEMPLATE_NOT_ppc__unpack parted
 unpack popt
 unpack portmap
-unpack ppp         # When will the ISO start using this at all?
+unpack ppp
 unpack procinfo
 unpack procps
 unpack raidtools

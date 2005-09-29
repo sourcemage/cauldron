@@ -159,6 +159,12 @@ scan_cdroms()  {
 }
 
 
+toggle_hotplug() {
+  [[ "$HOTPLUG_ACTION" == "enable" ]] &&
+    HOTPLUG_ACTION="disable" ||
+    HOTPLUG_ACTION="enable"
+}
+
 show_filesystems()  {
 
   for FILESYSTEM in `grep -v nodev /proc/filesystems`;
@@ -198,12 +204,16 @@ select_root()  {
 }
 
 main_menu()  {
-    
+
+    HOTPLUG_ACTION="disable"
+    # NOTE: this is the opposite of the status of the toggle
+
     while true;
       do
 
       M_HELP="Select modules to load"
       S_HELP="Shell out for a moment"
+      H_HELP="toggle if the ISO runs hotplug"
       R_HELP="Choose the device to be mounted as /"
       D_HELP="Continue the normal boot process"
       
@@ -239,16 +249,18 @@ main_menu()  {
                         --default-item  "$DEFAULT_ITEM"       \
                         --menu                                \
                         "$HELP"                               \
-                        8 60 0                               \
+                        8 60 0                                \
                         "M"  "Load modules "       "$M_HELP"  \
                         "S"  "Shell "              "$S_HELP"  \
+                        "H"  "$HOTPLUG_ACTION hotplug" "$H_HELP" \
                         "R"  "Choose root device (For rescue mode)" "$R_HELP" \
                         "D"  "Continue booting "   "$D_HELP"`
 
       case  $COMMAND  in
           M)  load_module  ;;
           S)  shell        ;;
-		  R)  select_root  ;;
+          H)  toggle_hotplug ;;
+          R)  select_root  ;;
           D)  return       ;;
       esac
 
@@ -258,66 +270,56 @@ main_menu()  {
 
 main()  {
 
-  while true;
-  do
+  while true ;do
 
-	main_menu
+    main_menu
+    if  [ -z $ROOT ] && [ -z $SMGL_CD ] ;then
+      # height is 6 lines :
+      # 1 line for drawing a top line
+      # 1 line for a blank line
+      # 1 line of text
+      # 1 line for drawing a line
+      # 1 line for <OK> button
+      # 1 line for drawing a bottom line
+      "${DIALOG[@]}" --msgbox "Unable to boot without a root." 6 60
+      continue
+    fi
 
-	if  [  -z  $ROOT    ]   &&
-        [  -z  $SMGL_CD ];  then
+       ROOT=${ROOT:-$SMGL_CD}
+    VFSTYPE=${VFSTYPE:-iso9660}
+    OPTIONS=${OPTIONS:-"defaults,ro"}
 
-# height is 6 lines : 
-# 1 line for drawing a top line
-# 1 line for a blank line
-# 1 line of text
-# 1 line for drawing a line
-# 1 line for <OK> button
-# 1 line for drawing a bottom line
+    mount -n -t $VFSTYPE  -o $OPTIONS  $ROOT  $MOUNT ||
+    {
+      "${DIALOG[@]}" --msgbox "Unable to mount $ROOT as $VFSTYPE." 6 60
+      continue
+    }
 
-	  "${DIALOG[@]}" --msgbox "Unable to boot without a root." 6 60
-	  continue
+    if [ ! -x $MOUNT/sbin/init ]; then
+      "${DIALOG[@]}" --msgbox "Unable to locate /sbin/init on $ROOT." 6 60
+      umount -n $MOUNT
+      continue
+    fi
 
-	fi
+    umount -n /proc
 
-	[  -n  "$ROOT"     ]  ||     ROOT=$SMGL_CD
-	[  -n  "$VFSTYPE"  ]  ||  VFSTYPE=iso9660
-	[  -n  "$OPTIONS"  ]  ||  OPTIONS="defaults,ro"
+    # setup writable /etc /root and nfs stat dir if ISO is ROOT
+    if [ "$ROOT" = "$SMGL_CD" ] ;then
+      /bin/mount -t $VFSTYPE -o $OPTIONS $ROOT $MOUNT/mnt/cdrom
+      cd $MOUNT/mnt/cdrom
+      for i in etc root var/log var/lib/nfs ;do
+        echo "Setting up writable /$i for install"
+        /bin/mount -t tmpfs tmpfs $MOUNT/$i
+        $MOUNT/bin/cp -a --parents $i $MOUNT
+      done
+      cd $MOUNT
+      /bin/umount $MOUNT/mnt/cdrom
+    fi
 
-	if ! mount -n -t $VFSTYPE  -o $OPTIONS  $ROOT  $MOUNT; then
-
-	  "${DIALOG[@]}" --msgbox "Unable to mount $ROOT as $VFSTYPE." 6 60
-	  continue
-
-	fi
-
-	if [ ! -x $MOUNT/sbin/init ]; then
-
-	  "${DIALOG[@]}" --msgbox "Unable to locate /sbin/init on $ROOT." 6 60
-	  umount -n $MOUNT
-	  continue
-
-	fi
-
-	umount -n /proc
-
-### HGG START ###
-      ## setup writable /etc /root and nfs stat dir if ISO is ROOT
-       if [ "$ROOT" = "$SMGL_CD" ]
-       then /bin/mount -t $VFSTYPE -o $OPTIONS $ROOT $MOUNT/mnt/cdrom
-            for i in etc root
-            do echo "Setting up writable /$i for install"
-               /bin/mount -t tmpfs tmpfs $MOUNT/$i
-               $MOUNT/bin/cp -a $MOUNT/mnt/cdrom/$i $MOUNT
-            done
-            echo "Setting up writable /var/log for install"
-	    /bin/mount -t tmpfs tmpfs $MOUNT/var/log/
-	    $MOUNT/bin/cp -a $MOUNT/mnt/cdrom/var/log/* $MOUNT/var/log/
-            echo "Setting up writable /var/lib/nfs for install"
-	    /bin/mount -t tmpfs tmpfs $MOUNT/var/lib/nfs
-	    $MOUNT/bin/cp -a $MOUNT/mnt/cdrom/var/lib/nfs $MOUNT/var/lib/
-	    /bin/umount $MOUNT/mnt/cdrom
-       fi
-### HGG END ###
+    if [[ "$HOTPLUG_ACTION" == "enable" ]] ;then
+      # Menu entry was "enable", so it was set to disabled
+      $MOUNT/bin/chmod a-x $MOUNT/etc/init.d/runlevels/%S/hotplug
+    fi
 
     cd $MOUNT
 
@@ -329,7 +331,7 @@ main()  {
 
     echo "Running /sbin/init $@"
 
-# if the new root filesystem use devfs, /dev/console should not exist
+# if the new root filesystem uses devfs, /dev/console should not exist
     if [ ! -e dev/console ]; then
       mount -n -t devfs  devfs  dev
     fi
