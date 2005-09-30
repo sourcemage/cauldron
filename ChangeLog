@@ -1,3 +1,7 @@
+2005-09-30 Karsten Behrmann <BearPerson@sourcemage.org>
+	* doc/known_issues: add document for common problems and their fixes
+	* doc/chroot-howto: add memo on chroot generation and pitfalls
+
 2005-09-29 Karsten Behrmann <BearPerson@sourcemage.org>
 	* misc/release.sh: fix up relative paths for p4
 	* README: added policy on devel releases
