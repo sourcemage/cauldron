@@ -1,0 +1,165 @@
+#!/bin/bash
+# Handy little wrapper script for creating cache tarballs
+
+# If anything is needed to be run before every cast
+function prepare_cast()
+{
+#  rm $(find /etc -not -type d | grep -v -f ~/etcexcluded)
+  true
+}
+
+function pre_workaround()
+{
+# The place for workarounds needed before a spell so it casts nicely.
+  case $1 in
+    "irssi"|"grub"|"parted"|"syslinux"|"syslog-ng"|"uptimed")
+      cast g++ # The ole autoconf workaround
+      ;;
+    "linux")
+      cp $STATE_DIR/linux.p $DEPENDS_CONFIG/linux.p
+      cp $STATE_DIR/config-$KVERSION /etc/sorcery/local/kernel.config
+      rm -f /usr/src/linux-*/.spell-config.p
+      ;; #We want to use our preset kernel version and config
+    "openssh")
+      rm -rf /etc/ssh
+      ;; # The dir is protected by sorcery, it won't reap it by itself
+  esac
+  true
+}
+
+function post_workaround()
+{
+  true
+}
+
+# Attempts to fetch an install log, either from sorcery or from the cache.
+# Needs the sorcery environment and codex_set_current_spell done before it
+function try_get_install_log() {
+  local rclog=/tmp/install_log_rc.$$
+  local rc
+  {
+    gaze install $SPELL ||
+    tar -xjOf ${INSTALL_CACHE}/${SPELL}-${VERSION}-${HOST}.tar${EXTENSION} \
+      ${INSTALL_LOGS#/}/$SPELL-$VERSION ||
+    # try without leading / first
+    tar -xjOf ${INSTALL_CACHE}/${SPELL}-${VERSION}-${HOST}.tar${EXTENSION} \
+      $INSTALL_LOGS/$SPELL-$VERSION
+    echo $? >$rclog
+    # This is a subshell. We can't just set a variable.
+    # Exit code of a pipe is the exit code of the last command, here: "sort".
+  } 2>/dev/null | grep -v "$TABLET_PATH" | sort
+  rc=$(cat $rclog)
+  rm -f $rclog
+  return $rc
+}
+
+function filter_dirs() {
+  local line
+  while read line ;do
+    test -d "$line" ||
+    echo "$line"
+  done
+}
+
+if [ "$1" == "-c" ] ;then
+  RECAST="-c"
+  shift
+fi
+mkdir -p ~/broken-logs
+mkdir -p /tmp # Just to be sure
+. /etc/sorcery/config
+. ${0%/*}/config
+
+# sanity check
+if ! [ -e $STATE_DIR/list.reqd ] ;then
+  ${0%/*}/listparse
+fi
+
+SUCCESS_LIST=/tmp/spell.success.$$
+FAIL_LIST=/tmp/spell.fail.$$
+CHANGE_LIST=/tmp/spell.change.$$
+rm -f $SUCCESS_LIST $FAIL_LIST $CHANGE_LIST
+for spell in $@ ; do
+  codex_set_current_spell_by_name $spell
+  if [ $RECAST ] ||
+     ! test -e ${INSTALL_CACHE}/${SPELL}-${VERSION}-${HOST}.tar${EXTENSION}
+  then
+
+    rm -f /tmp/old-install-log
+    try_get_install_log >/tmp/tmp-install-log &&
+    cat /tmp/tmp-install-log | filter_dirs >/tmp/old-install-log
+    # do not create the file when try_get_install_log fails
+
+    prepare_cast
+    pre_workaround $spell
+    cast --deps $spell
+    cast $RECAST $spell
+    rc=$?
+    post_workaround $spell
+    if ! [ -e ${INSTALL_CACHE}/${SPELL}-${VERSION}-${HOST}.tar${EXTENSION} ]
+    then
+      if gaze install $spell >/dev/null ;then
+        message "Forcing generation of cache"
+        gaze install-full $spell | tar --no-recursion -cjf \
+          ${INSTALL_CACHE}/${SPELL}-${VERSION}-${HOST}.tar${EXTENSION} -T -
+      fi
+    fi
+
+    gaze install $spell >/tmp/tmp-install-log &&
+    cat /tmp/tmp-install-log | filter_dirs >/tmp/new-install-log &&
+    # again, preserving exit status from gaze install
+    if [ -e /tmp/old-install-log ] && 
+     ! diff /tmp/old-install-log /tmp/new-install-log >/dev/null ;then
+      message "OOPS... Spell $SPELL_COLOR$SPELL$DEFAULT_COLOR\
+install log suddenly changed..."
+      datestr=$(date +%s)
+      cp /tmp/old-install-log ~/broken-logs/${SPELL}-${datestr}-pre
+      cp /tmp/new-install-log ~/broken-logs/${SPELL}-${datestr}-post
+      echo "$SPELL" >>$CHANGE_LIST
+    elif [[ $rc == 0 ]] ;then
+      echo "$SPELL" >>$SUCCESS_LIST
+    else
+      echo "$SPELL" >>$FAIL_LIST
+    fi ||
+      echo "$SPELL" >>$FAIL_LIST # when the gaze install failed
+    rm -f /tmp/new-install-log
+
+    SUP_SPELLS=$(
+     { cat /var/state/sorcery/packages | cut -d: -f1
+       cat $STATE_DIR/list.reqd $STATE_DIR/list.reqd ; } |
+       sort | uniq -u)
+    if [ $( echo "$SUP_SPELLS" | wc -l ) -gt 10 ] ;then
+      message "${QUERY_COLOR}Whoops! Cleanup wants me to dispel the following\
+spells:${DEFAULT_COLOR}${SPELL_COLOR}"
+      echo "$SUP_SPELLS" |column
+      message -n "$DEFAULT_COLOR"
+      if query "Continue anyway?" n ;then
+        exit 3
+      fi
+    fi
+    if [ -n "$SUP_SPELLS" ] ;then
+      dispel --no-reap-depends $SUP_SPELLS
+    fi
+  fi
+done
+
+if [ -s $SUCCESS_LIST ] ;then
+  message "${MESSAGE_COLOR}Spells installed successfully:"
+  message "------------------------------${SPELL_COLOR}"
+  column $SUCCESS_LIST
+  message "$DEFAULT_COLOR"
+fi
+if [ -s $CHANGE_LIST ] ;then
+  message "${MESSAGE_COLOR}Spells whose install log changed:"
+  message "------------------------------${QUERY_COLOR}"
+  column $CHANGE_LIST
+  message "$DEFAULT_COLOR"
+fi
+if [ -s $FAIL_LIST ] ;then
+  message "${MESSAGE_COLOR}Spells that failed to cast:"
+  message "------------------------------${PROBLEM_COLOR}"
+  column $FAIL_LIST
+  message "$DEFAULT_COLOR"
+fi
+
+rm -f $SUCCESS_LIST $FAIL_LIST $CHANGE_LIST

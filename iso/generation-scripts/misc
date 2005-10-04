@@ -1,0 +1,13 @@
+#!/bin/bash
+
+output_warning()
+{
+  echo $1 1>&2
+}
+
+fatal_warning()
+{
+  echo $1 1>&2
+  [ "$IGNORE_FATAL" == "yes" ] ||
+  exit 1;
+}

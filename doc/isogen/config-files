@@ -1,0 +1,52 @@
+==============================initrd.dirs===============================
+This file specifies all directories that need to exist on the initrd.
+Note that directories implied in initrd.files are created automatically.
+
+Also note that the smgl-fhs directories are NOT automatically on the initrd.
+
+==============================initrd.files==============================
+The purpose of this file is to specify files that need to be copied
+from the parent system onto the initrd. Format is a plain newline-seperated
+list, no comments allowed.
+
+When specifying plain files, use a full path. However, when you specify
+a binary such as "bash" or "grep", just put the binary name.
+
+Lines with no leading '/' will trigger a mechanism to find the binary
+and install all libraries it links against.
+
+==============================initrd.kernel=============================
+In this file, specify directories (or even individual modules) of the
+kernel that need to be copied onto the initrd. all other modules stay off
+it.
+
+Paths are relative to /lib/modules/$KERNEL_VERSION/kernel .
+
+==============================initrd.patch==============================
+If this file exists, it will be passed into "patch" to patch files in the
+initrd.
+
+==============================initrd.command============================
+If this file exists, its contents will be run by bash just before the
+initrd is finally built into a file.
+
+=================================iso.dirs===============================
+The same as initrd.dirs
+
+=================================iso.packages===========================
+This file contains commands to flexibly install spells to the ISO.
+Commands are:
+add_default_include pattern
+add_default_exclude pattern
+unpack spell
+begin_unpack spell
+end_unpack spell
+iso_include pattern
+iso_exclude pattern
+For details, see <FIXME: insert link here>
+
+========================install-list/optional-list======================
+These are the lists of spells the installer should install in any case
+or install when the user chooses to, respectively.
+Their real location is $SKELETON/usr/share/smgl.install/
+

@@ -1,0 +1,261 @@
+#!/bin/bash 
+
+# Note: In this file, we use dependencies to carry information
+# as a more elegant alternative to global variables.
+# But we also have to carry variables into run_template.
+# Fortunately, a local variable in bash is accessible in all
+# function we call from that function. Not quite elegant, but it works.
+
+#bootloader stuff
+function bootloader_screen() {
+#check the depends
+  config_bootloader
+#write depends
+}
+
+# usage: create_etc_mtab
+
+# this functions creates a valid $TARGET/etc/mtab file that will make
+# df work in a chroot. This is usefull for yabootconfig, lilo and
+# grub-install for instance, if they are run in chroot.
+
+create_etc_mtab() {
+
+  # replace $TARGET followed by zero or more /, by /
+
+  cat /proc/mounts | grep " ${TARGET}" |
+  sed -e "s:${TARGET}/*:/:g" > "${TARGET}/etc/mtab"
+
+}
+
+bl_choose_loader() {
+# TODO: Auto-generate this
+  if [ "$ARCH" == "ppc" ] ;then
+    echo "yaboot" # We don't have any choice, why bother do display a menu?
+  else
+    run_dialog --title "Bootloader selection menu"   \
+      --item-help --single-quoted --radiolist        \
+      "Please select the bootloader you wish to use to boot your SMGL system"\
+      8 60 0                                         \
+      "lilo" "The LInux LOader" "on"                 \
+      "lilo has been the standard-issue bootloader for many people for quite long"\
+      "grub" "GNU GRUB Multiboot boot loader" "off"  \
+      "GRUB is a dynamic, interactive bootloader - liked by some, hated by others"
+  fi #TODO: make these more neutral
+}
+
+bl_choose_target() {
+  local QUESTION
+  if check_dependency disk-boot ;then # we have a seperate /boot partition
+    QUESTION="Do You want to install the boot loader to the
+Master Boot Record of the disk that /boot is on
+or to the Boot Record of the /boot partition?"
+    if run_dialog --yes-label "MBR" --no-label "Partition" \
+               --yesno "$QUESTION" 8 60 ;then
+      get_dependency disk-boot |
+        sed -e 's/part[0-9]*$/disc/' -e 's/[0-9]*$//'
+      # partX -> disc conversion for devfs, hdaX -> hda otherwise
+    else
+      get_dependency disk-boot
+    fi # this is the command that outputs the target to 
+  else
+    QUESTION="Do You want to install the boot loader to the
+Master Boot Record of the disk that / is on
+or to the Boot Record of the / partition?"
+    if run_dialog --yes-label "MBR" --no-label "Partition" \
+               --yesno "$QUESTION" 8 60 ;then
+      get_dependency disk-root |
+        sed -e 's/part[0-9]*$/disc/' -e 's/[0-9]*$//'
+      # partX -> disc conversion for devfs, hdaX -> hda otherwise
+    else
+      get_dependency disk-root
+    fi
+  fi
+}
+
+config_bootloader() {
+
+  local TARGET_DEV # The device to install the loader to
+  local BOOTLOADER=`bl_choose_loader`  &&
+
+  # there is no MBR choice on ppc machines
+
+  if [ "${ARCH}" == "ppc" ]; then
+    TARGET_DEV=""
+  else
+    TARGET_DEV=$(bl_choose_target)
+  fi                                   &&
+
+  si_wait $BOOTLOADER
+
+  bl_${BOOTLOADER}_config $TARGET_DEV  &&
+  bl_${BOOTLOADER}_install $TARGET_DEV
+
+}
+
+# return the installed kernel version (either precompiled or compiled)
+# it returns for instance 2.6.8.1
+
+bl_get_kernel() {
+  {
+#    chroot_cmd gaze version linux | head -n 3 | tail -n 1 | awk '{print $5}' ||
+    uname -r # fallback, default for now
+  } | tail -n 1 # for sanity, should never be needed
+}
+
+# -----------------GRUB-------------------------
+bl_grub_config() {
+
+  mkdir -p "${TARGET}/boot/grub"
+
+# Variables needed for the grub template:
+  local BL_BOOTLOC
+  local BL_KVERSION
+  local BL_ROOTDEV
+
+
+# Okay, let's try to find how grub calls the /boot partition.
+# Add a file that will very likely be uniquely there, and let grub search for it
+  local GRUB_DUMMY_FILE="grub.$RANDOM.findfile"
+  touch ${TARGET}/boot/$GRUB_DUMMY_FILE    &&
+  # special thanks to the grub spell for some ideas boldly stolen here
+  if check_dependency disk-boot ;then # seperate part for /boot
+    BL_BOOTLOC="$( echo "find /${GRUB_DUMMY_FILE}" |
+      chroot_cmd grub --no-floppy --batch |
+      grep -A 1 "^grub>" | head -n 2 | tail -n 1)"
+  else
+    BL_BOOTLOC="$( echo "find /boot/${GRUB_DUMMY_FILE}" |
+      chroot_cmd grub --no-floppy --batch |
+      grep -A 1 "^grub>" | head -n 2 | tail -n 1)/boot"
+  fi                                       &&
+  rm -f ${TARGET}/boot/$GRUB_DUMMY_FILE    &&
+
+  BL_KVERSION=$( bl_get_kernel )           &&
+
+  BL_ROOTDEV=$( get_dependency disk-root ) &&
+
+  run_template $TEMPLATE_DIR/grub.conf $TEMPLATE_DIR/bootloader.patterns \
+    >${TARGET}/boot/grub/menu.lst          &&
+
+  if confirm "Do you want to edit /boot/grub/menu.lst?" --defaultno ;then
+    ${EDITOR:-nano} "${TARGET}/boot/grub/menu.lst"
+  fi
+}
+
+bl_grub_install() {
+
+  # get boot record
+
+  # install grub (it is a shell script using df, and thus /etc/mtab to
+  # locate file)
+
+  create_etc_mtab &&
+  chroot_cmd grub-install --no-floppy "$1"
+
+  if [ "${DEBUG}" = "yes" ]; then
+    press_enter
+  fi
+
+}
+
+#-------------LILO----------------------
+
+bl_lilo_config() {
+
+  # this one is easy
+  local BL_KVERSION
+  local BL_ROOTDEV
+  local BL_TARGET
+
+  BL_KVERSION=`bl_get_kernel`                    &&
+
+  BL_ROOTDEV=$(get_dependency disk-root)         &&
+
+  BL_TARGET=$1 &&
+
+  # copy boot.bmp
+  cp -a /boot/boot.bmp "${TARGET}/boot/boot.bmp" &&
+
+  # create a configuration file
+  mkdir -p "${TARGET}/etc"                       &&
+  run_template $TEMPLATE_DIR/lilo.conf $TEMPLATE_DIR/bootloader.patterns \
+    >${TARGET}/etc/lilo.conf                     &&
+
+  if confirm "Do you want to edit /etc/lilo.conf?" --defaultno ;then
+    ${EDITOR:-nano} "${TARGET}/etc/lilo.conf"
+  fi
+
+}
+
+bl_lilo_install() {
+
+  chroot_cmd lilo -v
+
+  if [ "${DEBUG}" = "yes" ]; then
+    press_enter
+  fi
+
+}
+
+#-----------YABOOT-------------------
+# TODO: Have someone who knows yaboot look over this
+
+bootloader_yaboot_conf() {
+
+  # yabootconfig will df, df will use /etc/mtab
+  # so, we need a valid /etc/mtab. copy /etc/fstab.
+
+  local BL_BOOTLOC
+  local BL_KVERSION
+
+  # replace /boot/vmlinux if it is an absolute link
+
+  local LINK
+  if [ -h "${TARGET}/boot/vmlinux" ]; then
+    LINK=`readlink "${TARGET}/boot/vmlinux"`
+    if [ "${LINK:0:1}" = "/" ]; then
+      ln -sf "..${LINK}" "${TARGET}/boot/vmlinux"
+    fi
+  fi                                                        &&
+
+  yabootconfig -t "${TARGET}" --noinstall -q                &&
+
+
+  # remove the default image section written by yabootconfig
+  # which are the last 3 lines of /etc/yaboot.conf
+
+  head -n -3 "${TARGET}/etc/yaboot.conf" > /tmp/yaboot.conf &&
+  cp /tmp/yaboot.conf "${TARGET}/etc/yaboot.conf"           &&
+
+# TODO: Check if this needs fixed up like grub
+  if check_dependency disk-boot; then
+    BL_BOOTLOC=""
+  else
+    BL_BOOTLOC="/boot"
+  fi                                                        &&
+
+  BL_KVERSION=`bl_get_kernel`                               &&
+
+  # _append_ our own image section
+
+  run_template $TEMPLATE_DIR/yaboot.conf.last $TEMPLATE_DIR/bootloader.patterns \
+    >>${TARGET}/etc/yaboot.conf                             &&
+
+  if confirm "Do you want to edit /etc/yaboot.conf?" --defaultno ;then
+    ${EDITOR:-nano} "${TARGET}/etc/yaboot.conf"
+  fi
+}
+
+bl_yaboot_install() {
+
+  # we use --nonvram since we don't have nvsetenv installed
+
+  chroot_cmd ybin --nonvram
+
+  if [ "${DEBUG}" = "yes" ]; then
+    press_enter
+  fi
+
+}
+
+

@@ -1,0 +1,101 @@
+#!/bin/bash
+
+kernel_screen()  {
+
+  if run_dialog --yes-label "copy" --no-label "compile" \
+       --nocancel --yesno                               \
+"Would you like to configure and compile a custom kernel,
+or install/copy the precompiled kernel from the ISO?
+The precompiled kernel is highly modular to support almost
+any hardware we might encounter, the custom kernel needs
+some work to do all the config, but will be smaller.
+Special hardware may also require a custom kernel." 10 60 ;then
+    kn_copy_kernel
+  else
+    kn_compile_kernel
+  fi
+
+}
+
+kn_copy_kernel() {
+
+  local KVERSION=$(uname -r)
+
+  echo "Waiting for the tools needed for kernel installation to install..."
+  si_wait "special:compile_env"
+
+  # install the config used for this kernel
+  cp -f /boot/config-* ${TARGET}/etc/sorcery/local/kernel.config
+
+  cp --parents /etc/sorcery/local/depends/linux.p $TARGET
+
+  touch $TARGET/etc/sorcery/local/makefile.patches
+
+  echo "Setting up kernel source tree... (needed by some compiles)"
+
+  export PROMPT_DELAY=0
+  export INTERNAL_ISO_VAR="yes"
+  chroot_cmd cast -c linux
+  local rc=$? # We want the following statements to execute on fail and success
+
+  unset PROMPT_DELAY
+  unset INTERNAL_ISO_VAR
+  rm -f $TARGET/etc/sorcery/local/depends/linux.p \
+    ${TARGET}/etc/sorcery/local/kernel.config \
+    ${TARGET}/usr/src/linux*/.spell-config.p
+  # We don't want the linux spell to pick up our borked config
+
+  (( rc )) && return $rc # If linux cast failed, fail out now
+
+  sed -i '/^linux:/d' $TARGET/var/state/sorcery/packages &&
+  # we don't want the spellinstaller to think it is already installed
+
+  si_queue_now linux       &&
+  # install the meat after the linux spell has done its thing
+
+  debug_log "kernel" "copying pre-made kernel"
+}
+
+kn_compile_kernel() {
+
+  run_dialog --cr-wrap --textbox  ${DATA_DIR}/kernel.help 22 60
+
+  echo "Waiting for the tools needed for kernel installation to install..."
+  si_wait "special:compile_env"
+
+  cp --parents /etc/sorcery/local/depends/linux.p $TARGET
+
+  if run_dialog --defaultno --yes-label "ISO" --no-label "default" --yesno \
+    "Do you want to start with the ISO's kernel config?
+It does support a lot of hardware with modules, on the other
+hand it will be large and take a long time to build.
+Alternatively, I can just use the linux defaults." 8 65 \
+     ;then
+    # install the config used for this kernel
+    cp -f /boot/config-* ${TARGET}/etc/sorcery/local/kernel.config
+  else
+    # make linux spell use the linux default config
+    ln -s /usr/src/linux/arch/i386/defconfig \
+      ${TARGET}/etc/sorcery/local/kernel.config
+    # The target of this link does not exist yet, but will at the time the
+    # link is resolved by the linux spell
+  fi
+
+  sed -i -e 's/^MAKEMODE=.*/MAKEMODE="menuconfig"/' \
+         -e 's/^CONFIG_KERNEL=.*/CONFIG_KERNEL="y"/' \
+    $TARGET/etc/sorcery/local/depends/linux.p
+
+  touch $TARGET/etc/sorcery/local/makefile.patches
+
+  chroot_cmd cast -c linux
+  local rc=$?
+
+  rm -f $TARGET/etc/sorcery/local/depends/linux.p \
+    ${TARGET}/etc/sorcery/local/kernel.config \
+    ${TARGET}/usr/src/linux*/.spell-config.p
+  # We don't want the linux spell to pick up our borked config
+
+  (( rc )) && return $rc
+
+  debug_log "kernel" "compiling custom kernel"
+}

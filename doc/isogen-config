@@ -1,0 +1,42 @@
+This is the documentation of the file /etc/smgl-isogen.conf .
+This is meant to be a per-host configuration file to override the settings
+set by default in the perforce version. It is plain bash code.
+It is to be on the host system, the same tree as the perforce mirror is in,
+not the chroot.
+
+The following variables are common to be defined (defaults in []):
+
+ISO_BRANCH [devel]
+  An internal variable to specify the ISO branch (devel, test, rc, stable)
+  Used only in pattern decisions
+
+ARCH [i486-pc-linux-gnu]
+  A variable to specify what architecture the cache tarballs are built for
+  (specifying the name to look for)
+
+ISO_ARCH [x86]
+  A variable to change the internal behavior of the scripts, building an ISO
+  for a different architecture. Currently known are x86, ppc, and x86_64.
+  Currently supported is only x86, but we're working on it.
+
+SVERSION [stable]
+  This variable globally specifies what sorcery the chroot should be using as
+  well as what grimoire the ISO should install (those should not differ)
+
+GVERSION [test]
+  This variable specifies the grimoire version to use. Rest same as SVERSION.
+
+KVERSION [2.6]
+  This variable is meant as a switch for building kernels for different ISOs.
+  It does nothing yet, though.
+
+KERNEL_VERSION [2.6.12.5, changing rapidly]
+  Specifies what kernel version to use for the ISO and which one the ISO should
+  install as well. We don't support any patches but maintenance patches.
+
+ISO_VERSION [devel-YYYYMMDDHH]
+  Version string for the ISO. Appears in various files and in the ISO name.
+
+IGNORE_FATAL [yes]
+  Specifies whether the ISO should try to continue on grave errors
+  (e.g. caches for spells that should be on the ISO not found)
