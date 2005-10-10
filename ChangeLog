@@ -1,3 +1,6 @@
+2005-10-09 Karsten Behrmann <BearPerson@sourcemage.org>
+	* config: -rc is stable in all aspects, change to stable
+
 2005-10-03 David Kowis <dkowis@sourcemage.org>
 	* Branched to stable
 	* internal_version: release 1
