@@ -156,9 +156,7 @@ bl_grub_install() {
   create_etc_mtab &&
   chroot_cmd grub-install --no-floppy "$1"
 
-  if [ "${DEBUG}" = "yes" ]; then
-    press_enter
-  fi
+  debug_enter "bootloader" 2
 
 }
 
@@ -195,9 +193,7 @@ bl_lilo_install() {
 
   chroot_cmd lilo -v
 
-  if [ "${DEBUG}" = "yes" ]; then
-    press_enter
-  fi
+  debug_enter "bootloader" 2
 
 }
 
@@ -256,9 +252,7 @@ bl_yaboot_install() {
 
   chroot_cmd ybin --nonvram
 
-  if [ "${DEBUG}" = "yes" ]; then
-    press_enter
-  fi
+  debug_enter "bootloader" 2
 
 }
 

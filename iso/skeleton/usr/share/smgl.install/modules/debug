@@ -1,0 +1,119 @@
+#!/bin/bash
+
+DEBUG_DIR=/tmp/debug_dir
+function init_debug() {
+  mkdir -p $DEBUG_DIR
+  for DBG_file in $DATA_DIR/default_debug* ;do
+    cp $DBG_file $DEBUG_DIR/${DBG_FILE##*/default_}
+  done
+}
+
+# Main menu to configure debugging
+function debug_screen() {
+  # TODO: Put a nice menu here with the most common debug values
+}
+
+# Runs a command, captures its output, displays it nicely if it fails.
+# If the command is a pipe, you'll need eval. Let's hope that won't happen.
+# Possible parameters:
+# -e "string": specify your own failure message
+# -nc: (no-capture) don't redirect output
+function try_run() {
+  local error_message
+  local capture=true
+  local capfile=$TMP_DIR/debug.out.$$
+  local rc
+  while [[ "$1" == -* ]] ;do
+    case "$1" in
+       "-e") error_message="$2"
+             shift 2
+          ;;
+      "-nc") capture=false
+             shift
+          ;;
+    esac
+  done
+  error_message=${error_message:-"Running $1 failed."}
+  if $capture ;then
+    set -o pipefail
+    "$@" 2>&1 | tee $capfile
+    rc=$?
+    set +o pipefail
+    if [[ $? != 0 ]] ;then
+      run_dialog --title "$error_message" --cr-wrap --msgbox \
+        "The failed command (exit code $rc) was:
+$*
+The (error) output was:
+$(cat $capfile)" 20 80
+    fi
+  else
+    "$@"
+    rc=$?
+    if [[ $? != 0 ]] ;then
+      echo "$error_message"
+      echo "The failed command (exit code $rc) was:"
+      echo "$*"
+      debug_enter "tryrun" -1
+    fi >&2
+  fi
+  if [[ $? != 0 ]] ;then
+    debug_log "tryrun" 0 "$1 failed (rc=$rc)" "$@" "error:" "$(cat $capfile)"
+  else
+    debug_log "tryrun" 3 "$1 executed successfully, the full command was" \
+              "$@" "Output was" "$(cat $capfile)"
+  fi
+  return $rc
+}
+
+# Params:
+# $1: component
+# $2: debug level
+# Returns 1 when debugging is enabled
+function debug_is_on() {
+  local func=$1
+  local priority=${2:-2} # Default to 2
+  if [ -e $DEBUG_DIR/debug_$func ] ;then
+    [ $(cat $DEBUG_DIR/debug_$func) -lt $priority ]
+  else
+    [ $(cat $DEBUG_DIR/debug) -lt $priority ]
+  fi
+}
+
+# Sleeps for given time
+# Usage:
+# debug_sleep <component> time
+function debug_sleep() {
+  debug_is_on "$1" &&
+  sleep ${2:-5}
+  true
+}
+
+# display a single line and wait for the user to press enter
+# $1: component, $2: debug level
+function debug_enter() {
+  debug_is_on "$1" $2 &&
+  read -p "Press enter..."
+  true
+}
+
+# Logs given text
+# Usage:
+# debug_log <component> <log at debug level> <string[s] to log>
+# e.g. debug_log "diskStructure" 3 "Chosen device $DEV"
+function debug_log() {
+  local func=$1
+  local priority=$2
+  shift 2
+  debug_is_on "$func" $priority || return
+  if [ $# == 1 ] ;then
+    echo "$(date +%H:%M:%S) ${func}($$)@$priority: $*" >>${INSTALLER_DEBUG}
+  elif [ $# -gt 1 ] ;then
+    local var
+    echo "$(date +%H:%M:%S) ${func}($$)@$priority: <several vars>" >>$INSTALLER_DEBUG
+    for var in "$@" ;do
+      echo "> $var" >>$INSTALLER_DEBUG
+    done
+  else
+    echo "debug_log called incorrectly: \"$func\" \"$priority\"" >>$INSTALLER_DEBUG
+  fi
+}

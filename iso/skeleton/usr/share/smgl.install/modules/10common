@@ -9,22 +9,12 @@ LOCK_DIR=/tmp/lock-dir
 
 # wrapper for dialog, should eventually replace the ugly ${DIALOG[*]}
 function run_dialog() {
-  echo "Waiting to enable you to see error messages and stuff" >&2
-  sleep 2 #enough to hit Scroll Lock
-  debug_log "common" "run_dialog called with the following arguments:"
-  local arg
-  for arg in "$@" ;do
-    debug_log "dialog_param" "$arg"
-  done
+  debug_sleep "pre-dialog"
+  debug_log "dialog" 3 "run_dialog called with the following arguments:" "$@"
+
   "${DIALOG[@]}" "$@"
   # TODO: Was too lazy to really make this do something, eventually
   #       should define all the dialog stuff here
-}
-
-# press_enter: display a single line and wait for the user to press enter
-# SECTION: MISC
-function press_enter() {
-  read -p "Press enter..."
 }
 
 # explode(): split up a string into an array at a given delimiter
@@ -78,11 +68,7 @@ function inputbox()  {
 # usage: chroot_cmd cmd args...
 function chroot_cmd() {
 
-  debug_log "common" "chroot_cmd called with the following arguments:"
-  local arg
-  for arg in "$@" ;do
-    debug_log "chroot_param" "$arg"
-  done
+  debug_log "chroot_cmd" 3 "chroot_cmd called with the following arguments:" "$@"
 
   chroot "${TARGET}" "$@"
 
@@ -109,18 +95,6 @@ function confirm()  {
 # displays a message
 function display_message() {
   run_dialog --msgbox "$1" 10 60
-}
-
-function debug_log() {
-  local func=$1
-  shift
-  echo "$(date +%H:%M:%S) ${func}($$): $*" >>${INSTALLER_DEBUG}
-}
-
-# deprecated
-function debug_screen() {
-#$1 is the message to show
-  display_message "DEBUG: $1"
 }
 
 #adding some functions for dependency management

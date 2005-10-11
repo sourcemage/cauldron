@@ -24,7 +24,7 @@ syslog()  {
               "off" "metalog has many features and allows high configurability"           \
             "none"      "no logger"                                  \
               "off" "don't want/need a system logger")    &&
-  debug_log "syslog" "Chose \"$logger\" as system logger" &&
+  debug_log "syslog" 1 "Chose \"$logger\" as system logger" &&
   si_queue $logger                                        &&
   sed -i "s/^syslog=.*$/syslog=$logger/" \
     ${FINALFILES}/etc/sysconfig/facilities                &&

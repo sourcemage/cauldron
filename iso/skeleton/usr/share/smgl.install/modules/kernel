@@ -57,7 +57,7 @@ kn_copy_kernel() {
   # install the meat after the linux spell has done its thing
 
   fill_dependency linux copy &&
-  debug_log "kernel" "copying pre-made kernel"
+  debug_log "kernel" 1 "copying pre-made kernel"
 }
 
 kn_compile_kernel() {
@@ -102,5 +102,5 @@ Alternatively, I can just use the linux defaults." 8 65 \
   (( rc )) && return $rc
 
   fill_dependency linux compile &&
-  debug_log "kernel" "compiling custom kernel"
+  debug_log "kernel" 1 "compiling custom kernel"
 }

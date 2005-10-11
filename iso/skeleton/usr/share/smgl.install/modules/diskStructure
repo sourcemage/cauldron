@@ -112,13 +112,7 @@ select_disc()  {
 
   local DISC
 
-  if [ "${DEBUG}" = "yes" ]; then
-    for DISC in "${LIST_DISCS[@]}";
-    do
-      echo "DISC=${DISC}" >&2
-      done
-    read -p "press enter..." >&2
-  fi &&
+  debug_log "diskStructure" 3 "Disk list:" "${LIST_DISCS[@]}"
 
   run_dialog \
     --title "Disk Selection Menu"                                     \
@@ -134,7 +128,7 @@ fdisc_menu()  {
   if [ "$ARCH" = "ppc" ]; then
     display_message "Remember you need to create a bootstrap partition first
 (type 'b' at the prompt)."
-    debug_log "diskStructure" "Running mac-fdisk on $DISC"
+    debug_log "diskStructure" 2 "Running mac-fdisk on $DISC"
     mac-fdisk "$DISC"
   else
     PROG=`run_dialog                                                  \
@@ -145,9 +139,7 @@ fdisc_menu()  {
       "fdisk"  "Text-based. A little harder to use, more features"    \
       "parted" "Text-based. Many features, such as moving partitions" ` &&
 
-    if ! ${PROG} "${DISC}"; then
-      press_enter
-    fi
+    try_run --no-cap ${PROG} "${DISC}"
   fi
 }
 
@@ -202,8 +194,8 @@ dsr_sanity_check() {
   local ERROR_FILE=/tmp/raid-errors.$$
   rm -f $ERROR_FILE
 
-  debug_log "diskStructure" "Checking RAID settings: DEVICE=$1, LEVEL=$2"
-  debug_log "diskStructure" "Generating from $4 partitions: $3"
+  debug_log "diskStructure" 2 "Checking RAID settings: DEVICE=$1, LEVEL=$2"
+  debug_log "diskStructure" 2 "Generating from $4 partitions: $3"
 
   #verify raid level device count
   local COUNT_CHECK=0
@@ -255,15 +247,10 @@ create_md_device() {
   local P_COUNT=`echo $PARTS | wc -w`   &&
 
   dsr_sanity_check "$DEVICE_NAME" "$LEVEL" "$PARTS" "$P_COUNT" &&
-  if mdadm --create $DEVICE_NAME --level=$LEVEL --raid-devices=$P_COUNT $PARTS
-  then
-    dsr_make_raid_config &&
-    debug_log "Successfully generated md device."
-    si_queue mdadm
-  else
-    echo "failed to make the md device"
-    press_enter
-  fi
+  try_run mdadm --create $DEVICE_NAME --level=$LEVEL --raid-devices=$P_COUNT $PARTS &&
+  dsr_make_raid_config                          &&
+  debug_log "diskStructure" 1 "Successfully generated $DEVICE_NAME." &&
+  si_queue mdadm
 }
 
 # ---------------- formatting and mounting ------------------
@@ -322,13 +309,7 @@ get_part()  {
   LIST_PARTS=()
   explode "$(list_parts)" $'\n' "LIST_PARTS"
 
-  if [ "${DEBUG}" = "yes" ]; then
-    for PART in "${LIST_PARTS[@]}";
-    do
-      echo "PART=${PART}" >&2
-    done
-    read -p "press enter..."
-  fi
+  debug_log "diskStructure" 3 "Partition list:" "${LIST_PARTS[@]}"
 
   run_dialog                                                   \
     --title "Partition Selection Menu"                         \
@@ -452,7 +433,8 @@ mount_fsys()  {
     ;;
        *)
           mkdir -p $MPOINT                                               &&
-          mount -t $2 -o "$4" "$1" "$MPOINT"                             &&
+          try_run -e "Mointing $1 as $2 to $MPOINT failed." \
+            mount -t $2 -o "$4" "$1" "$MPOINT"                           &&
           case  $3  in
                 /)
                    fill_dependency disk-root $1
@@ -462,10 +444,8 @@ mount_fsys()  {
                 ;;
                 *) true      ;;
           esac                                                           &&
-          debug_log "diskStructure" "Nicely mounted $1 as $2 to $MPOINT" ||
+          debug_log "diskStructure" 1 "Nicely mounted $1 as $2 to $MPOINT" ||
           {
-            press_enter
-            debug_log "diskStructure" "Mounting $1 as $2 to $MPOINT failed."
             return 1
           }
     ;;
@@ -510,16 +490,8 @@ as far as I can figure it out.
 If you want to change anything, you can now.
 If you don't know what to do, just hit OK."        &&
     MKFSCMD=$( inputbox "$QUESTION" "${MKFSCMD}" ) &&
-    eval "$MKFSCMD"                                &&
-    # save the command for debugging:
-    debug_log "diskStructure" \
-      "Successfully formatted $PART as $FSYS with $MKFSCD" ||
-    {
-      debug_log "diskStructure" \
-        "Formatting failed on $PART as $FSYS using $MKFSCMD"
-      echo "Creating filesystem failed."
-      return 1
-    }
+    eval "try_run $MKFSCMD"                        ||
+    return 1
   elif $CHECK ;then
     badblocks $PART
   fi                                              &&
@@ -540,10 +512,11 @@ mk_swap_file()  {
 
   if confirm "Okay. Swapfile at $DEVICE, size $SIZE. That right, boss?" ;then
     dd  if=/dev/zero of=$SWAPFILE bs=1M count=$SIZE &&
-      mkswap      $SWAPFILE                         &&
-      chmod  000  $SWAPFILE                         &&
+    try_run mkswap      $SWAPFILE                   &&
+    chmod  000          $SWAPFILE                   &&
+    try_run swapon      $SWAPFILE                   &&
     make_fstab_line $DEVICE "swap" "swap" "defaults\t0 2" >>/tmp/fstab &&
     fill_dependency disk-swap file||
-    press_enter
+    press_enter "diskStructure" 0
   fi
 }

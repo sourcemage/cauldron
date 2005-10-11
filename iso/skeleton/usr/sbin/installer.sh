@@ -63,7 +63,7 @@ control to System Administrators that the wizards and
 maintainers of modern distributions have steadily
 chipped away."
 
-  "${DIALOG[@]}" --title "Welcome to Source Mage GNU/Linux" \
+  run_dialog --title "Welcome to Source Mage GNU/Linux" \
     --msgbox "${MSG}" 9 60
 
   local MSG="Source Mage GNU/Linux empowers System Administrators
@@ -80,7 +80,7 @@ And it provides the conveniences of:
   compliant filesystem hierarchy, parallel simpleinit
   and networking."
 
-  "${DIALOG[@]}"  --cr-wrap                             \
+  run_dialog  --cr-wrap                             \
     --title  "The Benefits of Source Mage GNU/Linux"  \
     --msgbox "${MSG}" 18 60
 
@@ -100,10 +100,8 @@ final_screen() {
     fi
 
     PROMPT="Reboot now?" 
-    if  confirm  "${PROMPT}" --defaultno;  then
+    if  confirm  "${PROMPT}";  then
         exec shutdown -r -q now
-    else
-        exit  0
     fi
 }
 
@@ -130,7 +128,7 @@ toggle_confirm()  {
 # SECTION: MISC
 display_install_help()  {
 
-  "${DIALOG[@]}" --cr-wrap --textbox $DATA_DIR/install.guide  21 60
+  run_dialog --cr-wrap --textbox $DATA_DIR/install.guide  21 60
   return 0
 }
 
@@ -166,7 +164,7 @@ reset_installer() {
   rm -f /etc/raidtab
   rm -f /tmp/fstab
   # add restart to installer-debug log if it exists
-  debug_log "main" "Resetting installer"
+  debug_log "main" 1 "Resetting installer"
   swapoff -a
 
   # reset these to the defaults
@@ -337,6 +335,8 @@ main()  {
   if [[ "$1" == "-e" ]] ;then
     return # to just fetch environment
   fi
+
+  init_debug
 
   display_install_menu
 

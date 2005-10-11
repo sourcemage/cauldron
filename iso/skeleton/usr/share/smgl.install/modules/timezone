@@ -34,11 +34,11 @@ tz_menu()  {
   done
 
   if ! [ -f "$selectedTZ" ]; then
-    debug_log "timezone" "got invalid time zone $selectedTZ"
+    debug_log "timezone" 0 "got invalid time zone $selectedTZ"
     return 2 # This should _never_ happen
   fi
   # if we've reached this point, we probably have a valid time zone
-  debug_log "timezone" "selected time zone $selectedTZ"
+  debug_log "timezone" 1 "selected time zone $selectedTZ"
 
   # configure the local time zone
   ln  -sf  "$selectedTZ" "${FINALFILES}/etc/localtime"
@@ -55,10 +55,10 @@ tz_menu()  {
 to be re-set for dailight saving time, but it messes up
 broken OS's like MS Windows."      \
         8 60                 ;then
-    debug_log "timezone" "selected local time in hwclock"
+    debug_log "timezone" 1 "selected local time in hwclock"
     sed -i 's/^UTC=.*$/UTC=no/' ${FINALFILES}/etc/sysconfig/hwclock
   else
-    debug_log "timezone" "selected GMT in hwclock"
+    debug_log "timezone" 1 "selected GMT in hwclock"
     sed -i 's/^UTC=.*$/UTC=yes/' ${FINALFILES}/etc/sysconfig/hwclock
   fi
 }

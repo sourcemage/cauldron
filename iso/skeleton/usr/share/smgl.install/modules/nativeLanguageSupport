@@ -53,7 +53,7 @@ keymap_menu()  {
 
   unset KEYMAPS                                               &&
 
-  debug_log "NLS" "Chose keymapping $KEYMAP"                  &&
+  debug_log "NLS" 1 "Chose keymapping $KEYMAP"                  &&
   loadkeys  $KEYMAP                                           &&
   fill_dependency keymap $KEYMAP                              &&
   sed -i "s/^KEYMAP=.*$/KEYMAP=$KEYMAP/" ${FINALFILES}/etc/sysconfig/keymap
@@ -72,7 +72,7 @@ font_menu()  {
         7 60 0                                                 \
         "${FONTS[@]}"`                                         &&
 
-  debug_log "NLS" "Chose console font $FONT"                   &&
+  debug_log "NLS" 1 "Chose console font $FONT"                   &&
 
   consolechars  -f  $FONT
 
@@ -102,7 +102,7 @@ select your preferred language."
     >${FINALFILES}/etc/profile.d/lc.sh &&
   unset LANGS                          &&
 
-  debug_log "NLS" "Chose LANG=$LANG"
+  debug_log "NLS" 1 "Chose LANG=$LANG"
 }
 
 editor_menu()  {
@@ -137,7 +137,7 @@ elvis during the install"
     export EDITOR=$REAL_ED
   fi                                                   &&
 
-  debug_log "NLS" "chose $REAL_ED as EDITOR"            &&
+  debug_log "NLS" 1 "chose $REAL_ED as EDITOR"            &&
 
   si_queue $REAL_ED                                    &&
 

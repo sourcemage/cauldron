@@ -263,7 +263,7 @@ si_post_workaround() {
 # $1: the spell to install
 si_install_spell() {
 
-  debug_log "spellinstall" "considering to install $1"
+  debug_log "spellinstall" 2 "considering to install $1"
 
   if si_is_fake_spell $1 ;then
     si_run_fake_spell $1
@@ -296,6 +296,6 @@ si_install_spell() {
 
   echo "$1:$(date +%Y%m%d):installed:${VERSION}" \
     >>${TARGET}/var/state/sorcery/packages &&
-  debug_log "spellinstall" "successfully installed $1" &&
+  debug_log "spellinstall" 1 "successfully installed $1" &&
   >$SI_INSTALLING # Clear file
 }
