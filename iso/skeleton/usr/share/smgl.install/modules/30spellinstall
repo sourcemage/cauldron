@@ -83,7 +83,8 @@ si_flush() {
   # This will stop working the moment we're multitasking, but it works for now
   local spell
   while read spell ;do
-    si_install_spell $spell
+    si_install_spell $spell <&2
+    # Get stdin back, if something goes wrong don't read out the queue file
   done <$SI_SPELL_QUEUE
   >${SI_SPELL_QUEUE} #empty queue, we've done these
 }
@@ -169,8 +170,8 @@ si_post_workaround() {
     "openssh")
               rm -f ${TARGET}/etc/ssh/*host*
               chroot_cmd ssh-keygen -t rsa1 -f /etc/ssh/ssh_host_key -N ""
-              chroot_cmd ssh-keygen -t rsa -f /etc/ssh/ssh_host_key -N ""
-              chroot_cmd ssh-keygen -t dsa -f /etc/ssh/ssh_host_key -N ""
+              chroot_cmd ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N ""
+              chroot_cmd ssh-keygen -t dsa -f /etc/ssh/ssh_host_dsa_key -N ""
             ;;
       "gnupg")
               mkdir -p -m 700 $TARGET/root/.gnupg
