@@ -18,7 +18,8 @@ partition structure you have set up. Very bad things
 happen when you mount new partitions on top of them.
 It is *highly* recommended that you choose
 \"restart installer\" from the main menu if you have to
-repartition, and start from scratch." --defaultno ||
+repartition, and start from scratch.
+continue?" --defaultno ||
     return 1
   fi
 
@@ -26,13 +27,10 @@ repartition, and start from scratch." --defaultno ||
   local DONE=false
   while ! $DONE ;do
 
-    local TEXT="Please create at least a root partition. A boot
-partition is recommended, for RAID and some filesystems
-it is mandatory. Lilo can only boot from a RAID 1 array
-and xfs or reiserfs formatting can cause problems with
-the MBR. Grub can boot from any filesystem, but still
-cannot boot from RAID unless it is RAID 1 or has a
-separate boot partition"
+    local TEXT="Please create at least a root partition.
+There currently is a bug with grub on xfs, so
+you can't install grub to an xfs / without a seperate
+non-xfs /boot partition."
     ICOMMAND=`run_dialog              \
       --ok-label "Select"             \
       --title  "Disk structure menu"  \

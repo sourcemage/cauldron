@@ -1,3 +1,9 @@
+2005-10-14 Karsten Behrmann <BearPerson@sourcemage.org>
+	* modules/30spellinstall: fix typo in ssh key generation
+
+2005-10-13 Karsten Behrmann <BearPerson@sourcemage.org>
+	* modules/installation: force making /etc/shadow only root-readable
+
 2005-10-11 Karsten Behrmann <BearPerson@sourcemage.org>
 	* modules/debug: add debug framework
 	* installer.sh, modules/*: employ new debug framework
@@ -23,6 +29,7 @@
 
 2005-09-26 Karsten Behrmann <BearPerson@sourcemage.org>
 	* diskStructure: added menu for mount points (bug 9348)
+	                 postpone/explain bug 9803
 
 2005-09-25 David Kowis <dkowis@sourcemage.org>
 	* diskStructure: After much head bashing, the /dev/ removal needs to be
@@ -76,6 +83,10 @@
 
 2005-09-18 Karsten Behrmann <BearPerson@sourcemage.org>
 	* kernel: clean up modded spell conf files more thoroughly
+	* internal_version: release -test1
+
+2005-09-17 Karsten Behrmann <BearPerson@sourcemage.org>
+	* diskStructure: removed raid option
 
 2005-09-17 Karsten Behrmann <BearPerson@sourcemage.org>
 	* caster: remove "install log does not exist" messages

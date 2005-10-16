@@ -107,6 +107,8 @@ in_start() {
   cp --parents -f \
     /etc/{passwd,group,shadow,ld.so.conf,issue,modules,modules.conf,nsswitch.conf,shells} \
     ${TARGET}
+  chmod 0400 $TARGET/etc/shadow
+  chown root:root $TARGET/etc/shadow
 
   # Install binaries that may be needed (for whatever it's worth,
   #  we'll be waiting for the basesystem to be there for most purposes anyway)

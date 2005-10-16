@@ -251,8 +251,8 @@ si_post_workaround() {
     "openssh")
               rm -f ${TARGET}/etc/ssh/*host*
               chroot_cmd ssh-keygen -t rsa1 -f /etc/ssh/ssh_host_key -N ""
-              chroot_cmd ssh-keygen -t rsa -f /etc/ssh/ssh_host_key -N ""
-              chroot_cmd ssh-keygen -t dsa -f /etc/ssh/ssh_host_key -N ""
+              chroot_cmd ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N ""
+              chroot_cmd ssh-keygen -t dsa -f /etc/ssh/ssh_host_dsa_key -N ""
             ;;
       "gnupg")
               mkdir -p -m 700 $TARGET/root/.gnupg

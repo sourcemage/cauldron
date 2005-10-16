@@ -65,10 +65,10 @@ unpack netkit-base
 unpack netkit-ping
 unpack net-tools
 unpack nfs-utils   # Why?
-##begin_unpack openssh     # Ditto
-##  iso_exclude '/etc/ssh/*key*'
-##end_unpack openssh
-##unpack openssl     # Ditto
+begin_unpack openssh     # Ditto
+  iso_exclude '/etc/ssh/*key*'
+end_unpack openssh
+unpack openssl     # Ditto
 unpack patch
 unpack pciutils
 unpack pcmcia-cs
@@ -81,25 +81,25 @@ unpack procps
 unpack raidtools
 unpack readline
 unpack reiserfsprogs
-##unpack rpmunpack
+unpack rpmunpack
 unpack rp-pppoe
 unpack sed
 unpack shadow
 unpack simpleinit-msb
 unpack slang
-##unpack sysfsutils
+unpack sysfsutils
 unpack tar
 unpack tcp_wrappers
 unpack tdb
 unpack texinfo
 #unpack udev  -- double ouch
-##unpack unzip
+unpack unzip
 unpack util-linux
 unpack wget
 unpack which
 unpack wireless_tools
 unpack xfsprogs
-##unpack xinetd
+unpack xinetd
 unpack zlib
 unpack hdparm
 __SMGL_TEMPLATE_NOT_ppc__begin_unpack syslinux
