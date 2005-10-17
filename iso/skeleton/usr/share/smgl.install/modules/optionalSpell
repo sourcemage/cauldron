@@ -21,7 +21,7 @@ function optional_screen() {
   }
 
   if ! check_dependency dev_format ||
-   run_dialog --defaultno --yesno "Do you want to reconfigure /dev?" ;then
+    confirm "Do you want to reconfigure /dev?" --defaultno ;then
     opt_choose_dev
   fi
 

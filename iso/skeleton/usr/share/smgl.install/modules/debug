@@ -10,7 +10,45 @@ function init_debug() {
 
 # Main menu to configure debugging
 function debug_screen() {
-  # TODO: Put a nice menu here with the most common debug values
+  local DBGCOMMAND=$(run_dialog   \
+    --title "Debugging menu"      \
+    --item-help                   \
+    --menu "Select the debugging level you want to change.
+Higher numbers mean more debugging." \
+    10 60 0                       \
+    "A" "debug dialog parameters" \
+    "Log all parameters that dialog is called with" \
+    "B" "debug chroot'ed commands" \
+    "Log all parameters of all commands run inside the chroot" \
+    "C" "show all command outputs" \
+    "Make all programs, regardless of exit status, explicitly show output" \
+    "D" "sleep before dialogs" \
+ "Sleep a bit before placing a dialog window, so you can read error messages" \
+    "O" "other debugging"          \
+    "Manually enter a component and debug level") &&
+  case $DBGCOMMAND in
+    A) echo 3 >$DEBUG_DIR/debug_dialog ;;
+    B) echo 3 >$DEBUG_DIR/debug_chroot_cmd ;;
+    C) echo 3 >$DEBUG_DIR/debug_tryrun ;;
+    D) echo 2 >$DEBUG_DIR/debug_pre-dialog ;;
+    O) debug_menu_manual ;;
+  esac
+}
+
+function debug_menu_manual() {
+  local component=$(inputbox \
+    "Enter the name of the component for which
+you want to set the debug level" \
+    "diskStructure")
+
+  local level=$(cat $DEBUG_DIR/debug)
+  [ -e $DEBUG_DIR/debug_$component ] &&
+  level=$(cat $DEBUG_DIR/debug_$component)
+
+  level=$(inputbox \
+    "Please set the new debug level for $component" \
+    $level) &&
+  echo $level >$DEBUG_DIR/debug_$component
 }
 
 # Runs a command, captures its output, displays it nicely if it fails.
@@ -39,7 +77,7 @@ function try_run() {
     "$@" 2>&1 | tee $capfile
     rc=$?
     set +o pipefail
-    if [[ $? != 0 ]] ;then
+    if [[ $? != 0 ]] || debug_is_on "tryrun" 3 ;then
       run_dialog --title "$error_message" --cr-wrap --msgbox \
         "The failed command (exit code $rc) was:
 $*
@@ -49,15 +87,15 @@ $(cat $capfile)" 20 80
   else
     "$@"
     rc=$?
-    if [[ $? != 0 ]] ;then
+    if [[ $? != 0 ]] || debug_is_on "tryrun" 3 ;then
       echo "$error_message"
-      echo "The failed command (exit code $rc) was:"
+      echo "The return code was $rc. The command was:"
       echo "$*"
-      debug_enter "tryrun" -1
+      debug_enter "error" -1
     fi >&2
   fi
   if [[ $? != 0 ]] ;then
-    debug_log "tryrun" 0 "$1 failed (rc=$rc)" "$@" "error:" "$(cat $capfile)"
+    debug_log "error" -1 "$1 failed (rc=$rc)" "$@" "error:" "$(cat $capfile)"
   else
     debug_log "tryrun" 3 "$1 executed successfully, the full command was" \
               "$@" "Output was" "$(cat $capfile)"
@@ -73,9 +111,9 @@ function debug_is_on() {
   local func=$1
   local priority=${2:-2} # Default to 2
   if [ -e $DEBUG_DIR/debug_$func ] ;then
-    [ $(cat $DEBUG_DIR/debug_$func) -lt $priority ]
+    [ $(cat $DEBUG_DIR/debug_$func) -le $priority ]
   else
-    [ $(cat $DEBUG_DIR/debug) -lt $priority ]
+    [ $(cat $DEBUG_DIR/debug) -le $priority ]
   fi
 }
 
