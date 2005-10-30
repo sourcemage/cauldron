@@ -110,17 +110,7 @@ final_screen() {
 shell() {
 
   echo  "Press CTRL-D or type exit to return to the installer"
-  /bin/bash -l
-
-}
-
-# toggles a confirm variable
-# SECTION: MISC
-toggle_confirm()  {
-
-  [  -n  "$CONFIRM"  ]  &&
-  unset  CONFIRM        ||
-  CONFIRM="on"
+  /bin/login-shell.sh
 
 }
 
@@ -164,12 +154,8 @@ reset_installer() {
   rm -f /etc/raidtab
   rm -f /tmp/fstab
   # add restart to installer-debug log if it exists
-  debug_log "main" 1 "Resetting installer"
+  debug_log "main" 0 "Resetting installer"
   swapoff -a
-
-  # reset these to the defaults
-  CONFIRM=on
-  DEBUG=no
 
   # reset depends stuff
   rm -f $DEPENDS_DIR/*
@@ -177,26 +163,6 @@ reset_installer() {
   # reset spellinstaller stuff
   rm -rf $SI_QUEUE_DIR
 }
-
-#toggles the debug switch
-# SECTION: MISC
-toggle_debug() {
-
-  if [ "${DEBUG}" = "yes" ]; then
-    rm -f $SI_QUEUE_DIR/debug
-    DEBUG="no"
-  else
-    mkdir -p $SI_QUEUE_DIR
-    touch $SI_QUEUE_DIR/debug # Debug proper usage of si_wait
-    rm -f $SI_QUEUE_DIR/force_run
-    DEBUG="yes"
-  fi
-
-  echo "DEBUG=${DEBUG}"
-  press_enter
-
-}
-
 
 #displays the installer menu
 display_install_menu() {
@@ -232,9 +198,10 @@ which they appear."
           "L" "[*]Choose Services to Run at Boot (expert)" "Select which services to start at boot" \
           "X" "Done" "Exit! Done! Finito!" \
           "S" "[*]Shell" "Shell out perhaps to load modules" \
-          "T" "[*]Toggle Confirm" "Toggles display of prompts. Do NOT use." \
           "R" "[*]Restart Installation" "Resets everything and begins installation again" \
-          "Z" "[*]Toggle Debug" "Toggles the debug flag" )
+          "Z" "[*]Debug Menu" "Change debugging settings" )
+
+    [[ -z $ICOMMAND ]] && continue
 
     case $ICOMMAND in
       A) intro_screen     ;;
@@ -252,9 +219,8 @@ which they appear."
 # nothing else, so has to be run after target is fully set up.
       X) final_screen     ;;
       S) shell            ;;
-      T) toggle_confirm   ;;
       R) reset_installer  ;;
-      Z) toggle_debug     ;;
+      Z) debug_screen     ;;
       ?) display_install_help ;;
     esac
 
@@ -264,8 +230,9 @@ which they appear."
       #movin on!
       increment_menu_pointer $ICOMMAND
     else
-      run_dialog --infobox "DEBUG: not moving forward" 10 60
-      sleep 1
+      debug_log "main" 1 "Failed to run menu entry $ICOMMAND"
+      echo "Detecting an error, not moving forward in the menu." >&2
+      debug_enter "main" 2
     fi
 
   done
@@ -321,7 +288,6 @@ main()  {
 # read-only filesystem), the directory must already exists.
 
   [ -z $TARGET ] && TARGET=/mnt/root
-  CONFIRM=on
 
 # check for TARGET
   if [ ! -d "${TARGET}" ]; then
@@ -346,42 +312,20 @@ main()  {
 # this script really starts here
 #
 
-# notes on dialog:
-# General warning about dialog --radiolist. Since the result is
-# enclosed with spurious ".
-# For instance:
-#
-# dialog --stdout --radiolist radiolist 9 60 2 \
-#  "grub" "grub text" "on" \
-#  "lilo" "lilo text" "off"
-#
-# will return "grub" instead of grub.
-# Use --single-quoted to get the result without (!?!) any quotes.
-#
-# dialog --yesno     : add 4 to get height
-# dialog --msgbox    : add 5 to get height
-# dialog --menu      : add 6 to get height (let menu-height to always be 0)
-# dialog --radiolist : add 6 to get height (let list-height to always be 0)
-# dialog --checklist : add 6 to get height (let list-height to always be 0)
-# dialog --inputbox  : add 7 to get height
-
 # do some initial config things
 # TODO: add these to a function
 if [ -f $STATE_DIR/version ]; then
   . $STATE_DIR/version 
 else
-  INSTALLER_VERSION=`date +%Y%m%d`-debug
+  INSTALLER_VERSION=inofficial-debug
   SORCERY_VERSION=stable #wild guess
   GRIMOIRE_VERSION=stable
+  KERNEL_VERSION=$(uname -r)
 fi
 
 echo "INSTALLER (RE)STARTING" 1>&2
 
 export DIALOGRC=/etc/sorcery/dialogrc # yoohoo! sorcery color scheme!
-
-DIALOG=( "dialog" "--backtitle" \
-         "Source Mage GNU/Linux Installer v. ${INSTALLER_VERSION}" \
-         "--stdout" "--trim")
 
 trap  "true"  INT QUIT
 

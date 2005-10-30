@@ -11,10 +11,6 @@ INSTALLER_DEBUG=$TMP_DIR/installer_debug
 
 export DIALOGRC=/etc/sorcery/dialogrc # yoohoo! sorcery color scheme!
 
-DIALOG=( "dialog" "--backtitle" \
-         "Source Mage GNU/Linux Installer v. ${INSTALLER_VERSION}" \
-         "--stdout" "--trim")
-
 export PATH="/bin:/usr/bin:/sbin:/usr/sbin"
 export  HOME="/root"
 
@@ -62,9 +58,10 @@ function main() {
 if [ -f $STATE_DIR/version ]; then
   . $STATE_DIR/version 
 else
-  INSTALLER_VERSION=`date +%Y%m%d`-debug
+  INSTALLER_VERSION=inofficial-debug
   SORCERY_VERSION=stable #wild guess
   GRIMOIRE_VERSION=stable
+  KERNEL_VERSION=$(uname -r)
 fi
 
 trap  "true"  INT QUIT

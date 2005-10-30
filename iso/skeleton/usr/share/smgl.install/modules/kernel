@@ -5,8 +5,10 @@ kernel_screen()  {
   need_dependency disk &&
   need_dependency install_start &&
 
+  debug_log "kernel" 3 "Entering kernel selection screen"
+
   if run_dialog --yes-label "copy" --no-label "compile" \
-       --nocancel --yesno                               \
+                --yesno                                 \
 "Would you like to configure and compile a custom kernel,
 or install/copy the precompiled kernel from the ISO?
 The precompiled kernel is highly modular to support almost
@@ -16,19 +18,21 @@ Special hardware may also require a custom kernel." 10 60 ;then
     kn_copy_kernel
   else
     kn_compile_kernel
-  fi
+  fi || {
+    debug_log "ERROR" -1 "Failed to install the kernel"
+    return 1
+  }
 
 }
 
 kn_copy_kernel() {
 
-  local KVERSION=$(uname -r)
-
   echo "Waiting for the tools needed for kernel installation to install..."
+  debug_log "kernel" 2 "Starting kernel copy"
   si_wait Iso.Compile_env gnupg
 
   # install the config used for this kernel
-  cp -f /boot/config-* ${TARGET}/etc/sorcery/local/kernel.config
+  cp -f /boot/config-$KERNEL_VERSION ${TARGET}/etc/sorcery/local/kernel.config
 
   cp --parents /etc/sorcery/local/depends/linux.p $TARGET
 
@@ -36,6 +40,7 @@ kn_copy_kernel() {
 
   echo "Setting up kernel source tree... (needed by some compiles)"
 
+  debug_log "kernel" 3 "Starting cast of kernel"
   export PROMPT_DELAY=0
   export INTERNAL_ISO_VAR="yes"
   chroot_cmd cast -c linux
@@ -53,11 +58,12 @@ kn_copy_kernel() {
   sed -i '/^linux:/d' $TARGET/var/state/sorcery/packages &&
   # we don't want the spellinstaller to think it is already installed
 
+  debug_log "kernel" 3 "Starting si install of kernel" &&
   si_queue_now linux       &&
   # install the meat after the linux spell has done its thing
 
   fill_dependency linux copy &&
-  debug_log "kernel" 1 "copying pre-made kernel"
+  debug_log "kernel" 1 "copied pre-made kernel"
 }
 
 kn_compile_kernel() {
@@ -65,20 +71,23 @@ kn_compile_kernel() {
   run_dialog --cr-wrap --textbox  ${DATA_DIR}/kernel.help 22 60
 
   echo "Waiting for the tools needed for kernel installation to install..."
+  debug_log "kernel" 2 "Starting kernel compile"
   si_wait Iso.Compile_env gnupg
 
   cp --parents /etc/sorcery/local/depends/linux.p $TARGET
 
-  if run_dialog --defaultno --yes-label "ISO" --no-label "default" --yesno \
+  if run_dialog --yes-label "ISO" --no-label "default" --yesno \
     "Do you want to start with the ISO's kernel config?
 It does support a lot of hardware with modules, on the other
 hand it will be large and take a long time to build.
 Alternatively, I can just use the linux defaults." 8 65 \
      ;then
     # install the config used for this kernel
-    cp -f /boot/config-* ${TARGET}/etc/sorcery/local/kernel.config
+    debug_log "kernel" 1 "using ISO config"
+    cp -f /boot/config-$KERNEL_VERSION ${TARGET}/etc/sorcery/local/kernel.config
   else
     # make linux spell use the linux default config
+    debug_log "kernel" 1 "using default config"
     ln -s /usr/src/linux/arch/i386/defconfig \
       ${TARGET}/etc/sorcery/local/kernel.config
     # The target of this link does not exist yet, but will at the time the
@@ -91,6 +100,7 @@ Alternatively, I can just use the linux defaults." 8 65 \
 
   touch $TARGET/etc/sorcery/local/makefile.patches
 
+  debug_log "kernel" 3 "casting kernel..."
   chroot_cmd cast -c linux
   local rc=$?
 
@@ -102,5 +112,5 @@ Alternatively, I can just use the linux defaults." 8 65 \
   (( rc )) && return $rc
 
   fill_dependency linux compile &&
-  debug_log "kernel" 1 "compiling custom kernel"
+  debug_log "kernel" 1 "compiled custom kernel"
 }

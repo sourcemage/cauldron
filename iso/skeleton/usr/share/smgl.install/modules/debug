@@ -1,4 +1,10 @@
 #!/bin/bash
+# Debug levels ought to be:
+# 3: verbose debugging
+# 2: debugging info
+# 1: info about e.g. what gets installed
+# 0: status of the installer itself
+#-1: errors (use function "ERROR")
 
 DEBUG_DIR=/tmp/debug_dir
 function init_debug() {
@@ -10,20 +16,22 @@ function init_debug() {
 
 # Main menu to configure debugging
 function debug_screen() {
-  local DBGCOMMAND=$(run_dialog   \
-    --title "Debugging menu"      \
-    --item-help                   \
+  local DBGCOMMAND=$(run_dialog    \
+    --title "Debugging menu"       \
+    --item-help                    \
     --menu "Select the debugging level you want to change.
 Higher numbers mean more debugging." \
-    10 60 0                       \
-    "A" "debug dialog parameters" \
+    10 60 0                        \
+    "A" "debug dialog parameters"  \
     "Log all parameters that dialog is called with" \
     "B" "debug chroot'ed commands" \
     "Log all parameters of all commands run inside the chroot" \
     "C" "show all command outputs" \
     "Make all programs, regardless of exit status, explicitly show output" \
-    "D" "sleep before dialogs" \
+    "D" "sleep before dialogs"     \
  "Sleep a bit before placing a dialog window, so you can read error messages" \
+    "L" "lazy bg-installer"        \
+    "spell installer waits for menu to need a spell before it does something" \
     "O" "other debugging"          \
     "Manually enter a component and debug level") &&
   case $DBGCOMMAND in
@@ -31,6 +39,7 @@ Higher numbers mean more debugging." \
     B) echo 3 >$DEBUG_DIR/debug_chroot_cmd ;;
     C) echo 3 >$DEBUG_DIR/debug_tryrun ;;
     D) echo 2 >$DEBUG_DIR/debug_pre-dialog ;;
+    L) touch $SI_QUEUE_DIR/debug ;;
     O) debug_menu_manual ;;
   esac
 }
@@ -143,6 +152,7 @@ function debug_log() {
   local priority=$2
   shift 2
   debug_is_on "$func" $priority || return
+  lock_resource INSTALLER_DEBUG
   if [ $# == 1 ] ;then
     echo "$(date +%H:%M:%S) ${func}($$)@$priority: $*" >>${INSTALLER_DEBUG}
   elif [ $# -gt 1 ] ;then
@@ -152,6 +162,8 @@ function debug_log() {
       echo "> $var" >>$INSTALLER_DEBUG
     done
   else
-    echo "debug_log called incorrectly: \"$func\" \"$priority\"" >>$INSTALLER_DEBUG
+    echo "$(date +%H:%M:%S) ERROR($$)@-1: debug_log called incorrectly:" \
+      "\"$func\" \"$priority\"" >>$INSTALLER_DEBUG
   fi
+  unlock_resource INSTALLER_DEBUG
 }

@@ -97,16 +97,6 @@ config_bootloader() {
 
 }
 
-# return the installed kernel version (either precompiled or compiled)
-# it returns for instance 2.6.8.1
-
-bl_get_kernel() {
-  {
-#    chroot_cmd gaze version linux | head -n 3 | tail -n 1 | awk '{print $5}' ||
-    uname -r # fallback, default for now
-  } | tail -n 1 # for sanity, should never be needed
-}
-
 # -----------------GRUB-------------------------
 bl_grub_config() {
 
@@ -134,7 +124,7 @@ bl_grub_config() {
   fi                                       &&
   rm -f ${TARGET}/boot/$GRUB_DUMMY_FILE    &&
 
-  BL_KVERSION=$( bl_get_kernel )           &&
+  BL_KVERSION=$KERNEL_VERSION           &&
 
   BL_ROOTDEV=$( get_dependency disk-root ) &&
 
@@ -169,7 +159,7 @@ bl_lilo_config() {
   local BL_ROOTDEV
   local BL_TARGET
 
-  BL_KVERSION=`bl_get_kernel`                    &&
+  BL_KVERSION=$KERNEL_VERSION                    &&
 
   BL_ROOTDEV=$(get_dependency disk-root)         &&
 
@@ -234,7 +224,7 @@ bootloader_yaboot_conf() {
     BL_BOOTLOC="/boot"
   fi                                                        &&
 
-  BL_KVERSION=`bl_get_kernel`                               &&
+  BL_KVERSION=$KERNEL_VERSION                               &&
 
   # _append_ our own image section
 

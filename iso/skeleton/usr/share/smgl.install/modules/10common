@@ -12,9 +12,12 @@ function run_dialog() {
   debug_sleep "pre-dialog"
   debug_log "dialog" 3 "run_dialog called with the following arguments:" "$@"
 
-  "${DIALOG[@]}" "$@"
-  # TODO: Was too lazy to really make this do something, eventually
-  #       should define all the dialog stuff here
+  dialog --backtitle "Source Mage GNU/Linux Installer v. ${INSTALLER_VERSION}" \
+         --stdout --trim "$@"
+
+  local rc=$?
+  [[ $rc == 255 ]] && debug_log "ERROR" -1 "run_dialog failed, params:" "$@"
+  return $rc
 }
 
 # explode(): split up a string into an array at a given delimiter
@@ -80,15 +83,10 @@ function chroot_cmd() {
 # SECTION: MISC
 function confirm()  {
 
-#  if  [ "$CONFIRM"  != "on" ]; then
-#    [  -z  "$2"  ]
-    # return false if there probably was a --defaultno in $2
-#  else
     local query="$1"
     local length=$(( $( echo "$1" | wc -l) + 4))
     shift
     run_dialog "$@" --yesno  "$query" $length 60
-#  fi
 
 }
 

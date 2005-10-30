@@ -1,3 +1,14 @@
+2005-10-30 Karsten Behrmann <BearPerson@sourcemage.org>
+	* skeleton/etc/login-shell.sh: remove error from dircolors, cd to /
+	* skeleton/etc/{hosts,hostname}: shorten hostname
+	* bg-install.sh, installer.sh: move vars around, cleanup unused stuff
+	* smgl.install/default_debug_spellinstall: debug spell installation
+	* 10common: cleanup dialog
+	* 30spellinstall, kernel: extend debugging
+	* modules/debug: cleanup and locking
+	* bootloader: use ISO-generation-time set kernel version
+	* $STATE_DIR/version: add generation-set kernel version
+
 2005-10-17 Karsten Behrmann <BearPerson@sourcemage.org>
 	* modules/debug: added debugging menu
 	* default_debug: added global default debugging level

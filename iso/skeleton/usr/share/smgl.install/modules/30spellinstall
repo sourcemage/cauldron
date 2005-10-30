@@ -36,9 +36,8 @@ si_queue() {
   rm -f $SI_QUEUE_DIR/tmpqueue $SI_QUEUE_DIR/tmpqueue.unloop
 }
 
-# (currently) installs a spell
+# inserts a spell and its dependencies at the top of the spell queue
 # args: the spells to install
-# TODO: Could get a nice progress bar too
 si_queue_now() {
   mkdir -p ${SI_QUEUE_DIR}
   >$SI_QUEUE_DIR/tmpqueue
@@ -56,7 +55,7 @@ si_queue_now() {
   rm -f $SI_QUEUE_DIR/tmpqueue.unloop
 }
 
-# ditto
+# marks a spell for installation and does not return until it is installed
 # args: the spells to install
 si_wait() {
   si_queue_now "$@"
@@ -104,8 +103,8 @@ si_flush() {
   echo "Waiting for all spells left to complete..."
   while [ -s $SI_SPELL_QUEUE ] ;do
     test -e $SI_QUEUE_DIR/debug && touch $SI_QUEUE_DIR/force_run
-      echo -en '\r\033[2K'
-      echo -n "installing $(cat $SI_INSTALLING)..."
+    echo -en '\r\033[2K'
+    echo -n "installing $(cat $SI_INSTALLING)..."
     sleep 1
   done
 }
@@ -115,7 +114,8 @@ si_flush() {
 si_pop() {
   if test -s $SI_SPELL_QUEUE ;then
     spell=$(head -n 1 $SI_SPELL_QUEUE)
-    si_install_spell "$spell"
+    si_install_spell "$spell" ||
+    debug_log "ERROR" -1 "Failed to install $spell"
     lock_resource SI_SPELL_QUEUE
     sed -i "/^$spell$/d" $SI_SPELL_QUEUE
     unlock_resource SI_SPELL_QUEUE
@@ -199,6 +199,7 @@ si_get_fake_spell() {
 }
 
 si_run_fake_spell() {
+  debug_log "spellinstall" 2 "installing fake spell $1"
   case $1 in
     "Iso.Caches")
                  local TOTALFILES=`ls -1 /var/cache/sorcery | wc -l`
@@ -250,9 +251,9 @@ si_post_workaround() {
             ;;
     "openssh")
               rm -f ${TARGET}/etc/ssh/*host*
-              chroot_cmd ssh-keygen -t rsa1 -f /etc/ssh/ssh_host_key -N ""
-              chroot_cmd ssh-keygen -t rsa -f /etc/ssh/ssh_host_rsa_key -N ""
-              chroot_cmd ssh-keygen -t dsa -f /etc/ssh/ssh_host_dsa_key -N ""
+              chroot_cmd ssh-keygen -t rsa1 -f /etc/ssh/ssh_host_key     -N ""
+              chroot_cmd ssh-keygen -t rsa  -f /etc/ssh/ssh_host_rsa_key -N ""
+              chroot_cmd ssh-keygen -t dsa  -f /etc/ssh/ssh_host_dsa_key -N ""
             ;;
       "gnupg")
               mkdir -p -m 700 $TARGET/root/.gnupg
@@ -271,31 +272,39 @@ si_install_spell() {
   fi
 
   if grep -q "^$1:" ${TARGET}/var/state/sorcery/packages ;then
+    debug_log "spellinstall" 3 "discarding $1 as already installed"
     return 0 #already installed
   fi
 
   echo "Installing $1..." >&2
+  debug_log "spellinstall" 2 "starting install of $1"
   echo "$1" >$SI_INSTALLING
 
   # TODO: The backgrounded version should be locking now,
   #       and logging the current spell
-  si_pre_workaround $1        &&
+  debug_log "spellinstall" 3 "running pre_workaround for $1"
+  si_pre_workaround $1                                     &&
 
   local VERSION=$(grep "^$1:" /var/state/sorcery/packages | cut -d: -f4) &&
   if [ -z $VERSION ] ;then
     echo "The spell $1 does not seem to be on this CD!?" >&2
+    debug_log "ERROR" -1 "Not finding spell $1"
     return 1
-  fi                          &&
+  fi                                                       &&
   # TODO: I don't like using *'s
+  debug_log "spellinstall" 3 "installing files for $1"     &&
   tar -xjp -C ${TARGET} -f /var/cache/sorcery/$1-${VERSION}-*.tar.bz2 &&
-    if [[ "$1" != "smgl-fhs" ]] ;then
-      chroot_cmd /sbin/ldconfig
-    fi                        &&
-
-  si_post_workaround $1       &&
+  if [[ "$1" != "smgl-fhs" ]] ;then
+    debug_log "spellinstall" 3 "ldconfig for $1"           &&
+    chroot_cmd /sbin/ldconfig
+  fi                                                       &&
 
   echo "$1:$(date +%Y%m%d):installed:${VERSION}" \
-    >>${TARGET}/var/state/sorcery/packages &&
-  debug_log "spellinstall" 1 "successfully installed $1" &&
+    >>${TARGET}/var/state/sorcery/packages                 &&
+
+  debug_log "spellinstall" 3 "post_workaround for $1"      &&
+  si_post_workaround $1                                    &&
+
+  debug_log "spellinstall" 1 "successfully installed $1"   &&
   >$SI_INSTALLING # Clear file
 }
