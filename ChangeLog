@@ -1,3 +1,6 @@
+2005-11-03 Karsten Behrmann <BearPerson@sourcemage.org>
+	* network: fix up ppp settings, no longer use /dev/modem symlink
+
 2005-10-30 Karsten Behrmann <BearPerson@sourcemage.org>
 	* skeleton/etc/login-shell.sh: remove error from dircolors, cd to /
 	* skeleton/etc/{hosts,hostname}: shorten hostname

@@ -59,20 +59,16 @@ nw_ppp()  {
                    "rp-pppoe" "Roaring Penguin PPPoE provides PPP-over-Ethernet, the usual protocol for DSL")
   # TODO: Check why PPPoE is here
 
-  local ISP_FILE="/etc/ppp/chat/isp"
-  # TODO: Is ppp installed on the ISO? does this file even exist?
-
   local  USERNAME=`inputbox  "Please enter your ISP username"` &&
   local  PASSWORD=`inputbox  "Please enter your ISP password"` &&
   local    NUMBER=`inputbox  "Enter ISP phone number without dashes, spaces and parenthesis" "5555555"` &&
-  local      PORT=`inputbox  "Enter serial port device (ttyS0 is the first COM port)" "ttyS0"` &&
+  local      PORT=`inputbox  "Enter serial port device (ttyS0 is the first COM port)" "/dev/ttyS0"` &&
 
-  sed -i -e "s/5555555/$NUMBER/"        "$ISP_FILE"            &&
-  sed -i -e "s/: username/: $USERNAME/" "$ISP_FILE"            &&
-  sed -i -e "s/qpassword/q$PASSWORD/"   "$ISP_FILE"            &&
-  ln  -sf  $PORT  $TARGET/dev/modem                            &&
-  ln  -sf  $PORT  /dev/modem                                   &&
-  # FIXME: Does not work with udev or devfs, needs a change
+  sed -i $'s\a5555555\a'"$NUMBER"$'\a'        /etc/ppp/chat/isp     &&
+  sed -i $'s\a: username\a'": $USERNAME"$'\a' /etc/ppp/chat/isp     &&
+  sed -i $'s\aqpassword\a'"q$PASSWORD"$'\a'   /etc/ppp/chat/isp     &&
+  sed -i $'s\a/dev/modem\a'"$PORT"$'\a'       /etc/ppp/peers/isp    &&
+  cp --parents /etc/ppp/{peers,chat}/isp $FINALFILES                &&
 
 
   if confirm "Should a connection be started now?"; then
