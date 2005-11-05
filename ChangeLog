@@ -1,3 +1,8 @@
+2005-11-05 Karsten Behrmann <BearPerson@sourcemage.org>
+	* initrd/sbin/smgl.init: fix indent, clean up, make module menu
+	                         not return on loading a module (bug 7806)
+	* mkiso, nativeLanguageSupport, timezone: pre-generate lists (bug 7853)
+
 2005-11-03 Karsten Behrmann <BearPerson@sourcemage.org>
 	* network: fix up ppp settings, no longer use /dev/modem symlink
 

@@ -145,56 +145,32 @@ elvis during the install"
     >${FINALFILES}/etc/profile.d/editor.sh
 }
 
-#TODO: redo this function to load it from a file too
 get_keymaps()  {
 
   local idx=0
   local line
-
-  find /usr/share/keymaps -type f -not -path '*/include/*' |
-    sed -e 's@^/usr/share/keymaps/@@' -e 's@\.k\?map\.gz@@' |
-    sort >$TMP_DIR/temp.keymaps
-
   while read line ; do
-    KEYMAPS[$((idx++))]=${line##*/} #keymap name
-    KEYMAPS[$((idx++))]=${line%/*}  #path leading up to it, e.g. "qwerty"
-  done <$TMP_DIR/temp.keymaps
+    KEYMAPS[idx++]=$line
+  done <$STATE_DIR/keyMapList
 
-  rm -f $TMP_DIR/temp.keymaps
 }
 
-#TODO: redo this function so that it reads it from an info file
 get_consolefonts()  {
 
   local idx=0
   local line
-
-  ls -1 /usr/share/consolefonts/ | sed -n 's/\.gz$//p' |
-    sort >/tmp/temp.fontlist
-
   while read line ; do
-    FONTS[$((idx++))]=$line
-    FONTS[$((idx++))]="Font"
-  done </tmp/temp.fontlist
+    FONTS[idx++]=$line
+  done <$STATE_DIR/fontList
 
-  rm -f /tmp/temp.fontlist
 }
 
 get_languages()  {
 
   local idx=0
-  local lang title
+  local line
+  while read line ; do
+    LANGS[idx++]=$line
+  done <$STATE_DIR/languageList
 
-  ls -1 /usr/share/i18n/locales | sort >/tmp/temp.langs
-
-  while read lang ; do
-    title=`grep "^title" "/usr/share/i18n/locales/${lang}" | cut -d '"' -f 2`
-    if [ -n "${title}" ] ;then
-      LANGS[$((idx++))]="${lang}"
-      LANGS[$((idx++))]="${title}"
-    fi
-
-  done </tmp/temp.langs
-
-  rm -f /tmp/temp.langs
 }

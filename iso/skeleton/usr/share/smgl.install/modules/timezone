@@ -15,10 +15,12 @@ tz_menu()  {
 
   while [ -d $selectedTZ ] ;do
     if [[ "$selectedTZ" == "/usr/share/zoneinfo" ]] ;then
-      selectedTZ=$selectedTZ/$( run_dialog --title "Time Zone Selection Menu" \
+      local answer
+      answer=$( run_dialog --title "Time Zone Selection Menu" \
         --menu "Select a timezone or a directory to look in"  \
-        0 60 0 $(tz_show $selectedTZ)                             ) ||
+        0 60 0 $(tz_show $selectedTZ)                         ) ||
       return 1 # fail out when the dialog is aborted
+      selectedTZ="$answer"
     else # Don't show ".." if we're at top level
       local answer
       answer=$( run_dialog --title "Time Zone Selection Menu"    \
@@ -64,19 +66,5 @@ broken OS's like MS Windows."      \
 }
 
 tz_show()  {
-  #TODO: turn this into one from the lists
-
-  local line
-  ls -1 $1 |
-  while read line ; do # SUBSHELL
-    if  [  -d  $1/$line  ] ;then
-      echo $line
-      echo "Directory"
-    else
-      if [[ "$(file -b $1/$line)" == "timezone data" ]] ;then
-        echo $line
-        echo "Timezone"
-      fi
-    fi
-  done
+  grep "^$1:" $STATE_DIR/timeZoneList | cut -d: -f2-3 | tr : ' '
 }
