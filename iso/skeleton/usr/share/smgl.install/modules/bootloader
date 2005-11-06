@@ -77,8 +77,8 @@ or to the Boot Record of the / partition?"
 
 config_bootloader() {
 
-  local TARGET_DEV # The device to install the loader to
-  local BOOTLOADER=`bl_choose_loader`  &&
+  local BOOTLOADER TARGET_DEV # The device to install the loader to
+  BOOTLOADER=`bl_choose_loader`  &&
 
   # there is no MBR choice on ppc machines
 
@@ -88,7 +88,7 @@ config_bootloader() {
     TARGET_DEV=$(bl_choose_target)
   fi                                   &&
 
-  si_wait $BOOTLOADER
+  si_wait $BOOTLOADER                  &&
 
   bl_${BOOTLOADER}_config $TARGET_DEV  &&
   bl_${BOOTLOADER}_install $TARGET_DEV &&

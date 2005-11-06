@@ -43,19 +43,17 @@ keymap_menu()  {
 
   local KEYMAP
   declare -a KEYMAPS
-  get_keymaps                                                 &&
+  get_keymaps                                           &&
 
-  KEYMAP=`run_dialog                                          \
-          --title "Keymap Selection Menu"                     \
-          --menu  "Please select your preferred keymapping."  \
-          7 60 0                                              \
-          "${KEYMAPS[@]}"`                                    &&
+  KEYMAP=$(memory_menu "KEYMAP" "Keymap Selection Menu"  \
+           "" "Please select your preferred keymapping." \
+           "defkeymap" "${KEYMAPS[@]}")                 &&
 
-  unset KEYMAPS                                               &&
+  unset KEYMAPS                                         &&
 
-  debug_log "NLS" 1 "Chose keymapping $KEYMAP"                  &&
-  loadkeys  $KEYMAP                                           &&
-  fill_dependency keymap $KEYMAP                              &&
+  debug_log "NLS" 1 "Chose keymapping $KEYMAP"          &&
+  loadkeys  $KEYMAP                                     &&
+  fill_dependency keymap $KEYMAP                        &&
   sed -i "s/^KEYMAP=.*$/KEYMAP=$KEYMAP/" ${FINALFILES}/etc/sysconfig/keymap
 
 }
@@ -64,20 +62,18 @@ font_menu()  {
 
   local FONT
   declare -a FONTS
-  get_consolefonts                                             &&
+  get_consolefonts                                       &&
 
-  FONT=`run_dialog                                             \
-        --title  "Console Font Selection Menu"                 \
-        --menu   "Please select your preferred console fonts." \
-        7 60 0                                                 \
-        "${FONTS[@]}"`                                         &&
+  FONT=$(memory_menu "FONT" "Console Font Selection Menu" \
+         "" "Please select your preferred console fonts." \
+         "default8x16" "${FONTS[@]}" )                   &&
 
-  debug_log "NLS" 1 "Chose console font $FONT"                   &&
+  debug_log "NLS" 1 "Chose console font $FONT"           &&
 
-  consolechars  -f  $FONT
+  consolechars  -f  $FONT                                &&
 
   sed -i "s/^CONSOLECHARS_ARGS=.*$/CONSOLECHARS_ARGS=\"-f $FONT\"/" \
-    ${FINALFILES}/etc/sysconfig/keymap                         &&
+    ${FINALFILES}/etc/sysconfig/keymap                   &&
 
   unset FONTS
 }
@@ -89,18 +85,15 @@ change the languages of many other programs.  Please
 select your preferred language."
 
   declare -a LANGS
-  get_languages                        &&
+  get_languages                             &&
 
-  LANG=`run_dialog                     \
-        --trim --title "Language Selection Menu" \
-        --menu   "$HELP"               \
-        9 60 0                         \
-        "${LANGS[@]}"`                 &&
-  export LANG                          &&
+  LANG=$(memory_menu "LANG" "Language Selection Menu" \
+         "" "$HELP" "POSIX" "${LANGS[@]}" ) &&
+  export LANG                               &&
 
   run_template $TEMPLATE_DIR/lc.sh $TEMPLATE_DIR/nls.patterns \
-    >${FINALFILES}/etc/profile.d/lc.sh &&
-  unset LANGS                          &&
+    >${FINALFILES}/etc/profile.d/lc.sh      &&
+  unset LANGS                               &&
 
   debug_log "NLS" 1 "Chose LANG=$LANG"
 }
@@ -111,35 +104,33 @@ editor_menu()  {
   local   JED_DSC="jed is an editor with emulation for emacs, EDT, and Wordstar"
   local  NANO_DSC="nano is an enchanced free pico clone"
   local   VIM_DSC="VIM is an improved version of vi"
-  local REAL_ED
+  local   REAL_ED
 
-  local HELP="The Install/Rescue disc provides two easy to use
-editors, elvis and nano. Four common editors can be
-installed, although selecting vim will still use
-elvis during the install"
+  local HELP="The Install/Rescue disc provides three easy to use
+editors, elvis, nano, and jed. Due to the limited
+size of the CD, vim and emacs can not be used during
+installation. However, you can select vim, which still
+uses elvis during the install, vim on the final system."
 
-  REAL_ED=`run_dialog --title  "Editor Selection Menu" \
-           --item-help --single-quoted                 \
-           --default-item "${EDITOR}"                  \
-           --radiolist   "$HELP" 10 60 0               \
-           "nano"  "a pico clone"  "off"  "$NANO_DSC"  \
-           "jed" "Powerful editor" "off"   "$JED_DSC"  \
-           "elvis" "A vi clone"    "off" "$ELVIS_DSC"  \
-           "vim"   "VI IMproved"   "off"   "$VIM_DSC"` &&
+  REAL_ED=$(memory_radio_help "editor" "Select your preferred editor" \
+            "" "$HELP" "nano" \
+           "nano"  "a pico clone"    "$NANO_DSC"  \
+           "jed"   "Powerful editor" "$JED_DSC"   \
+           "elvis" "A vi clone"      "$ELVIS_DSC" \
+           "vim"   "VI IMproved"     "$VIM_DSC"   ) &&
 
   # REAL_ED is the editor that will be installed on the new system
   # EDITOR is the editor used throughout the install process
-  # since vim/elvis conflicts, only elvis is installed (smaller)
 
   if [ "${REAL_ED}" = "vim" ]; then
     export EDITOR="elvis"
   else
     export EDITOR=$REAL_ED
-  fi                                                   &&
+  fi                                                &&
 
-  debug_log "NLS" 1 "chose $REAL_ED as EDITOR"            &&
+  debug_log "NLS" 1 "chose $REAL_ED as EDITOR"      &&
 
-  si_queue $REAL_ED                                    &&
+  si_queue $REAL_ED                                 &&
 
   run_template $TEMPLATE_DIR/editor.sh $TEMPLATE_DIR/nls.patterns \
     >${FINALFILES}/etc/profile.d/editor.sh

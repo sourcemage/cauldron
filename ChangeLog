@@ -1,3 +1,9 @@
+2005-11-06 Karsten Behrmann <BearPerson@sourcemage.org>
+	* 10common: add routines for a "default remembering" menu
+	* debug, bootloader, diskStructure, network:
+	  fix local VAR=$(cmd) && brokenness
+	* nativeLanguageSupport: use default menu stuff
+
 2005-11-05 Karsten Behrmann <BearPerson@sourcemage.org>
 	* initrd/sbin/smgl.init: fix indent, clean up, make module menu
 	                         not return on loading a module (bug 7806)

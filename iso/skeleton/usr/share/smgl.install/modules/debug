@@ -16,7 +16,8 @@ function init_debug() {
 
 # Main menu to configure debugging
 function debug_screen() {
-  local DBGCOMMAND=$(run_dialog    \
+  local DBGCOMMAND
+  DBGCOMMAND=$(run_dialog          \
     --title "Debugging menu"       \
     --item-help                    \
     --menu "Select the debugging level you want to change.

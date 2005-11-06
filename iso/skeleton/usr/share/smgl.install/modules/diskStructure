@@ -122,7 +122,8 @@ select_disc()  {
 
 fdisc_menu()  {
 
-  local DISC=`select_disc` &&
+  local DISC PROG
+  DISC=`select_disc` &&
   if [ "$ARCH" = "ppc" ]; then
     display_message "Remember you need to create a bootstrap partition first
 (type 'b' at the prompt)."
@@ -238,11 +239,12 @@ dsr_make_raid_config() {
 }
 
 create_md_device() {
+  local DEVICE_NAME LEVEL PARTS P_COUNT
   dsr_show_warning                      &&
-  local DEVICE_NAME=`dsr_device_name`   &&
-  local LEVEL=`dsr_raid_level_menu`     &&
-  local PARTS="`dsr_choose_partitions`" &&
-  local P_COUNT=`echo $PARTS | wc -w`   &&
+  DEVICE_NAME=`dsr_device_name`   &&
+  LEVEL=`dsr_raid_level_menu`     &&
+  PARTS="`dsr_choose_partitions`" &&
+  P_COUNT=`echo $PARTS | wc -w`   &&
 
   dsr_sanity_check "$DEVICE_NAME" "$LEVEL" "$PARTS" "$P_COUNT" &&
   try_run mdadm --create $DEVICE_NAME --level=$LEVEL --raid-devices=$P_COUNT $PARTS &&
@@ -362,8 +364,8 @@ get_mount_point()  {
       fi
     done
 
-    local MPOINT=$(run_dialog                              \
-      --title "Mount point selection"                      \
+    local MPOINT
+    MPOINT=$(run_dialog --title "Mount point selection"    \
       --menu  "Please select where to mount $1 (type $2)"  \
       7 80 0                                               \
       "${MOUNT_POINTS[@]}") &&
@@ -504,9 +506,10 @@ If you don't know what to do, just hit OK."        &&
 
 mk_swap_file()  {
 
-  local DEVICE=`inputbox "Where should the swapfile go?" "/.swapfile"` &&
-  local SWAPFILE="$TARGET$DEVICE"                                      &&
-  local SIZE=`inputbox "How big do you want it to be? (in MB)" "1024"` &&
+  local DEVICE SWAPFILE SIZE
+  DEVICE=`inputbox "Where should the swapfile go?" "/.swapfile"` &&
+  SWAPFILE="$TARGET$DEVICE"                                      &&
+  SIZE=`inputbox "How big do you want it to be? (in MB)" "1024"` &&
 
   if confirm "Okay. Swapfile at $DEVICE, size $SIZE. That right, boss?" ;then
     dd  if=/dev/zero of=$SWAPFILE bs=1M count=$SIZE &&

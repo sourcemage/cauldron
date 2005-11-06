@@ -59,10 +59,11 @@ nw_ppp()  {
                    "rp-pppoe" "Roaring Penguin PPPoE provides PPP-over-Ethernet, the usual protocol for DSL")
   # TODO: Check why PPPoE is here
 
-  local  USERNAME=`inputbox  "Please enter your ISP username"` &&
-  local  PASSWORD=`inputbox  "Please enter your ISP password"` &&
-  local    NUMBER=`inputbox  "Enter ISP phone number without dashes, spaces and parenthesis" "5555555"` &&
-  local      PORT=`inputbox  "Enter serial port device (ttyS0 is the first COM port)" "/dev/ttyS0"` &&
+  local USERNAME PASSWORD NUMBER PORT
+  USERNAME=`inputbox  "Please enter your ISP username"` &&
+  PASSWORD=`inputbox  "Please enter your ISP password"` &&
+    NUMBER=`inputbox  "Enter ISP phone number without dashes, spaces and parenthesis" "5555555"` &&
+      PORT=`inputbox  "Enter serial port device (ttyS0 is the first COM port)" "/dev/ttyS0"` &&
 
   sed -i $'s\a5555555\a'"$NUMBER"$'\a'        /etc/ppp/chat/isp     &&
   sed -i $'s\a: username\a'": $USERNAME"$'\a' /etc/ppp/chat/isp     &&
