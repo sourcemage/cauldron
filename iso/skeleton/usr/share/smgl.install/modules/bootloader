@@ -35,14 +35,13 @@ bl_choose_loader() {
   if [ "$ARCH" == "ppc" ] ;then
     echo "yaboot" # We don't have any choice, why bother do display a menu?
   else
-    run_dialog --title "Bootloader selection menu"   \
-      --item-help --single-quoted --radiolist        \
-      "Please select the bootloader you wish to use to boot your SMGL system"\
-      8 60 0                                         \
-      "lilo" "The LInux LOader" "on"                 \
-      "lilo has been the standard-issue bootloader for many people for quite long"\
-      "grub" "GNU GRUB Multiboot boot loader" "off"  \
-      "GRUB is a dynamic, interactive bootloader - liked by some, hated by others"
+    memory_radio_help bootloader "Bootloader selection menu" ""                \
+      "Please select the bootloader you wish to use to boot your SMGL system"  \
+      "lilo"                                                                   \
+      "lilo" "The LInux LOader"                                                \
+  "lilo has been the standard-issue bootloader for many people for quite long" \
+      "grub" "GNU GRUB Multiboot boot loader"                                  \
+  "GRUB is a dynamic, interactive bootloader - liked by some, hated by others"
   fi #TODO: make these more neutral
 }
 

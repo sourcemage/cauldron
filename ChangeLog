@@ -1,4 +1,7 @@
 2005-11-06 Karsten Behrmann <BearPerson@sourcemage.org>
+	* bootloader, network, syslog: use "remembering" menus
+
+2005-11-06 Karsten Behrmann <BearPerson@sourcemage.org>
 	* 10common: add routines for a "default remembering" menu
 	* debug, bootloader, diskStructure, network:
 	  fix local VAR=$(cmd) && brokenness
@@ -1137,3 +1140,4 @@ Hamish Greig
 Kyle Sallee
 Laurent Wandrebeck <low@sourcemage.org>
 Seth Woolley <seth@tautology.org>
+

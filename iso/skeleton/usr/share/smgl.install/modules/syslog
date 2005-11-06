@@ -4,30 +4,26 @@
 function logger_screen() {
   need_dependency disk          &&
   need_dependency install_start &&
-  syslog # let's just blindly call this for now
+  syslog
 }
 
 syslog()  {
 
   local logger
-
-  logger=$(run_dialog                                  \
-            --title "Please select your system logger" \
-            --item-help --single-quoted --radiolist    \
-            "Pick one of the 3 loggers available"      \
-            7 60 0                                     \
-            "sysklogd"  "standard system logging daemon"             \
-              "on" "This version of syslogd is similar to the standard Berkeley product." \
-            "syslog-ng" "new logging daemon with some more features" \
-              "off" "syslog-ng, as the name shows, is a syslogd replacement."             \
-            "metalog"   "a modern replacement for the loggers"       \
-              "off" "metalog has many features and allows high configurability"           \
-            "none"      "no logger"                                  \
-              "off" "don't want/need a system logger")    &&
-  debug_log "syslog" 1 "Chose \"$logger\" as system logger" &&
-  si_queue $logger                                        &&
+  logger=$(memory_radio_help logger "Please select your system logger" \
+            "" "Pick one of the 3 loggers available" "none"            \
+            "sysklogd"  "standard system logging daemon"               \
+"This version of syslogd is similar to the standard Berkeley product." \
+            "syslog-ng" "new logging daemon with some more features"   \
+            "syslog-ng, as the name shows, is a syslogd replacement."  \
+            "metalog"   "a modern replacement for the loggers"         \
+           "metalog has many features and allows high configurability" \
+            "none"      "no logger"                                    \
+            "don't want/need a system logger")                        &&
+  debug_log "syslog" 1 "Chose \"$logger\" as system logger"           &&
+  si_queue $logger                                                    &&
   sed -i "s/^syslog=.*$/syslog=$logger/" \
-    ${FINALFILES}/etc/sysconfig/facilities                &&
+    ${FINALFILES}/etc/sysconfig/facilities                            &&
   fill_dependency syslog $logger
 
 }

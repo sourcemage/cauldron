@@ -141,22 +141,21 @@ nw_main()  {
 
   local COMMAND
 
-  COMMAND=`run_dialog  --title "Networking Setup"                             \
-             --nocancel --item-help --menu                                    \
-             "Please select the way this box will connect to the internet"    \
-             7 60 0                                                           \
-             "E" "Ethernet" "By plain network, using e.g. a gateway"          \
-             "P" "PPP" "Point-to-Point Protocol is used for modem connections"\
-             "R" "PPPoE" "PPP over Ethernet, usually used for A-DSL and similar"\
-             "N" "None" "No internet connection available"` &&
+  COMMAND=$(memory_menu network "Networking Setup" "--nocancel"              \
+             "Please select the way this box will connect to the internet"   \
+             "Ethernet"                                                      \
+             "Ethernet" "By plain network, using e.g. a gateway"             \
+             "PPP" "Point-to-Point Protocol is used for modem connections"   \
+             "PPPoE" "PPP over Ethernet, usually used for A-DSL and similar" \
+             "None" "No internet connection available")                      &&
 
   case  $COMMAND  in
-    E)  nw_ethernet  ;;
-    P)  nw_ppp       ;;
-    R)  nw_pppoe     ;;
-    N)  nw_none      ;;
+    Ethernet)  nw_ethernet  ;;
+    PPP)  nw_ppp       ;;
+    PPPoE)  nw_pppoe     ;;
+    None)  nw_none      ;;
   esac &&
 
   # reset hostname to user specified
-  hostname `cat /etc/hostname`
+  hostname $(cat /etc/hostname)
 }
