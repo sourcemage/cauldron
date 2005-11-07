@@ -3,21 +3,26 @@
 
 function arch_screen() {
 
-  need_dependency disk          &&
-  need_dependency install_start ||
+  want_dependency disk          &&
+  want_dependency install_start ||
   return 1
-  si_wait Iso.Basics smgl-archspecs gcc
 
-  cat <<EOF >$TARGET/arch_menu
-#!/bin/bash
-exit() {
-  true
-}
-. /usr/sbin/sorcery -v >/dev/null
-optimize_architecture
-EOF
-  chmod +x $TARGET/arch_menu
-  chroot_cmd /arch_menu
-  rm -f $TARGET/arch_menu
+  if confirm "do you want to configure make jobs and distcc? (advanced)" \
+       --defaultno ;then
+    export CONFIG_DISTCC=yes
+  fi
+
+  (
+    exit() {
+      true
+    }
+    . /usr/sbin/sorcery -v >/dev/null
+    optimize_architecture
+    [[ $CONFIG_DISTCC ]] && parallel_compilation_menu
+  )
+
+  unset CONFIG_DISTCC
+  cp --parents -a /etc/sorcery/local/config $FINALFILES
+  cp --parents -a /etc/sorcery/local/compile_config $FINALFILES
 
 }

@@ -1,3 +1,8 @@
+2005-11-07 Karsten Behrmann <BearPerson@sourcemage.org>
+	* iso.packages, architecture: don't configure in chroot; fix bug 8757
+	* 10common, architecture: weaken dependencies
+	* installer.sh: remove $FINALFILES content during fixup
+
 2005-11-06 Karsten Behrmann <BearPerson@sourcemage.org>
 	* bootloader, network, syslog: use "remembering" menus
 

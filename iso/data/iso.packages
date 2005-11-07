@@ -87,6 +87,7 @@ unpack sed
 unpack shadow
 unpack simpleinit-msb
 unpack slang
+unpack smgl-archspecs
 unpack sysfsutils
 unpack tar
 unpack tcp_wrappers

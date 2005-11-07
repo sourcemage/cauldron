@@ -231,19 +231,19 @@ function check_dependency() {
 # otherwise fall out to the main menu?
 # $1 is depends key
 function need_dependency() {
-  if check_dependency $1; then
-    return 0
-  else
-    if confirm "The selected step needs $1 to be done first.
-Do you want to continue anyway and skip $1?"
-    then
-      #ok was selected
-      fill_dependency $1 force
-      return 0
-    else
-      return 1
-    fi
-  fi
+  check_dependency $1 ||
+  {
+    confirm "The selected step needs $1 to be done first.
+Do you want to continue anyway and skip $1?" --defaultno &&
+    fill_dependency $1 force
+  }
+}
+
+# Ask the user if he wants to do this yet,
+# it's physically possible but rarely done in that order
+function want_dependency() {
+  check_dependency $1 ||
+  confirm "Normally, $1 is done before this step. Continue anyway?"
 }
 
 # Blocks until specified stuff is fulfilled

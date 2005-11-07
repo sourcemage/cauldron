@@ -160,6 +160,9 @@ reset_installer() {
   # reset depends stuff
   rm -f $DEPENDS_DIR/*
 
+  rm -rf $FINALFILES/*
+  cp --parents /etc/sysconfig/* ${FINALFILES}
+
   # reset spellinstaller stuff
   rm -rf $SI_QUEUE_DIR
 }
