@@ -1,3 +1,7 @@
+2005-11-09 Karsten Behrmann <BearPerson@sourcemage.org>
+	* diskStructure: attempt to give more info for partitions
+	* diskStructure: fix bug 9764
+
 2005-11-07 Karsten Behrmann <BearPerson@sourcemage.org>
 	* iso.packages, architecture: don't configure in chroot; fix bug 8757
 	* 10common, architecture: weaken dependencies

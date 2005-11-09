@@ -164,21 +164,21 @@ dsr_raid_level_menu() {
     --radiolist "Select a RAID level" 0 0 0 \
     "0" "Striping" off \
     "1" "Mirroring" off \
-    "2" "Hamming code ECC" off \
-    "3" "Parallel transfer with parity" off \
     "4" "Independent Data disks with shared Parity disk" off \
     "5" "Independent data disks with distributed parity" off \
     "6" "Independent data disks with dual distributed parity" off
+#    "3" "Parallel transfer with parity" off \
+#    "2" "Hamming code ECC" off \
 }
 
 dsr_choose_partitions() {
   LIST_PARTS=()
   # Use sed to append an "off" line to every entry
   explode "$(list_parts | sed 's/^\(Size: .*\)$/\1\noff/')" $'\n' \
-    "LIST_PARTS"
+    LIST_PARTS
 
   run_dialog --title "Select partitons to create a RAID device from" \
-  --separate-output \
+  --separate-output --item-help \
   --checklist "Mark partitions to be made into the RAID array" 0 0 0 \
   "${LIST_PARTS[@]}" |
     sed 's:^:/dev/:g'
@@ -268,7 +268,14 @@ list_parts()  {
            $FINALFILES/etc/mdadm.conf
        then # don't do nil strings, partitions we mounted already, RAID parts
          echo "$PARTITION"
-         echo "Size: $(( SIZE / 1024 ))MB"
+         echo -n "Size: $(( SIZE / 1024 ))MB"
+         if [[ $PARTITION == md* ]] ;then
+           mdadm --detail --brief /dev/$PARTITION |
+             sed 's/^.*\(level.*\)UUID.*$/\1/'
+         else
+           sfdisk -lq | grep "^/dev/$PARTITION" | cut -d$'\t' -f6
+         fi
+         file -s /dev/$PARTITION
 # TODO: add type recognition
 # This old code did it:
 
@@ -307,12 +314,20 @@ list_parts()  {
 get_part()  {
 
   LIST_PARTS=()
-  explode "$(list_parts)" $'\n' "LIST_PARTS"
+  explode "$(list_parts)" $'\n' LIST_PARTS
 
   debug_log "diskStructure" 3 "Partition list:" "${LIST_PARTS[@]}"
 
+  if [[ ${#LIST_PARTS[@]} == 0 ]] ;then
+    display_message "No partitions could be found. Either all are
+already mounted, or none are available.
+You may need to load more modules (shell out, use modprobe)
+or partition your disks."
+    return 1
+  fi
+
   run_dialog                                                   \
-    --title "Partition Selection Menu"                         \
+    --title "Partition Selection Menu" --item-help             \
     --menu  "Select a partition to mount. Sizes are in blocks" \
     7 60 0                                                     \
     "${LIST_PARTS[@]}"
