@@ -1,3 +1,6 @@
+2005-11-10 Karsten Behrmann <BearPerson@sourcemage.org>
+	* smgl.multi, config-2.6.ppc: integrate ppc fixes from devel
+
 2005-10-14 Karsten Behrmann <BearPerson@sourcemage.org>
 	* modules/30spellinstall: fix typo in ssh key generation
 
