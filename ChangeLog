@@ -1,3 +1,7 @@
+2005-11-14 Karsten Behrmann <BearPerson@sourcemage.org>
+	* network, 30spellinstall: add hostname to /etc/hosts (bug 10080)
+	* skeleton/etc/hosts: deleted, is provided by netkit-base
+
 2005-11-09 Karsten Behrmann <BearPerson@sourcemage.org>
 	* diskStructure: attempt to give more info for partitions
 	* diskStructure: fix bug 9764

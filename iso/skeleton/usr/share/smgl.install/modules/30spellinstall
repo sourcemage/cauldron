@@ -258,6 +258,11 @@ si_post_workaround() {
       "gnupg")
               mkdir -p -m 700 $TARGET/root/.gnupg
             ;;
+"netkit-base")
+              sed -i \
+              "s/^127.0.0.1.*/127.0.0.1	localhost	$(cat /etc/hostname)" \
+              $TARGET/etc/hosts
+            ;;
   esac
 }
 
