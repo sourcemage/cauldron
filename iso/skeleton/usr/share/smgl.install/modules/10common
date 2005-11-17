@@ -13,7 +13,7 @@ function run_dialog() {
   debug_log "dialog" 3 "run_dialog called with the following arguments:" "$@"
 
   dialog --backtitle "Source Mage GNU/Linux Installer v. ${INSTALLER_VERSION}" \
-         --stdout --trim "$@"
+         --stdout --cr-wrap "$@"
 
   local rc=$?
   [[ $rc == 255 ]] && debug_log "ERROR" -1 "run_dialog failed, params:" "$@"
@@ -63,7 +63,7 @@ function explode()
 function inputbox()  {
 
   run_dialog  --nocancel --inputbox "$1" \
-    $(( $( echo "$1" | wc -l) + 6)) 60 "$2"
+    0 0 "$2"
 
 }
 
@@ -84,9 +84,8 @@ function chroot_cmd() {
 function confirm()  {
 
     local query="$1"
-    local length=$(( $( echo "$1" | wc -l) + 4))
     shift
-    run_dialog "$@" --yesno  "$query" $length 60
+    run_dialog "$@" --yesno  "$query" 0 0
 
 }
 
@@ -108,14 +107,10 @@ function memory_menu() {
   shift 5
   local USEDEF="$(get_dependency "remember_$ID")"
   USEDEF="${USEDEF:-"$DEF"}"
-  local HEIGHT=6
-  let HEIGHT+=$(echo "$TEXT" | wc -l)
-  let HEIGHT+=$#/2
-  [[ $HEIGHT -gt 20 ]] && HEIGHT=20
   local ANSWER
-  ANSWER==$(run_dialog --title "$TITLE" \
-                 --default-item "$USEDEF"    \
-                 --menu "$TEXT" $HEIGHT 60 0 \
+  ANSWER=$(run_dialog --title "$TITLE"      \
+                 --default-item "$USEDEF"   \
+                 --menu "$TEXT" 0 0 0       \
                  "$@")                      &&
   fill_dependency "remember_$ID" "$ANSWER"  &&
   echo "$ANSWER"
@@ -131,10 +126,6 @@ function memory_radio() {
   shift 5
   local USEDEF="$(get_dependency "remember_$ID")"
   USEDEF="${USEDEF:-"$DEF"}"
-  local HEIGHT=6
-  let HEIGHT+=$(echo "$TEXT" | wc -l)
-  let HEIGHT+=$#/2
-  [[ $HEIGHT -gt 20 ]] && HEIGHT=20
 
   local -a ITEMS
   local i=0
@@ -148,7 +139,7 @@ function memory_radio() {
   local ANSWER
   ANSWER=$(run_dialog --title "$TITLE" --single-quoted \
                  --default-item "$USEDEF"              \
-                 --radiolist "$TEXT" $HEIGHT 60 0      \
+                 --radiolist "$TEXT" 0 0 0      \
                  "${ITEMS[@]}")             &&
   fill_dependency "remember_$ID" "$ANSWER"  &&
   echo "$ANSWER"
@@ -164,10 +155,6 @@ function memory_radio_help() {
   shift 5
   local USEDEF="$(get_dependency "remember_$ID")"
   USEDEF="${USEDEF:-"$DEF"}"
-  local HEIGHT=6
-  let HEIGHT+=$(echo "$TEXT" | wc -l)
-  let HEIGHT+=$#/3
-  [[ $HEIGHT -gt 20 ]] && HEIGHT=20
 
   local -a ITEMS
   local i=0
@@ -182,7 +169,7 @@ function memory_radio_help() {
   local ANSWER
   ANSWER=$(run_dialog --title "$TITLE" --single-quoted \
                  --default-item "$USEDEF" --item-help  \
-                 --radiolist "$TEXT" $HEIGHT 60 0      \
+                 --radiolist "$TEXT" 0 0 0      \
                  "${ITEMS[@]}")             &&
   fill_dependency "remember_$ID" "$ANSWER"  &&
   echo "$ANSWER"
@@ -190,7 +177,7 @@ function memory_radio_help() {
 
 # displays a message
 function display_message() {
-  run_dialog --msgbox "$1" 10 60
+  run_dialog --msgbox "$1" 0 0
 }
 
 #adding some functions for dependency management

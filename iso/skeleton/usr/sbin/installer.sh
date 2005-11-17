@@ -64,7 +64,7 @@ maintainers of modern distributions have steadily
 chipped away."
 
   run_dialog --title "Welcome to Source Mage GNU/Linux" \
-    --msgbox "${MSG}" 9 60
+    --msgbox "${MSG}" 0 0
 
   local MSG="Source Mage GNU/Linux empowers System Administrators
 to choose:
@@ -82,7 +82,7 @@ And it provides the conveniences of:
 
   run_dialog  --cr-wrap                             \
     --title  "The Benefits of Source Mage GNU/Linux"  \
-    --msgbox "${MSG}" 18 60
+    --msgbox "${MSG}" 0 0
 
     return 0
 }
@@ -118,7 +118,7 @@ shell() {
 # SECTION: MISC
 display_install_help()  {
 
-  run_dialog --cr-wrap --textbox $DATA_DIR/install.guide  21 60
+  run_dialog --cr-wrap --textbox $DATA_DIR/install.guide  0 0
   return 0
 }
 
@@ -185,7 +185,7 @@ which they appear."
           --title "Source Mage GNU/Linux installer" \
           --nocancel --default-item $CURRENT_MAIN   \
           --item-help --menu "$MENU_DESCRIPTION"    \
-          8 60 0                                    \
+          0 0 0                                    \
           "A" "[*]Introduction" "Read about the advantages of using Source Mage GNU/Linux" \
           "?" "[*]Installation and help notes" "A help text on the installer" \
           "B" "[*]Native Language Support" "Select default language, keymap, and console fonts" \

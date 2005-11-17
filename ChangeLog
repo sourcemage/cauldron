@@ -1,3 +1,10 @@
+2005-11-17 Karsten Behrmann <BearPerson@sourcemage.org>
+	* 10common: break dialog menu descriptions at newlines,
+	            make dialog auto-determine window height/width
+	* debug: fix typo in setting debug defaults and in debug_is_on()
+	* installer.sh: make dialog auto-determine window size
+	* mkiso: improve font menu, catch font size better
+
 2005-11-14 Karsten Behrmann <BearPerson@sourcemage.org>
 	* network, 30spellinstall: add hostname to /etc/hosts (bug 10080)
 	* skeleton/etc/hosts: deleted, is provided by netkit-base

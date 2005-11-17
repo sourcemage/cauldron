@@ -245,9 +245,9 @@ function create_statefiles() {
       echo "${line%/*}"  #path leading up to it, e.g. "qwerty"
     done >>$ISO_STATE_DIR/keyMapList
 
-  for file in usr/share/consolefonts/* ;do
+  for file in usr/share/consolefonts/*.gz ;do
     echo "${file##*/}"
-    gunzip -c "$file" | file - | cut -d, -f5 # font dimensions
+    gunzip -c "$file" | file - | sed 's/^.*, \?//' # font dimensions
   done >>$ISO_STATE_DIR/fontList
 
   for file in usr/share/i18n/locales/* ;do

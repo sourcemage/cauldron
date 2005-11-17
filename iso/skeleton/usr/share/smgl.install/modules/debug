@@ -10,7 +10,7 @@ DEBUG_DIR=/tmp/debug_dir
 function init_debug() {
   mkdir -p $DEBUG_DIR
   for DBG_file in $DATA_DIR/default_debug* ;do
-    cp $DBG_file $DEBUG_DIR/${DBG_FILE##*/default_}
+    cp $DBG_file $DEBUG_DIR/${DBG_file##*/default_}
   done
 }
 
@@ -121,9 +121,9 @@ function debug_is_on() {
   local func=$1
   local priority=${2:-2} # Default to 2
   if [ -e $DEBUG_DIR/debug_$func ] ;then
-    [ $(cat $DEBUG_DIR/debug_$func) -le $priority ]
+    [ $(cat $DEBUG_DIR/debug_$func) -ge $priority ]
   else
-    [ $(cat $DEBUG_DIR/debug) -le $priority ]
+    [ $(cat $DEBUG_DIR/debug) -ge $priority ]
   fi
 }
 
