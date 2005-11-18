@@ -1,3 +1,11 @@
+2005-11-18 Karsten Behrmann <BearPerson@sourcemage.org>
+	* iso.packages: add c++ libs for groff for man
+	* installer.sh: run with bash, not sh
+	* 30spellinstall: fix typo in netkit-base workaround
+	* debug: add logging, fix typos and arg parsing in try_run
+	* diskStructure: fix typo, add logging ; fix output logging for jfs
+	* timezone: auto-size dialogs, fix typo
+
 2005-11-17 Karsten Behrmann <BearPerson@sourcemage.org>
 	* 10common: break dialog menu descriptions at newlines,
 	            make dialog auto-determine window height/width

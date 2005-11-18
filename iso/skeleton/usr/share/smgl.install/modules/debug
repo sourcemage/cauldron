@@ -71,6 +71,7 @@ function try_run() {
   local capture=true
   local capfile=$TMP_DIR/debug.out.$$
   local rc
+  debug_log "tryrun" 3 "Argument list before parameter parsing:" "$@"
   while [[ "$1" == -* ]] ;do
     case "$1" in
        "-e") error_message="$2"
@@ -79,15 +80,19 @@ function try_run() {
       "-nc") capture=false
              shift
           ;;
+          *) debug_log "ERROR" -1 "Unknown parameter to try_run: $1"
+             shift
+          ;;
     esac
   done
+  debug_log "tryrun" 3 "Command to run:" "$@"
   error_message=${error_message:-"Running $1 failed."}
   if $capture ;then
     set -o pipefail
     "$@" 2>&1 | tee $capfile
     rc=$?
     set +o pipefail
-    if [[ $? != 0 ]] || debug_is_on "tryrun" 3 ;then
+    if [[ $rc != 0 ]] || debug_is_on "tryrun" 3 ;then
       run_dialog --title "$error_message" --cr-wrap --msgbox \
         "The failed command (exit code $rc) was:
 $*
@@ -97,14 +102,14 @@ $(cat $capfile)" 20 80
   else
     "$@"
     rc=$?
-    if [[ $? != 0 ]] || debug_is_on "tryrun" 3 ;then
+    if [[ $rc != 0 ]] || debug_is_on "tryrun" 3 ;then
       echo "$error_message"
       echo "The return code was $rc. The command was:"
       echo "$*"
       debug_enter "error" -1
     fi >&2
   fi
-  if [[ $? != 0 ]] ;then
+  if [[ $rc != 0 ]] ;then
     debug_log "error" -1 "$1 failed (rc=$rc)" "$@" "error:" "$(cat $capfile)"
   else
     debug_log "tryrun" 3 "$1 executed successfully, the full command was" \
@@ -167,4 +172,5 @@ function debug_log() {
       "\"$func\" \"$priority\"" >>$INSTALLER_DEBUG
   fi
   unlock_resource INSTALLER_DEBUG
+  true
 }

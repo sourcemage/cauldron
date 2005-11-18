@@ -138,7 +138,8 @@ fdisc_menu()  {
       "fdisk"  "Text-based. A little harder to use, more features"    \
       "parted" "Text-based. Many features, such as moving partitions" ` &&
 
-    try_run --no-cap ${PROG} "${DISC}"
+    debug_log "diskStructure" 2 "Running $PROG on $DISC"
+    try_run -nc ${PROG} "${DISC}"
   fi
 }
 
@@ -505,7 +506,11 @@ as far as I can figure it out.
 If you want to change anything, you can now.
 If you don't know what to do, just hit OK."        &&
     MKFSCMD=$( inputbox "$QUESTION" "${MKFSCMD}" ) &&
-    eval "try_run $MKFSCMD"                        ||
+    if [[ $FSYS == jfs ]] ;then # mkfs.jfs doesn't line-buffer its output
+      eval "try_run -nc $MKFSCMD"
+    else
+      eval "try_run $MKFSCMD"
+    fi                                             ||
     return 1
   elif $CHECK ;then
     badblocks $PART

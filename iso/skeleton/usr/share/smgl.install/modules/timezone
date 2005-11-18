@@ -18,14 +18,14 @@ tz_menu()  {
       local answer
       answer=$( run_dialog --title "Time Zone Selection Menu" \
         --menu "Select a timezone or a directory to look in"  \
-        0 60 0 $(tz_show $selectedTZ)                         ) ||
+        0 0 0 $(tz_show $selectedTZ)                         ) ||
       return 1 # fail out when the dialog is aborted
-      selectedTZ="$answer"
+      selectedTZ="$selectedTZ/$answer"
     else # Don't show ".." if we're at top level
       local answer
       answer=$( run_dialog --title "Time Zone Selection Menu"    \
         --menu "Select timezone or directory (we're in $selectedTZ)" \
-        0 70 0 ".." "Up one level" $(tz_show $selectedTZ)         ) ||
+        0 0 0 ".." "Up one level" $(tz_show $selectedTZ)         ) ||
       return 1
       if [[ "$answer" == ".." ]] ;then
         selectedTZ=${selectedTZ%/*}
