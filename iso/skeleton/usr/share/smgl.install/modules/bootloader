@@ -202,24 +202,26 @@ bl_lilo_install() {
 
 bootloader_yaboot_conf() {
 
-  # yabootconfig will df, df will use /etc/mtab
-  # so, we need a valid /etc/mtab. copy /etc/fstab.
+  # yaboot workarounds
+  # It also wants /etc/fstab to exist for whatever reason
+  cp $FINALFILES/etc/fstab $TARGET/etc/fstab
+  # Its tools expect sysfs somewhere, mount it
+  mkdir $TARGET/sys
+  mount sysfs -t sysfs $TARGET/sys
+  # yabootconfig uses df, which needs /etc/mtab
+  create_etc_mtab
+  # hfsutils are required to install yaboot
+  si_queue_now hfsutils
 
   local BL_BOOTLOC
   local BL_KVERSION
 
-  # replace /boot/vmlinux if it is an absolute link
-
-  local LINK
-  if [ -h "${TARGET}/boot/vmlinux" ]; then
-    LINK=`readlink "${TARGET}/boot/vmlinux"`
-    if [ "${LINK:0:1}" = "/" ]; then
-      ln -sf "..${LINK}" "${TARGET}/boot/vmlinux"
-    fi
-  fi                                                        &&
-
-  yabootconfig -t "${TARGET}" --noinstall -q                &&
-
+  yabootconfig -t "${TARGET}" --noinstall -q                ||
+  {
+    echo "Yabootconfig failed to run ($?). This is a semi-known problem."
+    echo "If this still occurs, please report it to BearPerson on IRC"
+    press_enter
+  } >&2
 
   # remove the default image section written by yabootconfig
   # which are the last 3 lines of /etc/yaboot.conf
