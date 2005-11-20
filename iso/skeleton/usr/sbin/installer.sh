@@ -188,7 +188,7 @@ which they appear."
           0 0 0                                    \
           "A" "[*]Introduction" "Read about the advantages of using Source Mage GNU/Linux" \
           "?" "[*]Installation and help notes" "A help text on the installer" \
-          "B" "[*]Native Language Support" "Select default language, keymap, and console fonts" \
+          "B" "[*]Pre-installation defaults settings" "Select default language, keymap, font and editor" \
           "C" "Disk Structure" "Partition, format, and mount your disk" \
           "D" "Select Timezone" "Select this box's timezone" \
           "E" "[*]Architecture Optimizations" "Select Architecture and Optimizations" \

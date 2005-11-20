@@ -37,7 +37,7 @@ non-xfs /boot partition."
       --default-item  $ICOMMAND       \
       --item-help                     \
       --menu "$TEXT"                  \
-      13 60 0                         \
+      0 0 0                         \
       "A" "[*]Partition Disks"   "Create partitions on your drives" \
       "B" "[*]Make MD RAID Devices" "Create RAID devices using mdadm"    \
       "C" "Format and/or mount filesystems" "Define where the partitions should go" \
@@ -46,13 +46,13 @@ non-xfs /boot partition."
 
     case $ICOMMAND in
       A)
-        fdisc_menu # do the partitioning 
+        fdisc_menu # do the partitioning
       ;; # maybe partitions are already created
       B)
-        create_md_device # Make ourselves some MD devices! 
+        create_md_device # Make ourselves some MD devices!
       ;;
       C)
-        mount_menu # do the mounting
+        while mount_menu ;do true ;done # do the mounting until user quits
       ;;
       D)
         if need_dependency disk-root; then
@@ -112,10 +112,16 @@ select_disc()  {
 
   debug_log "diskStructure" 3 "Disk list:" "${LIST_DISCS[@]}"
 
+  if [[ ${#LIST_DISCS[@]} == 0 ]] ;then
+    display_message "No discs could be found.
+You may need to load more modules (shell out, use modprobe)"
+    return 1
+  fi
+
   run_dialog \
     --title "Disk Selection Menu"                                     \
     --menu  "Please select a disk to partition. Sizes are in blocks." \
-    7 60 0                                                            \
+    0 0 0                                                            \
     "${LIST_DISCS[@]}" # 2 entries per disk - name and size
 
 }
@@ -133,7 +139,7 @@ fdisc_menu()  {
     PROG=`run_dialog                                                  \
       --title "Partitioning Menu"                                     \
       --menu  "Please choose the program for partitioning $DISC"      \
-      13 60 0                                                         \
+      0 0 0                                                         \
       "cfdisk" "Menu-driven partitioning program. Easy to use."       \
       "fdisk"  "Text-based. A little harder to use, more features"    \
       "parted" "Text-based. Many features, such as moving partitions" ` &&
@@ -150,7 +156,7 @@ dsr_show_warning() {
     --msgbox "If you plan on mounting the device you're about to create as
 / (the root), you need to ensure that you make the
 partition types \"Linux raid autodetect\" (ID 0xFD).
-Otherwise your system will not boot!" 20 60
+Otherwise your system will not boot!" 0 0
 }
 
 dsr_device_name() {
@@ -177,6 +183,15 @@ dsr_choose_partitions() {
   # Use sed to append an "off" line to every entry
   explode "$(list_parts | sed 's/^\(Size: .*\)$/\1\noff/')" $'\n' \
     LIST_PARTS
+
+  if [[ ${#LIST_PARTS[@]} == 0 ]] ;then
+    display_message "No partitions could be found. Either all are
+already mounted, or none are available.
+You may need to load more modules (shell out, use modprobe)
+or partition your disks."
+    return 1
+  fi
+
 
   run_dialog --title "Select partitons to create a RAID device from" \
   --separate-output --item-help \
@@ -228,7 +243,7 @@ dsr_sanity_check() {
 
   if [ -e $ERROR_FILE ] ;then
     run_dialog --title "Failed to create MD device" --textbox \
-      $ERROR_FILE 10 50
+      $ERROR_FILE 0 0
     return 1
   fi
 }
@@ -330,7 +345,7 @@ or partition your disks."
   run_dialog                                                   \
     --title "Partition Selection Menu" --item-help             \
     --menu  "Select a partition to mount. Sizes are in blocks" \
-    7 60 0                                                     \
+    0 0 0                                                     \
     "${LIST_PARTS[@]}"
 
 }
@@ -340,7 +355,7 @@ get_filesystem()  {
   run_dialog                                               \
     --title "Filesystem Selection Menu"                    \
     --menu  "Please select what filesystem to use for $1"  \
-    7 60 0                                                 \
+    0 0 0                                                 \
     "ext2"      "Second Extended file system"              \
     "ext3"      "Second Extended journaling file system"   \
     "reiserfs"  "Reiserfs journaling file system"          \
@@ -383,7 +398,7 @@ get_mount_point()  {
     local MPOINT
     MPOINT=$(run_dialog --title "Mount point selection"    \
       --menu  "Please select where to mount $1 (type $2)"  \
-      7 80 0                                               \
+      0 0 0                                               \
       "${MOUNT_POINTS[@]}") &&
     if [[ "$MPOINT" == "other" ]] ;then
       inputbox  "Please choose where to mount $1 (type $2)"  "/"

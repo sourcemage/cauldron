@@ -7,6 +7,7 @@ console-data
 console-tools
 netkit-base
 netkit-ping
+sorcery-pubkeys
 __SMGL_TEMPLATE_ONLY_ppc__mac-fdisk
 __SMGL_TEMPLATE_ONLY_ppc__yaboot
 __SMGL_TEMPLATE_ONLY_ppc__hfsutils

@@ -1,3 +1,11 @@
+2005-11-20 Karsten Behrmann <BearPerson@sourcemage.org>
+	* skeleton/etc/issue: change to not include ISO version (9811)
+	* install-list, optional-list: install sorcery-pubkeys automatically
+	* skeleton/etc/sorcery/local/config: check gpg by default (both 9768)
+	* installer.sh: rename Native Language menu (9771)
+	* diskStructure: fail out with no disks/partitions (9764)
+	  auto-size dialogs ; repeat partition mounting until user quits (9644)
+
 2005-11-18 Karsten Behrmann <BearPerson@sourcemage.org>
 	* iso.packages: add c++ libs for groff for man
 	* installer.sh: run with bash, not sh
