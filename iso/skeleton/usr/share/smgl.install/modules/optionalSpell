@@ -12,7 +12,6 @@ function optional_screen() {
   need_dependency disk          &&
   need_dependency install_start &&
   need_dependency linux         &&
-  need_dependency syslog        &&
   need_dependency bootloader    &&
   need_dependency network       ||
   {
@@ -32,7 +31,7 @@ function optional_screen() {
   # TODO: add spell's version as description and description as item help
   local SPELLS=$( eval "run_dialog --single-quoted --item-help \
     --title 'Optional Spells' --checklist 'Select optional spells to install' \
-    20 61 13 $(cat /tmp/prunedOptionalList)" )
+    0 0 0 $(cat /tmp/prunedOptionalList)" )
 
   #queue up the spells to install
   si_queue $SPELLS
@@ -68,17 +67,17 @@ function opt_choose_dev() {
   DEVSYST=$( run_dialog --single-quoted --title 'choose /dev system'  \
     --item-help                                                       \
     --menu "Select the system you want to manage your /dev directory" \
-    0 60 0 \
+    0 0 0 \
     "udev" "udev dynamically creates device nodes in userspace"       \
       "udev has a daemon to create nodes in /dev as the devices get recognized" \
     "static" "static device nodes in the filesystem tree"             \
       "does not require any daemons, but has every device known to linux in /dev" ) &&
 #    "devfs" "dynamic device nodes in a virtual file system"           \
 #      "devfs is a mountable kernel space file system used in the 2.4 kernel" )    &&
-  if umount $TARGET/dev ;then
+  if umount $TARGET/dev 2>/dev/null ;then
     DEVROOT=$TARGET/dev
   else
-    mount $(get_dependency disk-root) /mnt/mnt
+    mount --bind $TARGET /mnt/mnt
     DEVROOT=/mnt/mnt/dev
   fi &&
   case $DEVSYST in
@@ -104,5 +103,6 @@ function opt_choose_dev() {
 #             fill_dependency dev_format devfs
 #           ;;
   esac
+  [[ $DEVROOT == /mnt/mnt/dev ]] && umount /mnt/mnt
   sed -i "s/^DEVICES=.*$/DEVICES=$DEVSYST/" ${FINALFILES}/etc/sysconfig/devices
 }

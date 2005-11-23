@@ -7,6 +7,24 @@ kernel_screen()  {
 
   debug_log "kernel" 3 "Entering kernel selection screen"
 
+  # Sanity check the system date,
+  # gnupg fails when the kernel signing key will be created in the future
+  touch -d "now + 1 week" $TMP_DIR/timetest
+  if [[ $TMP_DIR/timetest -ot /bin/bash ]] ;then
+    confirm "Your system date appears to be set wrong.
+This might cause the following signature check
+on the linux kernel sources to fail.
+
+You can fix this by switching to another terminal
+and entering something like
+date -d \"2005-12-24 20:30:00\".
+If you do this, answer \"no\" to this query.
+
+Alternatively, I can just set the system time to
+the time this ISO was created. Should I do this now?" --defaultno &&
+    date -s "$(date -r /bin/bash)"
+  fi
+
   if run_dialog --yes-label "copy" --no-label "compile" \
                 --yesno                                 \
 "Would you like to configure and compile a custom kernel,
@@ -14,7 +32,7 @@ or install/copy the precompiled kernel from the ISO?
 The precompiled kernel is highly modular to support almost
 any hardware we might encounter, the custom kernel needs
 some work to do all the config, but will be smaller.
-Special hardware may also require a custom kernel." 10 60 ;then
+Special hardware may also require a custom kernel." 0 0 ;then
     kn_copy_kernel
   else
     kn_compile_kernel
@@ -68,7 +86,7 @@ kn_copy_kernel() {
 
 kn_compile_kernel() {
 
-  run_dialog --cr-wrap --textbox  ${DATA_DIR}/kernel.help 22 60
+  run_dialog --cr-wrap --textbox  ${DATA_DIR}/kernel.help 0 0
 
   echo "Waiting for the tools needed for kernel installation to install..."
   debug_log "kernel" 2 "Starting kernel compile"
@@ -80,7 +98,7 @@ kn_compile_kernel() {
     "Do you want to start with the ISO's kernel config?
 It does support a lot of hardware with modules, on the other
 hand it will be large and take a long time to build.
-Alternatively, I can just use the linux defaults." 8 65 \
+Alternatively, I can just use the linux defaults." 0 0 \
      ;then
     # install the config used for this kernel
     debug_log "kernel" 1 "using ISO config"

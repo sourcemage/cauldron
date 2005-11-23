@@ -25,4 +25,10 @@ function arch_screen() {
   cp --parents -a /etc/sorcery/local/config $FINALFILES
   cp --parents -a /etc/sorcery/local/compile_config $FINALFILES
 
+  fill_dependency "architecture" "manual"
+}
+
+function architecture_auto() {
+  cp --parents -a /etc/sorcery/local/config $FINALFILES
+  cp --parents -a /etc/sorcery/local/compile_config $FINALFILES
 }

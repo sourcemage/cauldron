@@ -8,6 +8,10 @@ function timezone_screen() {
   tz_menu
 }
 
+function timezone_auto() {
+  debug_log "timezone" 1 "selected UTC as timezone since none was configured"
+  ln -sf /usr/share/zoneinfo/UTC $FINALFILES/etc/localtime
+}
 
 tz_menu()  {
 
@@ -56,7 +60,7 @@ tz_menu()  {
 (UTC/GMT) or in local time? In universal it doesn't have
 to be re-set for dailight saving time, but it messes up
 broken OS's like MS Windows."      \
-        8 60                 ;then
+        0 0                 ;then
     debug_log "timezone" 1 "selected local time in hwclock"
     sed -i 's/^UTC=.*$/UTC=no/' ${FINALFILES}/etc/sysconfig/hwclock
   else

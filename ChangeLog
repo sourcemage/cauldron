@@ -1,3 +1,19 @@
+2005-11-23 Karsten Behrmann <BearPerson@sourcemage.org>
+	* deps-optional, deps-required: added some automated dependency tracking
+	* 10common: quench half-expected error messages
+	* architecture, timezone: add functions for when a step was skipped
+	* bootloader, debug, installation, kernel, nativeLanguageSupport,
+	  network, optionalSpell, services, timezone: more dialog auto-sizing
+	* debug: fix annoying bug with exit code
+	* diskStructure: fix md partition parsing; more intelligently exclude
+	  partitions in an md array; fix partition list
+	* installation: automate dependency checks ; add capability to auto-run
+	  some code for skipped steps.
+	* kernel: sanity-check system date for the kernel gpg check
+	* nativeLanguageSupport: add dependencies; add keymap_auto()
+	* optionalSpell: fix cross-mounting of /dev
+	* syslog: jump out early when no logger is selected
+
 2005-11-20 Karsten Behrmann <BearPerson@sourcemage.org>
 	* skeleton/etc/issue: change to not include ISO version (9811)
 	* install-list, optional-list: install sorcery-pubkeys automatically

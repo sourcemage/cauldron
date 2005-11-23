@@ -194,10 +194,11 @@ or partition your disks."
 
 
   run_dialog --title "Select partitons to create a RAID device from" \
-  --separate-output --item-help \
+  --separate-output                                                  \
   --checklist "Mark partitions to be made into the RAID array" 0 0 0 \
   "${LIST_PARTS[@]}" |
-    sed 's:^:/dev/:g'
+    sed 's:^[[:space:]]*:/dev/:g'
+  # If anyone knows how that whitespace creeps in there, I owe him a beer (Bear)
 }
 
 # Arguments:
@@ -251,7 +252,9 @@ dsr_sanity_check() {
 dsr_make_raid_config() {
   #generate the mdadm.conf
   echo 'DEVICE /dev/hd*[0-9] /dev/sd*[0-9]' > $FINALFILES/etc/mdadm.conf
-  mdadm --detail --scan -v >> $FINALFILES/etc/mdadm.conf
+  mdadm --detail --scan >> $FINALFILES/etc/mdadm.conf
+  mdadm --detail --scan -v >/tmp/md-devices
+  # Store devices used for partition selection
 }
 
 create_md_device() {
@@ -276,22 +279,25 @@ list_parts()  {
   # grepping a non-existant file gives an error
   local PARTITION SIZE
   touch /tmp/fstab
+  touch /tmp/md-devices
    cat /proc/partitions | awk '$3 !~ /^1$/ {print $4 " " $3}' | grep -v ram |
      grep -v disc | grep -v name | grep '^[^ ]*[0-9]' |
      while read PARTITION SIZE ;do #SUBSHELL!
        if [[ -n "$PARTITION" ]] && ! grep -q "^/dev/$PARTITION	" /tmp/fstab &&
-         ! grep -q "devices=\([^,]*,\)*$PARTITION\(,\|$\)" \
-           $FINALFILES/etc/mdadm.conf
+         ! grep -q "devices=\([^,]*,\)*/dev/$PARTITION\(,\|$\)" /tmp/md-devices
        then # don't do nil strings, partitions we mounted already, RAID parts
          echo "$PARTITION"
-         echo -n "Size: $(( SIZE / 1024 ))MB"
+         echo -n "Size: $(( SIZE / 1024 ))MB Type: "
          if [[ $PARTITION == md* ]] ;then
+           echo -n "RAID "
            mdadm --detail --brief /dev/$PARTITION |
              sed 's/^.*\(level.*\)UUID.*$/\1/'
          else
-           sfdisk -lq | grep "^/dev/$PARTITION" | cut -d$'\t' -f6
+           sfdisk -lq 2>/dev/null | # Bug in sfdisk makes it not honor -q
+           grep "^/dev/$PARTITION" | sed 's/^.*  //'
+           # The sed is ugly, and we'll have to change it
+           # whenever they change their output format... no choice though :-/
          fi
-         file -s /dev/$PARTITION
 # TODO: add type recognition
 # This old code did it:
 
@@ -342,10 +348,11 @@ or partition your disks."
     return 1
   fi
 
-  run_dialog                                                   \
-    --title "Partition Selection Menu" --item-help             \
-    --menu  "Select a partition to mount. Sizes are in blocks" \
-    0 0 0                                                     \
+  run_dialog                               \
+    --title "Partition Selection Menu"     \
+    --cancel-label "done"                  \
+    --menu  "Select a partition to mount." \
+    0 0 0                                  \
     "${LIST_PARTS[@]}"
 
 }

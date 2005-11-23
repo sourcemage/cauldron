@@ -21,10 +21,9 @@ syslog()  {
             "none"      "no logger"                                    \
             "don't want/need a system logger")                        &&
   debug_log "syslog" 1 "Chose \"$logger\" as system logger"           &&
+  fill_dependency syslog $logger                                      &&
+  if [[ $logger == "none" ]] ;then return 0 ;fi                       &&
   si_queue $logger                                                    &&
   sed -i "s/^syslog=.*$/syslog=$logger/" \
-    ${FINALFILES}/etc/sysconfig/facilities                            &&
-  fill_dependency syslog $logger
-
+    ${FINALFILES}/etc/sysconfig/facilities
 }
-

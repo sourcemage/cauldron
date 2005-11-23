@@ -105,7 +105,7 @@ function memory_menu() {
   local TEXT="$4"
   local DEF="$5"
   shift 5
-  local USEDEF="$(get_dependency "remember_$ID")"
+  local USEDEF="$(get_dependency "remember_$ID" 2>/dev/null)"
   USEDEF="${USEDEF:-"$DEF"}"
   local ANSWER
   ANSWER=$(run_dialog --title "$TITLE"      \
@@ -124,7 +124,7 @@ function memory_radio() {
   local TEXT="$4"
   local DEF="$5"
   shift 5
-  local USEDEF="$(get_dependency "remember_$ID")"
+  local USEDEF="$(get_dependency "remember_$ID" 2>/dev/null)"
   USEDEF="${USEDEF:-"$DEF"}"
 
   local -a ITEMS
@@ -153,7 +153,7 @@ function memory_radio_help() {
   local TEXT="$4"
   local DEF="$5"
   shift 5
-  local USEDEF="$(get_dependency "remember_$ID")"
+  local USEDEF="$(get_dependency "remember_$ID" 2>/dev/null)"
   USEDEF="${USEDEF:-"$DEF"}"
 
   local -a ITEMS

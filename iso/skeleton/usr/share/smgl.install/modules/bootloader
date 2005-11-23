@@ -52,7 +52,7 @@ bl_choose_target() {
 Master Boot Record of the disk that /boot is on
 or to the Boot Record of the /boot partition?"
     if run_dialog --yes-label "MBR" --no-label "Partition" \
-               --yesno "$QUESTION" 8 60 ;then
+               --yesno "$QUESTION" 0 0 ;then
       get_dependency disk-boot |
         sed -e 's/part[0-9]*$/disc/' -e 's/[0-9]*$//'
       # partX -> disc conversion for devfs, hdaX -> hda otherwise
@@ -64,7 +64,7 @@ or to the Boot Record of the /boot partition?"
 Master Boot Record of the disk that / is on
 or to the Boot Record of the / partition?"
     if run_dialog --yes-label "MBR" --no-label "Partition" \
-               --yesno "$QUESTION" 8 60 ;then
+               --yesno "$QUESTION" 0 0 ;then
       get_dependency disk-root |
         sed -e 's/part[0-9]*$/disc/' -e 's/[0-9]*$//'
       # partX -> disc conversion for devfs, hdaX -> hda otherwise

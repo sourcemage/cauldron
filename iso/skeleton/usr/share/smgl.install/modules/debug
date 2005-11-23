@@ -22,7 +22,7 @@ function debug_screen() {
     --item-help                    \
     --menu "Select the debugging level you want to change.
 Higher numbers mean more debugging." \
-    10 60 0                        \
+    0 0 0                        \
     "A" "debug dialog parameters"  \
     "Log all parameters that dialog is called with" \
     "B" "debug chroot'ed commands" \
@@ -97,7 +97,7 @@ function try_run() {
         "The failed command (exit code $rc) was:
 $*
 The (error) output was:
-$(cat $capfile)" 20 80
+$(cat $capfile)" 0 0
     fi
   else
     "$@"
@@ -157,7 +157,7 @@ function debug_log() {
   local func=$1
   local priority=$2
   shift 2
-  debug_is_on "$func" $priority || return
+  debug_is_on "$func" $priority || return 0
   lock_resource INSTALLER_DEBUG
   if [ $# == 1 ] ;then
     echo "$(date +%H:%M:%S) ${func}($$)@$priority: $*" >>${INSTALLER_DEBUG}

@@ -9,25 +9,30 @@ nls_screen()  {
   local COMMAND
 
   mkdir -p ${FINALFILES}/etc/profile.d
-  fill_dependency keymap defkeymap #So it's picked up right in the help line
 
-  while
+  while true ;do
+
+    local curkeymap
+    check_dependency keymap            &&
+    curkeymap=$(get_dependency keymap) ||
+    curkeymap="unset"
 
       FONT_HELP="Select a new default console font."
-    KEYMAP_HELP="Select a new default keyboard mapping. (is $(get_dependency keymap))"
-      LANG_HELP="Select a new default language. (currently is $LANG)"
+    KEYMAP_HELP="Select a new default keyboard mapping. (is $curkeymap)"
+      LANG_HELP="Select a new default language. (currently is \"$LANG\")"
     EDITOR_HELP="Select a new default editor."
     COMMAND=`run_dialog  --cancel-label  "Continue"                 \
              --ok-label "Select"                                    \
              --title  "Native Language Support Menu"                \
              --item-help                                            \
              --menu "Select options to customize your SMGL install" \
-             7 60 0                                                 \
+             0 0 0                                                 \
              "Font"    "Font     Menu "  "$FONT_HELP"               \
              "Keymap"  "Keymap   Menu "  "$KEYMAP_HELP"             \
              "Lang"    "Language Menu "  "$LANG_HELP"               \
-             "Editor"  "Editor   Menu "  "$EDITOR_HELP"`
-  do
+             "Editor"  "Editor   Menu "  "$EDITOR_HELP"`           ||
+    return 0
+
     case  $COMMAND in
         Keymap)  keymap_menu  ;;
           Font)  font_menu    ;;
@@ -36,7 +41,6 @@ nls_screen()  {
     esac
   done
 
-  return 0
 }
 
 keymap_menu()  {
@@ -58,6 +62,10 @@ keymap_menu()  {
 
 }
 
+keymap_auto() {
+  sed -i "s/^KEYMAP=.*$/KEYMAP=defkeymap/" ${FINALFILES}/etc/sysconfig/keymap
+}
+
 font_menu()  {
 
   local FONT
@@ -71,6 +79,7 @@ font_menu()  {
   debug_log "NLS" 1 "Chose console font $FONT"           &&
 
   consolechars  -f  $FONT                                &&
+  fill_dependency font $FONT                             &&
 
   sed -i "s/^CONSOLECHARS_ARGS=.*$/CONSOLECHARS_ARGS=\"-f $FONT\"/" \
     ${FINALFILES}/etc/sysconfig/keymap                   &&
@@ -90,6 +99,7 @@ select your preferred language."
   LANG=$(memory_menu "LANG" "Language Selection Menu" \
          "" "$HELP" "POSIX" "${LANGS[@]}" ) &&
   export LANG                               &&
+  fill_dependency lang $LANG                &&
 
   run_template $TEMPLATE_DIR/lc.sh $TEMPLATE_DIR/nls.patterns \
     >${FINALFILES}/etc/profile.d/lc.sh      &&
@@ -131,6 +141,7 @@ uses elvis during the install, vim on the final system."
   debug_log "NLS" 1 "chose $REAL_ED as EDITOR"      &&
 
   si_queue $REAL_ED                                 &&
+  fill_dependency editor $REAL_ED                      &&
 
   run_template $TEMPLATE_DIR/editor.sh $TEMPLATE_DIR/nls.patterns \
     >${FINALFILES}/etc/profile.d/editor.sh

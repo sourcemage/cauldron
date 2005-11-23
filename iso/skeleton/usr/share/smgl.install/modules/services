@@ -43,7 +43,7 @@ An X means they are enabled (usually for a good reason)"
   local SCRIPTS
 
   SCRIPTS=$(run_dialog --title "Select init scripts to be run at boot time" \
-             --single-quoted --checklist "$HELP" 10 60 0          \
+             --single-quoted --checklist "$HELP" 0 0 0                      \
              "${SCRIPTLIST[@]}")                                           &&
   echo $SCRIPTS | tr ' ' $'\n' >$TMP_DIR/enabled-scripts                   &&
   # dialog gives us a space-seperated list

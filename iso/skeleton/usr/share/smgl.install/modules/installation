@@ -7,30 +7,34 @@ function setup_target() {
 }
 
 function install_screen() {
-  need_dependency disk          &&
-  need_dependency install_start &&
-  need_dependency timezone      &&
-  need_dependency linux         &&
-  need_dependency syslog        &&
-  need_dependency bootloader    &&
-  need_dependency network       &&
-  need_dependency dev_format    ||
-  {
-    echo "Not all dependencies fulfilled, refusing to finish install"
-    return 1
-  }
+  local depcy
+  while read depcy ;do
+    need_dependency ${depcy%%\#*} ||
+    {
+      echo "Not all dependencies fulfilled, refusing to finish install"
+      return 1
+    }
+  done <$DATA_DIR/deps-required
+
+  # Check for optional dependencies and run ${name}_auto if needed
+  while read depcy ;do
+    depcy=${depcy%%\#*} # Strips trailing spaces
+    check_dependency "$depcy"               ||
+    ! declare -F "${depcy}_auto" >/dev/null || # Skip if function is undefined
+    ${depcy}_auto
+  done <$DATA_DIR/deps-optional
 
   in_finish &&
 
   # This is the place for release-note bigass warnings
-  run_dialog --msgbox \
+  run_dialog --cr-wrap --msgbox \
 "Once you have booted your new system, it's recommmended to:
 * ensure that networking is up
 * run \"sorcery update\" to update the sorcery scripts
 * run \"scribe update\" to update the spell lists
 * configure sorcery (run \"sorcery\", go to Options)
 * run \"sorcery rebuild\" to build everything with your
-  chosen optimizations" 15 65
+  chosen optimizations" 0 0
 }
 
 # This one returns a nice list of libraries that a binary is linked against,
@@ -141,7 +145,7 @@ in_finish() {
   ln -sf sourcemage-release ${TARGET}/etc/release
   run_dialog --msgbox "The system and all the configuration you have selected
 have been installed. The only thing left to do is to enter
-the password for the root account." 9 60
+the password for the root account." 0 0
   chroot_cmd passwd root
   fill_dependency install_finish
 }

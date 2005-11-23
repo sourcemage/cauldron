@@ -13,11 +13,12 @@ nw_ethernet()  {
 # after all. Maybe semi-intelligently queue those needed? (as in "wlan0" or
 # "MODE=dynamic")
   si_queue $(run_dialog --single-quoted --checklist \
-                   "Here is a list of spells you may need. Select those wanted." 10 60 0  \
-                   "dhcpcd" "DHCP is a protocol to automatically get IP and routing info" "off" \
-                   "pcmcia-cs" "Drivers for PCMCIA or PC Card support" "off" \
-                   "wireless_tools" "Tools to configure wireless connections" "off" \
-                   "ndiswrapper" "NDISwrapper provides support for wireless cards with win-only drivers" "off")
+             "Here is a list of spells you may need. Select those wanted."    \
+             0 0 0                                                            \
+ "dhcpcd" "DHCP is a protocol to automatically get IP and routing info" "off" \
+ "pcmcia-cs"                    "Drivers for PCMCIA or PC Card support" "off" \
+ "wireless_tools"             "Tools to configure wireless connections" "off" \
+ "ndiswrapper"       "support for wireless cards with win-only drivers" "off" )
 
   # configure netconf on the CD (requires a writable /etc) and next
   # copy the configuration to the target.
@@ -51,12 +52,13 @@ nw_ethernet()  {
 nw_ppp()  {
 
   si_queue $(run_dialog --single-quoted --checklist \
-                   "Choose required tools to install" 11 60 0 \
-                   "dhcpcd" "DHCP is a protocol to automatically get IP and routing info" "off" \
-                   "pcmcia-cs" "Drivers for PCMCIA or PC Card support" "off" \
-                   "wireless_tools" "Tools to configure wireless connections" "off" \
-                   "ndiswrapper" "NDISwrapper provides support for wireless cards with win-only drivers" "off" \
-                   "rp-pppoe" "Roaring Penguin PPPoE provides PPP-over-Ethernet, the usual protocol for DSL")
+             "Here is a list of spells you may need. Select those wanted."    \
+             0 0 0                                                            \
+ "dhcpcd" "DHCP is a protocol to automatically get IP and routing info" "off" \
+ "pcmcia-cs"                    "Drivers for PCMCIA or PC Card support" "off" \
+ "wireless_tools"             "Tools to configure wireless connections" "off" \
+ "ndiswrapper"       "support for wireless cards with win-only drivers" "off" \
+ "rp-pppoe"     "Roaring Penguin for PPP-over-Ethernet, common for DSL" "off" )
   # TODO: Check why PPPoE is here
 
   local USERNAME PASSWORD NUMBER PORT
@@ -90,11 +92,12 @@ nw_pppoe()  {
 #        Need to have someone who knows adsl-setup look over this (Bear, 2005-05-21)
 
   si_queue $(run_dialog --single-quoted --checklist \
-                   "Choose required tools to install" 10 60 0 \
-                   "dhcpcd" "DHCP is a protocol to automatically get IP and routing info" "off" \
-                   "pcmcia-cs" "Drivers for PCMCIA or PC Card support" "off" \
-                   "wireless_tools" "Tools to configure wireless connections" "off" \
-                   "ndiswrapper" "NDISwrapper provides support for wireless cards with win-only drivers" "off")
+             "Here is a list of spells you may need. Select those wanted."    \
+             0 0 0                                                            \
+ "dhcpcd" "DHCP is a protocol to automatically get IP and routing info" "off" \
+ "pcmcia-cs"                    "Drivers for PCMCIA or PC Card support" "off" \
+ "wireless_tools"             "Tools to configure wireless connections" "off" \
+ "ndiswrapper"       "support for wireless cards with win-only drivers" "off" )
 
   adsl-setup &&
   debug_log "network" 2 "Setting up adsl via adsl-setup" &&
@@ -121,7 +124,7 @@ system, but rather as a starting point for a system
 that should be regularly updated. It is advised that you
 get sorcery and grimoire updates regularly and download
 the package sources. Please check the sorcery manpage for a
-description on how to do this manually." 15 65
+description on how to do this manually." 0 0
   fill_dependency network none
 }
 
@@ -159,6 +162,7 @@ nw_main()  {
   # reset hostname to user specified
   hostname $(cat /etc/hostname)
   [[ -e $TARGET/etc/hosts ]] && # If netkit-base installed it yet
-  sed -i "s/^127.0.0.1.*/127.0.0.1	localhost	$(cat /etc/hostname)" \
+  sed -i "s/^127.0.0.1.*/127.0.0.1	localhost	$(cat /etc/hostname)/" \
     $TARGET/etc/hosts
+  true
 }
