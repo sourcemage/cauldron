@@ -1,3 +1,7 @@
+2005-12-1 David Kowis <dkowis@sourcemage.org>
+	* diskStructure: fixed bug #9809, Made a menu a bit more intellgently
+	  named
+	
 2005-11-23 Karsten Behrmann <BearPerson@sourcemage.org>
 	* deps-optional, deps-required: added some automated dependency tracking
 	* 10common: quench half-expected error messages

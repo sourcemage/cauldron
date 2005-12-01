@@ -40,7 +40,7 @@ non-xfs /boot partition."
       0 0 0                         \
       "A" "[*]Partition Disks"   "Create partitions on your drives" \
       "B" "[*]Make MD RAID Devices" "Create RAID devices using mdadm"    \
-      "C" "Format and/or mount filesystems" "Define where the partitions should go" \
+	  "C" "Format/mount filesystems and swap" "Format and mount your partitions" \
       "D" "Done"        "We're all done here, let's get on with it" ` ||
     return 1 #return with a failure if canceled
 
