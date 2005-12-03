@@ -22,12 +22,12 @@ function isocmd_gversion() {
 }
 
 if [[ -d $ISO_DIR/isolinux ]] ;then
-  sed -i "s/@INITRD_SIZE@/$(cat $DATA_DIR/initrd.size)/g" \
+  sed -i "s/@INITRD_SIZE@/$(cat $STATE_DIR/initrd.size)/g" \
     $ISO_DIR/isolinux/isolinux.cfg
   sed -i "s/@GRIMOIRE_VERSION@/$(isocmd_gversion)/g" \
     $ISO_DIR/isolinux/isolinux.msg
 elif [[ -d $ISO_DIR/yaboot ]] ;then
-  sed -i "s/@INITRD_SIZE@/$(cat $DATA_DIR/initrd.size)/g" \
+  sed -i "s/@INITRD_SIZE@/$(cat $STATE_DIR/initrd.size)/g" \
     $ISO_DIR/yaboot/yaboot.conf
   sed -i "s/@GRIMOIRE_VERSION@/$(isocmd_gversion)/g" \
     $ISO_DIR/yaboot/yaboot.msg
