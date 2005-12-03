@@ -2272,7 +2272,7 @@ CONFIG_LOG_BUF_SHIFT=16
 # CONFIG_DEBUG_FS is not set
 # CONFIG_XMON is not set
 # CONFIG_BDI_SWITCH is not set
-# CONFIG_BOOTX_TEXT is not set
+CONFIG_BOOTX_TEXT=y
 
 #
 # Security options

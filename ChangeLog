@@ -11,6 +11,9 @@
 	* diskStructure: fixed bug #9809, Made a menu a bit more intellgently
 	  named
 
+2005-11-26 Karsten Behrmann <BearPerson@sourcemage.org>
+	* config-2.6.ppc: enable early boot debugging console
+
 2005-11-23 Karsten Behrmann <BearPerson@sourcemage.org>
 	* deps-optional, deps-required: added some automated dependency tracking
 	* 10common: quench half-expected error messages
@@ -35,6 +38,10 @@
 	* diskStructure: fail out with no disks/partitions (9764)
 	  auto-size dialogs ; repeat partition mounting until user quits (9644)
 
+2005-11-20 Karsten Behrmann <BearPerson@sourcemage.org>
+	* bootloader: workarounds for yaboot,
+	  thanks to alcove on IRC for testing
+
 2005-11-18 Karsten Behrmann <BearPerson@sourcemage.org>
 	* iso.packages: add c++ libs for groff for man
 	* installer.sh: run with bash, not sh
@@ -53,6 +60,9 @@
 2005-11-14 Karsten Behrmann <BearPerson@sourcemage.org>
 	* network, 30spellinstall: add hostname to /etc/hosts (bug 10080)
 	* skeleton/etc/hosts: deleted, is provided by netkit-base
+
+2005-11-10 Karsten Behrmann <BearPerson@sourcemage.org>
+	* smgl.multi, config-2.6.ppc: integrate ppc fixes from devel
 
 2005-11-09 Karsten Behrmann <BearPerson@sourcemage.org>
 	* diskStructure: attempt to give more info for partitions
