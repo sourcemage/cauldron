@@ -147,5 +147,10 @@ in_finish() {
 have been installed. The only thing left to do is to enter
 the password for the root account." 0 0
   chroot_cmd passwd root
+  if confirm "It is highly recommended to create and use a regular
+(non-root) user account for all work, and only su to root
+when neccessary. Do you want to create an user now?" ;then
+    /usr/sbin/fancy-useradd.sh $TARGET
+  fi
   fill_dependency install_finish
 }

@@ -1,7 +1,16 @@
+2005-12-03 Karsten Behrmann <BearPerson@sourcemage.org>
+	* mkinitrd, iso.command, isolinux.{cfg,msg}, yaboot.{conf,msg}:
+	  Insert initrd size and grimoire version just before rolling the ISO
+	  (bug 9200)
+	* skeleton/etc/{group,passwd,shadow}: add/move standard groups
+	* skeleton/share/smgl.install/group-descriptions, modules/installation,
+	  skeleton/usr/sbin/fancy-useradd.sh: fancy user addition script (9812)
+	* diskStructure: uppercase button
+
 2005-12-1 David Kowis <dkowis@sourcemage.org>
 	* diskStructure: fixed bug #9809, Made a menu a bit more intellgently
 	  named
-	
+
 2005-11-23 Karsten Behrmann <BearPerson@sourcemage.org>
 	* deps-optional, deps-required: added some automated dependency tracking
 	* 10common: quench half-expected error messages

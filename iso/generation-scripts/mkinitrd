@@ -51,6 +51,9 @@ function mk_initrd_file() {
 
   gzip -c $tmp_file >$2
 
+  # Store size for inclusion in bootloader configs
+  echo "${initrd_size}" >${2%.gz}.size
+
   rm -rf $tmp_file $tmp_mountdir
   echo "initrd is compressed $(du -ks $2 | cut -d$'\t' -f1)K, uncompressed ${initrd_size}K."
 }
