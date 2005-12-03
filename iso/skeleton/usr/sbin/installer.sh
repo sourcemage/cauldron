@@ -94,15 +94,21 @@ And it provides the conveniences of:
 # SECTION: ???
 final_screen() {
     # copy the install-debug log 
-    if [ -d ${TARGET}/var/log ] && [ -s /tmp/installer-debug ]
-      then cp -f $INSTALLER_DEBUG \
-        ${TARGET}/var/log/SMGL-$INSTALLER_VERSION-install.log
+  if [ -d ${TARGET}/var/log ] && [ -s $INSTALLER_DEBUG ] ;then
+    cp $INSTALLER_DEBUG ${TARGET}/var/log/SMGL-$INSTALLER_VERSION-install.log
+    if grep -q 'ERROR' $INSTALLER_DEBUG ;then
+      display_message \
+"There appear to have been errors during \
+the install. In order to help debugging them, \
+could you please somehow mail the file
+/var/log/SMGL-$INSTALLER_VERSION-install.log
+(on the installed system) \
+to iso@sourcemage.org? Please include \
+\"[ISO debugging log]\" in the e-mail subject."
     fi
+  fi
 
-    PROMPT="Reboot now?" 
-    if  confirm  "${PROMPT}";  then
-        exec shutdown -r -q now
-    fi
+  exec shutdown -r -q now
 }
 
 # shells out
@@ -190,10 +196,10 @@ which they appear."
           "?" "[*]Installation and help notes" "A help text on the installer" \
           "B" "[*]Pre-installation defaults settings" "Select default language, keymap, font and editor" \
           "C" "Disk Structure" "Partition, format, and mount your disk" \
-          "D" "Select Timezone" "Select this box's timezone" \
+          "D" "[*]Select Timezone" "Select this box's timezone" \
           "E" "[*]Architecture Optimizations" "Select Architecture and Optimizations" \
           "F" "Select Linux Kernel" "Determine wether to compile or install the default kernel" \
-          "G" "Configure Log System" "Select a daemon for system logging, or none!" \
+          "G" "[*]Configure Log System" "Select a daemon for system logging, or none!" \
           "H" "Configure Bootloader" "Configure a bootloader for this box" \
           "I" "Configure Networking" "Configure this box's network" \
           "J" "Misc. Configuration" "Select some extra spells to install and configure a bit." \

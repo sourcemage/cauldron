@@ -85,16 +85,16 @@ function opt_choose_dev() {
       "udev")
              si_queue udev
              pushd $DEVROOT >/dev/null
-             /sbin/MAKEDEV std console fd
-             mknod initctl p
+             try_run /sbin/MAKEDEV std console fd
+             try_run mknod initctl p
              popd >/dev/null
              fill_dependency dev_format udev
            ;;
     "static")
              cp /sbin/MAKEDEV $DEVROOT/MAKEDEV
              pushd $DEVROOT >/dev/null
-             ./MAKEDEV generic-nopty md
-             mknod initctl p
+             try_run ./MAKEDEV generic-nopty md
+             try_run mknod initctl p
              popd >/dev/null
              fill_dependency dev_format static
            ;;

@@ -1,4 +1,9 @@
 2005-12-03 Karsten Behrmann <BearPerson@sourcemage.org>
+	* skeleton/etc/sorcery/local/{config,config.ppc}: add def. arch (8757)
+	* installer.sh: add notice about errors in install; fix bug 9657,
+	  mark 2 steps as optional
+	* modules/*: run external commands with try_run (9643)
+	* installation: fix bug 9808
 	* mkinitrd, iso.command, isolinux.{cfg,msg}, yaboot.{conf,msg}:
 	  Insert initrd size and grimoire version just before rolling the ISO
 	  (bug 9200)

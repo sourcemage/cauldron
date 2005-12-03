@@ -110,7 +110,7 @@ $(cat $capfile)" 0 0
     fi >&2
   fi
   if [[ $rc != 0 ]] ;then
-    debug_log "error" -1 "$1 failed (rc=$rc)" "$@" "error:" "$(cat $capfile)"
+    debug_log "ERROR" -1 "$1 failed (rc=$rc)" "$@" "error:" "$(cat $capfile)"
   else
     debug_log "tryrun" 3 "$1 executed successfully, the full command was" \
               "$@" "Output was" "$(cat $capfile)"

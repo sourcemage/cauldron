@@ -47,9 +47,9 @@ tz_menu()  {
   debug_log "timezone" 1 "selected time zone $selectedTZ"
 
   # configure the local time zone
-  ln  -sf  "$selectedTZ" "${FINALFILES}/etc/localtime"
+  try_run ln -sf "$selectedTZ" "${FINALFILES}/etc/localtime"
   # and /etc/ is writable now too
-  ln  -sf  "$selectedTZ" /etc/localtime
+  try_run ln -sf "$selectedTZ" /etc/localtime
   fill_dependency timezone "$selectedTZ"
 
   if run_dialog                    \
@@ -62,10 +62,10 @@ to be re-set for dailight saving time, but it messes up
 broken OS's like MS Windows."      \
         0 0                 ;then
     debug_log "timezone" 1 "selected local time in hwclock"
-    sed -i 's/^UTC=.*$/UTC=no/' ${FINALFILES}/etc/sysconfig/hwclock
+    try_run sed -i 's/^UTC=.*$/UTC=no/' ${FINALFILES}/etc/sysconfig/hwclock
   else
     debug_log "timezone" 1 "selected GMT in hwclock"
-    sed -i 's/^UTC=.*$/UTC=yes/' ${FINALFILES}/etc/sysconfig/hwclock
+    try_run sed -i 's/^UTC=.*$/UTC=yes/' ${FINALFILES}/etc/sysconfig/hwclock
   fi
 }
 

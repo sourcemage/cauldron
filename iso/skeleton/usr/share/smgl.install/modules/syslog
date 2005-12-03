@@ -24,6 +24,6 @@ syslog()  {
   fill_dependency syslog $logger                                      &&
   if [[ $logger == "none" ]] ;then return 0 ;fi                       &&
   si_queue $logger                                                    &&
-  sed -i "s/^syslog=.*$/syslog=$logger/" \
+  try_run sed -i "s/^syslog=.*$/syslog=$logger/" \
     ${FINALFILES}/etc/sysconfig/facilities
 }

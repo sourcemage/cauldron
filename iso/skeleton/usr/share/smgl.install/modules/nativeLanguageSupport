@@ -56,7 +56,7 @@ keymap_menu()  {
   unset KEYMAPS                                         &&
 
   debug_log "NLS" 1 "Chose keymapping $KEYMAP"          &&
-  loadkeys  $KEYMAP                                     &&
+  try_run loadkeys  $KEYMAP                             &&
   fill_dependency keymap $KEYMAP                        &&
   sed -i "s/^KEYMAP=.*$/KEYMAP=$KEYMAP/" ${FINALFILES}/etc/sysconfig/keymap
 
@@ -78,7 +78,7 @@ font_menu()  {
 
   debug_log "NLS" 1 "Chose console font $FONT"           &&
 
-  consolechars  -f  $FONT                                &&
+  try_run consolechars  -f  $FONT                        &&
   fill_dependency font $FONT                             &&
 
   sed -i "s/^CONSOLECHARS_ARGS=.*$/CONSOLECHARS_ARGS=\"-f $FONT\"/" \

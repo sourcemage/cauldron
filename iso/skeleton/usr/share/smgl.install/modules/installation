@@ -84,35 +84,39 @@ in_start() {
   done <${DATA_DIR}/symlinks
 
   # do /proc and /dev - lazy
-  mount --rbind /dev ${TARGET}/dev
-  mount -t proc proc $TARGET/proc
+  try_run mount --rbind /dev ${TARGET}/dev
+  try_run mount -t proc proc $TARGET/proc
 
   # Install sorcery
   pushd /tmp >/dev/null                                    &&
   tar -xjf /var/cache/sorcery/sorcery-$SORCERY_VERSION.tar.bz2 &&
   cd sorcery                                               &&
-  ./install ${TARGET}                                      &&
+  try_run -e "installing sorcery" ./install ${TARGET}      &&
   popd >/dev/null                                          &&
   rm -rf /tmp/sorcery                                      &&
 
   # Copy sources
-  cp --parents -f /var/spool/sorcery/* ${TARGET}           &&
+  try_run cp --parents -f /var/spool/sorcery/* ${TARGET}   &&
 
   # Install grimoires
   mkdir -p ${TARGET}/var/lib/sorcery/codex                 &&
-  tar -xjf /var/lib/sorcery/codex/$GRIMOIRE_VERSION.tar.bz2 -C \
-      ${TARGET}/var/lib/sorcery/codex                      &&
+  try_run tar -xjf /var/lib/sorcery/codex/$GRIMOIRE_VERSION.tar.bz2 \
+    -C ${TARGET}/var/lib/sorcery/codex                     &&
   echo "GRIMOIRE_DIR[0]=/var/lib/sorcery/codex/$GRIMOIRE_VERSION" \
        >${TARGET}/etc/sorcery/local/grimoire
   echo "FROM_URL=http://codex.sourcemage.org/$GRIMOIRE_VERSION.tar.bz2" \
        >$TARGET/var/lib/sorcery/codex/$GRIMOIRE_VERSION/GRIMOIRE
+  cut -d: -f2 /var/state/sorcery/packages | tail -n 1 \
+       >$TARGET/var/state/sorcery/$GRIMOIRE_VERSION.lastupdate
+  # Store date for ChangeLog, we hope the /v/s/s/packages date is reasonably
+  #   close to ISO creation date (it currently is equal -Bear, 2005-12-03)
 
   # Install alien config files
-  cp --parents -f \
+  try_run cp --parents -f \
     /etc/{passwd,group,shadow,ld.so.conf,issue,modules,modules.conf,nsswitch.conf,shells} \
     ${TARGET}
-  chmod 0400 $TARGET/etc/shadow
-  chown root:root $TARGET/etc/shadow
+  try_run chmod 0400 $TARGET/etc/shadow
+  try_run chown root:root $TARGET/etc/shadow
 
   # Install binaries that may be needed (for whatever it's worth,
   #  we'll be waiting for the basesystem to be there for most purposes anyway)
@@ -146,7 +150,7 @@ in_finish() {
   run_dialog --msgbox "The system and all the configuration you have selected
 have been installed. The only thing left to do is to enter
 the password for the root account." 0 0
-  chroot_cmd passwd root
+  try_run -e "password for root" chroot_cmd passwd root
   if confirm "It is highly recommended to create and use a regular
 (non-root) user account for all work, and only su to root
 when neccessary. Do you want to create an user now?" ;then

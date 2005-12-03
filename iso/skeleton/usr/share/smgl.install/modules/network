@@ -33,7 +33,7 @@ nw_ethernet()  {
     local ETHDEV
     pushd /etc/sysconfig/network >/dev/null
     for ETHDEV in *.dev ;do
-      ifup ${ETHDEV%.dev}
+      try_run ifup ${ETHDEV%.dev}
     done                                                        &&
 
     cp -f /etc/resolv.conf  ${TARGET}/etc/resolv.conf           &&
@@ -75,8 +75,8 @@ nw_ppp()  {
 
 
   if confirm "Should a connection be started now?"; then
-    pon isp &&
-    cp -f /etc/resolv.conf  ${TARGET}/etc       &&
+    try_run pon isp                                &&
+    cp -f /etc/resolv.conf  ${TARGET}/etc          &&
     debug_log "network" 1 "starting ppp interface" &&
     fill_dependency network on ||
     fill_dependency network off
@@ -103,8 +103,8 @@ nw_pppoe()  {
   debug_log "network" 2 "Setting up adsl via adsl-setup" &&
 
   if confirm "Start that interface now ?"; then
-    adsl-start
-    cp -f /etc/resolv.conf  ${TARGET}/etc       &&
+    try_run adsl-start                              &&
+    cp -f /etc/resolv.conf  ${TARGET}/etc           &&
     debug_log "network" 1 "starting adsl interface" &&
     fill_dependency network on ||
     fill_dependency network off
