@@ -136,10 +136,8 @@ fdisc_menu()  {
     debug_log "diskStructure" 2 "Running mac-fdisk on $DISC"
     mac-fdisk "$DISC"
   else
-    PROG=`run_dialog                                                  \
-      --title "Partitioning Menu"                                     \
-      --menu  "Please choose the program for partitioning $DISC"      \
-      0 0 0                                                         \
+    PROG=`memory_menu "fdisc_tool" "Partitioning Menu" ""             \
+      "Please choose the program for partitioning $DISC" "cfdisk"     \
       "cfdisk" "Menu-driven partitioning program. Easy to use."       \
       "fdisk"  "Text-based. A little harder to use, more features"    \
       "parted" "Text-based. Many features, such as moving partitions" ` &&
@@ -166,14 +164,13 @@ dsr_device_name() {
 }
 
 dsr_raid_level_menu() {
-  run_dialog --title "Select RAID level" \
-    --single-quoted \
-    --radiolist "Select a RAID level" 0 0 0 \
-    "0" "Striping" off \
-    "1" "Mirroring" off \
-    "4" "Independent Data disks with shared Parity disk" off \
-    "5" "Independent data disks with distributed parity" off \
-    "6" "Independent data disks with dual distributed parity" off
+  memory_menu "raidlevel" "Select RAID level" ""         \
+    "Select a RAID level" "1"                            \
+    "0" "Striping"                                       \
+    "1" "Mirroring"                                      \
+    "4" "Independent Data disks with shared Parity disk" \
+    "5" "Independent data disks with distributed parity" \
+    "6" "Independent data disks with dual distributed parity"
 #    "3" "Parallel transfer with parity" off \
 #    "2" "Hamming code ECC" off \
 }
@@ -359,10 +356,8 @@ or partition your disks."
 
 get_filesystem()  {
 
-  run_dialog                                               \
-    --title "Filesystem Selection Menu"                    \
-    --menu  "Please select what filesystem to use for $1"  \
-    0 0 0                                                 \
+  memory_menu "filesystem" "Filesystem Selection Menu" ""  \
+    "Please select what filesystem to use for $1" "ext2"   \
     "ext2"      "Second Extended file system"              \
     "ext3"      "Second Extended journaling file system"   \
     "reiserfs"  "Reiserfs journaling file system"          \

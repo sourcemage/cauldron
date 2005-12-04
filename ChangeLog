@@ -1,3 +1,6 @@
+2005-12-04 Karsten Behrmann <BearPerson@sourcemage.org>
+	* diskStructure: add some remembering menus
+
 2005-12-03 Karsten Behrmann <BearPerson@sourcemage.org>
 	* skeleton/etc/sorcery/local/{config,config.ppc}: add def. arch (8757)
 	* installer.sh: add notice about errors in install; fix bug 9657,
