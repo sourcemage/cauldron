@@ -6,6 +6,7 @@ distcc
 screen
 procinfo
 pciutils
+lshw
 uptimed
 ethstatus
 #nmap

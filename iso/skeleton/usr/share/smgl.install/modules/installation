@@ -24,17 +24,7 @@ function install_screen() {
     ${depcy}_auto
   done <$DATA_DIR/deps-optional
 
-  in_finish &&
-
-  # This is the place for release-note bigass warnings
-  run_dialog --cr-wrap --msgbox \
-"Once you have booted your new system, it's recommmended to:
-* ensure that networking is up
-* run \"sorcery update\" to update the sorcery scripts
-* run \"scribe update\" to update the spell lists
-* configure sorcery (run \"sorcery\", go to Options)
-* run \"sorcery rebuild\" to build everything with your
-  chosen optimizations" 0 0
+  in_finish
 }
 
 # This one returns a nice list of libraries that a binary is linked against,

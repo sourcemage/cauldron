@@ -272,8 +272,11 @@ si_install_spell() {
   debug_log "spellinstall" 2 "considering to install $1"
 
   if si_is_fake_spell $1 ;then
+    echo "$1" >$SI_INSTALLING
     si_run_fake_spell $1
-    return $? #nothing left to do
+    local rc=$?
+    >$SI_INSTALLING # Clear file
+    return $rc #nothing left to do
   fi
 
   if grep -q "^$1:" ${TARGET}/var/state/sorcery/packages ;then

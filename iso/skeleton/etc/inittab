@@ -8,7 +8,7 @@ tty2:linux:/sbin/agetty -n -l /usr/sbin/bg-install.sh tty2 9600
 tty3:linux:/sbin/agetty -n -l /bin/login-shell.sh tty3 9600
 tty4:linux:/sbin/agetty -n -l /bin/login-shell.sh tty4 9600
 tty5:linux:/sbin/agetty -n -l /bin/login-shell.sh tty5 9600
-tty6:linux:/sbin/agetty -n -l /bin/login-shell.sh tty6 9600
+tty6:linux:/sbin/agetty -n -l /usr/bin/installer-help.sh tty6 9600
 
 finalprog     =
 quietrollback = yes

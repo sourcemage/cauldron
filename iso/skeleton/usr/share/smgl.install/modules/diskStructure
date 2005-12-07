@@ -11,7 +11,7 @@
 function disk_structure_screen() {
   # do things here to display the menu items for setting up disks
 
-  if check_dependency disk ;then
+  if check_dependency install_start ;then
     # Whoops! We already have stuff starting to install
     confirm "WARNING! Data is already being installed to the
 partition structure you have set up. Very bad things
@@ -182,8 +182,11 @@ dsr_choose_partitions() {
     LIST_PARTS
 
   if [[ ${#LIST_PARTS[@]} == 0 ]] ;then
-    display_message "No partitions could be found. Either all are
-already mounted, or none are available.
+    display_message "No partitions could be found. In order to avoid
+warnings about broken partition tables on bootup,
+it is recommended that you partition even the drives
+that you want to use in a RAID as a whole (into one
+big partition).
 You may need to load more modules (shell out, use modprobe)
 or partition your disks."
     return 1

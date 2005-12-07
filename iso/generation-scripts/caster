@@ -61,6 +61,15 @@ function filter_dirs() {
   done
 }
 
+function get_updated() {
+  mkdir -p /tmp/get_updated
+  # We don't know the tablet date, so we can't extract the file directly
+  tar -C /tmp/get_updated -xjf "$1" var/state/sorcery/tablet
+  cat /tmp/get_updated/var/state/sorcery/tablet/*/*/updated ||
+  echo 0
+  rm -rf /tmp/get_updated
+}
+
 if [ "$1" == "-c" ] ;then
   RECAST="-c"
   shift
@@ -84,7 +93,7 @@ for spell in "$@" ; do
   cachefile=${INSTALL_CACHE}/${SPELL}-${VERSION}-${HOST}.tar${EXTENSION}
   if [ $RECAST ] ||
      ! test -e $cachefile ||
-     test $UPDATED -gt $(stat -c "%y" $cachefile | cut -d' ' -f1 | tr -d '-')
+     test $UPDATED -gt $(get_updated $cachefile)
   then
 
     rm -f /tmp/old-install-log
@@ -101,7 +110,7 @@ for spell in "$@" ; do
     if ! test -e $cachefile || test $(date +%Y%m%d) -gt \
       $(stat -c "%y" $cachefile | cut -d' ' -f1 | tr -d '-')
     then # nonexisting or stale cache
-      if gaze install $spell >/dev/null ;then
+      if [[ $rc == 0 ]] && gaze install $spell >/dev/null ;then
         message "Forcing generation of cache"
         gaze install-full $spell | tar --no-recursion -cjf $cachefile -T -
       fi

@@ -61,6 +61,7 @@ begin_unpack linux
   mv ${UNPACK_DIR}/boot/vmlinu*-* ${ISO_DIR}/boot/linux
 end_unpack
 unpack lvm
+unpack lshw
 __SMGL_TEMPLATE_ONLY_ppc__unpack mac-fdisk
 unpack make # Who needs this?
 unpack man

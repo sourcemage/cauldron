@@ -1,7 +1,7 @@
 = About this Installation Help Guide
 
 This file is located at
-/etc/installerdata/install.guide on the install disk,
+/usr/share/smgl.install/install.guide on the install disk,
 in case you want to copy it to another computer and/or
 print it out. See the end for authors and copyright
 notice.

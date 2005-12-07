@@ -84,6 +84,23 @@ And it provides the conveniences of:
     --title  "The Benefits of Source Mage GNU/Linux"  \
     --msgbox "${MSG}" 0 0
 
+  run_dialog --cr-wrap             \
+    --title "About this installer" \
+    --msgbox                       \
+"This installer is developed by the Source Mage
+Cauldron team. Feedback is very welcome under
+bugs.sourcemage.org, or on IRC on irc.freenode.net,
+channel #sourcemage-cauldron.
+
+This installer installs spells in the background,
+you can view progress on tty2 if you want (press
+ALT+F2 or ALT+RightArrow).
+
+There's a help file accessible from the main menu
+on this installer, or on tty6 (ALT-F6 or
+ALT+LeftArrow).
+We hope you'll enjoy using our installer! ;-)" 0 0
+
     return 0
 }
 
@@ -93,6 +110,17 @@ And it provides the conveniences of:
 # file in the /tmp dir. then ask to reboot.
 # SECTION: ???
 final_screen() {
+
+  # This is the place for release-note bigass warnings
+  run_dialog --cr-wrap --msgbox \
+"Once you have booted your new system, it's recommmended to:
+* ensure that networking is up
+* run \"sorcery update\" to update the sorcery scripts
+* run \"scribe update\" to update the spell lists
+* configure sorcery (run \"sorcery\", go to Options)
+* run \"sorcery rebuild\" to build everything with your
+  chosen optimizations" 0 0
+
     # copy the install-debug log 
   if [ -d ${TARGET}/var/log ] && [ -s $INSTALLER_DEBUG ] ;then
     cp $INSTALLER_DEBUG ${TARGET}/var/log/SMGL-$INSTALLER_VERSION-install.log
@@ -196,15 +224,16 @@ which they appear."
           "?" "[*]Installation and help notes" "A help text on the installer" \
           "B" "[*]Pre-installation defaults settings" "Select default language, keymap, font and editor" \
           "C" "Disk Structure" "Partition, format, and mount your disk" \
-          "D" "[*]Select Timezone" "Select this box's timezone" \
-          "E" "[*]Architecture Optimizations" "Select Architecture and Optimizations" \
-          "F" "Select Linux Kernel" "Determine wether to compile or install the default kernel" \
-          "G" "[*]Configure Log System" "Select a daemon for system logging, or none!" \
-          "H" "Configure Bootloader" "Configure a bootloader for this box" \
-          "I" "Configure Networking" "Configure this box's network" \
-          "J" "Misc. Configuration" "Select some extra spells to install and configure a bit." \
-          "K" "Install Source Mage GNU/Linux" "Install all left to be done" \
-          "L" "[*]Choose Services to Run at Boot (expert)" "Select which services to start at boot" \
+          "D" "Start Installation" "Start everything, no going back to mounting now"
+          "E" "[*]Select Timezone" "Select this box's timezone" \
+          "F" "[*]Architecture Optimizations" "Select Architecture and Optimizations" \
+          "G" "Select Linux Kernel" "Determine wether to compile or install the default kernel" \
+          "H" "[*]Configure Log System" "Select a daemon for system logging, or none!" \
+          "I" "Configure Bootloader" "Configure a bootloader for this box" \
+          "J" "Configure Networking" "Configure this box's network" \
+          "K" "Misc. Configuration" "Select some extra spells to install and configure a bit." \
+          "L" "Install Source Mage GNU/Linux" "Install all left to be done" \
+          "M" "[*]Choose Services to Run at Boot (expert)" "Select which services to start at boot" \
           "X" "Done" "Exit! Done! Finito!" \
           "S" "[*]Shell" "Shell out perhaps to load modules" \
           "R" "[*]Restart Installation" "Resets everything and begins installation again" \
@@ -216,15 +245,16 @@ which they appear."
       A) intro_screen     ;;
       B) nls_screen       ;;
       C) disk_structure_screen ;;
-      D) timezone_screen  ;;
-      E) arch_screen      ;;
-      F) kernel_screen    ;;
-      G) logger_screen    ;;
-      H) bootloader_screen ;;
-      I) network_screen   ;;
-      J) optional_screen  ;;
-      K) install_screen   ;;
-      L) services_screen  ;; # Yes, works on the installed files and does
+      D) setup_target     ;;
+      E) timezone_screen  ;;
+      F) arch_screen      ;;
+      G) kernel_screen    ;;
+      H) logger_screen    ;;
+      I) bootloader_screen ;;
+      J) network_screen   ;;
+      K) optional_screen  ;;
+      L) install_screen   ;;
+      M) services_screen  ;; # Yes, works on the installed files and does
 # nothing else, so has to be run after target is fully set up.
       X) final_screen     ;;
       S) shell            ;;
@@ -256,9 +286,7 @@ increment_menu_pointer() {
   case $1 in
     A) RETVALUE="B"  ;;
     B) RETVALUE="C"  ;;
-    C) RETVALUE="D"
-      setup_target
-      ;;
+    C) RETVALUE="D"  ;;
     D) RETVALUE="E"  ;;
     E) RETVALUE="F"  ;;
     F) RETVALUE="G"  ;;
@@ -266,8 +294,9 @@ increment_menu_pointer() {
     H) RETVALUE="I"  ;;
     I) RETVALUE="J"  ;;
     J) RETVALUE="K"  ;;
-    K) RETVALUE="X"  ;;
+    K) RETVALUE="L"  ;;
     L) RETVALUE="X"  ;;
+    M) RETVALUE="X"  ;;
     R) RETVALUE="B"  ;; #reset the installer
     *) `dialog --infobox "HOLY CRAPOLA got $1 for a menu item" 10 60; sleep 2`;;
   esac
