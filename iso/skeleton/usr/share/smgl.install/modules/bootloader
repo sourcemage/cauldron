@@ -200,7 +200,7 @@ bl_lilo_install() {
 #-----------YABOOT-------------------
 # TODO: Have someone who knows yaboot look over this
 
-bootloader_yaboot_conf() {
+bl_yaboot_conf() {
 
   # yaboot workarounds
   # It also wants /etc/fstab to exist for whatever reason
@@ -211,7 +211,7 @@ bootloader_yaboot_conf() {
   # yabootconfig uses df, which needs /etc/mtab
   create_etc_mtab
   # hfsutils are required to install yaboot
-  si_queue_now hfsutils
+  si_wait hfsutils
 
   local BL_BOOTLOC
   local BL_KVERSION
@@ -259,5 +259,3 @@ bl_yaboot_install() {
   fi
 
 }
-
-
