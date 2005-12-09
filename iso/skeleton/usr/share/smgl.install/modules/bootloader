@@ -200,7 +200,7 @@ bl_lilo_install() {
 #-----------YABOOT-------------------
 # TODO: Have someone who knows yaboot look over this
 
-bl_yaboot_conf() {
+bl_yaboot_config() {
 
   # yaboot workarounds
   # It also wants /etc/fstab to exist for whatever reason
