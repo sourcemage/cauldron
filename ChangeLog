@@ -2,6 +2,12 @@
 	* config-2.6, gen-scripts/config: update for 2.6.14.2 kernel
 	* gen-scripts/config: make devel ISOs use test sorcery
 
+2005-12-08 Karsten Behrmann <BearPerson@sourcemage.org>
+	* bootloader: Fix typo in function name...
+
+2005-12-07 Karsten Behrmann <BearPerson@sourcemage.org>
+	* config-2.6.ppc: pull SCSI into modules, it breaks boots
+
 2005-12-07 Karsten Behrmann <BearPerson@sourcemage.org>
 	* initrd.files: add some standard tools
 	* iso.packages, optional-list: add lshw (9393)
