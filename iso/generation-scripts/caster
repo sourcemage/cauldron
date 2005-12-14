@@ -12,7 +12,7 @@ function pre_workaround()
 {
 # The place for workarounds needed before a spell so it casts nicely.
   case $1 in
-    "irssi"|"grub"|"parted"|"syslinux"|"syslog-ng"|"uptimed")
+    "irssi"|"grub"|"lshw"|"parted"|"syslinux"|"syslog-ng"|"uptimed")
       cast g++ # The ole autoconf workaround
       ;;
     "linux")
@@ -107,8 +107,7 @@ for spell in "$@" ; do
     cast -c $spell
     rc=$?
     post_workaround $spell
-    if ! test -e $cachefile || test $(date +%Y%m%d) -gt \
-      $(stat -c "%y" $cachefile | cut -d' ' -f1 | tr -d '-')
+    if ! test -e $cachefile || test $UPDATED -gt $(get_updated $cachefile)
     then # nonexisting or stale cache
       if [[ $rc == 0 ]] && gaze install $spell >/dev/null ;then
         message "Forcing generation of cache"
