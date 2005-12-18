@@ -86,8 +86,20 @@ function end_unpack() {
 #---------------------------------------------------------------------
 function iso_include() {
   pushd ${UNPACK_DIR} >/dev/null
-  eval "cp --parents -au ./$1 ${ISO_DIR}"
+  eval "cp --parents -a ./$1 ${ISO_DIR}"
   popd >/dev/null
+}
+
+#---------------------------------------------------------------------
+## @param path to include
+## @param path to include as
+## This function includes the given file/dir at the given location,
+## effectively renaming it. Note that the file will still be
+## installed to the original location too unless you exclude it.
+#---------------------------------------------------------------------
+function iso_include_as() {
+  eval "mkdir -p $ISO_DIR/${2%/*}"
+  eval "cp -a $UNPACK_DIR/$1 $ISO_DIR/$2"
 }
 
 #---------------------------------------------------------------------

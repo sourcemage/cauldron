@@ -116,65 +116,6 @@ function memory_menu() {
   echo "$ANSWER"
 }
 
-# Same as memory_menu, with a radiolist
-function memory_radio() {
-  local ID="$1"
-  local TITLE="$2"
-  local OPTS="$3"
-  local TEXT="$4"
-  local DEF="$5"
-  shift 5
-  local USEDEF="$(get_dependency "remember_$ID" 2>/dev/null)"
-  USEDEF="${USEDEF:-"$DEF"}"
-
-  local -a ITEMS
-  local i=0
-  while (( $# )) ;do
-    ITEMS[i++]=$1
-    ITEMS[i++]=$2
-    [[ $1 == $USEDEF ]] && ITEMS[i++]="on" || ITEMS[i++]="off"
-    shift 2
-  done
-
-  local ANSWER
-  ANSWER=$(run_dialog --title "$TITLE" --single-quoted \
-                 --default-item "$USEDEF"              \
-                 --radiolist "$TEXT" 0 0 0      \
-                 "${ITEMS[@]}")             &&
-  fill_dependency "remember_$ID" "$ANSWER"  &&
-  echo "$ANSWER"
-}
-
-# same, with help line at the bottom
-function memory_radio_help() {
-  local ID="$1"
-  local TITLE="$2"
-  local OPTS="$3"
-  local TEXT="$4"
-  local DEF="$5"
-  shift 5
-  local USEDEF="$(get_dependency "remember_$ID" 2>/dev/null)"
-  USEDEF="${USEDEF:-"$DEF"}"
-
-  local -a ITEMS
-  local i=0
-  while (( $# )) ;do
-    ITEMS[i++]=$1
-    ITEMS[i++]=$2
-    [[ $1 == $USEDEF ]] && ITEMS[i++]="on" || ITEMS[i++]="off"
-    ITEMS[i++]=$3
-    shift 3
-  done
-
-  local ANSWER
-  ANSWER=$(run_dialog --title "$TITLE" --single-quoted \
-                 --default-item "$USEDEF" --item-help  \
-                 --radiolist "$TEXT" 0 0 0      \
-                 "${ITEMS[@]}")             &&
-  fill_dependency "remember_$ID" "$ANSWER"  &&
-  echo "$ANSWER"
-}
-
 # displays a message
 function display_message() {
   run_dialog --msgbox "$1" 0 0

@@ -1,6 +1,15 @@
+2005-12-18 Karsten Behrmann <BearPerson@sourcemage.org>
+	* skeleton/sbin/{shutdown,dummy-halt.sh}:
+	  add scripts to regain control after init shut the system down
+	* iso.packages, mkiso: Add capabilities to install a file to a different	  location, make shutdown compatible to our hack
+
+2005-12-17 Karsten Behrmann <BearPerson@sourcemage.org>
+	* installer.sh: fix nasty typo
+	* 10common, bootloader, nativeLanguageSupport, syslog:
+	  Remove nasty radio menu style, it's just causing too much trouble
+
 2005-12-14 Karsten Behrmann <BearPerson@sourcemage.org>
 	* caster: add lshw implicit g++ dep, fix cache creation
-	* config: test uses stable sorcery, bad merge
 	* isolinux.cfg: we no longer use devfs
 
 2005-12-11 Karsten Behrmann <BearPerson@sourcemage.org>

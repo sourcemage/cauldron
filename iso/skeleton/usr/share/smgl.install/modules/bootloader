@@ -35,7 +35,7 @@ bl_choose_loader() {
   if [ "$ARCH" == "ppc" ] ;then
     echo "yaboot" # We don't have any choice, why bother do display a menu?
   else
-    memory_radio_help bootloader "Bootloader selection menu" ""                \
+    memory_menu bootloader "Bootloader selection menu" ""                \
       "Please select the bootloader you wish to use to boot your SMGL system"  \
       "lilo"                                                                   \
       "lilo" "The LInux LOader"                                                \

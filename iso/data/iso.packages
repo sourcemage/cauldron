@@ -9,7 +9,6 @@ add_default_exclude /usr/include
 add_default_exclude '/var/*/sorcery'
 unpack smgl-fhs
 begin_unpack bash
-  iso_exclude /bin/bashbug
   cp --parents -a /etc/profile* $UNPACK_DIR
   # more-or-less elegant FINAL workaround
 end_unpack #bash
@@ -57,8 +56,8 @@ unpack jfsutils
 unpack less
 unpack libpcap # For what?
 begin_unpack linux
-  mkdir -p ${ISO_DIR}/boot
-  mv ${UNPACK_DIR}/boot/vmlinu*-* ${ISO_DIR}/boot/linux
+  iso_include_as '/boot/vmlinu*-*' /boot/linux
+  iso_exclude '/boot/vmlinu*'
 end_unpack
 unpack lvm
 unpack lshw
@@ -74,11 +73,11 @@ unpack netconf
 unpack netkit-base
 unpack netkit-ping
 unpack net-tools
-unpack nfs-utils   # Why?
-begin_unpack openssh     # Ditto
+unpack nfs-utils
+begin_unpack openssh
   iso_exclude '/etc/ssh/*key*'
 end_unpack openssh
-unpack openssl     # Ditto
+unpack openssl
 unpack patch
 unpack pciutils
 unpack pcmcia-cs
@@ -95,7 +94,10 @@ unpack rpmunpack
 unpack rp-pppoe
 unpack sed
 unpack shadow
-unpack simpleinit-msb
+begin_unpack simpleinit-msb
+  iso_include_as /sbin/shutdown /sbin/real.shutdown
+  iso_exclude /sbin/shutdown
+end_unpack simpleinit-msb
 unpack slang
 unpack smgl-archspecs
 unpack sysfsutils
@@ -114,13 +116,9 @@ unpack xinetd
 unpack zlib
 unpack hdparm
 __SMGL_TEMPLATE_NOT_ppc__begin_unpack syslinux
-__SMGL_TEMPLATE_NOT_ppc__  mkdir -p ${ISO_DIR}/isolinux
-__SMGL_TEMPLATE_NOT_ppc__# warning: this is a hack
-__SMGL_TEMPLATE_NOT_ppc__  cp ${UNPACK_DIR}/usr/lib/syslinux/isolinux.bin ${ISO_DIR}/isolinux/
+__SMGL_TEMPLATE_NOT_ppc__  iso_include_as /usr/lib/syslinux/isolinux.bin /isolinux/isolinux.bin
 __SMGL_TEMPLATE_NOT_ppc__  iso_exclude '*'
 __SMGL_TEMPLATE_NOT_ppc__end_unpack
 __SMGL_TEMPLATE_ONLY_ppc__begin_unpack yaboot
-__SMGL_TEMPLATE_ONLY_ppc__  mkdir -p ${ISO_DIR}/yaboot
-__SMGL_TEMPLATE_ONLY_ppc__# warning: this is a hack
-__SMGL_TEMPLATE_ONLY_ppc__  cp ${UNPACK_DIR}/usr/lib/yaboot/yaboot ${ISO_DIR}/yaboot/
+__SMGL_TEMPLATE_ONLY_ppc__  iso_include_as /usr/lib/yaboot/yaboot /yaboot/yaboot
 __SMGL_TEMPLATE_ONLY_ppc__end_unpack

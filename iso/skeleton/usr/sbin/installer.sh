@@ -224,7 +224,7 @@ which they appear."
           "?" "[*]Installation and help notes" "A help text on the installer" \
           "B" "[*]Pre-installation defaults settings" "Select default language, keymap, font and editor" \
           "C" "Disk Structure" "Partition, format, and mount your disk" \
-          "D" "Start Installation" "Start everything, no going back to mounting now"
+          "D" "Start Installation" "Start everything, no going back to mounting now" \
           "E" "[*]Select Timezone" "Select this box's timezone" \
           "F" "[*]Architecture Optimizations" "Select Architecture and Optimizations" \
           "G" "Select Linux Kernel" "Determine wether to compile or install the default kernel" \

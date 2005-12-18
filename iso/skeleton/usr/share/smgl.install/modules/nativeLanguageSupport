@@ -122,7 +122,7 @@ size of the CD, vim and emacs can not be used during
 installation. However, you can select vim, which still
 uses elvis during the install, vim on the final system."
 
-  REAL_ED=$(memory_radio_help "editor" "Select your preferred editor" \
+  REAL_ED=$(memory_menu "editor" "Select your preferred editor" \
             "" "$HELP" "nano" \
            "nano"  "a pico clone"    "$NANO_DSC"  \
            "jed"   "Powerful editor" "$JED_DSC"   \

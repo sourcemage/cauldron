@@ -10,7 +10,7 @@ function logger_screen() {
 syslog()  {
 
   local logger
-  logger=$(memory_radio_help logger "Please select your system logger" \
+  logger=$(memory_menu logger "Please select your system logger" \
             "" "Pick one of the 3 loggers available" "none"            \
             "sysklogd"  "standard system logging daemon"               \
 "This version of syslogd is similar to the standard Berkeley product." \
