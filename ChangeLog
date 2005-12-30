@@ -1,3 +1,6 @@
+2005-12-29 Karsten Behrmann <BearPerson@sourcemage.org>
+	* mkprep: fix choose_multi for symlinks into nowhere
+
 2005-12-18 Karsten Behrmann <BearPerson@sourcemage.org>
 	* skeleton/sbin/{shutdown,dummy-halt.sh}:
 	  add scripts to regain control after init shut the system down

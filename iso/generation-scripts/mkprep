@@ -28,12 +28,15 @@ function choose_multi()
   fi # Things get really evil otherwise
   basicname="$1"
   tempname="$1"
+  shift
   while [ $# -gt 0 ] ;do
-    shift
-    [ -e "$tempname" ] && foundname="$tempname"
     tempname="${tempname}.$1"
+    [[ -L "$tempname" ]] || [[ -e "$tempname" ]] && foundname="$tempname"
+    # Symlinks into nowhere need to be caught too
+    shift
   done
-  if [[ "$foundname" ]] && [[ "$foundname" != "$basicname" ]] ;then
+  if [[ "$foundname" ]] ;then
+    rm -rf "$basicname"
     mv "$foundname" "$basicname"
   fi
   rm -rf "$basicname".*
@@ -46,7 +49,8 @@ function process_templates()
 {
   local pattern
   local line
-  cp $1  ${TMP_DIR}/tmp.template
+  [[ -e "$1" ]] || return #Files not existing throws ugly errors here...
+  cp "$1"  ${TMP_DIR}/tmp.template
   while read line ; do
     eval pattern="$line"
     sed -i "s/$pattern/g" ${TMP_DIR}/tmp.template
@@ -57,7 +61,7 @@ function process_templates()
   sed 's/^__SMGL_TEMPLATE_NOT_[^_]*__//' |
   sed "s/^__SMGL_TEMPLATE_ONLY_${ISO_ARCH}__//" |
   sed "s/^__SMGL_TEMPLATE_ONLY_${ISO_BRANCH}__//" |
-  grep -v "^__SMGL_TEMPLATE_ONLY_[^_]*__" >$1
+  grep -v "^__SMGL_TEMPLATE_ONLY_[^_]*__" >"$1"
   rm ${TMP_DIR}/tmp.template
 }
 
