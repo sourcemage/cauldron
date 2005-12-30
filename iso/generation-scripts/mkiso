@@ -198,11 +198,10 @@ function create_statefiles() {
   cp ${STATE_DIR}/../../$GVERSION.tar.bz2 ${ISO_DIR}/var/lib/sorcery/codex
   cp ${STATE_DIR}/../../sorcery-$SVERSION.tar.bz2 ${ISO_DIR}/var/cache/sorcery
   pushd /var/spool/sorcery >/dev/null
-  cp $( summon -p source linux) ${ISO_DIR}/var/spool/sorcery
+    cp $( summon -p source linux) ${ISO_DIR}/var/spool/sorcery
   popd >/dev/null
 
   echo "Pre-generating optional spell list..."
-
   (
     . /etc/sorcery/config
 
@@ -215,7 +214,7 @@ function create_statefiles() {
     rm -f $TMP_DIR/optlist
 
     function conflicts() { #redefinition
-      echo "$SPELL;$1"
+      echo "$SPELL:$1"
     }
     while read spell ; do
       codex_set_current_spell_by_name $spell >/dev/null
@@ -231,7 +230,42 @@ function create_statefiles() {
     # $TMP_DIR/allspells has been generated just before we copied cache files
   )
 
-  cp $TMP_DIR/alldeps $ISO_DIR/var/state/sorcery/depends
+  cat $TMP_DIR/alldeps >>$ISO_DIR/var/state/sorcery/depends
+
+  echo "generating other pre-made lists..."
+  pushd $ISO_DIR >/dev/null
+
+  local file line
+
+  find usr/share/keymaps -type f -not -path '*/include/*' |
+    sed -e 's@^usr/share/keymaps/@@' -e 's@\.k\?map\.gz@@' |
+    sort |
+    while read line ;do #SUBSHELL
+      echo "${line##*/}" #keymap name
+      echo "${line%/*}"  #path leading up to it, e.g. "qwerty"
+    done >>$ISO_STATE_DIR/keyMapList
+
+  for file in usr/share/consolefonts/*.gz ;do
+    echo "${file##*/}"
+    gunzip -c "$file" | file - | sed 's/^.*, \?//' # font dimensions
+  done >>$ISO_STATE_DIR/fontList
+
+  for file in usr/share/i18n/locales/* ;do
+    title=$(grep "^title" "$file" | cut -d '"' -f 2)
+    if [ -n "$title" ] ;then
+      echo "${file##*/}"
+      echo "$title"
+    fi
+  done >>$ISO_STATE_DIR/languageList
+
+  find usr/share/zoneinfo -mindepth 1 -type d -printf '/%h:%f:Directory\n' \
+    >>$ISO_STATE_DIR/timeZoneList
+  find usr/share/zoneinfo -type f |
+  while read line ;do #SUBSHELL
+    echo "/${line%/*}:${line##*/}:$(TZ="$ISO_DIR/$line" date +%z)"
+  done >>$ISO_STATE_DIR/timeZoneList
+
+  popd >/dev/null
 }
 
 #---------------------------------------------------------------------

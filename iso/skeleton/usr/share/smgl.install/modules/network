@@ -2,33 +2,30 @@
 
 #network stuff
 function network_screen() {
+  need_dependency disk          &&
+  need_dependency install_start &&
   nw_main
 }
 
 nw_ethernet()  {
 
-
 # To be considered: Do these need to be here? We have the optional spell menu,
 # after all. Maybe semi-intelligently queue those needed? (as in "wlan0" or
 # "MODE=dynamic")
   si_queue $(run_dialog --single-quoted --checklist \
-                   "Here is a list of spells you may need. Select those wanted." 10 60 0  \
-                   "dhcpcd" "DHCP is a protocol to automatically get IP and routing info" "off" \
-                   "pcmcia-cs" "Drivers for PCMCIA or PC Card support" "off" \
-                   "wireless_tools" "Tools to configure wireless connections" "off" \
-                   "ndiswrapper" "NDISwrapper provides support for wireless cards with win-only drivers" "off")
+             "Here is a list of spells you may need. Select those wanted."    \
+             0 0 0                                                            \
+ "dhcpcd" "DHCP is a protocol to automatically get IP and routing info" "off" \
+ "pcmcia-cs"                    "Drivers for PCMCIA or PC Card support" "off" \
+ "wireless_tools"             "Tools to configure wireless connections" "off" \
+ "ndiswrapper"       "support for wireless cards with win-only drivers" "off" )
 
   # configure netconf on the CD (requires a writable /etc) and next
   # copy the configuration to the target.
 
-  # Here was a workaround to bug #7459. Is it still needed? (Bear, 2005-05-21)
-  #  mkdir -p /tmp/empty-dir &&
-  #  cd /tmp/empty-dir &&
-
-  sleep 2
   netconf &&
   cp -af --parents /etc/sysconfig/network "${TARGET}" &&
-  debug_log "network" "Running netconf"               &&
+  debug_log "network" 2 "Running netconf"               &&
 
   #TODO make this more intelligent! not quite right question
   if confirm "Do you want to start networking now?"; then
@@ -36,18 +33,18 @@ nw_ethernet()  {
     local ETHDEV
     pushd /etc/sysconfig/network >/dev/null
     for ETHDEV in *.dev ;do
-      ifup ${ETHDEV%.dev}
+      try_run ifup ${ETHDEV%.dev}
     done                                                        &&
 
     cp -f /etc/resolv.conf  ${TARGET}/etc/resolv.conf           &&
-    debug_log "network" "starting ethernet interfaces"          &&
+    debug_log "network" 1 "starting ethernet interfaces"          &&
     fill_dependency network on                                  ||
     fill_dependency network off
     # Okay, we configured it, couldn't start it - mark it as configured anyway
 
     popd >/dev/null
   else
-    debug_log "network" "declined to start ethernet interface"
+    debug_log "network" 1 "declined to start ethernet interface"
     fill_dependency network off
   fi
 }
@@ -55,38 +52,36 @@ nw_ethernet()  {
 nw_ppp()  {
 
   si_queue $(run_dialog --single-quoted --checklist \
-                   "Choose required tools to install" 11 60 0 \
-                   "dhcpcd" "DHCP is a protocol to automatically get IP and routing info" "off" \
-                   "pcmcia-cs" "Drivers for PCMCIA or PC Card support" "off" \
-                   "wireless_tools" "Tools to configure wireless connections" "off" \
-                   "ndiswrapper" "NDISwrapper provides support for wireless cards with win-only drivers" "off" \
-                   "rp-pppoe" "Roaring Penguin PPPoE provides PPP-over-Ethernet, the usual protocol for DSL")
+             "Here is a list of spells you may need. Select those wanted."    \
+             0 0 0                                                            \
+ "dhcpcd" "DHCP is a protocol to automatically get IP and routing info" "off" \
+ "pcmcia-cs"                    "Drivers for PCMCIA or PC Card support" "off" \
+ "wireless_tools"             "Tools to configure wireless connections" "off" \
+ "ndiswrapper"       "support for wireless cards with win-only drivers" "off" \
+ "rp-pppoe"     "Roaring Penguin for PPP-over-Ethernet, common for DSL" "off" )
   # TODO: Check why PPPoE is here
 
-  local ISP_FILE="/etc/ppp/chat/isp"
-  # TODO: Is ppp installed on the ISO? does this file even exist?
+  local USERNAME PASSWORD NUMBER PORT
+  USERNAME=`inputbox  "Please enter your ISP username"` &&
+  PASSWORD=`inputbox  "Please enter your ISP password"` &&
+    NUMBER=`inputbox  "Enter ISP phone number without dashes, spaces and parenthesis" "5555555"` &&
+      PORT=`inputbox  "Enter serial port device (ttyS0 is the first COM port)" "/dev/ttyS0"` &&
 
-  local  USERNAME=`inputbox  "Please enter your ISP username"` &&
-  local  PASSWORD=`inputbox  "Please enter your ISP password"` &&
-  local    NUMBER=`inputbox  "Enter ISP phone number without dashes, spaces and parenthesis" "5555555"` &&
-  local      PORT=`inputbox  "Enter serial port device (ttyS0 is the first COM port)" "ttyS0"` &&
-
-  sed -i -e "s/5555555/$NUMBER/"        "$ISP_FILE"            &&
-  sed -i -e "s/: username/: $USERNAME/" "$ISP_FILE"            &&
-  sed -i -e "s/qpassword/q$PASSWORD/"   "$ISP_FILE"            &&
-  ln  -sf  $PORT  $TARGET/dev/modem                            &&
-  ln  -sf  $PORT  /dev/modem                                   &&
-  # FIXME: Does not work with udev or devfs, needs a change
+  sed -i $'s\a5555555\a'"$NUMBER"$'\a'        /etc/ppp/chat/isp     &&
+  sed -i $'s\a: username\a'": $USERNAME"$'\a' /etc/ppp/chat/isp     &&
+  sed -i $'s\aqpassword\a'"q$PASSWORD"$'\a'   /etc/ppp/chat/isp     &&
+  sed -i $'s\a/dev/modem\a'"$PORT"$'\a'       /etc/ppp/peers/isp    &&
+  cp --parents /etc/ppp/{peers,chat}/isp $FINALFILES                &&
 
 
   if confirm "Should a connection be started now?"; then
-    pon isp &&
-    cp -f /etc/resolv.conf  ${TARGET}/etc       &&
-    echo "starting ppp interface" >> /tmp/installer-debug &&
+    try_run pon isp                                &&
+    cp -f /etc/resolv.conf  ${TARGET}/etc          &&
+    debug_log "network" 1 "starting ppp interface" &&
     fill_dependency network on ||
     fill_dependency network off
   else
-    echo "declined to start ppp interface" >> /tmp/installer-debug
+    debug_log "network" 1 "declined to start ppp interface"
     fill_dependency network off
   fi
 
@@ -97,23 +92,24 @@ nw_pppoe()  {
 #        Need to have someone who knows adsl-setup look over this (Bear, 2005-05-21)
 
   si_queue $(run_dialog --single-quoted --checklist \
-                   "Choose required tools to install" 10 60 0 \
-                   "dhcpcd" "DHCP is a protocol to automatically get IP and routing info" "off" \
-                   "pcmcia-cs" "Drivers for PCMCIA or PC Card support" "off" \
-                   "wireless_tools" "Tools to configure wireless connections" "off" \
-                   "ndiswrapper" "NDISwrapper provides support for wireless cards with win-only drivers" "off")
+             "Here is a list of spells you may need. Select those wanted."    \
+             0 0 0                                                            \
+ "dhcpcd" "DHCP is a protocol to automatically get IP and routing info" "off" \
+ "pcmcia-cs"                    "Drivers for PCMCIA or PC Card support" "off" \
+ "wireless_tools"             "Tools to configure wireless connections" "off" \
+ "ndiswrapper"       "support for wireless cards with win-only drivers" "off" )
 
   adsl-setup &&
-  echo "Setting up adsl via adsl-setup" >> /tmp/installer-debug &&
+  debug_log "network" 2 "Setting up adsl via adsl-setup" &&
 
   if confirm "Start that interface now ?"; then
-    adsl-start
-    cp -f /etc/resolv.conf  ${TARGET}/etc       &&
-    echo "starting adsl interface" >> /tmp/installer-debug &&
+    try_run adsl-start                              &&
+    cp -f /etc/resolv.conf  ${TARGET}/etc           &&
+    debug_log "network" 1 "starting adsl interface" &&
     fill_dependency network on ||
     fill_dependency network off
   else
-    echo "declined to start adsl interface" >> /tmp/installer-debug
+    debug_log "network" 1 "declined to start adsl interface"
     fill_dependency network off
   fi
 
@@ -128,7 +124,7 @@ system, but rather as a starting point for a system
 that should be regularly updated. It is advised that you
 get sorcery and grimoire updates regularly and download
 the package sources. Please check the sorcery manpage for a
-description on how to do this manually." 15 65
+description on how to do this manually." 0 0
   fill_dependency network none
 }
 
@@ -139,32 +135,34 @@ nw_main()  {
   mkdir -p ${TARGET}/etc/sysconfig/network
 
   # get a hostname (remove /etc/hostname to force reconfigure)
-  rm -f /etc/hostname      &&
+  rm -f /etc/hostname
   netconf --check_hostname
 
-  # TODO: Move all this kind of junk to a debug_log function
-  echo "hostname is `cat /etc/hostname`" >> /tmp/installer-debug
+  debug_log "network" 2 "hostname is `cat /etc/hostname`"
 
   cp -f /etc/hostname ${TARGET}/etc/hostname
 
   local COMMAND
 
-  COMMAND=`"${DIALOG[@]}"  --title "Networking Setup"                         \
-             --nocancel --item-help --menu                                    \
-             "Please select the way this box will connect to the internet"    \
-             7 60 0                                                           \
-             "E" "Ethernet" "By plain network, using e.g. a gateway"          \
-             "P" "PPP" "Point-to-Point Protocol is used for modem connections"\
-             "R" "PPPoE" "PPP over Ethernet, usually used for A-DSL and similar"\
-             "N" "None" "No internet connection available"` &&
+  COMMAND=$(memory_menu network "Networking Setup" "--nocancel"              \
+             "Please select the way this box will connect to the internet"   \
+             "Ethernet"                                                      \
+             "Ethernet" "By plain network, using e.g. a gateway"             \
+             "PPP" "Point-to-Point Protocol is used for modem connections"   \
+             "PPPoE" "PPP over Ethernet, usually used for A-DSL and similar" \
+             "None" "No internet connection available")                      &&
 
   case  $COMMAND  in
-    E)  nw_ethernet  ;;
-    P)  nw_ppp       ;;
-    R)  nw_pppoe     ;;
-    N)  nw_none      ;;
+    Ethernet)  nw_ethernet  ;;
+    PPP)  nw_ppp       ;;
+    PPPoE)  nw_pppoe     ;;
+    None)  nw_none      ;;
   esac &&
 
   # reset hostname to user specified
-  hostname `cat /etc/hostname`
+  hostname $(cat /etc/hostname)
+  [[ -e $TARGET/etc/hosts ]] && # If netkit-base installed it yet
+  sed -i "s/^127.0.0.1.*/127.0.0.1	localhost	$(cat /etc/hostname)/" \
+    $TARGET/etc/hosts
+  true
 }

@@ -1,9 +1,12 @@
 basename
 bash
 chroot
+cp
+rm
 ls
 find
 mknod
+mkdir
 mount
 umount
 uname

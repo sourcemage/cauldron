@@ -1,0 +1,28 @@
+         Problem         |          Reason          |         Solution
+=========================|==========================|==========================
+errors involving         |                          |
+/dev/std{err,out} during | /proc not mounted        | mount proc
+casts                    |                          |
+-------------------------|--------------------------|--------------------------
+Spell caches not found,  | dependencies missing in  | manually caster -c the
+but caster doesn't       | list.all                 | spell
+update it automatically  | (fixed in devel)         |
+-------------------------|--------------------------|--------------------------
+Spells getting dispelled | spell not in             | cast spell, (not caster)
+by caster, but they are  | p4/data/list.reqd        | rm ../data/list.reqd
+needed (e.g. linux)      | ( intelligent in devel)  | ./listparse
+-------------------------|--------------------------|--------------------------
+Initrd fails with weird  |                          |
+messages, nothing in     |      Mostly unknown      |      Regenerate ISO
+/dev                     |                          |
+-------------------------|--------------------------|--------------------------
+                         | No free loop device      | free up loop devices:
+       Initrd empty      | during generation        | losetup -d /dev/loop0
+                         |                          | repeat for loop{1-8}
+-------------------------|--------------------------|--------------------------
+No linux sources on ISO  | spool not mounted during | mount --bind
+                         | generation               | /var/spool/sorcery again
+-------------------------|--------------------------|--------------------------
+Installed system doesn't | /etc/inittab is an alien | <chroot> rm /etc/inittab
+boot, no /etc/inittab    |                          | and ./caster -c init.d
+-------------------------|--------------------------|--------------------------

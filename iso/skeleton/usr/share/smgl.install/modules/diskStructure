@@ -11,7 +11,7 @@
 function disk_structure_screen() {
   # do things here to display the menu items for setting up disks
 
-  if check_dependency disk ;then
+  if check_dependency install_start ;then
     # Whoops! We already have stuff starting to install
     confirm "WARNING! Data is already being installed to the
 partition structure you have set up. Very bad things
@@ -37,9 +37,9 @@ non-xfs /boot partition."
       --default-item  $ICOMMAND       \
       --item-help                     \
       --menu "$TEXT"                  \
-      13 60 0                         \
+      0 0 0                         \
       "A" "[*]Partition Disks"   "Create partitions on your drives" \
-      "C" "Format and/or mount filesystems" "Define where the partitions should go" \
+      "C" "Format/mount filesystems and swap" "Format and mount your partitions" \
       "D" "Done"        "We're all done here, let's get on with it" ` ||
     return 1 #return with a failure if canceled
 
@@ -47,16 +47,16 @@ non-xfs /boot partition."
 
     case $ICOMMAND in
       A)
-        fdisc_menu # do the partitioning 
+        fdisc_menu # do the partitioning
       ;; # maybe partitions are already created
       B)
-        create_md_device # Make ourselves some MD devices! 
+        create_md_device # Make ourselves some MD devices!
       ;;
       C)
-        mount_menu # do the mounting
+        while mount_menu ;do true ;done # do the mounting until user quits
       ;;
       D)
-        if interactive_do_depends disk-root; then
+        if need_dependency disk-root; then
           rm -f $FINALFILES/etc/fstab
           cat $TEMPLATE_DIR/fstab.first /tmp/fstab $TEMPLATE_DIR/fstab.last \
             >$FINALFILES/etc/fstab
@@ -111,44 +111,43 @@ select_disc()  {
 
   local DISC
 
-  if [ "${DEBUG}" = "yes" ]; then
-    for DISC in "${LIST_DISCS[@]}";
-    do
-      echo "DISC=${DISC}" >&2
-      done
-    read -p "press enter..." >&2
-  fi &&
+  debug_log "diskStructure" 3 "Disk list:" "${LIST_DISCS[@]}"
+
+  if [[ ${#LIST_DISCS[@]} == 0 ]] ;then
+    display_message "No discs could be found.
+You may need to load more modules (shell out, use modprobe)"
+    return 1
+  fi
 
   run_dialog \
     --title "Disk Selection Menu"                                     \
     --menu  "Please select a disk to partition. Sizes are in blocks." \
-    7 60 0                                                            \
+    0 0 0                                                            \
     "${LIST_DISCS[@]}" # 2 entries per disk - name and size
 
 }
 
 fdisc_menu()  {
 
-  local DISC=`select_disc` &&
+  local DISC PROG
+  DISC=`select_disc` &&
   if [ "$ARCH" = "ppc" ]; then
     display_message "Remember you need to create a bootstrap partition first
 (type 'b' at the prompt)."
-    debug_log "diskStructure" "Running mac-fdisk on $DISC"
+    debug_log "diskStructure" 2 "Running mac-fdisk on $DISC"
     mac-fdisk "$DISC"
   else
-    PROG=`run_dialog                                                  \
-      --title "Partitioning Menu"                                     \
-      --menu  "Please choose the program for partitioning $DISC"      \
-      13 60 0                                                         \
+    PROG=`memory_menu "fdisc_tool" "Partitioning Menu" ""             \
+      "Please choose the program for partitioning $DISC" "cfdisk"     \
       "cfdisk" "Menu-driven partitioning program. Easy to use."       \
       "fdisk"  "Text-based. A little harder to use, more features"    \
       "parted" "Text-based. Many features, such as moving partitions" ` &&
 
-    if ! ${PROG} "${DISC}"; then
-      press_enter
-    fi
+    debug_log "diskStructure" 2 "Running $PROG on $DISC"
+    try_run -nc ${PROG} "${DISC}"
   fi
 }
+
 # --------------------- NEW RAID STUFF ----------------------
 
 dsr_show_warning() {
@@ -156,7 +155,7 @@ dsr_show_warning() {
     --msgbox "If you plan on mounting the device you're about to create as
 / (the root), you need to ensure that you make the
 partition types \"Linux raid autodetect\" (ID 0xFD).
-Otherwise your system will not boot!" 20 60
+Otherwise your system will not boot!" 0 0
 }
 
 dsr_device_name() {
@@ -166,47 +165,58 @@ dsr_device_name() {
 }
 
 dsr_raid_level_menu() {
-  run_dialog --title "Select RAID level" \
-    --single-quoted \
-    --radiolist "Select a RAID level" 0 0 0 \
-    "0" "Striping" off \
-    "1" "Mirroring" off \
-    "2" "Hamming code ECC" off \
-    "3" "Parallel transfer with parity" off \
-    "4" "Independent Data disks with shared Parity disk" off \
-    "5" "Independent data disks with distributed parity" off \
-    "6" "Independent data disks with dual distributed parity" off
+  memory_menu "raidlevel" "Select RAID level" ""         \
+    "Select a RAID level" "1"                            \
+    "0" "Striping"                                       \
+    "1" "Mirroring"                                      \
+    "4" "Independent Data disks with shared Parity disk" \
+    "5" "Independent data disks with distributed parity" \
+    "6" "Independent data disks with dual distributed parity"
+#    "3" "Parallel transfer with parity" off \
+#    "2" "Hamming code ECC" off \
 }
 
 dsr_choose_partitions() {
   LIST_PARTS=()
   # Use sed to append an "off" line to every entry
   explode "$(list_parts | sed 's/^\(Size: .*\)$/\1\noff/')" $'\n' \
-    "LIST_PARTS"
+    LIST_PARTS
+
+  if [[ ${#LIST_PARTS[@]} == 0 ]] ;then
+    display_message "No partitions could be found. In order to avoid
+warnings about broken partition tables on bootup,
+it is recommended that you partition even the drives
+that you want to use in a RAID as a whole (into one
+big partition).
+You may need to load more modules (shell out, use modprobe)
+or partition your disks."
+    return 1
+  fi
+
 
   run_dialog --title "Select partitons to create a RAID device from" \
-  --separate-output \
+  --separate-output                                                  \
   --checklist "Mark partitions to be made into the RAID array" 0 0 0 \
   "${LIST_PARTS[@]}" |
-    sed 's:^:/dev/:'
+    sed 's:^[[:space:]]*:/dev/:g'
+  # If anyone knows how that whitespace creeps in there, I owe him a beer (Bear)
 }
 
 # Arguments:
 # $1: name of md device to create
 # $2: raid level
 # $3: newline-seperated list of devices
+# $4: count of selected partitions
 dsr_sanity_check() {
   local ERROR_FILE=/tmp/raid-errors.$$
   rm -f $ERROR_FILE
 
-  local P_COUNT=`echo $3 | wc -w`
-
-  debug_log "diskStructure" "Checking RAID settings: DEVICE=$1, LEVEL=$2"
-  debug_log "diskStructure" "Generating from $P_COUNT partitions: $3"
+  debug_log "diskStructure" 2 "Checking RAID settings: DEVICE=$1, LEVEL=$2"
+  debug_log "diskStructure" 2 "Generating from $4 partitions: $3"
 
   #verify raid level device count
   local COUNT_CHECK=0
-  case $LEVEL in
+  case $2 in
     0|1) COUNT_CHECK=2
     ;;
     2|3|4|5) COUNT_CHECK=3
@@ -220,14 +230,14 @@ dsr_sanity_check() {
     echo "You must specify a device to create!" >>$ERROR_FILE
   fi
 
-  if [ $P_COUNT -lt $COUNT_CHECK ] ; then
-    echo "RAID level $LEVEL must have at least $COUNT_CHECK devices" \
+  if [ $4 -lt $COUNT_CHECK ] ; then
+    echo "RAID level $2 must have at least $COUNT_CHECK devices" \
       >>$ERROR_FILE
   fi
 
   #verify selected devices are block devices
   local DEVICES
-  for DEVICES in $DEVICE_NAME $PARTS ; do
+  for DEVICES in $1 $3 ; do
     if [ ! -b "$DEVICES" ] ; then
       echo "$DEVICES is not a block device!" >>$ERROR_FILE
     fi
@@ -235,32 +245,32 @@ dsr_sanity_check() {
 
   if [ -e $ERROR_FILE ] ;then
     run_dialog --title "Failed to create MD device" --textbox \
-      $ERROR_FILE 10 50
+      $ERROR_FILE 0 0
     return 1
   fi
 }
 
 dsr_make_raid_config() {
   #generate the mdadm.conf
-  echo 'DEVICE /dev/hd*[0-9] /dev/sd*[0-9]' > ${TARGET}/etc/mdadm.conf
-  mdadm --detail --scan >> ${TARGET}/etc/mdadm.conf
+  echo 'DEVICE /dev/hd*[0-9] /dev/sd*[0-9]' > $FINALFILES/etc/mdadm.conf
+  mdadm --detail --scan >> $FINALFILES/etc/mdadm.conf
+  mdadm --detail --scan -v >/tmp/md-devices
+  # Store devices used for partition selection
 }
 
 create_md_device() {
+  local DEVICE_NAME LEVEL PARTS P_COUNT
   dsr_show_warning                      &&
-  local DEVICE_NAME=`dsr_device_name`   &&
-  local LEVEL=`dsr_raid_level_menu`     &&
-  local PARTS="`dsr_choose_partitions`" &&
-  dsr_sanity_check "$DEVICE_NAME" "$LEVEL" "$PARTS" &&
-  if mdadm --create $DEVICE_NAME --level=$LEVEL --raid-devices=$P_COUNT $PARTS
-  then
-    dsr_make_raid_config &&
-    debug_log "Successfully generated md device."
-    si_queue mdadm
-  else
-    echo "failed to make the md device"
-    press_enter
-  fi
+  DEVICE_NAME=`dsr_device_name`   &&
+  LEVEL=`dsr_raid_level_menu`     &&
+  PARTS="`dsr_choose_partitions`" &&
+  P_COUNT=`echo $PARTS | wc -w`   &&
+
+  dsr_sanity_check "$DEVICE_NAME" "$LEVEL" "$PARTS" "$P_COUNT" &&
+  try_run mdadm --create $DEVICE_NAME --level=$LEVEL --raid-devices=$P_COUNT $PARTS &&
+  dsr_make_raid_config                          &&
+  debug_log "diskStructure" 1 "Successfully generated $DEVICE_NAME." &&
+  si_queue mdadm
 }
 
 # ---------------- formatting and mounting ------------------
@@ -270,13 +280,25 @@ list_parts()  {
   # grepping a non-existant file gives an error
   local PARTITION SIZE
   touch /tmp/fstab
+  touch /tmp/md-devices
    cat /proc/partitions | awk '$3 !~ /^1$/ {print $4 " " $3}' | grep -v ram |
      grep -v disc | grep -v name | grep '^[^ ]*[0-9]' |
      while read PARTITION SIZE ;do #SUBSHELL!
-       if [[ -n "$PARTITION" ]] && ! grep -q "^/dev/$PARTITION	" /tmp/fstab
-       then # don't do nil strings, don't do partitions we mounted already
+       if [[ -n "$PARTITION" ]] && ! grep -q "^/dev/$PARTITION	" /tmp/fstab &&
+         ! grep -q "devices=\([^,]*,\)*/dev/$PARTITION\(,\|$\)" /tmp/md-devices
+       then # don't do nil strings, partitions we mounted already, RAID parts
          echo "$PARTITION"
-         echo "Size: $(( SIZE / 1024 ))MB"
+         echo -n "Size: $(( SIZE / 1024 ))MB Type: "
+         if [[ $PARTITION == md* ]] ;then
+           echo -n "RAID "
+           mdadm --detail --brief /dev/$PARTITION |
+             sed 's/^.*\(level.*\)UUID.*$/\1/'
+         else
+           sfdisk -lq 2>/dev/null | # Bug in sfdisk makes it not honor -q
+           grep "^/dev/$PARTITION" | sed 's/^.*  //'
+           # The sed is ugly, and we'll have to change it
+           # whenever they change their output format... no choice though :-/
+         fi
 # TODO: add type recognition
 # This old code did it:
 
@@ -315,30 +337,31 @@ list_parts()  {
 get_part()  {
 
   LIST_PARTS=()
-  explode "$(list_parts)" $'\n' "LIST_PARTS"
+  explode "$(list_parts)" $'\n' LIST_PARTS
 
-  if [ "${DEBUG}" = "yes" ]; then
-    for PART in "${LIST_PARTS[@]}";
-    do
-      echo "PART=${PART}" >&2
-    done
-    read -p "press enter..."
+  debug_log "diskStructure" 3 "Partition list:" "${LIST_PARTS[@]}"
+
+  if [[ ${#LIST_PARTS[@]} == 0 ]] ;then
+    display_message "No partitions could be found. Either all are
+already mounted, or none are available.
+You may need to load more modules (shell out, use modprobe)
+or partition your disks."
+    return 1
   fi
 
-  run_dialog                                                   \
-    --title "Partition Selection Menu"                         \
-    --menu  "Select a partition to mount. Sizes are in blocks" \
-    7 60 0                                                     \
+  run_dialog                               \
+    --title "Partition Selection Menu"     \
+    --cancel-label "Done"                  \
+    --menu  "Select a partition to mount." \
+    0 0 0                                  \
     "${LIST_PARTS[@]}"
 
 }
 
 get_filesystem()  {
 
-  run_dialog                                               \
-    --title "Filesystem Selection Menu"                    \
-    --menu  "Please select what filesystem to use for $1"  \
-    7 60 0                                                 \
+  memory_menu "filesystem" "Filesystem Selection Menu" ""  \
+    "Please select what filesystem to use for $1" "ext2"   \
     "ext2"      "Second Extended file system"              \
     "ext3"      "Second Extended journaling file system"   \
     "reiserfs"  "Reiserfs journaling file system"          \
@@ -351,13 +374,44 @@ get_filesystem()  {
 get_mount_point()  {
 
   if ! check_dependency disk-root  ;then
+    display_message "Automatically choosing / as first mount point"
     echo "/"
   elif  [  "$2"  ==  "swap"  ];  then
     echo "none"
   else
-    inputbox  "Please choose where to mount $1 (type $2)"  "/"
+    local -a MOUNT_POINTS
+    MOUNT_POINTS=(
+    # Mark for how long texts can get:                         over here v"
+    "/boot"  "Put boot-relevant stuff somewhere special for old BIOS'es"
+    "/home"  "Give users their own partition so they can't fill / up"
+    "/root"  "For the paranoid: extra HD space for recovery when / is full"
+    "/usr"   "Used to seperate system programs from the bulk of the data"
+"/usr/share" "No idea what this is for. Tell BearPerson on IRC :-)"
+    "/var"   "Guarantees that logs or source caches can't fill /"
+    "other"  "own custom mount point (forbidden: /etc, /bin, /sbin, /lib)" )
+
+    # Filter already-mounted partitions
+    local partnum=$(( ${#MOUNT_POINTS[@]} / 2 ))
+    local i
+    for((i=0;i<partnum;i++)) ;do
+      # literal tabs:
+      if grep -q "	${MOUNT_POINTS[2*i]}	" /tmp/fstab ;then
+        unset MOUNT_POINTS[2*i] MOUNT_POINTS[2*i+1]
+        # Luckily, this doesn't move the other entries down
+      fi
+    done
+
+    local MPOINT
+    MPOINT=$(run_dialog --title "Mount point selection"    \
+      --menu  "Please select where to mount $1 (type $2)"  \
+      0 0 0                                               \
+      "${MOUNT_POINTS[@]}") &&
+    if [[ "$MPOINT" == "other" ]] ;then
+      inputbox  "Please choose where to mount $1 (type $2)"  "/"
+    else
+      echo "$MPOINT"
+    fi
   fi
-  #TODO: add sanity checking (/etc, /lib, ...)
 }
 
 get_mkfs_cmd() {
@@ -416,7 +470,8 @@ mount_fsys()  {
     ;;
        *)
           mkdir -p $MPOINT                                               &&
-          mount -t $2 -o "$4" "$1" "$MPOINT"                             &&
+          try_run -e "Mointing $1 as $2 to $MPOINT failed." \
+            mount -t $2 -o "$4" "$1" "$MPOINT"                           &&
           case  $3  in
                 /)
                    fill_dependency disk-root $1
@@ -426,10 +481,8 @@ mount_fsys()  {
                 ;;
                 *) true      ;;
           esac                                                           &&
-          debug_log "diskStructure" "Nicely mounted $1 as $2 to $MPOINT" ||
+          debug_log "diskStructure" 1 "Nicely mounted $1 as $2 to $MPOINT" ||
           {
-            press_enter
-            debug_log "diskStructure" "Mounting $1 as $2 to $MPOINT failed."
             return 1
           }
     ;;
@@ -474,16 +527,12 @@ as far as I can figure it out.
 If you want to change anything, you can now.
 If you don't know what to do, just hit OK."        &&
     MKFSCMD=$( inputbox "$QUESTION" "${MKFSCMD}" ) &&
-    eval "$MKFSCMD"                                &&
-    # save the command for debugging:
-    debug_log "diskStructure" \
-      "Successfully formatted $PART as $FSYS with $MKFSCD" ||
-    {
-      debug_log "diskStructure" \
-        "Formatting failed on $PART as $FSYS using $MKFSCMD"
-      echo "Creating filesystem failed."
-      return 1
-    }
+    if [[ $FSYS == jfs ]] ;then # mkfs.jfs doesn't line-buffer its output
+      eval "try_run -nc $MKFSCMD"
+    else
+      eval "try_run $MKFSCMD"
+    fi                                             ||
+    return 1
   elif $CHECK ;then
     badblocks $PART
   fi                                              &&
@@ -498,16 +547,18 @@ If you don't know what to do, just hit OK."        &&
 
 mk_swap_file()  {
 
-  local DEVICE=`inputbox "Where should the swapfile go?" "/.swapfile"` &&
-  local SWAPFILE="$TARGET$DEVICE"                                      &&
-  local SIZE=`inputbox "How big do you want it to be? (in MB)" "1024"` &&
+  local DEVICE SWAPFILE SIZE
+  DEVICE=`inputbox "Where should the swapfile go?" "/.swapfile"` &&
+  SWAPFILE="$TARGET$DEVICE"                                      &&
+  SIZE=`inputbox "How big do you want it to be? (in MB)" "1024"` &&
 
   if confirm "Okay. Swapfile at $DEVICE, size $SIZE. That right, boss?" ;then
     dd  if=/dev/zero of=$SWAPFILE bs=1M count=$SIZE &&
-      mkswap      $SWAPFILE                         &&
-      chmod  000  $SWAPFILE                         &&
+    try_run mkswap      $SWAPFILE                   &&
+    chmod  000          $SWAPFILE                   &&
+    try_run swapon      $SWAPFILE                   &&
     make_fstab_line $DEVICE "swap" "swap" "defaults\t0 2" >>/tmp/fstab &&
     fill_dependency disk-swap file||
-    press_enter
+    press_enter "diskStructure" 0
   fi
 }

@@ -1,1 +1,1 @@
-mkisofs -hfs -part -map ${STATE_DIR}/map.hfs -hfs-bless $2/yaboot -no-desktop -R -o $1 $2
+mkisofs -q -hfs -part -map ${STATE_DIR}/map.hfs -hfs-bless $2/yaboot -no-desktop -R -o $1 $2

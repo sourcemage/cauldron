@@ -1,4 +1,5 @@
 SMGL-__SMGL_TEMPLATE_ISO_VERSION__ by the Source Mage GNU/Linux team 0e<www.sourcemage.org>07
+This ISO made using @GRIMOIRE_VERSION@.
 
 09Welcome07 to 04Source Mage GNU/Linux07
 Copyright (C) 2000-2001 by Kyle Sallee

@@ -7,17 +7,24 @@ function setup_target() {
 }
 
 function install_screen() {
-  in_finish
+  local depcy
+  while read depcy ;do
+    need_dependency ${depcy%%\#*} ||
+    {
+      echo "Not all dependencies fulfilled, refusing to finish install"
+      return 1
+    }
+  done <$DATA_DIR/deps-required
 
-  # This is the place for release-note bigass warnings
-  run_dialog --msgbox \
-"Once you have booted your new system, it's recommmended to:
-* ensure that networking is up
-* run \"sorcery update\" to update the sorcery scripts
-* run \"scribe update\" to update the spell lists
-* configure sorcery (run \"sorcery\", go to Options)
-* run \"sorcery rebuild\" to build everything with your
-  chosen optimizations" 15 65
+  # Check for optional dependencies and run ${name}_auto if needed
+  while read depcy ;do
+    depcy=${depcy%%\#*} # Strips trailing spaces
+    check_dependency "$depcy"               ||
+    ! declare -F "${depcy}_auto" >/dev/null || # Skip if function is undefined
+    ${depcy}_auto
+  done <$DATA_DIR/deps-optional
+
+  in_finish
 }
 
 # This one returns a nice list of libraries that a binary is linked against,
@@ -49,7 +56,7 @@ in_start() {
   >$TARGET/var/state/sorcery/packages #start with no spells installed
 
   # Set up directories
-  si_wait smgl-fhs
+  si_install_spell smgl-fhs
 
   local dirctry perms owner group
   while read dirctry perms owner group ;do
@@ -67,35 +74,39 @@ in_start() {
   done <${DATA_DIR}/symlinks
 
   # do /proc and /dev - lazy
-  mount --rbind /dev ${TARGET}/dev
-  mount -t proc proc $TARGET/proc
+  try_run mount --rbind /dev ${TARGET}/dev
+  try_run mount -t proc proc $TARGET/proc
 
   # Install sorcery
   pushd /tmp >/dev/null                                    &&
   tar -xjf /var/cache/sorcery/sorcery-$SORCERY_VERSION.tar.bz2 &&
   cd sorcery                                               &&
-  ./install ${TARGET}                                      &&
+  try_run -e "installing sorcery" ./install ${TARGET}      &&
   popd >/dev/null                                          &&
   rm -rf /tmp/sorcery                                      &&
 
   # Copy sources
-  cp --parents -f /var/spool/sorcery/* ${TARGET}           &&
+  try_run cp --parents -f /var/spool/sorcery/* ${TARGET}   &&
 
   # Install grimoires
   mkdir -p ${TARGET}/var/lib/sorcery/codex                 &&
-  tar -xjf /var/lib/sorcery/codex/$GRIMOIRE_VERSION.tar.bz2 -C \
-      ${TARGET}/var/lib/sorcery/codex                      &&
+  try_run tar -xjf /var/lib/sorcery/codex/$GRIMOIRE_VERSION.tar.bz2 \
+    -C ${TARGET}/var/lib/sorcery/codex                     &&
   echo "GRIMOIRE_DIR[0]=/var/lib/sorcery/codex/$GRIMOIRE_VERSION" \
        >${TARGET}/etc/sorcery/local/grimoire
   echo "FROM_URL=http://codex.sourcemage.org/$GRIMOIRE_VERSION.tar.bz2" \
        >$TARGET/var/lib/sorcery/codex/$GRIMOIRE_VERSION/GRIMOIRE
+  cut -d: -f2 /var/state/sorcery/packages | tail -n 1 \
+       >$TARGET/var/state/sorcery/$GRIMOIRE_VERSION.lastupdate
+  # Store date for ChangeLog, we hope the /v/s/s/packages date is reasonably
+  #   close to ISO creation date (it currently is equal -Bear, 2005-12-03)
 
   # Install alien config files
-  cp --parents -f \
+  try_run cp --parents -f \
     /etc/{passwd,group,shadow,ld.so.conf,issue,modules,modules.conf,nsswitch.conf,shells} \
     ${TARGET}
-  chmod 0400 $TARGET/etc/shadow
-  chown root:root $TARGET/etc/shadow
+  try_run chmod 0400 $TARGET/etc/shadow
+  try_run chown root:root $TARGET/etc/shadow
 
   # Install binaries that may be needed (for whatever it's worth,
   #  we'll be waiting for the basesystem to be there for most purposes anyway)
@@ -103,15 +114,14 @@ in_start() {
 
   chroot_cmd ldconfig
 
-  si_queue_now basesystem # TODO: This is overkill - not all needed during
-                          # install
-  si_queue_now special:basics
-  si_queue_now special:compile_env #make, gcc etc
+  si_queue basesystem
+  si_queue_now Iso.Compile_env #make, gcc etc
+  si_queue_now Iso.Basics #This one ends up first
 
   si_queue $( cat $DATA_DIR/install-list | sed 's/#.*$//' |
     grep -v '^[[:blank:]]*$' )
 
-  fill_dependency first_install
+  fill_dependency install_start
 }
 
 in_finish() {
@@ -129,7 +139,12 @@ in_finish() {
   ln -sf sourcemage-release ${TARGET}/etc/release
   run_dialog --msgbox "The system and all the configuration you have selected
 have been installed. The only thing left to do is to enter
-the password for the root account." 9 60
-  chroot_cmd passwd root
-  fill_dependency final_install
+the password for the root account." 0 0
+  try_run -e "password for root" chroot_cmd passwd root
+  if confirm "It is highly recommended to create and use a regular
+(non-root) user account for all work, and only su to root
+when neccessary. Do you want to create an user now?" ;then
+    /usr/sbin/fancy-useradd.sh $TARGET
+  fi
+  fill_dependency install_finish
 }

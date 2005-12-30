@@ -3,18 +3,32 @@
 
 function arch_screen() {
 
-# TODO: add sensible depends
+  want_dependency disk          &&
+  want_dependency install_start ||
+  return 1
 
-  cat <<EOF >$TARGET/arch_menu
-#!/bin/bash
-exit() {
-  true
+  if confirm "do you want to configure make jobs and distcc? (advanced)" \
+       --defaultno ;then
+    export CONFIG_DISTCC=yes
+  fi
+
+  (
+    exit() {
+      true
+    }
+    . /usr/sbin/sorcery -v >/dev/null
+    optimize_architecture
+    [[ $CONFIG_DISTCC ]] && parallel_compilation_menu
+  )
+
+  unset CONFIG_DISTCC
+  cp --parents -a /etc/sorcery/local/config $FINALFILES
+  cp --parents -a /etc/sorcery/local/compile_config $FINALFILES
+
+  fill_dependency "architecture" "manual"
 }
-. /usr/sbin/sorcery -v >/dev/null
-optimize_architecture
-EOF
-  chmod +x $TARGET/arch_menu
-  chroot_cmd /arch_menu
-  rm -f $TARGET/arch_menu
 
+function architecture_auto() {
+  cp --parents -a /etc/sorcery/local/config $FINALFILES
+  cp --parents -a /etc/sorcery/local/compile_config $FINALFILES
 }

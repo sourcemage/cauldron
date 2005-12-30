@@ -2,6 +2,8 @@
 
 #optional services
 function services_screen() {
+  need_dependency install_finish ||
+  return 1
   local SCRIPTLIST=()
   sv_get_scripts
   sv_choose_scripts &&
@@ -41,7 +43,7 @@ An X means they are enabled (usually for a good reason)"
   local SCRIPTS
 
   SCRIPTS=$(run_dialog --title "Select init scripts to be run at boot time" \
-             --single-quoted --checklist "$HELP" 10 60 0          \
+             --single-quoted --checklist "$HELP" 0 0 0                      \
              "${SCRIPTLIST[@]}")                                           &&
   echo $SCRIPTS | tr ' ' $'\n' >$TMP_DIR/enabled-scripts                   &&
   # dialog gives us a space-seperated list
@@ -60,11 +62,13 @@ sv_enable_scripts() {
 
   while read line ;do
     grep -q "^$line$" $TMP_DIR/prevenabled-scripts || # no already-enabled ones
-    chroot_cmd telinit bootenable "$line" <&2 # we hope stderr is the terminal
+    try_run -e "enabling init script failed" chroot_cmd telinit bootenable \
+      "$line" <&2 # we hope stderr is the terminal
   done <$TMP_DIR/enabled-scripts
   while read line ;do
     grep -q "^$line$" $TMP_DIR/prevdisabled-scripts ||
-    chroot_cmd telinit bootdisable "$line" <&2
+    try_run -e "disabling init script failed" chroot_cmd telinit bootdisable \
+      "$line" <&2
   done <$TMP_DIR/disabled-scripts
   rm -f $TMP_DIR/enabled-scripts $TMP_DIR/disabled-scripts
   rm -f $TMP_DIR/prevenabled-scripts $TMP_DIR/prevdisabled-scripts

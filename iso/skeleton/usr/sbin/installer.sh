@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 ########################################################################
 # Copyright (c) 2005 Source Mage GNU/Linux Team <www.sourcemage.org>   #
 ########################################################################
@@ -63,8 +63,8 @@ control to System Administrators that the wizards and
 maintainers of modern distributions have steadily
 chipped away."
 
-  "${DIALOG[@]}" --title "Welcome to Source Mage GNU/Linux" \
-    --msgbox "${MSG}" 9 60
+  run_dialog --title "Welcome to Source Mage GNU/Linux" \
+    --msgbox "${MSG}" 0 0
 
   local MSG="Source Mage GNU/Linux empowers System Administrators
 to choose:
@@ -80,9 +80,26 @@ And it provides the conveniences of:
   compliant filesystem hierarchy, parallel simpleinit
   and networking."
 
-  "${DIALOG[@]}"  --cr-wrap                             \
+  run_dialog  --cr-wrap                             \
     --title  "The Benefits of Source Mage GNU/Linux"  \
-    --msgbox "${MSG}" 18 60
+    --msgbox "${MSG}" 0 0
+
+  run_dialog --cr-wrap             \
+    --title "About this installer" \
+    --msgbox                       \
+"This installer is developed by the Source Mage
+Cauldron team. Feedback is very welcome under
+bugs.sourcemage.org, or on IRC on irc.freenode.net,
+channel #sourcemage-cauldron.
+
+This installer installs spells in the background,
+you can view progress on tty2 if you want (press
+ALT+F2 or ALT+RightArrow).
+
+There's a help file accessible from the main menu
+on this installer, or on tty6 (ALT-F6 or
+ALT+LeftArrow).
+We hope you'll enjoy using our installer! ;-)" 0 0
 
     return 0
 }
@@ -93,18 +110,33 @@ And it provides the conveniences of:
 # file in the /tmp dir. then ask to reboot.
 # SECTION: ???
 final_screen() {
-    # copy the install-debug log 
-    if [ -d ${TARGET}/var/log ] && [ -s /tmp/installer-debug ]
-      then cp -f $INSTALLER_DEBUG \
-        ${TARGET}/var/log/SMGL-$INSTALLER_VERSION-install.log
-    fi
 
-    PROMPT="Reboot now?" 
-    if  confirm  "${PROMPT}" --defaultno;  then
-        exec shutdown -r -q now
-    else
-        exit  0
+  # This is the place for release-note bigass warnings
+  run_dialog --cr-wrap --msgbox \
+"Once you have booted your new system, it's recommmended to:
+* ensure that networking is up
+* run \"sorcery update\" to update the sorcery scripts
+* run \"scribe update\" to update the spell lists
+* configure sorcery (run \"sorcery\", go to Options)
+* run \"sorcery rebuild\" to build everything with your
+  chosen optimizations" 0 0
+
+    # copy the install-debug log 
+  if [ -d ${TARGET}/var/log ] && [ -s $INSTALLER_DEBUG ] ;then
+    cp $INSTALLER_DEBUG ${TARGET}/var/log/SMGL-$INSTALLER_VERSION-install.log
+    if grep -q 'ERROR' $INSTALLER_DEBUG ;then
+      display_message \
+"There appear to have been errors during \
+the install. In order to help debugging them, \
+could you please somehow mail the file
+/var/log/SMGL-$INSTALLER_VERSION-install.log
+(on the installed system) \
+to iso@sourcemage.org? Please include \
+\"[ISO debugging log]\" in the e-mail subject."
     fi
+  fi
+
+  exec shutdown -r -q now
 }
 
 # shells out
@@ -112,17 +144,7 @@ final_screen() {
 shell() {
 
   echo  "Press CTRL-D or type exit to return to the installer"
-  /bin/bash -l
-
-}
-
-# toggles a confirm variable
-# SECTION: MISC
-toggle_confirm()  {
-
-  [  -n  "$CONFIRM"  ]  &&
-  unset  CONFIRM        ||
-  CONFIRM="on"
+  /bin/login-shell.sh
 
 }
 
@@ -130,7 +152,7 @@ toggle_confirm()  {
 # SECTION: MISC
 display_install_help()  {
 
-  "${DIALOG[@]}" --cr-wrap --textbox $DATA_DIR/install.guide  21 60
+  run_dialog --cr-wrap --textbox $DATA_DIR/install.guide  0 0
   return 0
 }
 
@@ -166,35 +188,18 @@ reset_installer() {
   rm -f /etc/raidtab
   rm -f /tmp/fstab
   # add restart to installer-debug log if it exists
-  debug_log "main" "Resetting installer"
+  debug_log "main" 0 "Resetting installer"
   swapoff -a
-
-  # reset these to the defaults
-  CONFIRM=on
-  DEBUG=no
 
   # reset depends stuff
   rm -f $DEPENDS_DIR/*
 
+  rm -rf $FINALFILES/*
+  cp --parents /etc/sysconfig/* ${FINALFILES}
+
   # reset spellinstaller stuff
   rm -rf $SI_QUEUE_DIR
 }
-
-#toggles the debug switch
-# SECTION: MISC
-toggle_debug() {
-
-  if [ "${DEBUG}" = "yes" ]; then
-    DEBUG="no"
-  else
-    DEBUG="yes"
-  fi
-
-  echo "DEBUG=${DEBUG}"
-  press_enter
-
-}
-
 
 #displays the installer menu
 display_install_menu() {
@@ -214,45 +219,47 @@ which they appear."
           --title "Source Mage GNU/Linux installer" \
           --nocancel --default-item $CURRENT_MAIN   \
           --item-help --menu "$MENU_DESCRIPTION"    \
-          8 60 0                                    \
+          0 0 0                                    \
           "A" "[*]Introduction" "Read about the advantages of using Source Mage GNU/Linux" \
           "?" "[*]Installation and help notes" "A help text on the installer" \
-          "B" "[*]Native Language Support" "Select default language, keymap, and console fonts" \
+          "B" "[*]Pre-installation defaults settings" "Select default language, keymap, font and editor" \
           "C" "Disk Structure" "Partition, format, and mount your disk" \
-          "D" "Select Timezone" "Select this box's timezone" \
-          "E" "[*]Architecture Optimizations" "Select Architecture and Optimizations" \
-          "F" "Select Linux Kernel" "Determine wether to compile or install the default kernel" \
-          "G" "Configure Log System" "Select a daemon for system logging, or none!" \
-          "H" "Configure Bootloader" "Configure a bootloader for this box" \
-          "I" "Configure Networking" "Configure this box's network" \
-          "J" "Misc. Configuration" "Select some extra spells to install and configure a bit." \
-          "K" "Install Source Mage GNU/Linux" "Install all left to be done" \
-          "L" "[*]Choose Services to Run at Boot (expert)" "Select which services to start at boot" \
+          "D" "Start Installation" "Start everything, no going back to mounting now" \
+          "E" "[*]Select Timezone" "Select this box's timezone" \
+          "F" "[*]Architecture Optimizations" "Select Architecture and Optimizations" \
+          "G" "Select Linux Kernel" "Determine wether to compile or install the default kernel" \
+          "H" "[*]Configure Log System" "Select a daemon for system logging, or none!" \
+          "I" "Configure Bootloader" "Configure a bootloader for this box" \
+          "J" "Configure Networking" "Configure this box's network" \
+          "K" "Misc. Configuration" "Select some extra spells to install and configure a bit." \
+          "L" "Install Source Mage GNU/Linux" "Install all left to be done" \
+          "M" "[*]Choose Services to Run at Boot (expert)" "Select which services to start at boot" \
           "X" "Done" "Exit! Done! Finito!" \
           "S" "[*]Shell" "Shell out perhaps to load modules" \
-          "T" "[*]Toggle Confirm" "Toggles display of prompts. Do NOT use." \
           "R" "[*]Restart Installation" "Resets everything and begins installation again" \
-          "Z" "[*]Toggle Debug" "Toggles the debug flag" )
+          "Z" "[*]Debug Menu" "Change debugging settings" )
+
+    [[ -z $ICOMMAND ]] && continue
 
     case $ICOMMAND in
       A) intro_screen     ;;
       B) nls_screen       ;;
       C) disk_structure_screen ;;
-      D) timezone_screen  ;;
-      E) arch_screen      ;;
-      F) kernel_screen    ;;
-      G) logger_screen    ;;
-      H) bootloader_screen ;;
-      I) network_screen   ;;
-      J) optional_screen  ;;
-      K) install_screen   ;;
-      L) services_screen  ;; # Yes, works on the installed files and does
+      D) setup_target     ;;
+      E) timezone_screen  ;;
+      F) arch_screen      ;;
+      G) kernel_screen    ;;
+      H) logger_screen    ;;
+      I) bootloader_screen ;;
+      J) network_screen   ;;
+      K) optional_screen  ;;
+      L) install_screen   ;;
+      M) services_screen  ;; # Yes, works on the installed files and does
 # nothing else, so has to be run after target is fully set up.
       X) final_screen     ;;
       S) shell            ;;
-      T) toggle_confirm   ;;
       R) reset_installer  ;;
-      Z) toggle_debug     ;;
+      Z) debug_screen     ;;
       ?) display_install_help ;;
     esac
 
@@ -262,8 +269,9 @@ which they appear."
       #movin on!
       increment_menu_pointer $ICOMMAND
     else
-      run_dialog --infobox "DEBUG: not moving forward" 10 60
-      sleep 1
+      debug_log "main" 1 "Failed to run menu entry $ICOMMAND"
+      echo "Detecting an error, not moving forward in the menu." >&2
+      debug_enter "main" 2
     fi
 
   done
@@ -278,9 +286,7 @@ increment_menu_pointer() {
   case $1 in
     A) RETVALUE="B"  ;;
     B) RETVALUE="C"  ;;
-    C) RETVALUE="D"
-      setup_target
-      ;;
+    C) RETVALUE="D"  ;;
     D) RETVALUE="E"  ;;
     E) RETVALUE="F"  ;;
     F) RETVALUE="G"  ;;
@@ -288,8 +294,9 @@ increment_menu_pointer() {
     H) RETVALUE="I"  ;;
     I) RETVALUE="J"  ;;
     J) RETVALUE="K"  ;;
-    K) RETVALUE="X"  ;;
+    K) RETVALUE="L"  ;;
     L) RETVALUE="X"  ;;
+    M) RETVALUE="X"  ;;
     R) RETVALUE="B"  ;; #reset the installer
     *) `dialog --infobox "HOLY CRAPOLA got $1 for a menu item" 10 60; sleep 2`;;
   esac
@@ -319,7 +326,6 @@ main()  {
 # read-only filesystem), the directory must already exists.
 
   [ -z $TARGET ] && TARGET=/mnt/root
-  CONFIRM=on
 
 # check for TARGET
   if [ ! -d "${TARGET}" ]; then
@@ -330,6 +336,12 @@ main()  {
   mkdir -p $DEPENDS_DIR $FINALFILES
   cp --parents /etc/sysconfig/* ${FINALFILES}
 
+  if [[ "$1" == "-e" ]] ;then
+    return # to just fetch environment
+  fi
+
+  init_debug
+
   display_install_menu
 
 }
@@ -338,44 +350,22 @@ main()  {
 # this script really starts here
 #
 
-# notes on dialog:
-# General warning about dialog --radiolist. Since the result is
-# enclosed with spurious ".
-# For instance:
-#
-# dialog --stdout --radiolist radiolist 9 60 2 \
-#  "grub" "grub text" "on" \
-#  "lilo" "lilo text" "off"
-#
-# will return "grub" instead of grub.
-# Use --single-quoted to get the result without (!?!) any quotes.
-#
-# dialog --yesno     : add 4 to get height
-# dialog --msgbox    : add 5 to get height
-# dialog --menu      : add 6 to get height (let menu-height to always be 0)
-# dialog --radiolist : add 6 to get height (let list-height to always be 0)
-# dialog --checklist : add 6 to get height (let list-height to always be 0)
-# dialog --inputbox  : add 7 to get height
-
 # do some initial config things
 # TODO: add these to a function
 if [ -f $STATE_DIR/version ]; then
   . $STATE_DIR/version 
 else
-  INSTALLER_VERSION=`date +%Y%m%d`-debug
+  INSTALLER_VERSION=inofficial-debug
   SORCERY_VERSION=stable #wild guess
   GRIMOIRE_VERSION=stable
+  KERNEL_VERSION=$(uname -r)
 fi
 
 echo "INSTALLER (RE)STARTING" 1>&2
 
 export DIALOGRC=/etc/sorcery/dialogrc # yoohoo! sorcery color scheme!
 
-DIALOG=( "dialog" "--backtitle" \
-         "Source Mage GNU/Linux Installer v. ${INSTALLER_VERSION}" \
-         "--stdout" "--trim")
-
 trap  "true"  INT QUIT
 
 # start the installation process
-main
+main "$@"

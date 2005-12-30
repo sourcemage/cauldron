@@ -6,6 +6,7 @@ distcc
 screen
 procinfo
 pciutils
+lshw
 uptimed
 ethstatus
 #nmap
@@ -56,6 +57,5 @@ metalog
 linux
 e2fsprogs
 g++
-sorcery-pubkeys
 libtool
 __SMGL_TEMPLATE_ONLY_ppc__yaboot

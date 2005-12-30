@@ -8,9 +8,11 @@
 
 #bootloader stuff
 function bootloader_screen() {
-#check the depends
+  need_dependency disk          &&
+  need_dependency install_start &&
+  need_dependency linux         &&
+  si_wait linux                 &&
   config_bootloader
-#write depends
 }
 
 # usage: create_etc_mtab
@@ -33,14 +35,13 @@ bl_choose_loader() {
   if [ "$ARCH" == "ppc" ] ;then
     echo "yaboot" # We don't have any choice, why bother do display a menu?
   else
-    run_dialog --title "Bootloader selection menu"   \
-      --item-help --single-quoted --radiolist        \
-      "Please select the bootloader you wish to use to boot your SMGL system"\
-      8 60 0                                         \
-      "lilo" "The LInux LOader" "on"                 \
-      "lilo has been the standard-issue bootloader for many people for quite long"\
-      "grub" "GNU GRUB Multiboot boot loader" "off"  \
-      "GRUB is a dynamic, interactive bootloader - liked by some, hated by others"
+    memory_menu bootloader "Bootloader selection menu" ""                \
+      "Please select the bootloader you wish to use to boot your SMGL system"  \
+      "lilo"                                                                   \
+      "lilo" "The LInux LOader"                                                \
+  "lilo has been the standard-issue bootloader for many people for quite long" \
+      "grub" "GNU GRUB Multiboot boot loader"                                  \
+  "GRUB is a dynamic, interactive bootloader - liked by some, hated by others"
   fi #TODO: make these more neutral
 }
 
@@ -51,7 +52,7 @@ bl_choose_target() {
 Master Boot Record of the disk that /boot is on
 or to the Boot Record of the /boot partition?"
     if run_dialog --yes-label "MBR" --no-label "Partition" \
-               --yesno "$QUESTION" 8 60 ;then
+               --yesno "$QUESTION" 0 0 ;then
       get_dependency disk-boot |
         sed -e 's/part[0-9]*$/disc/' -e 's/[0-9]*$//'
       # partX -> disc conversion for devfs, hdaX -> hda otherwise
@@ -63,7 +64,7 @@ or to the Boot Record of the /boot partition?"
 Master Boot Record of the disk that / is on
 or to the Boot Record of the / partition?"
     if run_dialog --yes-label "MBR" --no-label "Partition" \
-               --yesno "$QUESTION" 8 60 ;then
+               --yesno "$QUESTION" 0 0 ;then
       get_dependency disk-root |
         sed -e 's/part[0-9]*$/disc/' -e 's/[0-9]*$//'
       # partX -> disc conversion for devfs, hdaX -> hda otherwise
@@ -75,8 +76,8 @@ or to the Boot Record of the / partition?"
 
 config_bootloader() {
 
-  local TARGET_DEV # The device to install the loader to
-  local BOOTLOADER=`bl_choose_loader`  &&
+  local BOOTLOADER TARGET_DEV # The device to install the loader to
+  BOOTLOADER=`bl_choose_loader`  &&
 
   # there is no MBR choice on ppc machines
 
@@ -86,21 +87,13 @@ config_bootloader() {
     TARGET_DEV=$(bl_choose_target)
   fi                                   &&
 
-  si_wait $BOOTLOADER
+  si_wait $BOOTLOADER                  &&
 
   bl_${BOOTLOADER}_config $TARGET_DEV  &&
-  bl_${BOOTLOADER}_install $TARGET_DEV
+  bl_${BOOTLOADER}_install $TARGET_DEV &&
 
-}
+  fill_dependency bootloader $BOOTLOADER
 
-# return the installed kernel version (either precompiled or compiled)
-# it returns for instance 2.6.8.1
-
-bl_get_kernel() {
-  {
-#    chroot_cmd gaze version linux | head -n 3 | tail -n 1 | awk '{print $5}' ||
-    uname -r # fallback, default for now
-  } | tail -n 1 # for sanity, should never be needed
 }
 
 # -----------------GRUB-------------------------
@@ -130,7 +123,7 @@ bl_grub_config() {
   fi                                       &&
   rm -f ${TARGET}/boot/$GRUB_DUMMY_FILE    &&
 
-  BL_KVERSION=$( bl_get_kernel )           &&
+  BL_KVERSION=$KERNEL_VERSION           &&
 
   BL_ROOTDEV=$( get_dependency disk-root ) &&
 
@@ -150,11 +143,9 @@ bl_grub_install() {
   # locate file)
 
   create_etc_mtab &&
-  chroot_cmd grub-install --no-floppy "$1"
+  try_run -e "installing grub" chroot_cmd grub-install --no-floppy "$1"
 
-  if [ "${DEBUG}" = "yes" ]; then
-    press_enter
-  fi
+  debug_enter "bootloader" 2
 
 }
 
@@ -167,7 +158,7 @@ bl_lilo_config() {
   local BL_ROOTDEV
   local BL_TARGET
 
-  BL_KVERSION=`bl_get_kernel`                    &&
+  BL_KVERSION=$KERNEL_VERSION                    &&
 
   BL_ROOTDEV=$(get_dependency disk-root)         &&
 
@@ -189,11 +180,9 @@ bl_lilo_config() {
 
 bl_lilo_install() {
 
-  chroot_cmd lilo -v
+  try_run -e "installing lilo" chroot_cmd lilo -v
 
-  if [ "${DEBUG}" = "yes" ]; then
-    press_enter
-  fi
+  debug_enter "bootloader" 2
 
 }
 
@@ -236,7 +225,7 @@ bl_yaboot_config() {
     BL_BOOTLOC="/boot"
   fi                                                        &&
 
-  BL_KVERSION=`bl_get_kernel`                               &&
+  BL_KVERSION=$KERNEL_VERSION                               &&
 
   # _append_ our own image section
 
@@ -252,10 +241,8 @@ bl_yaboot_install() {
 
   # we use --nonvram since we don't have nvsetenv installed
 
-  chroot_cmd ybin --nonvram
+  try_run -e "installing yaboot" chroot_cmd ybin --nonvram
 
-  if [ "${DEBUG}" = "yes" ]; then
-    press_enter
-  fi
+  debug_enter "bootloader" 2
 
 }

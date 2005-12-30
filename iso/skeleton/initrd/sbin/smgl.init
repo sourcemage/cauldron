@@ -1,113 +1,78 @@
-#!/bin/sh
+#!/bin/bash
 
 shell() {
-
   echo  "Press CTRL-D or type exit to return"
-  /bin/sh
-
+  /bin/bash
 }
 
 show_modules()  {
-
-    for ITEM in "$1"/*; do
-        echo `basename "${ITEM}"`
-        if [ -d "${ITEM}" ]; then
-            echo "Directory ";
-        else
-            echo "Module ";
-        fi
-    done
-
+  for ITEM in "$1"/* ;do
+    echo ${ITEM%%*/}
+    if [[ -d "${ITEM}" ]] ;then
+      echo "Directory"
+    else
+      echo "Module"
+    fi
+  done
 }
 
 input_module_parameters()  {
-
-  HELP="Optionally, enter module parameters"
-
-  "${DIALOG[@]}"  --nocancel --inputbox  \
-           "$HELP"     \
-            0 60
+  "${DIALOG[@]}" --nocancel --inputbox \
+    "You can optionally enter module parameters" 0 60
 }
 
-# returns true (0) is a module has been loaded or false (-1)
+# returns when the user is done loading modules
 
 load_module()  {
 
-    if [ -n "$1" ]; then
-        
-          TITLE="Module Menu"
-           HELP="Select a module to load please"
-         MODULE=""
+  if [ -n "$1" ]; then
+    while true ;do
+      MODULE=$("${DIALOG[@]}"                                      \
+                  --title "Module Menu" --cancel-label "back"      \
+                  --menu "Please select a module to load:" 15 60 0 \
+                  $(show_modules  "$1"))
 
-        while true;
-        do
+      # if the user hit the <Cancel> button, we return.
+      [ -n "${MODULE}" ] ||
+        return -1;
 
-# one line for drawing top line
-# x lines of text
-# top list line separator
-# y lines of list (if the list has more elements, only y'st are displayed)
-# bottom list line separator
-# one line for drawing a separator
-# one line for <OK> and <Cancel> button
-# one line for drawing bottom line
-#
-# Conclusion: dialog --menu "menu_help" x+y+6 60 y
+      if [ -d "$1/${MODULE}" ] ;then
+        #the user selected a directory, we display a new menu
+        load_module "$1/${MODULE}"
+      elif [ -f "$1/${MODULE}" ]; then
+        # he selected a file, load that menu
+        # remove .o (2.4 kernels) or .ko (2.6 kernels) extension.
+        MODULE=${MODULE%.o}     &&
+        MODULE=${MODULE%.ko}    &&
+        PARAMETERS=$(input_module_parameters) &&
+        echo "Running modprobe ${MODULE} ${PARAMETERS}"      &&
+        if modprobe "${MODULE}" $PARAMETERS ;then
+          read -p "Success. Press enter..."
+        else
+          read -p "Failure. Press enter..."
+        fi
+      fi
+    done
 
-          MODULES=`show_modules  "$1"`
-           MODULE=`"${DIALOG[@]}"  --title  "$TITLE"  \
-                            --menu "$HELP"            \
-                            7 60 0              \
-                            $MODULES`
+  else
+    MODULE_DIR="/lib/modules/${KERNEL}/kernel"
 
-# if the user hit the <Cancel> button, we return false
-           if [ -z "${MODULE}" ]; then
-#               echo "You press the <Cancel> button"
-#               sleep 2
-               return -1;
-           fi
-
-#           echo "MODULE=${MODULE}"
-#           sleep 2
-           
-# if the user select a directory, we display a new menu
-           if [ -d "$1/${MODULE}" ]; then
-               if load_module "$1/${MODULE}"; then
-#                   echo "load_module returns true"
-#                   sleep 2
-                   return;
-               fi
-# else if the user select a file, we load that module
-           elif [ -f "$1/${MODULE}" ]; then
-# remove .o (2.4 kernels) or .ko (2.6 kernels) extension.
-               MODULE=`basename "${MODULE}" .o`     &&
-			   MODULE=`basename "${MODULE}" .ko`    &&
-               PARAMETERS=`input_module_parameters` &&
-			   echo "Running modprobe ${MODULE} ${PARAMETERS}"      &&
-               if modprobe "${MODULE}" $PARAMETERS; then
-                   read -p "Success. Press enter..."
-                   return 0;
-               fi
-# wait 10 seconds with the modprobe's error displayed and
-# redisplay the same menu again (hence, no return statement)
-               read -p "Failure. Press enter..."
-           fi
-        done
-
-    else
-
-	  MODULE_DIR="/lib/modules/${KERNEL}/kernel"
-	  M_NOMODULE="There is no module for ${KERNEL} kernel"
-
-	  if [ ! -d "${MODULE_DIR}" ]; then
-		"${DIALOG[@]}" --msgbox "${M_NOMODULE}" 6 60
-		return -1;
-	  fi
-
-      load_module "${MODULE_DIR}"
+    if [ ! -d "${MODULE_DIR}" ]; then
+      "${DIALOG[@]}" --msgbox "Unable to find any modules" 6 60
+      return -1;
     fi
+    load_module "${MODULE_DIR}"
+  fi
+}
 
-#    echo "load_module is returning $?"
-#    sleep 2
+test_cdrom() {
+  local found=false
+  mount -n -r -t iso9660 $1 $MOUNT 2>/dev/null
+  if [ -f $ID ] ;then
+    found=true
+  fi
+  umount -n $MOUNT 2>/dev/null
+  $found
 }
 
 # at the end SMGL_CD is defined to the device where the SMGL CD is found
@@ -122,19 +87,38 @@ scan_cdroms()  {
       handler=${handler%/media}
       device=/dev/${handler##*/}
 
-      mount -n -r -t iso9660 $device $MOUNT 2>/dev/null
-      if [ -f $ID ]; then
-        umount -n $MOUNT 2>/dev/null
+      test_cdrom $device &&
+      {
         SMGL_CD=$device
         return
-      else
-        umount -n $MOUNT 2>/dev/null
-
-      fi
+      }
     fi
   done
+
+  echo "Trying harder to find the SMGL CD..."
+  # Next try: look at all /proc/partitions stuff, make devices if neccessary
+  local major minor blocks name
+  while read major minor blocks name ;do
+    (( major )) 2>/dev/null || continue # Don't process non-numeric lines
+
+    [ -b /dev/$name ] ||
+    mknod /dev/$name b $major $minor
+
+    test_cdrom /dev/$name &&
+    {
+      SMGL_CD=/dev/$name
+      return
+    }
+
+  done </proc/partitions
 }
 
+
+toggle_hotplug() {
+  [[ "$HOTPLUG_ACTION" == "enable" ]] &&
+    HOTPLUG_ACTION="disable" ||
+    HOTPLUG_ACTION="enable"
+}
 
 show_filesystems()  {
 
@@ -175,17 +159,21 @@ select_root()  {
 }
 
 main_menu()  {
-    
+
+    HOTPLUG_ACTION="disable"
+    # NOTE: this is the opposite of the status of the toggle
+
     while true;
       do
 
       M_HELP="Select modules to load"
       S_HELP="Shell out for a moment"
+      H_HELP="toggle if the ISO runs hotplug"
       R_HELP="Choose the device to be mounted as /"
       D_HELP="Continue the normal boot process"
-      
+
       scan_cdroms
-      
+
       if  [  -z  "$SMGL_CD"  ]   &&
           [  -z  "$ROOT"    ];  then
 
@@ -216,16 +204,18 @@ main_menu()  {
                         --default-item  "$DEFAULT_ITEM"       \
                         --menu                                \
                         "$HELP"                               \
-                        8 60 0                               \
+                        8 60 0                                \
                         "M"  "Load modules "       "$M_HELP"  \
                         "S"  "Shell "              "$S_HELP"  \
+                        "H"  "$HOTPLUG_ACTION hotplug" "$H_HELP" \
                         "R"  "Choose root device (For rescue mode)" "$R_HELP" \
                         "D"  "Continue booting "   "$D_HELP"`
 
       case  $COMMAND  in
           M)  load_module  ;;
           S)  shell        ;;
-		  R)  select_root  ;;
+          H)  toggle_hotplug ;;
+          R)  select_root  ;;
           D)  return       ;;
       esac
 
@@ -235,66 +225,56 @@ main_menu()  {
 
 main()  {
 
-  while true;
-  do
+  while true ;do
 
-	main_menu
+    main_menu
+    if  [ -z $ROOT ] && [ -z $SMGL_CD ] ;then
+      # height is 6 lines :
+      # 1 line for drawing a top line
+      # 1 line for a blank line
+      # 1 line of text
+      # 1 line for drawing a line
+      # 1 line for <OK> button
+      # 1 line for drawing a bottom line
+      "${DIALOG[@]}" --msgbox "Unable to boot without a root." 6 60
+      continue
+    fi
 
-	if  [  -z  $ROOT    ]   &&
-        [  -z  $SMGL_CD ];  then
+       ROOT=${ROOT:-$SMGL_CD}
+    VFSTYPE=${VFSTYPE:-iso9660}
+    OPTIONS=${OPTIONS:-"defaults,ro"}
 
-# height is 6 lines : 
-# 1 line for drawing a top line
-# 1 line for a blank line
-# 1 line of text
-# 1 line for drawing a line
-# 1 line for <OK> button
-# 1 line for drawing a bottom line
+    mount -n -t $VFSTYPE  -o $OPTIONS  $ROOT  $MOUNT ||
+    {
+      "${DIALOG[@]}" --msgbox "Unable to mount $ROOT as $VFSTYPE." 6 60
+      continue
+    }
 
-	  "${DIALOG[@]}" --msgbox "Unable to boot without a root." 6 60
-	  continue
+    if [ ! -x $MOUNT/sbin/init ]; then
+      "${DIALOG[@]}" --msgbox "Unable to locate /sbin/init on $ROOT." 6 60
+      umount -n $MOUNT
+      continue
+    fi
 
-	fi
+    umount -n /proc
 
-	[  -n  "$ROOT"     ]  ||     ROOT=$SMGL_CD
-	[  -n  "$VFSTYPE"  ]  ||  VFSTYPE=iso9660
-	[  -n  "$OPTIONS"  ]  ||  OPTIONS="defaults,ro"
+    # setup writable /etc /root and nfs stat dir if ISO is ROOT
+    if [ -f $ID ] ;then
+      /bin/mount -t $VFSTYPE -o $OPTIONS $ROOT $MOUNT/mnt/cdrom
+      cd $MOUNT/mnt/cdrom
+      for i in etc root var/log var/lib/nfs ;do
+        echo "Setting up writable /$i for install"
+        /bin/mount -t tmpfs tmpfs $MOUNT/$i
+        $MOUNT/bin/cp -a --parents $i $MOUNT
+      done
+      cd $MOUNT
+      /bin/umount $MOUNT/mnt/cdrom
+    fi
 
-	if ! mount -n -t $VFSTYPE  -o $OPTIONS  $ROOT  $MOUNT; then
-
-	  "${DIALOG[@]}" --msgbox "Unable to mount $ROOT as $VFSTYPE." 6 60
-	  continue
-
-	fi
-
-	if [ ! -x $MOUNT/sbin/init ]; then
-
-	  "${DIALOG[@]}" --msgbox "Unable to locate /sbin/init on $ROOT." 6 60
-	  umount -n $MOUNT
-	  continue
-
-	fi
-
-	umount -n /proc
-
-### HGG START ###
-      ## setup writable /etc /root and nfs stat dir if ISO is ROOT
-       if [ "$ROOT" = "$SMGL_CD" ]
-       then /bin/mount -t $VFSTYPE -o $OPTIONS $ROOT $MOUNT/mnt/cdrom
-            for i in etc root
-            do echo "Setting up writable /$i for install"
-               /bin/mount -t tmpfs tmpfs $MOUNT/$i
-               $MOUNT/bin/cp -a $MOUNT/mnt/cdrom/$i $MOUNT
-            done
-            echo "Setting up writable /var/log for install"
-	    /bin/mount -t tmpfs tmpfs $MOUNT/var/log/
-	    $MOUNT/bin/cp -a $MOUNT/mnt/cdrom/var/log/* $MOUNT/var/log/
-            echo "Setting up writable /var/lib/nfs for install"
-	    /bin/mount -t tmpfs tmpfs $MOUNT/var/lib/nfs
-	    $MOUNT/bin/cp -a $MOUNT/mnt/cdrom/var/lib/nfs $MOUNT/var/lib/
-	    /bin/umount $MOUNT/mnt/cdrom
-       fi
-### HGG END ###
+    if [[ "$HOTPLUG_ACTION" == "enable" ]] ;then
+      # Menu entry was "enable", so it was set to disabled
+      $MOUNT/bin/chmod a-x $MOUNT/etc/init.d/runlevels/%S/hotplug
+    fi
 
     cd $MOUNT
 
@@ -306,7 +286,7 @@ main()  {
 
     echo "Running /sbin/init $@"
 
-# if the new root filesystem use devfs, /dev/console should not exist
+# if the new root filesystem uses devfs, /dev/console should not exist
     if [ ! -e dev/console ]; then
       mount -n -t devfs  devfs  dev
     fi
