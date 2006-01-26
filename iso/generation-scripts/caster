@@ -62,12 +62,8 @@ function filter_dirs() {
 }
 
 function get_updated() {
-  mkdir -p /tmp/get_updated
-  # We don't know the tablet date, so we can't extract the file directly
-  tar -C /tmp/get_updated -xjf "$1" var/state/sorcery/tablet
-  cat /tmp/get_updated/var/state/sorcery/tablet/*/*/updated ||
+  tar -xjOf "$1" 'var/state/sorcery/tablet/*/*/updated' ||
   echo 0
-  rm -rf /tmp/get_updated
 }
 
 if [ "$1" == "-c" ] ;then
