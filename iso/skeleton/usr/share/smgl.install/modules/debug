@@ -66,9 +66,11 @@ you want to set the debug level" \
 # Possible parameters:
 # -e "string": specify your own failure message
 # -nc: (no-capture) don't redirect output
+# -q: do not prompt user or print error, just log
 function try_run() {
   local error_message
   local capture=true
+  local quiet=false
   local capfile=$TMP_DIR/debug.out.$$
   local rc
   debug_log "tryrun" 3 "Argument list before parameter parsing:" "$@"
@@ -78,6 +80,10 @@ function try_run() {
              shift 2
           ;;
       "-nc") capture=false
+             echo "<not captured>" >$capfile
+             shift
+          ;;
+       "-q") quiet=true
              shift
           ;;
           *) debug_log "ERROR" -1 "Unknown parameter to try_run: $1"
@@ -93,6 +99,7 @@ function try_run() {
     rc=$?
     set +o pipefail
     if [[ $rc != 0 ]] || debug_is_on "tryrun" 3 ;then
+      $quiet ||
       run_dialog --title "$error_message" --cr-wrap --msgbox \
         "The failed command (exit code $rc) was:
 $*
@@ -102,11 +109,11 @@ $(cat $capfile)" 0 0
   else
     "$@"
     rc=$?
-    if [[ $rc != 0 ]] || debug_is_on "tryrun" 3 ;then
+    if [[ $rc != 0 ]] || debug_is_on "tryrun" 3 && ! $quiet ;then
       echo "$error_message"
       echo "The return code was $rc. The command was:"
       echo "$*"
-      debug_enter "error" -1
+      debug_enter "ERROR" -1
     fi >&2
   fi
   if [[ $rc != 0 ]] ;then

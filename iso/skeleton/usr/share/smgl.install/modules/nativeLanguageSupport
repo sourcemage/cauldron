@@ -123,7 +123,7 @@ installation. However, you can select vim, which still
 uses elvis during the install, vim on the final system."
 
   REAL_ED=$(memory_menu "editor" "Select your preferred editor" \
-            "" "$HELP" "nano" \
+           "--item-help" "$HELP" "nano"           \
            "nano"  "a pico clone"    "$NANO_DSC"  \
            "jed"   "Powerful editor" "$JED_DSC"   \
            "elvis" "A vi clone"      "$ELVIS_DSC" \

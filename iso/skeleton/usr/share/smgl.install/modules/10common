@@ -108,11 +108,11 @@ function memory_menu() {
   local USEDEF="$(get_dependency "remember_$ID" 2>/dev/null)"
   USEDEF="${USEDEF:-"$DEF"}"
   local ANSWER
-  ANSWER=$(run_dialog --title "$TITLE"      \
-                 --default-item "$USEDEF"   \
-                 --menu "$TEXT" 0 0 0       \
-                 "$@")                      &&
-  fill_dependency "remember_$ID" "$ANSWER"  &&
+  ANSWER=$(run_dialog --title "$TITLE" $OPTS \
+                 --default-item "$USEDEF"    \
+                 --menu "$TEXT" 0 0 0        \
+                 "$@")                       &&
+  fill_dependency "remember_$ID" "$ANSWER"   &&
   echo "$ANSWER"
 }
 

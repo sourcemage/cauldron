@@ -6,7 +6,6 @@
 /etc/sysconfig
 /etc/installerdata
 /initrd
-/isolinux
 /mnt
 /mnt/cdrom
 /mnt/mnt

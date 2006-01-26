@@ -1,3 +1,19 @@
+2006-01-10 Karsten Behrmann <BearPerson@sourcemage.org>
+	* 30spellinstall: add user sshd in openssh installation
+
+2006-01-03 Karsten Behrmann <BearPerson@sourcemage.org>
+	* caster: work around cast --deps problem
+	* 10common: make memory_menu actually respect $OPTS
+	* 30spellinstall: add lots of try_run -q's to log errors nicely
+	* debug: add -q parameter to try_run to disable interactiveness
+	* nLS, syslog, bootloader: fix memory_menu by adding --item-help
+	* syslog: fix init script name for metalog
+
+2005-12-30 Karsten Behrmann <BearPerson@sourcemage.org>
+	* iso.dirs: remove unconditional creation of isolinux dir
+	* diskStructure: add code for ppc disks, fix for >9 partitions,
+	  reactivate RAID option
+
 2005-12-29 Karsten Behrmann <BearPerson@sourcemage.org>
 	* mkprep: fix choose_multi for symlinks into nowhere
 

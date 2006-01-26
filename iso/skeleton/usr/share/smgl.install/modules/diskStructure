@@ -39,11 +39,11 @@ non-xfs /boot partition."
       --menu "$TEXT"                  \
       0 0 0                         \
       "A" "[*]Partition Disks"   "Create partitions on your drives" \
+      "B" "[*]Make MD RAID Devices" "Create RAID devices using mdadm"    \
       "C" "Format/mount filesystems and swap" "Format and mount your partitions" \
       "D" "Done"        "We're all done here, let's get on with it" ` ||
     return 1 #return with a failure if canceled
 
-#      "B" "[*]Make MD RAID Devices" "Create RAID devices using mdadm"    \
 
     case $ICOMMAND in
       A)
@@ -275,61 +275,37 @@ create_md_device() {
 
 # ---------------- formatting and mounting ------------------
 
+mnt_get_part_type() {
+  if [[ $1 == md* ]] ;then
+    echo -n "RAID "
+    mdadm --detail --brief /dev/$1 |
+      sed 's/^.*\(level.*\)UUID.*$/\1/'
+  else
+    if [[ $ARCH == "ppc" ]] ;then
+      mac-fdisk -l | grep "^/dev/$1[[:space:]]" |
+        sed 's/^.*  //'
+    else
+      sfdisk -lq 2>/dev/null | # Bug in sfdisk makes it not honor -q
+        grep "^/dev/$1[[:space:]]" | sed 's/^.*  //'
+    fi
+  fi
+}
+
 list_parts()  {
-  # TODO: sanitize
-  # grepping a non-existant file gives an error
   local PARTITION SIZE
   touch /tmp/fstab
   touch /tmp/md-devices
-   cat /proc/partitions | awk '$3 !~ /^1$/ {print $4 " " $3}' | grep -v ram |
-     grep -v disc | grep -v name | grep '^[^ ]*[0-9]' |
-     while read PARTITION SIZE ;do #SUBSHELL!
-       if [[ -n "$PARTITION" ]] && ! grep -q "^/dev/$PARTITION	" /tmp/fstab &&
-         ! grep -q "devices=\([^,]*,\)*/dev/$PARTITION\(,\|$\)" /tmp/md-devices
-       then # don't do nil strings, partitions we mounted already, RAID parts
-         echo "$PARTITION"
-         echo -n "Size: $(( SIZE / 1024 ))MB Type: "
-         if [[ $PARTITION == md* ]] ;then
-           echo -n "RAID "
-           mdadm --detail --brief /dev/$PARTITION |
-             sed 's/^.*\(level.*\)UUID.*$/\1/'
-         else
-           sfdisk -lq 2>/dev/null | # Bug in sfdisk makes it not honor -q
-           grep "^/dev/$PARTITION" | sed 's/^.*  //'
-           # The sed is ugly, and we'll have to change it
-           # whenever they change their output format... no choice though :-/
-         fi
-# TODO: add type recognition
-# This old code did it:
-
-#      if ! sfdisk -s | grep -q /dev/$PARTITION\: && !  echo  $FS_LIST | grep -q $PARTITION\  && ! `grep device /etc/raidtab | grep -q $PARTITION\ ` ;then
-#        echo  "/dev/${PARTITION}"
-#        if [[ `uname -r` == 2.6.* ]] ;then
-#          if [[ $PARTITION == md* ]] ;then
-#            echo  "Size `sfdisk -sq /dev/$PARTITION` Type RAID array" ||
-#              echo "size and type unknown"
-#          else
-#            echo  "Size $(sfdisk -sq /dev/$PARTITION` Type `sfdisk -lq | grep $PARTITION\ |
-#              awk '{print $(NF-1) " " $NF}' | sed -e s/[0123456789].[\ ]//g) " ||
-#              echo "size and type unknown"
-#          fi
-
-              # 2.4.25 wrongly tries to list removable media (cdroms,
-              # etc) which have no geometry so to avoid a lot of errors,
-              # I modified the check, but some weird mojo wouldn't let
-              # the "backticks within backticks" work so I used both ` `
-              # and $()
-
-#        elif [[ $PARTITION == md* ]] ;then
-#          echo  "Size `sfdisk -sq /dev/$PARTITION` Type RAID array " ||
-#          echo "size and type unknown"
-#        else
-#          echo  "Size `sfdisk -sq /dev/$PARTITION` Type `sfdisk -lq $(echo /dev/$PARTITION |
-#            sed -e s/part[0123456789]*/disc/) | grep $PARTITION\  | awk '{print $(NF-1) " " $NF}' |
-#            sed -e s/[0123456789].[\ ]//g` " ||
-#            echo "size and type unknown"
-#        fi
-#      fi
+  # grepping a non-existant file gives an error
+  cat /proc/partitions | awk '$3 !~ /^1$/ {print $4 " " $3}' | grep -v ram |
+    grep -v disc | grep -v name | grep '^[^ ]*[0-9]' |
+    while read PARTITION SIZE ;do #SUBSHELL!
+      if [[ -n "$PARTITION" ]] && ! grep -q "^/dev/$PARTITION	" /tmp/fstab &&
+        ! grep -q "devices=\([^,]*,\)*/dev/$PARTITION\(,\|$\)" /tmp/md-devices
+      then # don't do nil strings, partitions we mounted already, RAID parts
+        echo "$PARTITION"
+        echo "Size: $(( SIZE / 1024 ))MB Type: \
+$(mnt_get_part_type $PARTITION | tr '\n' ' ')"
+        # Be very paranoid about getting exactly one line out of this
       fi
     done
 }
