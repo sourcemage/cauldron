@@ -53,18 +53,18 @@ tz_menu()  {
   fill_dependency timezone "$selectedTZ"
 
   if run_dialog                    \
-       --title "GMT or local time" \
+       --title "UTC/GMT or local time" \
        --yes-label "local"         \
-       --no-label  "GMT"           \
-       --yesno "Should the hardware clock store time in universal time
-(UTC/GMT) or in local time? In universal it doesn't have
-to be re-set for dailight saving time, but it messes up
+       --no-label  "UTC/GMT"           \
+       --yesno "Should the hardware clock store time in UTC/GMT
+or in local time? In UTC/GMT it doesn't have
+to be reset for daylight savings time, but it messes up
 broken OS's like MS Windows."      \
         0 0                 ;then
     debug_log "timezone" 1 "selected local time in hwclock"
     try_run sed -i 's/^UTC=.*$/UTC=no/' ${FINALFILES}/etc/sysconfig/hwclock
   else
-    debug_log "timezone" 1 "selected GMT in hwclock"
+    debug_log "timezone" 1 "selected UTC/GMT in hwclock"
     try_run sed -i 's/^UTC=.*$/UTC=yes/' ${FINALFILES}/etc/sysconfig/hwclock
   fi
 }

@@ -1,3 +1,8 @@
+2006-02-02 Eric Sandall <eric@sandall.us>
+	* iso/skeleton/usr/share/smgl.install/modules/timezone: Fixed spelling
+	  of dailight and re-set (Bug #10485)
+	  Use UTC/GMT as main reference for UTC, GMT, and Universal  (Bug #10485)
+
 2006-01-26 Karsten Behrmann <BearPerson@sourcemage.org>
 	* generation-scripts/caster: be more efficient extracting $UPDATED
 
