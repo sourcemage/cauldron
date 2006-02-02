@@ -78,6 +78,7 @@ in_start() {
   try_run mount -t proc proc $TARGET/proc
 
   # Install sorcery
+  echo "Installing the sorcery package manager"
   pushd /tmp >/dev/null                                    &&
   tar -xjf /var/cache/sorcery/sorcery-$SORCERY_VERSION.tar.bz2 &&
   cd sorcery                                               &&
@@ -86,6 +87,7 @@ in_start() {
   rm -rf /tmp/sorcery                                      &&
 
   # Copy sources
+  echo "Installing base sources and package lists"
   try_run cp --parents -f /var/spool/sorcery/* ${TARGET}   &&
 
   # Install grimoires

@@ -362,7 +362,7 @@ get_mount_point()  {
     "/home"  "Give users their own partition so they can't fill / up"
     "/root"  "For the paranoid: extra HD space for recovery when / is full"
     "/usr"   "Used to seperate system programs from the bulk of the data"
-"/usr/share" "No idea what this is for. Tell BearPerson on IRC :-)"
+"/usr/share" "Contains architecture-independent data, such as data files"
     "/var"   "Guarantees that logs or source caches can't fill /"
     "other"  "own custom mount point (forbidden: /etc, /bin, /sbin, /lib)" )
 
