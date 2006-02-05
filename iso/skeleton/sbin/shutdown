@@ -6,13 +6,13 @@ fi
 exec </dev/console
 exec >/dev/console
 exec 2>/dev/console
-mount tmpfs -t tmpfs /proc
+mount tmpfs -n -t tmpfs /proc
+read
+# The prompt is displayed by the other script
 kill -SIGUSR1 -1
-sleep 1
 ROOTDEV=$(cat /proc/rootdev)
 ACTION=$(cat /proc/action)
 CDDEV=$(cat /proc/cddev)
-read -p "press enter..."
 if [[ $ACTION == "reboot" ]] ;then
   mount -t proc proc /tmp
   sync

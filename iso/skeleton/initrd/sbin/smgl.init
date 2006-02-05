@@ -269,6 +269,9 @@ main()  {
       done
       cd $MOUNT
       /bin/umount $MOUNT/mnt/cdrom
+
+      # Installer needs this to do its "eject CD" magic
+      echo "$ROOT" >$MOUNT/etc/cddev
     fi
 
     if [[ "$HOTPLUG_ACTION" == "enable" ]] ;then

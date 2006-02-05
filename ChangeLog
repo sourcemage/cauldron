@@ -1,3 +1,16 @@
+2006-02-05 Karsten Behrmann <BearPerson@sourcemage.org>
+	* iso.packages: add eject, do not install shutdown.conf since we
+	  install our own
+	* skeleton/etc/shutdown.conf: add stuff to eject CD before reboot /
+	  chroot into the installed system
+	* iso.command, skeleton/etc/init.d/runlevels/tmpfs.sh: add script to
+	  set up writeable /etc and such without having to boot the initrd,
+	  add hack since p4 won't let us store the right path
+	* skeleton/initrd/sbin/smgl.init: store CD device name for eject hack
+	* skeleton/sbin/{dummy-halt.sh,shutdown}: fixes in the eject CD /
+	  chroot systems
+	* installer.sh: add code to use the eject / chroot hack
+
 2006-02-02 Eric Sandall <eric@sandall.us>
 	* iso/skeleton/usr/share/smgl.install/modules/timezone: Fixed spelling
 	  of dailight and re-set (Bug #10485)

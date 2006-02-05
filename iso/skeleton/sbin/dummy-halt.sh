@@ -3,16 +3,14 @@
 function saveinfo() {
   echo "$ROOTDEV" >/proc/rootdev
   echo "$ACTION" >/proc/action
+  echo "$CDDEV" >/proc/cddev
   exit 0
 }
 
-exec </dev/console
 exec >/dev/console
 exec 2>/dev/console
-echo "Not doing anything really..."
-sleep 1
-echo "ROOTDEV=$ROOTDEV"
-echo "ACTION=$ACTION"
+echo "Press enter to eject the CD..."
+# print it here so we know this part of the script is ready
 trap saveinfo SIGUSR1
 sleep 1h
 return 1

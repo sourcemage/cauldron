@@ -135,8 +135,22 @@ to iso@sourcemage.org? Please include \
 \"[ISO debugging log]\" in the e-mail subject."
     fi
   fi
+  if check_dependency disk-root && confirm \
+      "Do you want to boot into your new system directly? (experimental)"\
+      --defaultno ;then
+    export ACTION="pivot_root"
+    export ROOTDEV=$(get_dependency disk-root)
+  else
+    export ACTION="reboot"
+    if [[ -e /etc/cddev ]] ;then
+      CDDEV=$(</etc/cddev)
+    else
+      CDDEV=$(cat /proc/cmdline | sed 's/.*root=//' | cut -d' ' -f1)
+    fi
+    export CDDEV
+  fi
 
-  exec shutdown -r -q now
+  exec shutdown -h -q now # -h because that one calls halt_action
 }
 
 # shells out
