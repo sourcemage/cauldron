@@ -57,10 +57,6 @@ non-xfs /boot partition."
       ;;
       D)
         if need_dependency disk-root; then
-          rm -f $FINALFILES/etc/fstab
-          cat $TEMPLATE_DIR/fstab.first /tmp/fstab $TEMPLATE_DIR/fstab.last \
-            >$FINALFILES/etc/fstab
-          fill_dependency disk
           DONE=true
         fi
       ;;
@@ -74,6 +70,10 @@ You have no dedicated swap partition."; then
       mk_swap_file
     fi
   fi
+  rm -f $FINALFILES/etc/fstab
+  cat $TEMPLATE_DIR/fstab.first /tmp/fstab $TEMPLATE_DIR/fstab.last \
+    >$FINALFILES/etc/fstab
+  fill_dependency disk
 
   return 0 # When we've reached this point, always return success.
 

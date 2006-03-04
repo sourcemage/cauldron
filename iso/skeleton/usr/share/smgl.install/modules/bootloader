@@ -241,6 +241,7 @@ bl_yaboot_install() {
 
   # we use --nonvram since we don't have nvsetenv installed
 
+  try_run -e "creating the bootstrap partition" chroot_cmd mkofboot
   try_run -e "installing yaboot" chroot_cmd ybin --nonvram
 
   debug_enter "bootloader" 2

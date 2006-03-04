@@ -1,3 +1,7 @@
+2006-03-04 Karsten Behrmann <BearPerson@sourcemage.org>
+	* bootloader: also run mkofboot on ppc
+	* diskStructure: make sure fstab includes swapfile
+
 2006-01-31 Karsten Behrmann <BearPerson@sourcemage.org>
 	* generation-scripts/config: bump to 0.9.6
 
