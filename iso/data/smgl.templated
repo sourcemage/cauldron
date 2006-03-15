@@ -1,5 +1,6 @@
 ${SKELETON}/etc/issue
 ${SKELETON}/etc/sorcery/local/depends/linux.p
+${SKELETON}/etc/sorcery/local/grimoire
 ${SKELETON}/etc/sourcemage_version
 ${SKELETON}/isolinux/isolinux.cfg
 ${SKELETON}/isolinux/isolinux.msg
