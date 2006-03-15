@@ -10,8 +10,8 @@ function logger_screen() {
 syslog()  {
 
   local logger
-  logger=$(memory_menu logger "Please select your system logger" \
-            "" "Pick one of the 3 loggers available" "none"            \
+  logger=$(memory_menu logger "Please select your system logger"       \
+            "--item-help" "Pick one of the 3 loggers available" "none" \
             "sysklogd"  "standard system logging daemon"               \
 "This version of syslogd is similar to the standard Berkeley product." \
             "syslog-ng" "new logging daemon with some more features"   \
@@ -24,6 +24,14 @@ syslog()  {
   fill_dependency syslog $logger                                      &&
   if [[ $logger == "none" ]] ;then return 0 ;fi                       &&
   si_queue $logger                                                    &&
-  try_run sed -i "s/^syslog=.*$/syslog=$logger/" \
+  try_run sed -i "s/^syslog=.*$/syslog=$(slg_get_initscript_name $logger)/" \
     ${FINALFILES}/etc/sysconfig/facilities
+}
+
+function slg_get_initscript_name() {
+  case "$1" in
+    "sysklogd") echo "sysklogd"     ;;
+   "syslog-ng") echo "syslog-ng"    ;;
+     "metalog") echo "smgl-metalog" ;;
+  esac
 }

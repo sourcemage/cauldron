@@ -100,6 +100,8 @@ for spell in "$@" ; do
     prepare_cast
     pre_workaround $spell
     cast --deps $spell
+    pre_workaround $spell
+    # Workaround until --deps works again, currently only openssh is affected
     cast -c $spell
     rc=$?
     post_workaround $spell

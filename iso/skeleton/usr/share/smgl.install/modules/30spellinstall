@@ -218,7 +218,7 @@ si_run_fake_spell() {
                ;;
     "Iso.Compile_env")
                       check_dependency compile_system ||
-                      chroot_cmd scribe reindex
+                      try_run -q chroot_cmd scribe reindex
                       fill_dependency compile_system
                     ;;
     Iso.*)
@@ -235,7 +235,7 @@ si_run_fake_spell() {
 si_pre_workaround() {
   case $1 in
     "example")
-              cp ${TARGET}/etc/passwd /tmp/backuppass
+              try_run -q cp ${TARGET}/etc/passwd /tmp/backuppass
             ;;
   esac
 }
@@ -243,23 +243,28 @@ si_pre_workaround() {
 si_post_workaround() {
   case $1 in
        "bash")
-              cp --parents -a /etc/profile* $TARGET
+              try_run -q cp --parents -a /etc/profile* $TARGET
             ;;
     "example")
-              cp /tmp/backuppass ${TARGET}/etc/passwd
-              chroot_cmd mk_example_key
+              try_run -q cp /tmp/backuppass ${TARGET}/etc/passwd
+              try_run -q chroot_cmd mk_example_key
             ;;
     "openssh")
-              rm -f ${TARGET}/etc/ssh/*host*
-              chroot_cmd ssh-keygen -t rsa1 -f /etc/ssh/ssh_host_key     -N ""
-              chroot_cmd ssh-keygen -t rsa  -f /etc/ssh/ssh_host_rsa_key -N ""
-              chroot_cmd ssh-keygen -t dsa  -f /etc/ssh/ssh_host_dsa_key -N ""
+              try_run -q chroot_cmd \
+                  useradd -u 111 -g nogroup -d /var/run/sshd -s /bin/false sshd
+              try_run -q rm -f ${TARGET}/etc/ssh/*host*
+              try_run -q chroot_cmd \
+                  ssh-keygen -t rsa1 -f /etc/ssh/ssh_host_key     -N ""
+              try_run -q chroot_cmd \
+                  ssh-keygen -t rsa  -f /etc/ssh/ssh_host_rsa_key -N ""
+              try_run -q chroot_cmd \
+                  ssh-keygen -t dsa  -f /etc/ssh/ssh_host_dsa_key -N ""
             ;;
       "gnupg")
-              mkdir -p -m 700 $TARGET/root/.gnupg
+              try_run -q mkdir -p -m 700 $TARGET/root/.gnupg
             ;;
 "netkit-base")
-              sed -i \
+              try_run -q sed -i \
               "s/^127.0.0.1.*/127.0.0.1	localhost	$(cat /etc/hostname)/" \
               $TARGET/etc/hosts
             ;;
@@ -301,13 +306,14 @@ si_install_spell() {
   fi                                                       &&
   # TODO: I don't like using *'s
   debug_log "spellinstall" 3 "installing files for $1"     &&
-  tar -xjp -C ${TARGET} -f /var/cache/sorcery/$1-${VERSION}-*.tar.bz2 &&
+  try_run -q tar -xjp -C ${TARGET} -f \
+      /var/cache/sorcery/$1-${VERSION}-*.tar.bz2 &&
   if [[ "$1" != "smgl-fhs" ]] ;then
     debug_log "spellinstall" 3 "ldconfig for $1"           &&
-    chroot_cmd /sbin/ldconfig
+    try_run -q chroot_cmd /sbin/ldconfig
   fi                                                       &&
 
-  echo "$1:$(date +%Y%m%d):installed:${VERSION}" \
+  try_run -q echo "$1:$(date +%Y%m%d):installed:${VERSION}" \
     >>${TARGET}/var/state/sorcery/packages                 &&
 
   debug_log "spellinstall" 3 "post_workaround for $1"      &&
