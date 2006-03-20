@@ -40,8 +40,9 @@ non-xfs /boot partition."
       0 0 0                         \
       "A" "[*]Partition Disks"   "Create partitions on your drives" \
       "B" "[*]Make MD RAID Devices" "Create RAID devices using mdadm"    \
-      "C" "Format/mount filesystems and swap" "Format and mount your partitions" \
-      "D" "Done"        "We're all done here, let's get on with it" ` ||
+      "C" "[*]Make LVM Devices" "Create LVM devices using lvm" \
+      "D" "Format/mount filesystems and swap" "Format and mount your partitions" \
+      "E" "Done"        "We're all done here, let's get on with it" ` ||
     return 1 #return with a failure if canceled
 
     case $ICOMMAND in
@@ -51,10 +52,13 @@ non-xfs /boot partition."
       B)
         create_md_device # Make ourselves some MD devices!
       ;;
-      C)
-        while mount_menu ;do true ;done # do the mounting until user quits
+      C)# cdombroski@icanttype.org, call the lvm menu
+        lvm_menu
       ;;
       D)
+        while mount_menu ;do true ;done # do the mounting until user quits
+      ;;
+      E)
         if need_dependency disk-root; then
           DONE=true
         fi
@@ -299,8 +303,10 @@ list_parts()  {
     grep -v disc | grep -v name | grep '^[^ ]*[0-9]' |
     while read PARTITION SIZE ;do #SUBSHELL!
       if [[ -n "$PARTITION" ]] && ! grep -q "^/dev/$PARTITION	" /tmp/fstab &&
-        ! grep -q "devices=\([^,]*,\)*/dev/$PARTITION\(,\|$\)" /tmp/md-devices
-      then # don't do nil strings, partitions we mounted already, RAID parts
+        ! grep -q "devices=\([^,]*,\)*/dev/$PARTITION\(,\|$\)" /tmp/md-devices &&
+        ! (pvs --noheadings | grep -q "^[[:space:]]*/dev/$PARTITION ")
+        #cdombroski@icanttype.org: added this line to check for lvm partitions
+      then # don't do nil strings, partitions we mounted already, RAID parts, LVM parts
         echo "$PARTITION"
         echo "Size: $(( SIZE / 1024 ))MB Type: \
 $(mnt_get_part_type $PARTITION | tr '\n' ' ')"
@@ -537,3 +543,156 @@ mk_swap_file()  {
     press_enter "diskStructure" 0
   fi
 }
+
+###
+# cdombroski@icanttype.org
+# lvm menu stuff
+###
+
+lvm_menu() {
+  local selection="A"
+  while [ "$selection" ]; do
+    selection=$(run_dialog --title "LVM Menu" --default-item $selection \
+    --menu "Select an option" 0 0 0 \
+    "A" "Create LVM physical volumes" \
+    "B" "Create LVM volume groups" \
+    "C" "Create LVM logical volumes" \
+    "D" "Done")
+    
+    case $selection in
+      A) lvm_create_pv
+        selection="B"
+      ;;
+      B) lvm_create_vg
+        selection="C"
+      ;;
+      C) lvm_create_lv
+        selection="D"
+      ;;
+      *) selection=""
+      ;;
+    esac
+  done
+}
+
+lvm_select_parts() {
+  local LIST_PARTS=()
+  # Use sed to append an "off" line to every entry
+  explode "$(list_parts | sed 's/^\(Size: .*\)$/\1\noff/')" $'\n' \
+    LIST_PARTS
+
+  if [[ ${#LIST_PARTS[@]} == 0 ]] ; then
+    display_message "No partitions could be found. They are all either
+already mounted or none are available. You may need to load modules or
+partition your disk"
+    return 1
+  fi
+
+  run_dialog --separate-output --title "Choose partitions to use for LVM" \
+  --checklist "Select partitions to be used in LVM" 0 0 0 \
+  "${LIST_PARTS[@]}" | sed -e 's@^[[:space:]]*@/dev/@g'
+}
+
+lvm_create_pv() {
+  local PVS="$(lvm_select_parts)"
+  if [ "$PVS" ] ; then
+    try_run pvcreate $PVS
+  else
+    display_message "No partitions selected, not doing anything."
+  fi
+}
+
+lvm_create_vg() {
+  local PVS_ARRAY=() PVS vg line vg_info vg_name vg_volumes temp
+  PVS="$(pvs --separator '@' --noheadings | while read line
+    do temp="${line#*@}"
+      vg="${temp%%@*}"
+      if [ -z $vg ] ; then
+        echo "${line%%@*}"
+        echo "${line##*@}"
+        echo "off"
+      fi
+    done
+  )"
+  explode "$PVS" $'\n' PVS_ARRAY
+
+  if [[ ${#PVS_ARRAY[@]} == 0 ]] ; then
+    display_message "No LVM physical volumes found. You need to create at
+least one for each volume group."
+    return 1
+  fi
+
+  vg_info=$(run_dialog --title "Create Volume Group" \
+  --inputbox "Choose volume group name" 0 0 \
+  --single-quoted --title "Create Volume Group" \
+  --checklist "Select partitions to include in volume group." 0 0 0 \
+  "${PVS_ARRAY[@]}")
+
+  if [ "$vg_info" ] ; then
+    vg_name=${vg_info%$'\t'*}
+    vg_volumes=${vg_info#*$'\t'}
+    if [ "$vg_name" -a "$vg_volumes" ] ; then
+      try_run vgcreate "$vg_name" $vg_volumes
+    else
+      display_message "Either no name was entered, or no volumes were selected.
+Volume group creation cancelled."
+    fi
+  fi
+}
+
+lvm_create_lv() {
+  local vgs vgs_array=() line lv_vg lv_info lv_name lv_sizeunit lv_size lv_unit
+  local lv_stripes vg_size temp lv_info_array=()
+  vgs="$(vgs --separator '@' --noheadings | while read line
+    do vg_size="${line##*@}"
+    if [ "$vg_size" != "0" ] ; then
+      echo "${line%%@*}"
+      echo "$vg_size"
+    fi
+  done)"
+
+  explode "$vgs" $'\n' vgs_array
+  
+  if [[ ${#vgs_array[@]} != 0 ]] ; then
+    lv_info=$(run_dialog --title "Create Logical Volume" \
+    --menu "Choose Volume Group" 0 0 0 \
+    "${vgs_array[@]}" \
+    --title "Create Logical Volume" \
+    --inputbox "Enter Logical Volume Name" 0 0 \
+    --title "Create Logical Volume" \
+    --inputbox "Enter Logical Volume Size (default size is in megabytes, use
+[kKmMgGtT] as a suffix to specify a different size)(this will be rounded up to
+the next multiple of the Physical Extent size of the volume group (default 4M))" 0 0 \
+    --title "Create Logical Volume" \
+    --inputbox "Enter number of Physical Volumes you would like this Logical
+Volume to span" 0 0 1)
+    if [ "$lv_info" ] ; then
+      explode "$lv_info" $'\t' lv_info_array
+
+      lv_vg="${lv_info_array[0]}"
+      lv_name="${lv_info_array[1]}"
+      lv_sizeunit="${lv_info_array[2]}"
+      lv_stripes="${lv_info_array[3]}"
+      
+      lv_size=${lv_sizeunit%[a-zA-Z]}
+      lv_unit=${lv_sizeunit##*[0-9.]}
+      if [ "$lv_vg" -a "$lv_name" -a "$lv_sizeunit" -a \
+        \( ${lv_size%.*} -gt 0 -o ${lv_size#*.} -gt 0 \) -a \
+        \( $(expr "$lv_unit" : '[kKmMgGtT]*') -eq 1 -o \
+          $(expr "$lv_unit" : '[^kKmMgGtT]*') -eq 0 \) -a \
+        $(expr $lv_stripes : '[^0-9]') -eq 0 -a $lv_stripes -ge 1 ] ; then
+        try_run lvcreate -L $lv_sizeunit -n "$lv_name" -i $lv_stripes "$lv_vg"
+      else
+        display_message "Invalid parameters specified. Logical Volume creation
+cancelled. $lv_vg $lv_name $lv_sizeunit $lv_size $lv_unit $lv_stripes"
+      fi
+    fi
+  else
+    display_message "No Volume Groups with free space available."
+  fi
+}
+
+###
+# cdombroski@icanttype.org
+# I added this just to get vi working easier...
+# vim:sw=2:ts=2:et
