@@ -46,6 +46,14 @@ TMP_DIR=/tmp
 DEPENDS_DIR=$TMP_DIR/installer_depends
 FINALFILES=$TMP_DIR/finalfiles
 INSTALLER_DEBUG=$TMP_DIR/installer_debug
+
+# Color definitions
+COLOR_next_required="\Zb\Z7" # bright white
+COLOR_required="\Z4" # blue
+COLOR_optional="\Zb\Z2" # bright green
+COLOR_reconfigure="\Z2" # green
+COLOR_not_possible="\Zb\Z0" # grey
+COLOR_misc="\Zn" # black
 # ---------------END GLOBAL Variables ----------------------------------
 
 #source all the modules to load everything...
@@ -177,21 +185,14 @@ reset_installer() {
 #common
   unset EDITOR
   unset LANG
-  unset PLACE # TODO: left-over global from RAID, clean up
-  unset RAIDLEVEL
-  unset RAID_PARTS
-  unset RD_PARTS
-  unset RD_DISC
-  unset ind_disk
-  unset part
-  unset RDEV # end left-overs
 
   # first unmount already mounted filesystems 
   local mounted_part
   for mounted_part in `mount | awk ' { print $3}' | grep /mnt/root | sort -r`
     do umount -f $mounted_part 2>/dev/null
   done
-  
+  swapoff -a
+
   # then when unmounted, stop raid arrays
   for RDEV in `grep raiddev /etc/raidtab | awk '{print $2}'`;
     do raidstop $RDEV
@@ -203,7 +204,6 @@ reset_installer() {
   rm -f /tmp/fstab
   # add restart to installer-debug log if it exists
   debug_log "main" 0 "Resetting installer"
-  swapoff -a
 
   # reset depends stuff
   rm -f $DEPENDS_DIR/*
@@ -221,7 +221,7 @@ display_install_menu() {
 # TODO: move kernel down a bit, since configuring now happens inside
 # the "select" step
 
-  local CURRENT_MAIN="B";
+  main_move_on "init"
 
   while true ;do
 
@@ -229,29 +229,47 @@ display_install_menu() {
     local MENU_DESCRIPTION="Here are the steps for the install. [*] denotes an optional step.
 All other steps are required. Entries should be followed in the order in
 which they appear."
-    ICOMMAND=$(run_dialog                            \
+    ICOMMAND=$(run_dialog --colors                  \
           --title "Source Mage GNU/Linux installer" \
           --nocancel --default-item $CURRENT_MAIN   \
           --item-help --menu "$MENU_DESCRIPTION"    \
-          0 0 0                                    \
-          "A" "[*]Introduction" "Read about the advantages of using Source Mage GNU/Linux" \
-          "?" "[*]Installation and help notes" "A help text on the installer" \
-          "B" "[*]Pre-installation defaults settings" "Select default language, keymap, font and editor" \
-          "C" "Disk Structure" "Partition, format, and mount your disk" \
-          "D" "Start Installation" "Start everything, no going back to mounting now" \
-          "E" "[*]Select Timezone" "Select this box's timezone" \
-          "F" "[*]Architecture Optimizations" "Select Architecture and Optimizations" \
-          "G" "Select Linux Kernel" "Determine wether to compile or install the default kernel" \
-          "H" "[*]Configure Log System" "Select a daemon for system logging, or none!" \
-          "I" "Configure Bootloader" "Configure a bootloader for this box" \
-          "J" "Configure Networking" "Configure this box's network" \
-          "K" "Misc. Configuration" "Select some extra spells to install and configure a bit." \
-          "L" "Install Source Mage GNU/Linux" "Install all left to be done" \
-          "M" "[*]Choose Services to Run at Boot (expert)" "Select which services to start at boot" \
-          "X" "Done" "Exit! Done! Finito!" \
-          "S" "[*]Shell" "Shell out perhaps to load modules" \
-          "R" "[*]Restart Installation" "Resets everything and begins installation again" \
-          "Z" "[*]Debug Menu" "Change debugging settings" )
+          0 0 0                                     \
+          "A" "${COLOR_MAIN_INTRO}[*]Introduction"    \
+              "Read about the advantages of using Source Mage GNU/Linux" \
+          "?" "${COLOR_MAIN_HELP}[*]Installation and help notes" \
+              "A help text on the installer" \
+          "B" "${COLOR_MAIN_NLS}[*]Pre-installation defaults settings" \
+              "Select default language, keymap, font and editor" \
+          "C" "${COLOR_MAIN_DISK}Disk Structure" \
+              "Partition, format, and mount your disk" \
+          "D" "${COLOR_MAIN_START}Start Installation" \
+              "Start everything, no going back to mounting now" \
+          "E" "${COLOR_MAIN_TIME}[*]Select Timezone" \
+              "Select this box's timezone" \
+          "F" "${COLOR_MAIN_ARCH}[*]Architecture Optimizations" \
+              "Select Architecture and Optimizations" \
+          "G" "${COLOR_MAIN_KERNEL}Select Linux Kernel" \
+              "Determine wether to compile or install the default kernel" \
+          "H" "${COLOR_MAIN_LOG}[*]Configure Log System" \
+              "Select a daemon for system logging, or none!" \
+          "I" "${COLOR_MAIN_BOOT}Configure Bootloader" \
+              "Configure a bootloader for this box" \
+          "J" "${COLOR_MAIN_NET}Configure Networking" \
+               "Configure this box's network" \
+          "K" "${COLOR_MAIN_MISC}Misc. Configuration" \
+              "Select some extra spells to install and configure a bit." \
+          "L" "${COLOR_MAIN_FINISH}Install Source Mage GNU/Linux" \
+              "Install all left to be done" \
+          "M" "${COLOR_MAIN_SERVICES}[*]Choose Services to Run at Boot (expert)" \
+              "Select which services to start at boot" \
+          "X" "${COLOR_MAIN_DONE}Done" \
+              "Exit! Done! Finito!" \
+          "S" "${COLOR_MAIN_SHELL}[*]Shell" \
+              "Shell out perhaps to load modules" \
+          "R" "${COLOR_MAIN_RESTART}[*]Restart Installation" \
+              "Resets everything and begins installation again" \
+          "Z" "${COLOR_MAIN_DEBUG}[*]Debug Menu" \
+              "Change debugging settings" )
 
     [[ -z $ICOMMAND ]] && continue
 
@@ -281,7 +299,7 @@ which they appear."
 
     if [[ $RETURNVALUE == 0 ]]; then
       #movin on!
-      increment_menu_pointer $ICOMMAND
+      main_move_on "$ICOMMAND"
     else
       debug_log "main" 1 "Failed to run menu entry $ICOMMAND"
       echo "Detecting an error, not moving forward in the menu." >&2
@@ -291,31 +309,92 @@ which they appear."
   done
 }
 
-#simply returns a value pointing to the next item in the menu list
-# used to make the installer self motivated
-# also runs the background functions
-# all the TODOs here should be back grounded
-increment_menu_pointer() {
-  local RETVALUE="A";
+# Runs whatever wheels need to be run to mark the given step
+# as done and move on to the next one
+main_move_on() {
   case $1 in
-    A) RETVALUE="B"  ;;
-    B) RETVALUE="C"  ;;
-    C) RETVALUE="D"  ;;
-    D) RETVALUE="E"  ;;
-    E) RETVALUE="F"  ;;
-    F) RETVALUE="G"  ;;
-    G) RETVALUE="H"  ;;
-    H) RETVALUE="I"  ;;
-    I) RETVALUE="J"  ;;
-    J) RETVALUE="K"  ;;
-    K) RETVALUE="L"  ;;
-    L) RETVALUE="X"  ;;
-    M) RETVALUE="X"  ;;
-    R) RETVALUE="B"  ;; #reset the installer
+    "init")
+           CURRENT_MAIN="B"
+           main_colorize misc INTRO HELP
+           main_colorize next_required DISK
+           main_colorize optional NLS
+           # FIXME: This is not technically correct, some of those
+           # steps are already possible thanks to $FINALFILES.
+           main_colorize not_possible START TIME ARCH KERNEL LOG BOOT NET
+           main_colorize not_possible MISC FINISH SERVICES
+           main_colorize required DONE
+           main_colorize misc SHELL RESTART DEBUG
+         ;;
+    A) CURRENT_MAIN="B"  ;;
+    B)
+      CURRENT_MAIN="C"
+      main_colorize reconfigure NLS
+    ;;
+    C)
+      CURRENT_MAIN="D"
+      main_colorize reconfigure DISK
+      main_colorize next_required START
+      main_colorize optional TIME ARCH LOG
+    ;;
+    D)
+      CURRENT_MAIN="E"
+      main_colorize not_possible START DISK
+      main_colorize next_required KERNEL
+      main_colorize required NET
+    ;;
+    E)
+      CURRENT_MAIN="F"
+      main_colorize reconfigure TIME
+    ;;
+    F)
+      CURRENT_MAIN="G"
+      main_colorize reconfigure ARCH
+    ;;
+    G)
+      CURRENT_MAIN="H"
+      main_colorize reconfigure KERNEL
+      main_colorize next_required BOOT
+    ;;
+    H)
+      CURRENT_MAIN="I"
+      main_colorize reconfigure LOG
+    ;;
+    I)
+      CURRENT_MAIN="J"
+      main_colorize next_required NET
+      main_colorize reconfigure BOOT
+    ;;
+    J)
+      CURRENT_MAIN="K"
+      main_colorize next_required MISC
+      main_colorize reconfigure NET
+    ;;
+    K)
+      CURRENT_MAIN="L"
+      main_colorize next_required FINISH
+      main_colorize reconfigure MISC
+    ;;
+    L)
+      CURRENT_MAIN="X"
+      main_colorize not_possible NLS TIME ARCH KERNEL LOG BOOT NET MISC FINISH
+      main_colorize next_required DONE
+      main_colorize reconfigure SERVICES;;
+    M) CURRENT_MAIN="X"  ;;
+    X) true ;; #huh, wtf? You're supposed to just have rebooted the box...
+    R) CURRENT_MAIN="B"  ;; #reset the installer
     *) `dialog --infobox "HOLY CRAPOLA got $1 for a menu item" 10 60; sleep 2`;;
   esac
+}
 
-  CURRENT_MAIN=$RETVALUE
+# @args $1 color to set steps to
+# @args $* steps to colorize
+main_colorize() {
+  local color_name="COLOR_$1"
+  local step
+  shift
+  for step in "$@" ;do
+    eval "COLOR_MAIN_$step=\$$color_name"
+  done
 }
 
 # sets up the system for the install process
