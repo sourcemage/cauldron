@@ -1,4 +1,8 @@
 2006-03-20 Christopher Dombroski <cdombroski@icanttype.org>
+	* skeleton/usr/share/smgl.install/modules/diskStructure: added lvm and
+	device-mapper to si_queue after successful lv creation
+
+2006-03-20 Christopher Dombroski <cdombroski@icanttype.org>
 	* skeleton/usr/share/smgl.install/modules/diskStructure: add lvm menu
 	support. TODO: add lvm and dm-tools to si-queue
 

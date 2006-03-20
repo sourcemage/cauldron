@@ -682,6 +682,8 @@ Volume to span" 0 0 1)
           $(expr "$lv_unit" : '[^kKmMgGtT]*') -eq 0 \) -a \
         $(expr $lv_stripes : '[^0-9]') -eq 0 -a $lv_stripes -ge 1 ] ; then
         try_run lvcreate -L $lv_sizeunit -n "$lv_name" -i $lv_stripes "$lv_vg"
+        si_queue lvm
+        si_queue device-mapper
       else
         display_message "Invalid parameters specified. Logical Volume creation
 cancelled. $lv_vg $lv_name $lv_sizeunit $lv_size $lv_unit $lv_stripes"
