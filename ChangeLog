@@ -1,3 +1,7 @@
+2006-03-28 Karsten Behrmann <BearPerson@sourcemage.org>
+	* skeleton/etc/facilities/*: removed some unneeded files, added new
+	  stuff to facilities
+
 2006-03-20 Christopher Dombroski <cdombroski@icanttype.org>
 	* skeleton/usr/share/smgl.install/modules/diskStructure: added lvm and
 	device-mapper to si_queue after successful lv creation
