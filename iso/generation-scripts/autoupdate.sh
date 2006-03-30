@@ -5,7 +5,7 @@ sorcery system-update
 [[ -e caster ]] ||
   cd ${0%/*}
 ./caster -c basesystem # to get all cruft dispelled
-./caster $(cat ../list.{reqd,all})
+./caster $(cat ../data/list.{reqd,all})
 if [[ $ISOGEN_LOGFILE ]] ;then
   ./mk-smgl-iso &>$ISOGEN_LOGFILE
 else

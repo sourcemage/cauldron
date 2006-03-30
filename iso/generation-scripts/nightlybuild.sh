@@ -14,7 +14,7 @@ if ! [[ -x $1/usr/sbin/sorcery ]] ;then
 fi
 
 exec 17>$LOGFILE
-export ISOGEN_LOGFILE=/dev=/fd/17
+export ISOGEN_LOGFILE=/dev/fd/17
 
 ./sanitize_chroot.sh $1
 

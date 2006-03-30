@@ -1,6 +1,7 @@
 2006-03-30 Karsten Behrmann <BearPerson@sourcemage.org>
 	* gen-scripts/{autoupdate.sh,nightlybuild.sh,sanitize-chroot.sh}:
 	  add scripts for automated unattended updates/builds
+	* data/iso.dirs, skeleton/etc/fstab: add tmpfs /dev/mapper for LVM
 
 2006-03-28 Karsten Behrmann <BearPerson@sourcemage.org>
 	* skeleton/etc/facilities/*: removed some unneeded files, added new

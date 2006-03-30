@@ -1,5 +1,6 @@
 /boot
 /dev
+/dev/mapper
 /dev/pts
 /dev/shm
 /etc
