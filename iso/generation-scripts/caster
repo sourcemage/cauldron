@@ -170,4 +170,15 @@ if [ -s $FAIL_LIST ] ;then
   message "$DEFAULT_COLOR"
 fi
 
+if [[ $ISOGEN_LOGFILE ]] ;then
+  echo "=====  begin caster report ====="
+  echo "Successful spells:"
+  column -c 72 $SUCCESS_LIST
+  echo "install log changed:"
+  column -c 72 $CHANGE_LIST
+  echo "failed to cast:"
+  column -c 72 $FAIL_LIST
+  echo "=====   end  caster report ====="
+fi >$ISOGEN_LOGFILE
+
 rm -f $SUCCESS_LIST $FAIL_LIST $CHANGE_LIST
