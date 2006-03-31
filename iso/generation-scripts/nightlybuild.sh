@@ -1,5 +1,5 @@
 #!/bin/bash
-LOGFILE="$(pwd)/isogen-log.$(date +%Y%m%d%h)"
+LOGFILE="$(pwd)/isogen-log.$(date +%Y%m%d%H)"
 [[ -e mkprep ]] ||
   cd ${0%/*}
 

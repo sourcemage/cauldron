@@ -40,10 +40,10 @@ function try_get_install_log() {
   {
     gaze install $SPELL ||
     tar -xjOf ${INSTALL_CACHE}/${SPELL}-${VERSION}-${HOST}.tar${EXTENSION} \
-      ${INSTALL_LOGS#/}/$SPELL-$VERSION ||
+      --occurrence ${INSTALL_LOGS#/}/$SPELL-$VERSION ||
     # try without leading / first
     tar -xjOf ${INSTALL_CACHE}/${SPELL}-${VERSION}-${HOST}.tar${EXTENSION} \
-      $INSTALL_LOGS/$SPELL-$VERSION
+      --occurrence $INSTALL_LOGS/$SPELL-$VERSION
     echo $? >$rclog
     # This is a subshell. We can't just set a variable.
     # Exit code of a pipe is the exit code of the last command, here: "sort".
@@ -61,9 +61,22 @@ function filter_dirs() {
   done
 }
 
-function get_updated() {
-  tar -xjOf "$1" 'var/state/sorcery/tablet/*/*/updated' ||
-  echo 0
+function needs_updating() {
+  local TMPTABDIR=/tmp/tabletstuff.$$
+  mkdir -p $TMPTABDIR
+    tar -C $TMPTABDIR -xjOf "$1" --occurrence \
+      'var/state/sorcery/tablet/*/*/updated' \
+      'var/state/sorcery/tablet/*/*/patchlevel' \
+      'var/state/sorcery/tablet/*/*/security_patch'
+  popd
+  CACHE_UPDATED=$(cat $TMPTABDIR/var/state/sorcery/tablet/*/*/updated)
+  CACHE_PATCHLEVEL=$(cat $TMPTABDIR/var/state/sorcery/tablet/*/*/patchlevel)
+  CACHE_SECPATCH=$(cat $TMPTABDIR/var/state/sorcery/tablet/*/*/security_patch)
+  rm -rf $TMPTABDIR
+  [[ ${UPDATED:-0} > ${CACHE_UPDATED:-0} ]] && return 0
+  [[ ${PATCHLEVEL:-0} > ${CACHE_PATCHLEVEL:-0} ]] && return 0
+  [[ ${SECURITY_PATCH:-0} > ${CACHE_SECPATCH:-0} ]] && return 0
+  return 1
 }
 
 if [ "$1" == "-c" ] ;then
@@ -87,38 +100,40 @@ rm -f $SUCCESS_LIST $FAIL_LIST $CHANGE_LIST
 for spell in "$@" ; do
   codex_set_current_spell_by_name $spell
   cachefile=${INSTALL_CACHE}/${SPELL}-${VERSION}-${HOST}.tar${EXTENSION}
-  if [ $RECAST ] ||
-     ! test -e $cachefile ||
-     test $UPDATED -gt $(get_updated $cachefile)
-  then
 
-    rm -f /tmp/old-install-log
-    try_get_install_log >/tmp/tmp-install-log &&
-    cat /tmp/tmp-install-log | filter_dirs >/tmp/old-install-log
-    # do not create the file when try_get_install_log fails
+  if ! test -e $cachefile || [ $RECAST ] || needs_updating $cachefile ;then
+
+    rm -f /tmp/old-install-log /tmp/tmp-install-log
+    try_get_install_log >/tmp/tmp-install-log || rm /tmp/tmp-install-log
 
     prepare_cast
     pre_workaround $spell
     cast --deps $spell
-    pre_workaround $spell
-    # Workaround until --deps works again, currently only openssh is affected
+    rm -f $cachefile
     cast -c $spell
     rc=$?
     post_workaround $spell
-    if ! test -e $cachefile || test $UPDATED -gt $(get_updated $cachefile)
-    then # nonexisting or stale cache
+    if ! test -e $cachefile ;then # ARCHIVE=off
       if [[ $rc == 0 ]] && gaze install $spell >/dev/null ;then
         message "Forcing generation of cache"
-        gaze install-full $spell | tar --no-recursion -cjf $cachefile -T -
+        pushd / >/dev/null
+          # This is how current sorcery makes caches (not quite intentional)
+          gaze install-full $spell | sed 's:^/::' |
+            tar --no-recursion -cjPf $cachefile -T -
+        popd >/dev/null
       fi
     fi
+
+    [ -e /tmp/tmp-install-log] &&
+    cat /tmp/tmp-install-log | filter_dirs >/tmp/old-install-log
+    # filter_dirs only once all the dirs referenced exist
 
     gaze install $spell >/tmp/tmp-install-log &&
     cat /tmp/tmp-install-log | filter_dirs >/tmp/new-install-log &&
     # again, preserving exit status from gaze install
     if [ -e /tmp/old-install-log ] && 
      ! diff /tmp/old-install-log /tmp/new-install-log >/dev/null ;then
-      message "OOPS... Spell ${SPELL_COLOR}${SPELL}${DEFAULT_COLOR}\
+      message "OOPS... Spell ${SPELL_COLOR}${SPELL}${DEFAULT_COLOR} \
 install log suddenly changed..."
       datestr=$(date +%s)
       cp /tmp/old-install-log ~/broken-logs/${SPELL}-${datestr}-pre

@@ -1,3 +1,7 @@
+2006-03-31 Karsten Behrmann <BearPerson@sourcemage.org>
+	* caster: fixes with detection if a spell needs to be updated
+	* nightlybuild.sh: fix typo in log naming
+
 2006-03-30 Karsten Behrmann <BearPerson@sourcemage.org>
 	* gen-scripts/{autoupdate.sh,nightlybuild.sh,sanitize-chroot.sh}:
 	  add scripts for automated unattended updates/builds
