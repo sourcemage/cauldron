@@ -1,3 +1,8 @@
+2006-06-06 Karsten Behrmann <BearPerson@gmx.net>
+	* skeleton/etc/init.d/runlevels/mountroot.sh: rename our bootstrap
+	  script to an existing one that we don't want,
+	  that ordinarily does something similar
+
 2006-05-21 Karsten Behrmann <BearPerson@gmx.net>
 	* gen-scripts/lint-packages.sh: add iso.packages dependency linter
 	* modules/{30spellinstall,installation}: switch to cast to install stuff
@@ -21,6 +26,9 @@
 2006-04-02 Christopher Dombroski <cdombroski@icanttype.org>
 	* skeleton/usr/share/smgl.install/modules/diskStructure: added support
 	for formating and mounting lvm partitions
+
+2006-04-02 Karsten Behrmann <BearPerson@sourcemage.org>
+	* data/iso.command, skeleton/etc/init.d/runlevels/tmpfs.sh: --hack
 
 2006-03-31 Karsten Behrmann <BearPerson@sourcemage.org>
 	* caster: fixes with detection if a spell needs to be updated

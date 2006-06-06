@@ -1,9 +1,5 @@
 #!/bin/bash
 
-# Silly hack because perforce doesn't like the pathname
-mv $ISO_DIR/etc/init.d/runlevels/tmpfs.sh \
-    $ISO_DIR/etc/init.d/runlevels/%DEV/tmpfs.sh
-
 touch ${ISO_DIR}/etc/modules.devfsd # can't generate those on the fly,
 touch ${ISO_DIR}/etc/modules.conf   # just make sure they exist
 touch ${ISO_DIR}/etc/modules

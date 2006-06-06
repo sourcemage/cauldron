@@ -1,7 +1,8 @@
 #!/bin/sh
 
 PROGRAM=/bin/false
-RUNLEVEL=DEV
+RUNLEVEL=S
+PROVIDES=root_fs
 ESSENTIAL=yes
 
 . /etc/init.d/smgl_init
@@ -16,9 +17,13 @@ start()
   required_executable /bin/mkdir
   required_executable /bin/cp
 
-  echo "Mounting tmpfs..."
-  /bin/mount -t tmpfs tmpfs /tmp
-  evaluate_retval
+  if ! { >/tmp/writable ; } 2>/dev/null ;then
+    # Allow the user to mount something else to /tmp (hard drive, to save RAM)
+    # Note that we don't have anything that would do so yet...
+    echo "Mounting tmpfs to /tmp..."
+    /bin/mount -t tmpfs tmpfs /tmp
+    evaluate_retval
+  fi
 
   for i in etc root var/log var/lib/nfs ;do
     echo "setting up a writeable /$i..."
@@ -27,8 +32,6 @@ start()
     /bin/mount --bind /tmp/$i /$i
     evaluate_retval
   done
-
-  /bin/mount proc -t proc /proc
 }
 
 stop()
