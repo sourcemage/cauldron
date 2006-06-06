@@ -1,0 +1,6 @@
+all: patch-2.6.14.7 
+
+patch-2.6.14.7:
+	@echo -n "patch-2.6.14.7 "
+
+.PHONY : all  patch-2.6.14.7 

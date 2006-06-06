@@ -1,0 +1,8 @@
+kernel_arch="x86_64"
+reconf="false"
+mode="newktree"
+kver="2.6.14"
+patches=""
+selected_patches="patch-2.6.14.7 "
+MAKEMODE="menuconfig"
+UPDATE_BL="n"
