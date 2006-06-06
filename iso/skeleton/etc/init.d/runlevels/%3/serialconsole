@@ -1,0 +1,40 @@
+#!/bin/bash
+
+PROGRAM=/bin/false
+RUNLEVEL=3
+NEEDS=remote_fs
+
+. /etc/init.d/smgl_init
+. /etc/sysconfig/init
+
+start()
+{
+	required_executable /usr/bin/grep
+	required_executable /bin/dmesg
+	
+	for serial in $( /bin/dmesg /usr/bin/grep -o -e "ttyS[0-9]" ) ; do
+		if (( `/usr/bin/grep -c $serial /etc/inittab` == 0 )) ; then
+			#TODO: add the appropriate serial console line to /etc/inittab
+			$serial:linux:/sbin/agetty -L /dev/$serial 38400,19200,9600 vt100
+		fi
+	done
+
+	#restart init to make it know about the changes
+	kill -1 1
+}
+
+stop()
+{
+  exit 0
+}
+
+restart()       { exit 3; }
+reload()        { exit 3; }
+force_reload()  { exit 3; }
+status()        { exit 3; }
+
+usage()
+{
+  echo "Usage: $0 {start|stop}"
+  echo "Warning: Do not run this script manually!"
+}
