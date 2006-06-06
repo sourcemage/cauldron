@@ -1,3 +1,7 @@
+2006-04-02 Christopher Dombroski <cdombroski@icanttype.org>
+	* skeleton/usr/share/smgl.install/modules/diskStructure: added support
+	for formating and mounting lvm partitions
+
 2006-03-31 Karsten Behrmann <BearPerson@sourcemage.org>
 	* caster: fixes with detection if a spell needs to be updated
 	* nightlybuild.sh: fix typo in log naming

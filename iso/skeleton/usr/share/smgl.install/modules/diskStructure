@@ -295,12 +295,12 @@ mnt_get_part_type() {
 }
 
 list_parts()  {
-  local PARTITION SIZE
+  local PARTITION SIZE VOL_GROUP
   touch /tmp/fstab
   touch /tmp/md-devices
   # grepping a non-existant file gives an error
   cat /proc/partitions | awk '$3 !~ /^1$/ {print $4 " " $3}' | grep -v ram |
-    grep -v disc | grep -v name | grep '^[^ ]*[0-9]' |
+    grep -v disc | grep -v name | grep -v 'dm-[0-9]*' | grep '^[^ ]*[0-9]' |
     while read PARTITION SIZE ;do #SUBSHELL!
       if [[ -n "$PARTITION" ]] && ! grep -q "^/dev/$PARTITION	" /tmp/fstab &&
         ! grep -q "devices=\([^,]*,\)*/dev/$PARTITION\(,\|$\)" /tmp/md-devices &&
@@ -311,6 +311,20 @@ list_parts()  {
         echo "Size: $(( SIZE / 1024 ))MB Type: \
 $(mnt_get_part_type $PARTITION | tr '\n' ' ')"
         # Be very paranoid about getting exactly one line out of this
+      fi
+    done
+
+  ####  
+  # cdombroski@icanttype.org 
+  # add lvm partitions to the menu
+  ####
+  lvs --noheadings --separator " " -o vg_name,name,size |
+    while read VOL_GROUP PARTITION SIZE ; do
+      if ! grep -q "^/dev/mapper/$VOL_GROUP-$PARTITION\b" /tmp/fstab &&
+        ! grep -q "devices=\([^,]*,\)*/dev/mapper/$VOL_GROUP-$PARTITION\(,\|$\)" /tmp/md-devices
+      then
+        echo "mapper/$VOL_GROUP-$PARTITION"
+        echo "Size: $SIZE"
       fi
     done
 }
