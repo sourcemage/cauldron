@@ -1,3 +1,6 @@
+2006-06-06 David Kowis <dkowis@shlrm.org>
+	* modules/bootloader: Fixed lilo description bug 10028
+
 2006-05-21 Karsten Behrmann <BearPerson@gmx.net>
 	* gen-scripts/lint-packages.sh: add iso.packages dependency linter
 	* modules/{30spellinstall,installation}: switch to cast to install stuff
