@@ -1,5 +1,6 @@
 2006-06-06 David Kowis <dkowis@shlrm.org>
 	* modules/bootloader: Fixed lilo description bug 10028
+	* modules/diskStructure: fixed bug 10745
 
 2006-05-21 Karsten Behrmann <BearPerson@gmx.net>
 	* gen-scripts/lint-packages.sh: add iso.packages dependency linter
