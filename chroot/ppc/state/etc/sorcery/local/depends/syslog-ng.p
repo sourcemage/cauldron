@@ -1,0 +1,5 @@
+INIT_INSTALLED="syslog-ng"
+INIT_NOT_INSTALLED=""
+INIT_ENABLED="syslog-ng"
+INIT_DISABLED=""
+INIT_PROVIDES="syslog-ng:syslog"

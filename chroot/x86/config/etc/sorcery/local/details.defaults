@@ -1,0 +1,20 @@
+TXTMESSAGE=""
+PATCH[3]=patch-2.6.14.2
+. ${SPELL_DIRECTORY}/info/patches/*/${PATCH[3]}
+SOURCE3=$source
+SOURCE3_URL=$source_url
+TXTMESSAGE="${TXTMESSAGE}${txtmessage} "
+SHORT="${SHORT}${short} "
+PATCHVER=${patchversion}
+SOURCE3_GPG=$source_gpg
+. ${SPELL_DIRECTORY}/info/patches/*/${PATCH[3]}
+SOURCE4=$(echo $source_gpg | cut -d: -f2)
+SOURCE4_URL=$gpg_source_url
+SOURCE4_IGNORE=signature
+KERNEL_VERSION=2.6.14
+. ${SPELL_DIRECTORY}/info/kernels/${KERNEL_VERSION}
+SOURCE=$source
+SOURCE_URL=$source_url
+SOURCE2=${source}.sign
+SOURCE_GPG=kernel.gpg:${SOURCE2}:ESTABLISHED_UPSTREAM_KEY
+SOURCE2_URL=${source_url}.sign

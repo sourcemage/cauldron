@@ -1,0 +1,1 @@
+GETTEXT_TETEX="n"
