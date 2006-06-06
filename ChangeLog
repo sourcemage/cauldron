@@ -1,5 +1,6 @@
 2006-06-06 David Kowis <dkowis@shlrm.org>
 	* modules/bootloader: Fixed lilo description bug 10028
+	* modules/diskStructure: fixed bug 10745
 
 2006-03-04 Karsten Behrmann <BearPerson@sourcemage.org>
 	* bootloader: also run mkofboot on ppc

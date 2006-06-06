@@ -533,7 +533,7 @@ mk_swap_file()  {
     try_run mkswap      $SWAPFILE                   &&
     chmod  000          $SWAPFILE                   &&
     try_run swapon      $SWAPFILE                   &&
-    make_fstab_line $DEVICE "swap" "swap" "defaults\t0 2" >>/tmp/fstab &&
+    make_fstab_line $DEVICE "swap" "swap" "defaults 0 2" >>/tmp/fstab &&
     fill_dependency disk-swap file||
     press_enter "diskStructure" 0
   fi
