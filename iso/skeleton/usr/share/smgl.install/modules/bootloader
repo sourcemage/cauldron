@@ -39,7 +39,7 @@ bl_choose_loader() {
       "Please select the bootloader you wish to use to boot your SMGL system"  \
       "lilo"                                                                   \
       "lilo" "The LInux LOader"                                                \
-  "lilo has been the standard-issue bootloader for many people for quite long" \
+      "LILO is a tried and true bootloader that has been around for a very long time" \
       "grub" "GNU GRUB Multiboot boot loader"                                  \
   "GRUB is a dynamic, interactive bootloader - liked by some, hated by others"
   fi #TODO: make these more neutral
