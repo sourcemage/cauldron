@@ -1,6 +1,7 @@
 #!/bin/bash
 # Contains the spell installation functions, as specified on sourcemage.org
 # backgrounding version
+# redone to be foregrounding for now (to test cast install stuff)
 
 # NEEDS: a /var/state/sorcery/depends containing all depends between
 #        spells that could be installed
@@ -61,13 +62,12 @@ si_wait() {
   si_queue_now "$@"
   local spell
   for spell in "$@" ;do
-    si_query $spell
-    while [[ $? != 3 ]] ;do
-      echo -en '\r\033[2K'
-      echo -n "waiting for $spell... (now installing $(cat $SI_INSTALLING))"
-      test -e $SI_QUEUE_DIR/debug && touch $SI_QUEUE_DIR/force_run
-      sleep 1
-      si_query $spell
+    while si_query $spell ; [[ $? != 3 ]] ;do
+#      echo -en '\r\033[2K'
+#      echo -n "waiting for $spell... (now installing $(cat $SI_INSTALLING))"
+#      test -e $SI_QUEUE_DIR/debug && touch $SI_QUEUE_DIR/force_run
+#      sleep 1
+      si_pop
     done
     echo -en '\r\033[2K'
     echo "done  with  $spell."
@@ -102,10 +102,11 @@ si_query() {
 si_flush() {
   echo "Waiting for all spells left to complete..."
   while [ -s $SI_SPELL_QUEUE ] ;do
-    test -e $SI_QUEUE_DIR/debug && touch $SI_QUEUE_DIR/force_run
-    echo -en '\r\033[2K'
-    echo -n "installing $(cat $SI_INSTALLING)..."
-    sleep 1
+#    test -e $SI_QUEUE_DIR/debug && touch $SI_QUEUE_DIR/force_run
+#    echo -en '\r\033[2K'
+#    echo -n "installing $(cat $SI_INSTALLING)..."
+#    sleep 1
+    si_pop
   done
 }
 
@@ -306,8 +307,7 @@ si_install_spell() {
   fi                                                       &&
   # TODO: I don't like using *'s
   debug_log "spellinstall" 3 "installing files for $1"     &&
-  try_run -q tar -xjp -C ${TARGET} -f \
-      /var/cache/sorcery/$1-${VERSION}-*.tar.bz2 &&
+  try_run -q -nc cast $1                                   &&
   if [[ "$1" != "smgl-fhs" ]] ;then
     debug_log "spellinstall" 3 "ldconfig for $1"           &&
     try_run -q chroot_cmd /sbin/ldconfig

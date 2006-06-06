@@ -102,6 +102,7 @@ in_start() {
        >$TARGET/var/state/sorcery/$GRIMOIRE_VERSION.lastupdate
   # Store date for ChangeLog, we hope the /v/s/s/packages date is reasonably
   #   close to ISO creation date (it currently is equal -Bear, 2005-12-03)
+  mount --bind $TARGET/var/lib/sorcery/codex /var/lib/sorcery/codex
 
   # Install alien config files
   try_run cp --parents -f \

@@ -28,6 +28,11 @@ function cleanup() {
 }
 
 function main() {
+  # disabled for now (see 30spellinstall)
+  echo "nothing to see here, move along... (temporarily moved back to main installer)"
+  suspend
+  exit
+
   # Sleep until we get stuff to do
   echo "Waiting for installation to begin..."
   wait_depends install_start

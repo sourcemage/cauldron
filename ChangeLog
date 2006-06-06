@@ -1,4 +1,9 @@
-2005-05-07 Karsten Behrmann <BearPerson@gmx.net>
+2006-05-21 Karsten Behrmann <BearPerson@gmx.net>
+	* gen-scripts/lint-packages.sh: add iso.packages dependency linter
+	* modules/{30spellinstall,installation}: switch to cast to install stuff
+	* bg-install.sh, modules/30spellinstall: disable bg'ed install for now
+
+2006-05-07 Karsten Behrmann <BearPerson@gmx.net>
 	* some files: add x86_64-specific configuration
 
 2006-04-15 Karsten Behrmann <BearPerson@gmx.net>
