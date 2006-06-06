@@ -1,4 +1,7 @@
-2006-040-03 David Kowis <dkowis@shlrm.org>
+2006-04-15 Karsten Behrmann <BearPerson@gmx.net>
+	* gen-scripts/caster: fix small typoes with caster
+
+2006-04-03 David Kowis <dkowis@shlrm.org>
 	* iso/skeleton/usr/share/smgl.install/modules/diskStructure: Fixed
 	spelling errors and such, changed a few sentences to make them make more
 	sense. Fixed some bug that I cannot see due to no web browser...

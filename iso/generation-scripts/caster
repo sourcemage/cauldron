@@ -64,11 +64,10 @@ function filter_dirs() {
 function needs_updating() {
   local TMPTABDIR=/tmp/tabletstuff.$$
   mkdir -p $TMPTABDIR
-    tar -C $TMPTABDIR -xjOf "$1" --occurrence \
+    tar -C $TMPTABDIR -xjf "$1" --occurrence \
       'var/state/sorcery/tablet/*/*/updated' \
       'var/state/sorcery/tablet/*/*/patchlevel' \
       'var/state/sorcery/tablet/*/*/security_patch'
-  popd
   CACHE_UPDATED=$(cat $TMPTABDIR/var/state/sorcery/tablet/*/*/updated)
   CACHE_PATCHLEVEL=$(cat $TMPTABDIR/var/state/sorcery/tablet/*/*/patchlevel)
   CACHE_SECPATCH=$(cat $TMPTABDIR/var/state/sorcery/tablet/*/*/security_patch)
@@ -124,7 +123,7 @@ for spell in "$@" ; do
       fi
     fi
 
-    [ -e /tmp/tmp-install-log] &&
+    [ -e /tmp/tmp-install-log ] &&
     cat /tmp/tmp-install-log | filter_dirs >/tmp/old-install-log
     # filter_dirs only once all the dirs referenced exist
 
@@ -186,14 +185,16 @@ if [ -s $FAIL_LIST ] ;then
 fi
 
 if [[ $ISOGEN_LOGFILE ]] ;then
-  echo "=====  begin caster report ====="
-  echo "Successful spells:"
-  column -c 72 $SUCCESS_LIST
-  echo "install log changed:"
-  column -c 72 $CHANGE_LIST
-  echo "failed to cast:"
-  column -c 72 $FAIL_LIST
-  echo "=====   end  caster report ====="
-fi >$ISOGEN_LOGFILE
+  {
+    echo "=====  begin caster report ====="
+    echo "Successful spells:"
+    column -c 72 $SUCCESS_LIST
+    echo "install log changed:"
+    column -c 72 $CHANGE_LIST
+    echo "failed to cast:"
+    column -c 72 $FAIL_LIST
+    echo "=====   end  caster report ====="
+  } >$ISOGEN_LOGFILE
+fi #If we put the redirection here bash tries to apply it even when if is false
 
 rm -f $SUCCESS_LIST $FAIL_LIST $CHANGE_LIST
