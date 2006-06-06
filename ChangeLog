@@ -1,3 +1,7 @@
+2006-04-03 David Kowis <dkowis@shlrm.org>
+	* iso/skeleton/etc/init.d/runlevels/%3/serialconsole: Added a script to
+	automatically set up ttyS[0-9]'s for a headless install mechanism
+
 2006-04-02 Christopher Dombroski <cdombroski@icanttype.org>
 	* skeleton/usr/share/smgl.install/modules/diskStructure: added support
 	for formating and mounting lvm partitions
