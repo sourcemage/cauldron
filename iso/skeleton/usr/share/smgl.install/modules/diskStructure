@@ -117,7 +117,7 @@ select_disc()  {
   debug_log "diskStructure" 3 "Disk list:" "${LIST_DISCS[@]}"
 
   if [[ ${#LIST_DISCS[@]} == 0 ]] ;then
-    display_message "No discs could be found.
+    display_message "No more discs have been found.
 You may need to load more modules (shell out, use modprobe)"
     return 1
   fi
@@ -186,8 +186,8 @@ dsr_choose_partitions() {
     LIST_PARTS
 
   if [[ ${#LIST_PARTS[@]} == 0 ]] ;then
-    display_message "No partitions could be found. In order to avoid
-warnings about broken partition tables on bootup,
+    display_message "No more unused partitions could be found.
+In order to avoid warnings about broken partition tables on bootup,
 it is recommended that you partition even the drives
 that you want to use in a RAID as a whole (into one
 big partition).
@@ -337,8 +337,8 @@ get_part()  {
   debug_log "diskStructure" 3 "Partition list:" "${LIST_PARTS[@]}"
 
   if [[ ${#LIST_PARTS[@]} == 0 ]] ;then
-    display_message "No partitions could be found. Either all are
-already mounted, or none are available.
+    display_message "No more unused partitions could be found. 
+Either all are already mounted, or none are available.
 You may need to load more modules (shell out, use modprobe)
 or partition your disks."
     return 1
@@ -596,7 +596,7 @@ lvm_select_parts() {
     LIST_PARTS
 
   if [[ ${#LIST_PARTS[@]} == 0 ]] ; then
-    display_message "No partitions could be found. They are all either
+    display_message "No more unused partitions could be found. They are all either
 already mounted or none are available. You may need to load modules or
 partition your disk"
     return 1
