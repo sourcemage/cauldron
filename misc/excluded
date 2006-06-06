@@ -1,0 +1,9 @@
+^boot/
+^etc/sorcery/local/
+^iso-root
+^lib/modules/
+^root/
+^tmp/
+^usr/src/
+^var/cache/sorcery
+^var/spool/sorcery
