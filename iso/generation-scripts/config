@@ -1,4 +1,7 @@
 #!/bin/bash
+
+[ -e /etc/smgl-isogen.conf ] && . /etc/smgl-isogen.conf
+
 SCRIPTDIR=${0%/*}
 if [[ "${SCRIPTDIR:0:1}" != "/" ]] ;then
   SCRIPTDIR=$(pwd)/$SCRIPTDIR # turn into absolute path
@@ -9,13 +12,22 @@ STATE_DIR=$SCRIPTDIR/../data
 SKELETON=$SCRIPTDIR/../skeleton
 
 ISO_BRANCH=${ISO_BRANCH:-devel}
-ARCH=${ARCH:-i486-pc-linux-gnu}
-ISO_ARCH=${ISO_ARCH:-x86}
-  # generic i386 and family
+# Don't worry, that echo runs in a subshell
+ARCH=${ARCH:-$(. /etc/sorcery/config ; echo $HOST)}
+ISO_ARCH=${ISO_ARCH:-$(uname -m)}
+# FIXME: this is a brutal hack, but the best I could come up with
+# on short notice...
+[[ $ISO_ARCH == ppc ]] || [[ $ISO_ARCH == x86_64 ]] || ISO_ARCH=i486
 SVERSION=${SVERSION:-test}
 GVERSION=${GVERSION:-test}
 KVERSION=${KVERSION:-"2.6"}
-KERNEL_VERSION=${KERNEL_VERSION:-2.6.14.2}
+
+# "local" helper variables
+kconf=../data/config-$KVERSION.$ISO_ARCH
+[[ -e $kconf ]] || kconf=../data/config-$KVERSION
+def_kv=$(sed -n 's/^# Linux kernel version: //p' $kconf)
+
+KERNEL_VERSION=${KERNEL_VERSION:-$def_kv}
 if [[ $KERNEL_VERSION == *.*.*.* ]] ;then
   KERNEL_MVERSION=${KERNEL_MVERSION:-${KERNEL_VERSION%.*}}
   KERNEL_PATCHES=${KERNEL_PATCHES:-"patch-$KERNEL_VERSION"}

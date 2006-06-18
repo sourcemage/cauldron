@@ -1,3 +1,8 @@
+2006-06-18 Karsten Behrmann <BearPerson@gmx.net>
+	* gen-scripts/config: "automate" config to autodetect
+	  kernel version and arch
+	* gen-scripts/mkroot: start a "create chroot" wrapper/script
+
 2006-06-06 Karsten Behrmann <BearPerson@gmx.net>
 	* skeleton/etc/init.d/runlevels/mountroot.sh: rename our bootstrap
 	  script to an existing one that we don't want,

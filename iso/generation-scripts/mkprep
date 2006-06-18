@@ -1,6 +1,5 @@
 #!/bin/bash
 SCRIPTDIR=${0%/*}
-[ -e /etc/smgl-isogen.conf ] && . /etc/smgl-isogen.conf
 . $SCRIPTDIR/config
 
 if [ $# -lt 1 ] || [[ "$1" == "/" ]] ;then
@@ -75,8 +74,8 @@ SKELETON=$1/skeleton
 SCRIPTS=$1/generation-scripts
 
 cp -a --no-preserve=ownership $SCRIPTDIR/../../ChangeLog $SKELETON
+[[ -e /etc/smgl-isogen.conf ]] && cp /etc/smgl-isogen.conf $1/../../etc/
 {
-  cat /etc/smgl-isogen.conf 2>/dev/null
   echo "ISO_VERSION=$ISO_VERSION"
   # Set ISO version to version of copy
   # (avoiding different $(date)'s for templates->files and the .iso file)
