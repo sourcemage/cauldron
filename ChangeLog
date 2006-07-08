@@ -21,6 +21,9 @@
 	* diskStructure: add code for ppc disks, fix for >9 partitions,
 	  reactivate RAID option
 
+2006-01-26 Karsten Behrmann <BearPerson@sourcemage.org>
+	* generation-scripts/caster: be more efficient extracting $UPDATED
+
 2005-12-30 Karsten Behrmann <BearPerson@sourcemage.org>
 	* templates/fstab.last: add comments about cdrom/floppy mount points
 
