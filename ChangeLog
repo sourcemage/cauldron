@@ -2,6 +2,14 @@
 	* bootloader: also run mkofboot on ppc
 	* diskStructure: make sure fstab includes swapfile
 
+2006-02-02 Eric Sandall <eric@sandall.us>
+	* iso/skeleton/usr/share/smgl.install/modules/timezone: Fixed spelling
+	  of dailight and re-set (Bug #10485)
+	  Use UTC/GMT as main reference for UTC, GMT, and Universal  (Bug #10485)
+
+2006-01-26 Karsten Behrmann <BearPerson@sourcemage.org>
+	* generation-scripts/caster: be more efficient extracting $UPDATED
+
 2006-01-31 Karsten Behrmann <BearPerson@sourcemage.org>
 	* generation-scripts/config: bump to 0.9.6
 
@@ -20,9 +28,6 @@
 	* iso.dirs: remove unconditional creation of isolinux dir
 	* diskStructure: add code for ppc disks, fix for >9 partitions,
 	  reactivate RAID option
-
-2006-01-26 Karsten Behrmann <BearPerson@sourcemage.org>
-	* generation-scripts/caster: be more efficient extracting $UPDATED
 
 2005-12-30 Karsten Behrmann <BearPerson@sourcemage.org>
 	* templates/fstab.last: add comments about cdrom/floppy mount points
