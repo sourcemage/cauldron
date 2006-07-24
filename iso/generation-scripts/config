@@ -23,7 +23,7 @@ else
   KERNEL_MVERSION=${KERNEL_MVERSION:-$KERNEL_VERSION}
   # leave KERNEL_PATCHES unset if unset, otherwise don't change.
 fi
-ISO_VERSION=0.9.6
+ISO_VERSION=0.9.6.1
 ISO_FILENAME="smgl-${ISO_VERSION}-$ISO_ARCH.iso"
 IGNORE_FATAL=${IGNORE_FATAL:-no}
 
