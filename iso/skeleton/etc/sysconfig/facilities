@@ -1,7 +1,3 @@
-root_fs=mountroot.sh
-
-modules=modutils
-
 network=network
 
 syslog=

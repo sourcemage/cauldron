@@ -2,10 +2,6 @@
 	* modules/bootloader: Fixed lilo description bug 10028
 	* modules/diskStructure: fixed bug 10745
 
-2006-03-28 Karsten Behrmann <BearPerson@sourcemage.org>
-	* skeleton/etc/facilities/*: removed some unneeded files, added new
-	  stuff to facilities
-
 2006-03-04 Karsten Behrmann <BearPerson@sourcemage.org>
 	* bootloader: also run mkofboot on ppc
 	* diskStructure: make sure fstab includes swapfile
