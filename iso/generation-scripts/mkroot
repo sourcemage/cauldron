@@ -15,8 +15,12 @@ cp -a $CHROOTGEN/$ISO_ARCH $1/chroot-configset
 #FIXME: Force specific grimoire to be updated and used (preferrably without
 # leaving a lasting trace (e.g. grimoire update) on the host)
 
+#chroot $1 scribe add $GVERSION
+
 chroot $1 /chrootgen.sh --chroot_dir /new-root --config_dir /chroot-configset \
   --backup_dir /tmp/backup_configs recreate
+
+#chroot $1 scribe del $GVERSION
 
 pushd $1/new-root
 mkdir -p proc dev sys tmp var/spool/sorcery
@@ -26,6 +30,9 @@ cd ..
 
 cp /etc/resolv.conf $1/new-root/etc/
 cp -a $SCRIPTDIR/../skeleton/etc/{nsswitch.conf,passwd,shadow,group} $1/new-root/etc/
+
+mkdir -p $1/new-root/etc/sorcery/local
+cp -a $CHROOTGEN/$ISO_ARCH/config/etc/sorcery/local/* $1/new-root/etc/sorcery/local/
 
 cd tmp
 wget http://download.sourcemage.org/sorcery/sorcery-$SVERSION.tar.bz2
