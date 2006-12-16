@@ -1,4 +1,5 @@
 #!/bin/bash
+# Some little helpers
 
 output_warning()
 {

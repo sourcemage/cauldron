@@ -22,8 +22,22 @@ pushd $1/new-root
 mkdir -p proc dev sys tmp var/spool/sorcery
 cd dev
 $1/var/lib/sorcery/codex/*/smgl/init.d/MAKEDEV generic
+cd ..
+
+cp /etc/resolv.conf $1/new-root/etc/
+cp -a $SCRIPTDIR/../skeleton/etc/{nsswitch.conf,passwd,shadow,group} $1/new-root/etc/
+
+cd tmp
+wget http://download.sourcemage.org/sorcery/sorcery-$SVERSION.tar.bz2
+tar -xjf sorcery-$SVERSION.tar.bz2
+
+chroot $1/new-root bash -c 'cd /tmp/sorcery ; ./install'
+
+rm -r sorcery*
+chroot $1/new-root scribe add $GVERSION
 
 popd
+
 mkdir -p $2
 rmdir $2 &&
 mv $1/new-root $2

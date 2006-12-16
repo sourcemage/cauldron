@@ -1,1 +1,27 @@
 Scripts we use for creating an ISO
+
+To be used from outside the chroot:
+- Makefile: in theory, a "make iso" should let your box rumble for a day,
+            and crank out a fully-built .iso in the end, no manual work needed
+- config:   a bunch of configuration for the ISO
+- mkprep:   resolves template stuff in the iso configuration files and copies
+            them into the chroot. Use this to update/install the iso generation
+            scripts into the chroot
+- mkroot:   creates a new chroot
+
+To be used inside the chroot:
+- first_build: build all tarballs needed for the iso
+- mk-smgl-iso: create a .iso from existing tarballs
+- mkinitrd:    create only an initrd image
+               (usually called via mk-smgl-iso)
+- mkiso:       create a .iso from existing tarballs and initrd image
+               (usually called via mk-smgl-iso)
+
+
+Old cruft, not to be used at all:
+- autoupdate.sh: attempt to update the spells inside the chroot and generate a
+                 new .iso - probably not working too well
+- lint-packages.sh: run inside the chroot to try and find unsatisfied
+                    dependencies from spells unpacked to the iso. Might come in
+                    useful every once in a while, but not part of the regular
+                    procedure. Should actually work.

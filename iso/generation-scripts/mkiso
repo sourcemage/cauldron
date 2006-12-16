@@ -1,4 +1,10 @@
 #!/bin/bash
+# This file generates the actual .iso file.
+# It's a bit lengthy, but manageable.
+
+
+# Let's start with a little trick. The iso.packages file actually is a
+# bash script, here we define the functions called from there.
 
 #=====================================================================
 ## BEGIN of functions called from iso.packages
@@ -6,7 +12,7 @@
 
 #---------------------------------------------------------------------
 ## @param file pattern to include by default
-## Adds the given pattern to the list of default includes
+## Makes the given pattern be copied to the iso, overriding default_exclude
 #---------------------------------------------------------------------
 function add_default_include() {
   DEF_INCLUDE[${#DEF_INCLUDE[*]}]="$1"
@@ -14,7 +20,7 @@ function add_default_include() {
 
 #---------------------------------------------------------------------
 ## @param file pattern to exclude by default
-## Adds the given pattern to the list of default excludes
+## Makes the given pattern be not included on the iso, unless overridden
 #---------------------------------------------------------------------
 function add_default_exclude() {
   DEF_EXCLUDE[${#DEF_EXCLUDE[*]}]="$1"
@@ -25,8 +31,7 @@ function add_default_exclude() {
 ## @Description
 ## This is the main unpacking function to use when installing stuff
 ## onto the ISO. Specify the spell name and the spell will be
-## automatically unpacked to the ISO with default excludes and
-## includes honored.
+## automatically unpacked to the ISO. Dependency tracking is not done.
 #---------------------------------------------------------------------
 function unpack() {
   begin_unpack "$1"
@@ -36,17 +41,20 @@ function unpack() {
 #---------------------------------------------------------------------
 ## @param spell to unpack
 ## @Description
-## This function unpacks the given spell to a temporary location to
-## prepare for its installation.
+## This function prepares a spell to be installed
 #---------------------------------------------------------------------
 function begin_unpack() {
   local file
+
+  # Clean up old unpack, if needed
   if [ -e $UNPACK_DIR ] ;then
     output_warning "An old unpack failed. Flushing the toilet."
     rm -rf $UNPACK_DIR
   fi
   mkdir $UNPACK_DIR
-  copy_fromver $1 ${UNPACK_DIR}         &&
+
+  # Extract tarball to a temporary location
+  unpack_spell $1 ${UNPACK_DIR}         &&
   echo $1 >${TMP_DIR}/unpack_successful ||
   echo "unpacking \"$1\" failed."
 }
@@ -59,22 +67,29 @@ function begin_unpack() {
 #---------------------------------------------------------------------
 function end_unpack() {
   local entry
+
+  # Copy files that should be copied in any case
   for entry in "${DEF_INCLUDE[@]}" ;do
     iso_include "$entry"
   done
+  # Remove files that should not be copied
   for entry in "${DEF_EXCLUDE[@]}" ;do
     iso_exclude "$entry"
   done
 
+  # Copy everything else, warn if there's nothing to copy
   if [ -e ${TMP_DIR}/unpack_successful ] ;then
     if ! cp -au ${UNPACK_DIR}/* ${ISO_DIR} 2>/dev/null ;then
       echo -n "nothing to be done for "
       cat ${TMP_DIR}/unpack_successful
     fi
     rm ${TMP_DIR}/unpack_successful
+
+  # Hmm, the unpack went boom. bad.
   else
     fatal_warning "The unpack failed. Can't install to ISO"
   fi
+
   rm -rf ${UNPACK_DIR}
 }
 
@@ -116,17 +131,21 @@ function iso_exclude() {
 ## END of functions called from iso.packages
 #=====================================================================
 
+
+# Okay, now some helper functions for installing and copying spells
+
 #---------------------------------------------------------------------
 ## @param spell to unpack
 ## @param location to unpack to
 ## @Description
 ## Attempts to find and unpack the binary cache of the given spell
 #---------------------------------------------------------------------
-function copy_fromver() {
+function unpack_spell() {
   if [ -e $CACHE_DIR/$1-$(get_ver_from_codex $1)-$ARCH.tar.bz2 ] ;then
     tar -xjf $CACHE_DIR/$1-$(get_ver_from_codex $1)-$ARCH.tar.bz2 -C $2
   else
-    copy_fromlog "$@"
+    fatal_warning "Unable to unpack $1: No tarball found"
+    return 1
   fi
 }
 
@@ -137,11 +156,12 @@ function copy_fromver() {
 ## Attempts to copy the binary cache of the given spell to the given
 ## location.
 #---------------------------------------------------------------------
-function package_fromver() {
+function copy_spell_tarball() {
   if [ -e $CACHE_DIR/$1-$(get_ver_from_codex $1)-$ARCH.tar.bz2 ] ;then
     cp $CACHE_DIR/$1-$(get_ver_from_codex $1)-$ARCH.tar.bz2 $2
   else
-    package_fromlog "$@"
+    fatal_warning "Unable to copy tarball for $1: No tarball found"
+    return 1
   fi
 }
 
@@ -157,93 +177,75 @@ function get_ver_from_codex() {
   )
 }
 
-#---------------------------------------------------------------------
-## @param spell name
-## @param location to copy to
-## As a fallback to copy_fromver, copy all files mentioned in the
-## install log to the given location.
-#---------------------------------------------------------------------
-function copy_fromlog() {
-  if gaze install $1 >/dev/null ;then
-    output_warning "Using installed files for $1."
-    gaze install $1 |
-     xargs cp -dp --parents --target-directory $2 2>/dev/null
-     # NOT -r !!! we don't want to copy all of /usr/share/man if our spell
-     # happens to be the first one to create it
-  else
-    fatal_warning "No way to copy $1: no trace of it could be found."
-    return 1
-  fi
-}
-
-#---------------------------------------------------------------------
-## @param spell name
-## @param location to create the archive in
-## Fallback to package_fromver, create a binary cache from all files
-## mentioned in the install log.
-#---------------------------------------------------------------------
-function package_fromlog() {
-  if gaze install $1 >/dev/null;then
-    output_warning "Using installed files for $1."
-    gaze install $1 |
-     tar --no-recursion -cjf "$2/$1-ISO-$ARCH.tar.bz2" -T -
-  else
-    fatal_warning "No way to install $1: no trace of it could be found."
-    return 1
-  fi
-}
 
 #---------------------------------------------------------------------
 ## @Description
-## This function is the chaos container for all the complicated code
-## needed to set up the environment and the variable files that the
-## installer wants generated.
+## This function contains all the code for the dynamically-generated
+## files the installer needs.
 ##
-## It copies the grimoire and sorcery packages and the linux sources
+## It also copies the grimoire and sorcery packages and the linux sources
 ##
-## It also generates the list of descriptions for the optional spell
-## list.
-##
-## Finally, it creates the packages and the conflicts file.
 #---------------------------------------------------------------------
 function create_statefiles() {
-  cp ${STATE_DIR}/../../$GVERSION.tar.bz2 ${ISO_DIR}/var/lib/sorcery/codex
-  cp ${STATE_DIR}/../../sorcery-$SVERSION.tar.bz2 ${ISO_DIR}/var/cache/sorcery
+
+  # Copy codex and sorcery
+  cp ${STATE_DIR}/../../$GVERSION.tar.bz2 ${ISO_DIR}/var/lib/sorcery/codex/
+  cp ${STATE_DIR}/../../sorcery-$SVERSION.tar.bz2 ${ISO_DIR}/var/cache/sorcery/
+
+  # Copy linux sources
   pushd /var/spool/sorcery >/dev/null
     cp $( summon -p source linux) ${ISO_DIR}/var/spool/sorcery
   popd >/dev/null
 
+
+  # Generate spell descriptions and all the other goodies displayed in the
+  # optional spell menu, also track spell conflicts
   echo "Pre-generating optional spell list..."
-  (
+  ( # Subshell, so we don't mess up the caller's environment
     . /etc/sorcery/config
 
+    # Get a list of all optional spells
     cat ${STATE_DIR}/optional-list | sed -e 's/#.*$//' -e 's/[[:blank:]]*$//' |
       grep -v '^$' >$TMP_DIR/optlist
+
+    # Write out data for the optional spell menu (grabbed from sorcery)
     while read spell ; do
       codex_set_current_spell_by_name $spell >/dev/null
       echo "\"$spell\" \"$VERSION\" \"off\" \"$SHORT\""
     done <$TMP_DIR/optlist >${ISO_STATE_DIR}/optionalSpellList
     rm -f $TMP_DIR/optlist
 
+    # Tricky hack: We redefine an internal sorcery function, hoping that the
+    # CONFLICTS files are simple and just give us the conflicting spells
+    # nicely on stdout this way
     function conflicts() { #redefinition
       echo "$SPELL:$1"
     }
+
+    # Generate spell list and conflicts list
     while read spell ; do
+
+      # get spell data
       codex_set_current_spell_by_name $spell >/dev/null
+
+      # Generate packages list, with a pretend install date of "right now".
       echo "$SPELL:$(date +%Y%m%d):installed:$VERSION" \
         >>$ISO_DIR/var/state/sorcery/packages
-      # We cannot use the host system's /var/state/sorcery/packages,
-      # as it does not have all the spells on the ISO installed at once
 
+      # Gather conflicts data, if possible
       [ -x $SPELL_DIRECTORY/CONFLICTS ] &&
         . $SPELL_DIRECTORY/CONFLICTS >>$ISO_DIR/var/lib/smgl.install/conflicts
 
+    # The allspells file has been generated before we were called
     done <$TMP_DIR/allspells
-    # $TMP_DIR/allspells has been generated just before we copied cache files
   )
 
+  # Add dependencies. Append, in case we want to "hardcode" some dependencies
+  # in the skeleton tree
   cat $TMP_DIR/alldeps >>$ISO_DIR/var/state/sorcery/depends
 
+
+  # Generate listings for the NLS menus
   echo "generating other pre-made lists..."
   pushd $ISO_DIR >/dev/null
 
@@ -252,7 +254,7 @@ function create_statefiles() {
   find usr/share/keymaps -type f -not -path '*/include/*' |
     sed -e 's@^usr/share/keymaps/@@' -e 's@\.k\?map\.gz@@' |
     sort |
-    while read line ;do #SUBSHELL
+    while read line ;do
       echo "${line##*/}" #keymap name
       echo "${line%/*}"  #path leading up to it, e.g. "qwerty"
     done >>$ISO_STATE_DIR/keyMapList
@@ -273,50 +275,66 @@ function create_statefiles() {
   find usr/share/zoneinfo -mindepth 1 -type d -printf '/%h:%f:Directory\n' \
     >>$ISO_STATE_DIR/timeZoneList
   find usr/share/zoneinfo -type f |
-  while read line ;do #SUBSHELL
+  while read line ;do
     echo "/${line%/*}:${line##*/}:$(TZ="$ISO_DIR/$line" date +%z)"
   done >>$ISO_STATE_DIR/timeZoneList
 
   popd >/dev/null
 }
 
+
 #---------------------------------------------------------------------
 ## @Description
-## This function creates a list of all spells that could get installed
-## by the ISO, as specified by install-list and optional-list.
+## This function runs through all spells that will have tarballs
+## on the iso, and includes their dependencies.
 ##
-## It also tracks dependencies and automatically adds dependencies to
-## the list too. It then prunes the depends file down to the parts
-## relevant for us and stores it.
+## It also prunes the depends file down to what we actually need
 ##
 ## The list of spells is stored in $TMP_DIR/allspells, all depends
 ## go into $TMP_DIR/alldeps
 #---------------------------------------------------------------------
 function generate_sufficient_spells_list() {
+
+  # Grab all spells
   cat ${STATE_DIR}/optional-list ${STATE_DIR}/install-list |
     filter_comments >$TMP_DIR/allspells
+
   NUM_LINES=0
   > $TMP_DIR/alldeps
+
+  # This loop will keep adding "dependencies of all spells in the list"
+  # to the list, so that we include multiple levels of dependencies.
+  # It terminates when the number of spells in the list no longer increases
+  # (as this means we didn't find any new dependencies)
   while [ "$NUM_LINES" != "$(wc -l $TMP_DIR/allspells)" ] ;do
+
+    # Save new line count
     NUM_LINES=$(wc -l $TMP_DIR/allspells)
-    # When nothing here sees new spells, stop.
-    # The last run will include their depends info
+
+    # Grab dependencies
     local spell
     while read spell ;do
       grep "^$spell:[^:]*:on" /var/state/sorcery/depends
     done <$TMP_DIR/allspells >$TMP_DIR/moredeps
+
+    # Parse depended-upon spells, remove the (FOO) construct for providers
     cat $TMP_DIR/moredeps | cut -d: -f2 | sed 's/(.*$//' >$TMP_DIR/morespells
-    # The sed kills (BOOTLOADER) etc.
+
+    # Add new dependency data, remove duplicates
     mv $TMP_DIR/alldeps $TMP_DIR/olddeps
     cat $TMP_DIR/olddeps $TMP_DIR/moredeps | sort -u >$TMP_DIR/alldeps
     rm -f $TMP_DIR/olddeps $TMP_DIR/moredeps
 
+    # Add new spells to the list, remove duplicates
     mv $TMP_DIR/allspells $TMP_DIR/oldspells
     cat $TMP_DIR/oldspells $TMP_DIR/morespells | sort -u >$TMP_DIR/allspells
     rm -f $TMP_DIR/oldspells $TMP_DIR/morespells
 
   done # repeat until number of lines does not change anymore
+
+  # Result files are already where they belong.
 }
+
 
 #---------------------------------------------------------------------
 ## @stdin stream of text with comments
@@ -327,8 +345,13 @@ function filter_comments() {
   sed -e 's/#.*$//' -e 's/[[:blank:]]*$//' | grep -v '^$'
 }
 
+
+
+# ---- actual script starts here ----
+
 . ${0%/*}/config
 
+# cleanup/setup
 rm -rf ${ISO_DIR}
 mkdir -p $ISO_DIR
 TMP_DIR="/tmp/mkiso.$$"
@@ -340,12 +363,16 @@ declare -a DEF_EXCLUDE
 
 echo "Creating ISO file structure..."
 
+# Create dirs
 while read line ; do
   mkdir -p ${ISO_DIR}/${line}
 done <${STATE_DIR}/iso.dirs
 
+# Install (unpack) packages needed
 . ${STATE_DIR}/iso.packages
 
+# Create static /dev, and the pipe init needs
+# (it normally creates it on bootup, but that's hard on a read-only iso9660 fs)
 pushd $ISO_DIR/dev >/dev/null
  $SKELETON/sbin/MAKEDEV generic-nopty md
  mknod initctl p
@@ -356,41 +383,57 @@ cp ${STATE_DIR}/initrd.gz $ISO_DIR/boot/initrd.gz
 echo "Copying cache tarballs..."
 
 generate_sufficient_spells_list
+
+# Copy tarballs the installer will be able to install
 while read spell ; do
-  package_fromver $spell ${ISO_DIR}/var/cache/sorcery/
+  copy_spell_tarball $spell ${ISO_DIR}/var/cache/sorcery/
 done <${TMP_DIR}/allspells
 
+
+# Finally, add the skeleton files on top (except for the initrd)
+# TODO: is a find construct with -prune cleaner?
 pushd $SKELETON >/dev/null
 cp -af --parents $(find * -maxdepth 0 ! -name initrd) $ISO_DIR
 popd >/dev/null
 
+# Same dusty old hook as in mkiso, allow for a "patch file" for last-minute mods
 [ -e ${STATE_DIR}/iso.patch ] &&
   patch -d $ISO_DIR -p0 ${STATE_DIR}/iso.patch
 
+# Create library caches and symlinks
 cp /sbin/ldconfig ${ISO_DIR}
 chroot ${ISO_DIR} /ldconfig
 rm ${ISO_DIR}/ldconfig
 
+# Create module tables (and be compatible to 2.4 kernels, fwiw)
 cp /sbin/depmod /sbin/depmod.old ${ISO_DIR}
 chroot ${ISO_DIR} /depmod $KERNEL_VERSION
 rm ${ISO_DIR}/depmod ${ISO_DIR}/depmod.old
 
-# symlinks would be pointing to ${INSTALL_ROOT} if we used that feature
-# have to run after ldconfig so everything finds its libs
+
+# Install sorcery
 mkdir ${ISO_DIR}/tmpsorcery
 tar -C ${ISO_DIR}/tmpsorcery -xjf ${STATE_DIR}/../../sorcery-$SVERSION.tar.bz2
 chroot ${ISO_DIR} sh -c "cd /tmpsorcery/sorcery ; ./install"
 rm -r ${ISO_DIR}/tmpsorcery
 
+
 echo "Generating installer-related files"
 create_statefiles
 
+
+# Command hook (this is actually used here)
+# This does some fixes, and puts the initrd size and grimoire version
+# into the bootloader config files
 [ -e ${STATE_DIR}/iso.command ] &&
   . ${STATE_DIR}/iso.command
 
 rm -r ${TMP_DIR}
 
-# all ready
+# all systems ready
 echo "generating ISO, outputting to /$ISO_FILENAME"
+
+
 # ISO ends up in the / directory of the chroot
+# This last script calls mkisofs with the correct arguments for our arch.
 . ${STATE_DIR}/iso.mkfscommand /$ISO_FILENAME $ISO_DIR

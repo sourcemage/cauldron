@@ -1,58 +1,90 @@
 #!/bin/bash
-# Handy little wrapper script for creating cache tarballs
+# This script wraps around cast. It tries to be a little "smarter"
+# to ensure we get good cache tarballs. Technically, we should be
+# able to use cast instead, but this does nice stuff like prevent
+# optional dependencies from automatically turning themselves on.
 
-# If anything is needed to be run before every cast
-function prepare_cast()
-{
-#  rm $(find /etc -not -type d | grep -v -f ~/etcexcluded)
-  true
-}
 
+# This function is called before every cast. It is commonly used for
+# spell-specific workarounds.
 function pre_workaround()
 {
-# The place for workarounds needed before a spell so it casts nicely.
+
+# this used to be a hack to ensure /etc was clean. This technique was
+# neccessary so spells installed their /etc files properly, as otherwise
+# many refused to overwrite existing files, resulting in those files not
+# getting tracked and not getting included in the binary tarball.
+#  rm $(find /etc -not -type d | grep -v -f ~/etcexcluded)
+
   case $1 in
+
+    # autoconf fails to find a C++ compiler, even if those spells don't
+    # actually need one. So, we install g++ so they're happy.
+    # TODO: audit this list
     "irssi"|"grub"|"lshw"|"parted"|"syslinux"|"syslog-ng"|"uptimed")
-      cast g++ # The ole autoconf workaround
+      cast g++
       ;;
+
+    # this attempts to make the linux build use the settings we want
+    # for the ISO kernel.
     "linux")
       cp $STATE_DIR/linux.p $DEPENDS_CONFIG/linux.p
       cp $STATE_DIR/config-$KVERSION /etc/sorcery/local/kernel.config
       rm -f /usr/src/linux-*/.spell-config.p
-      ;; #We want to use our preset kernel version and config
+      ;;
+
+    # This directory is protected by sorcery, and thus won't be reaped
+    # automatically. However, we'll want openssh to install all its
+    # /etc files, as otherwise e.g. sshd.conf is missing from the tarball.
     "openssh")
       rm -rf /etc/ssh
-      ;; # The dir is protected by sorcery, it won't reap it by itself
+      ;;
   esac
+
   true
 }
 
+# If neccessary, undo changes from pre_workaround here, or do other funky stuff
 function post_workaround()
 {
   true
 }
 
-# Attempts to fetch an install log, either from sorcery or from the cache.
+# This function is part of our spell tracking procedures. It attempts to
+# produce an install log for the given spell on stdout, so that we can
+# notice changes in the files a spell installs (usually bad, unless we're
+# updating)
 # Needs the sorcery environment and codex_set_current_spell done before it
 function try_get_install_log() {
   local rclog=/tmp/install_log_rc.$$
   local rc
   {
+    # First, get from sorcery, if the spell is currently installed
     gaze install $SPELL ||
+    # Next, try finding it in the tarball
     tar -xjOf ${INSTALL_CACHE}/${SPELL}-${VERSION}-${HOST}.tar${EXTENSION} \
       --occurrence ${INSTALL_LOGS#/}/$SPELL-$VERSION ||
-    # try without leading / first
+    # try again with a leading /, for some reason the file sometimes has it
     tar -xjOf ${INSTALL_CACHE}/${SPELL}-${VERSION}-${HOST}.tar${EXTENSION} \
       --occurrence $INSTALL_LOGS/$SPELL-$VERSION
+
+    # Preserve exit code (this is a subshell, so setting variables won't work)
     echo $? >$rclog
-    # This is a subshell. We can't just set a variable.
-    # Exit code of a pipe is the exit code of the last command, here: "sort".
+
+  # Ignore tablet, don't include gaze install's "does not exist" message
   } 2>/dev/null | grep -v "$TABLET_PATH" | grep -v "does not exist" | sort
+
+  # And grab exit code again
   rc=$(cat $rclog)
   rm -f $rclog
   return $rc
 }
 
+# This function is part of the spell tracking procedure.
+# It will try to remove directory names from the files listed on stdin.
+# We're not interested in directories that don't get installed again,
+# as they are created by extracting the tarball anyway for the files
+# they contain
 function filter_dirs() {
   local line
   while read line ;do
@@ -61,95 +93,160 @@ function filter_dirs() {
   done
 }
 
+# Phew. This function is interesting.
+# Attempt to work out if a spell's tarball is out of date and a new version
+# is in the grimoire.
+# As the spell isn't neccessarily installed, we need to fiddle our stuff from
+# the cache tarball (its filename gets passed as $1)
 function needs_updating() {
   local TMPTABDIR=/tmp/tabletstuff.$$
   mkdir -p $TMPTABDIR
-    tar -C $TMPTABDIR -xjf "$1" --occurrence \
-      'var/state/sorcery/tablet/*/*/updated' \
-      'var/state/sorcery/tablet/*/*/patchlevel' \
-      'var/state/sorcery/tablet/*/*/security_patch'
+
+  # Try to extract the relevant fields from the tablet saved in the tarball.
+  # As we do not know the exact tablet paths, we put * and rely on tar to work it out.
+  tar -C $TMPTABDIR -xjf "$1" --occurrence \
+    'var/state/sorcery/tablet/*/*/updated' \
+    'var/state/sorcery/tablet/*/*/patchlevel' \
+    'var/state/sorcery/tablet/*/*/security_patch'
+
   CACHE_UPDATED=$(cat $TMPTABDIR/var/state/sorcery/tablet/*/*/updated)
   CACHE_PATCHLEVEL=$(cat $TMPTABDIR/var/state/sorcery/tablet/*/*/patchlevel)
   CACHE_SECPATCH=$(cat $TMPTABDIR/var/state/sorcery/tablet/*/*/security_patch)
+
   rm -rf $TMPTABDIR
+
+  # If any of those have increased, we need to update.
+  # NOTE: this construction might contain bugs.
   [[ ${UPDATED:-0} > ${CACHE_UPDATED:-0} ]] && return 0
   [[ ${PATCHLEVEL:-0} > ${CACHE_PATCHLEVEL:-0} ]] && return 0
   [[ ${SECURITY_PATCH:-0} > ${CACHE_SECPATCH:-0} ]] && return 0
   return 1
 }
 
+
+# ---- execution of script starts here ----
+
 if [ "$1" == "-c" ] ;then
   RECAST="-c"
   shift
 fi
+
+# Make sure dirs we need actually exist
 mkdir -p ~/broken-logs
-mkdir -p /tmp # Just to be sure
+mkdir -p /tmp
+
+# Load sorcery and our config
 . /etc/sorcery/config
 . ${0%/*}/config
 
-# sanity check
+# make sure we actually have a list of spells to keep,
+# or things will go horribly boom.
 if ! [ -e $STATE_DIR/list.reqd ] ;then
   ${0%/*}/listparse
 fi
 
+# Some report files for fancy spell listings
 SUCCESS_LIST=/tmp/spell.success.$$
 FAIL_LIST=/tmp/spell.fail.$$
 CHANGE_LIST=/tmp/spell.change.$$
 rm -f $SUCCESS_LIST $FAIL_LIST $CHANGE_LIST
+
+# Main loop, cast each spell from the command line
 for spell in "$@" ; do
+
+  # grab everything we need to know about the spell from sorcery
   codex_set_current_spell_by_name $spell
   cachefile=${INSTALL_CACHE}/${SPELL}-${VERSION}-${HOST}.tar${EXTENSION}
 
+  # Generate a new tarball if we don't have one yet, have -c specified,
+  # or have an outdated one
   if ! test -e $cachefile || [ $RECAST ] || needs_updating $cachefile ;then
 
+    # Grab old install log if one exists, so we can check for changes
     rm -f /tmp/old-install-log /tmp/tmp-install-log
     try_get_install_log >/tmp/tmp-install-log || rm /tmp/tmp-install-log
 
-    prepare_cast
+    # Do hacks needed to get this thing to work
     pre_workaround $spell
+    # Cast all spells needed to cast $spell, but NOT $spell itself
+    # (this allows cast to extract caches for those spells )
     cast --deps $spell
+
+    # Remove caches, so we notice if ARCHIVE=off
     rm -f $cachefile
+
+    # Compile the spell itself
     cast -c $spell
+
     rc=$?
+    # Do post_workaround, no matter what happened
     post_workaround $spell
-    if ! test -e $cachefile ;then # ARCHIVE=off
+
+    # Test if we did not get a cache file
+    if ! test -e $cachefile ;then
+
+      # If the cast was successful, and there is an install log,
+      # we'll just make the tarball ourselves (ARCHIVE=off)
       if [[ $rc == 0 ]] && gaze install $spell >/dev/null ;then
         message "Forcing generation of cache"
         pushd / >/dev/null
-          # This is how current sorcery makes caches (not quite intentional)
+          # This mimicks sorcery's current behavior of making caches.
           gaze install-full $spell | sed 's:^/::' |
             tar --no-recursion -cjPf $cachefile -T -
         popd >/dev/null
       fi
     fi
 
+    # If we had an old install log, filter out dirs (we can only do this
+    # once the spell is installed and we're sure the dirs actually exist)
     [ -e /tmp/tmp-install-log ] &&
     cat /tmp/tmp-install-log | filter_dirs >/tmp/old-install-log
-    # filter_dirs only once all the dirs referenced exist
 
+    # Grab new install log, to compare it against the old one
     gaze install $spell >/tmp/tmp-install-log &&
+    # This ">file && cat file |" hack ensures that if gaze install fails,
+    # the commands after it don't get executed.
     cat /tmp/tmp-install-log | filter_dirs >/tmp/new-install-log &&
-    # again, preserving exit status from gaze install
+
+    # Do we have an old install log, and does it differ from the current one?
     if [ -e /tmp/old-install-log ] && 
-     ! diff /tmp/old-install-log /tmp/new-install-log >/dev/null ;then
+     ! cmp -s /tmp/old-install-log /tmp/new-install-log ;then
+
       message "OOPS... Spell ${SPELL_COLOR}${SPELL}${DEFAULT_COLOR} \
 install log suddenly changed..."
+
+      # Save old and new install log, in case we want to see what changed
       datestr=$(date +%s)
       cp /tmp/old-install-log ~/broken-logs/${SPELL}-${datestr}-pre
       cp /tmp/new-install-log ~/broken-logs/${SPELL}-${datestr}-post
       echo "$SPELL" >>$CHANGE_LIST
+
     elif [[ $rc == 0 ]] ;then
+      # Yay, everything went sweet
       echo "$SPELL" >>$SUCCESS_LIST
     else
       echo "$SPELL" >>$FAIL_LIST
     fi ||
-      echo "$SPELL" >>$FAIL_LIST # when the gaze install failed
+      # hmm... we just cast a spell, but gaze install $spell fails... strange.
+      echo "$SPELL" >>$FAIL_LIST
+
     rm -f /tmp/new-install-log
 
+
+    # Now, we finished what we came here for (casting one spell).
+    # We clean up after ourselves and dispel all spells not strictly needed,
+    # so the next spell gets a clean environment.
+
+    # This little thingy grabs all installed spells, compares them against
+    # the 'minimum' spells that actually should stay around all the time,
+    # and gives us all the "superfluous" spells that aren't needed.
     SUP_SPELLS=$(
      { cat /var/state/sorcery/packages | cut -d: -f1
        cat $STATE_DIR/list.reqd $STATE_DIR/list.reqd ; } |
        sort | uniq -u)
+
+    # Quick sanity check: If we're supposed to dispel more than 10 spells,
+    # something is very probably very wrong. Bail.
     if [ $( echo "$SUP_SPELLS" | wc -l ) -gt 10 ] ;then
       message "${QUERY_COLOR}Whoops! Cleanup wants me to dispel the following\
 spells:${DEFAULT_COLOR}${SPELL_COLOR}"
@@ -159,12 +256,17 @@ spells:${DEFAULT_COLOR}${SPELL_COLOR}"
         exit 3
       fi
     fi
+
+    # If we have spells to dispel, do so.
+    # Leave the /var/state/sorcery/depends entries around, though.
+    # We'll need them for dependency management on the ISO.
     if [ -n "$SUP_SPELLS" ] ;then
       dispel --no-reap-depends $SUP_SPELLS
     fi
   fi
 done
 
+# Print pretty cleanse --fix like result
 if [ -s $SUCCESS_LIST ] ;then
   message "${MESSAGE_COLOR}Spells installed successfully:"
   message "------------------------------${SPELL_COLOR}"
@@ -184,6 +286,10 @@ if [ -s $FAIL_LIST ] ;then
   message "$DEFAULT_COLOR"
 fi
 
+# This is a hack.
+# When ISOGEN_LOGFILE is set, we write a report there,
+# for the benefit of automated scripts that call this and
+# may want to send report mails.
 if [[ $ISOGEN_LOGFILE ]] ;then
   {
     echo "=====  begin caster report ====="
@@ -195,6 +301,6 @@ if [[ $ISOGEN_LOGFILE ]] ;then
     column -c 72 $FAIL_LIST
     echo "=====   end  caster report ====="
   } >$ISOGEN_LOGFILE
-fi #If we put the redirection here bash tries to apply it even when if is false
+fi
 
 rm -f $SUCCESS_LIST $FAIL_LIST $CHANGE_LIST
