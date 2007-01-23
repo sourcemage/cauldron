@@ -2,9 +2,7 @@ smgl-fhs
 basesystem
 rpmunpack
 util-linux
-#kbd
-console-data
-console-tools
+kbd
 netkit-base
 netkit-ping
 sorcery-pubkeys

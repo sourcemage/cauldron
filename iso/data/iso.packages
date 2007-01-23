@@ -13,8 +13,6 @@ begin_unpack bash
   # more-or-less elegant FINAL workaround
 end_unpack #bash
 unpack bzip2
-unpack console-data
-unpack console-tools
 unpack coreutils
 unpack cpio
 #unpack devfsd -- ouch.
@@ -54,7 +52,7 @@ begin_unpack init.d
 end_unpack
 unpack jed
 unpack jfsutils
-#unpack kbd
+unpack kbd
 unpack less
 unpack libpcap # For what?
 begin_unpack linux

@@ -78,7 +78,7 @@ font_menu()  {
 
   debug_log "NLS" 1 "Chose console font $FONT"           &&
 
-  try_run consolechars  -f  $FONT                        &&
+  try_run setfont $FONT                                  &&
   fill_dependency font $FONT                             &&
 
   sed -i "s/^CONSOLECHARS_ARGS=.*$/CONSOLECHARS_ARGS=\"-f $FONT\"/" \
