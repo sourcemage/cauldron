@@ -7,7 +7,7 @@ all: iso
 
 sanitize_source:
 	if [ "${SOURCE_ROOT}" != "/" ] ;then \
-	  ./sanitize_chroot.sh ${SOURCE_ROOT} \
+	  ./sanitize_chroot.sh ${SOURCE_ROOT} ; \
 	fi
 
 ${DESTINATION_ROOT}: | sanitize_source
