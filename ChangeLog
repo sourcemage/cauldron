@@ -1,3 +1,7 @@
+2007-01-06 Jaka Kranjc <lynxlynxlynx@sourcemage.org>
+	* iso.packages, install-list, nativeLanguageSupport: use kbd instead
+	  of console-{data,tools}, the previous limiting factors are gone
+
 2006-06-18 Karsten Behrmann <BearPerson@gmx.net>
 	* gen-scripts/config: "automate" config to autodetect
 	  kernel version and arch
