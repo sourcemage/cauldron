@@ -99,6 +99,8 @@ function filter_dirs() {
 # As the spell isn't neccessarily installed, we need to fiddle our stuff from
 # the cache tarball (its filename gets passed as $1)
 function needs_updating() {
+  return 1 # TODO: disable this for now, this doesn't seem to work yet
+
   local TMPTABDIR=/tmp/tabletstuff.$$
   mkdir -p $TMPTABDIR
 

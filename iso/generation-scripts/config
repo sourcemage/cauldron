@@ -26,7 +26,7 @@ ARCH=${ARCH:-$(. /etc/sorcery/config ; echo $HOST)}
 # Try to figure out what architecture we are
 # TODO: This is a hack
 ISO_ARCH=${ISO_ARCH:-$(uname -m)}
-[[ $ISO_ARCH == ppc ]] || [[ $ISO_ARCH == x86_64 ]] || ISO_ARCH=i486
+[[ $ISO_ARCH == ppc ]] || [[ $ISO_ARCH == x86_64 ]] || ISO_ARCH=x86
 
 # Sorcery version, Grimoire version, Kernel version
 SVERSION=${SVERSION:-test}

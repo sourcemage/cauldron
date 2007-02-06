@@ -9,7 +9,7 @@ if [[ -z $2 ]] ;then
 fi
 
 cp $CHROOTGEN/chrootgen.sh $1/
-rm -r $1/chroot-configset $1/new-root $1/tmp/backup_configs
+rm -rf $1/chroot-configset $1/new-root $1/tmp/backup_configs
 cp -a $CHROOTGEN/$ISO_ARCH $1/chroot-configset
 
 #FIXME: Force specific grimoire to be updated and used (preferrably without
