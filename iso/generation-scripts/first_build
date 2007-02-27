@@ -10,4 +10,4 @@ ${0%/*}/listparse
 
 # First cast all critical spells (for the sake of paranoia),
 # then create all tarballs we need
-${0%/*}/caster -c $( cat $STATE_DIR/list.reqd $STATE_DIR/list.all )
+${0%/*}/caster $( cat $STATE_DIR/list.reqd $STATE_DIR/list.all )
