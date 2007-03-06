@@ -48,7 +48,6 @@ __SMGL_TEMPLATE_ONLY_ppc__unpack hfsutils
 unpack iana-etc
 begin_unpack init.d
   iso_include '/etc/init.d' # overriding the default
-  iso_exclude /etc/shutdown.conf
 end_unpack
 unpack jed
 unpack jfsutils

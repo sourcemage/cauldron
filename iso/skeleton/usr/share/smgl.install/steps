@@ -1,0 +1,7 @@
+init               - start of the install
+disk-partition     - creating partitions
+disk-mount         - creating filesystems, mounting them appropriately
+copy-base          - copying basesystem and basic /etc files
+edit-confs         - editing the basic configuration files
+install-opt-spells - installing other spells you may need
+reboot             - reboot into the new system

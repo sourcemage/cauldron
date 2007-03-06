@@ -16,12 +16,3 @@ To be used inside the chroot:
                (usually called via mk-smgl-iso)
 - mkiso:       create a .iso from existing tarballs and initrd image
                (usually called via mk-smgl-iso)
-
-
-Old cruft, not to be used at all:
-- autoupdate.sh: attempt to update the spells inside the chroot and generate a
-                 new .iso - probably not working too well
-- lint-packages.sh: run inside the chroot to try and find unsatisfied
-                    dependencies from spells unpacked to the iso. Might come in
-                    useful every once in a while, but not part of the regular
-                    procedure. Should actually work.

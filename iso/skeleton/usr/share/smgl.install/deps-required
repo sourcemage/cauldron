@@ -1,6 +1,0 @@
-disk#          Partition disks
-install_start# Initial installation
-linux#         Kernel install
-bootloader#    Bootloader installed
-network#       Set up network (or at least seen hints for "none")
-dev_format#    /dev set up

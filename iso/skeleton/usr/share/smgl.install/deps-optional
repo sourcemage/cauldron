@@ -1,7 +1,0 @@
-keymap#       Set to defkeymap automatically if unset
-font
-lang
-editor
-architecture# Copy sorcery default config anyway
-timezone#     Set to UTC by default
-syslog
