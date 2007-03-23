@@ -1,0 +1,144 @@
+#!/bin/bash
+# This script will crank out an initrd image for the ISO to use.
+
+# The kernel version I'm supposed to look for
+KERNEL_VERSION=2.6.19.5
+
+# The temporary dir I'll use to put the initrd files
+INITRDROOT=initrd-dir
+
+#---------------------------------------------------------------------
+## @param full path of binary to check
+## @Stdout libraries with full path
+## echos all libs that the given file is linked against (not ld-linux)
+#---------------------------------------------------------------------
+# Used to implicitly install linked-against-libs to the initrd with a binary
+function libscan() {
+  ldd "$1" 2> /dev/null |
+   cut -d'>' -f2 |
+   cut -d' ' -f2 |
+   grep '^/'
+}
+
+#---------------------------------------------------------------------
+## Tries to find the given binary and copy it and its required libs
+## onto the initrd at the same paths they are in the parent system.
+#---------------------------------------------------------------------
+function install_prog() {
+  local prog progpath
+  for prog in $* ;do
+    # find executable
+    # TODO: check if we can use type -p here and avoid dependency on which
+    progpath=$( which $prog )         &&
+    # install executable
+    cp --parents -f $progpath $INITRDROOT &&
+    # install needed libs
+    cp --parents -f $( libscan $progpath ) $INITRDROOT
+  done
+}
+
+
+#---------------------------------------------------------------------
+## @param path to initrd directory
+## @param path to store gzip-compressed initrd image
+## @Description
+## This function creates a loopback-mountable filesystem from the
+## given initrd and passes it through gzip compression
+#---------------------------------------------------------------------
+function mk_initrd_file() {
+  local initrd_size tmp_file tmp_mountdir
+
+  # Measure size of the initrd files, add 20% for e2fs overhead and safety
+  initrd_size=$(du -ks ${INITRDROOT} | cut -d$'\t' -f1)
+  initrd_size="$(( initrd_size / 5 + initrd_size ))"
+
+  tmp_file="/tmp/initrd.$$"
+  tmp_mountdir="/tmp/initrdmpoint.$$"
+
+  rm -rf $tmp_file $tmp_mountdir
+  # Create initrd file and filesystem
+  dd if=/dev/zero of=$tmp_file bs=1024 count=$initrd_size
+  mke2fs -q -b 1024 -i 1024 -F $tmp_file
+
+  # Copy stuff into image
+  mkdir -p $tmp_mountdir
+  mount $tmp_file $tmp_mountdir -o loop
+  cp -a $1/* $tmp_mountdir
+  umount -d $tmp_mountdir
+
+  gzip -c $tmp_file >$2
+
+  # We'll need the unpacked size for the bootloader config,
+  # as it'll want to know how much memory to allocate for the initrd
+  echo "${initrd_size}" >${2%.gz}.size
+
+  rm -rf $tmp_file $tmp_mountdir
+  echo "initrd is compressed $(du -ks $2 | cut -d$'\t' -f1)K, uncompressed ${initrd_size}K."
+}
+
+
+# ---- actual script starts here ----
+
+# grab config
+MYDIR=${0%/*}/..
+
+rm -rf $INITRDROOT
+mkdir -p $INITRDROOT
+
+# Create all dirs we need on the initrd
+while read line ; do
+  mkdir -p ${INITRDROOT}/${line}
+done <$MYDIR/data/initrd.dirs
+
+# Copy files onto the initrd that we need.
+# Locating in and extracting from tarballs would be a pain,
+# so we just use the current system (chroot)
+while read line ; do
+
+  # If it has a leading /, treat it as a single file
+  if [[ ${line:0:1} == '/' ]] ;then
+    cp -a --parents ${line} ${INITRDROOT}
+
+  # Otherwise, it's a binary, find it and install its libs too
+  else
+    install_prog $line
+  fi
+done <$MYDIR/data/initrd.files
+
+# Copy the dynamic loader over
+cp --parents /lib/ld-2.* $INITRDROOT
+
+# Create a static /dev
+pushd $INITRDROOT/dev >/dev/null
+ $MYDIR/iso/sbin/MAKEDEV generic-nopty
+popd >/dev/null
+
+# Add kernel modules that are supposed to be on the iso
+mkdir -p ${INITRDROOT}/lib/modules/${KERNEL_VERSION}/kernel
+pushd /lib/modules/${KERNEL_VERSION}/kernel >/dev/null
+ while read line ; do
+   cp -pr --parents ./${line} ${INITRDROOT}/lib/modules/${KERNEL_VERSION}/kernel
+ done <$MYDIR/data/initrd.kernel
+popd >/dev/null
+
+# Copy module listing and other files the kernel needs, omit dirs though
+cp -dp --parents /lib/modules/$KERNEL_VERSION/* $INITRDROOT 2>/dev/null
+
+# Finally, copy everything from the skeleton on top
+cp -af $MYDIR/initrd/* ${INITRDROOT}
+
+# Set up linker caches and symlinks
+cp /sbin/ldconfig ${INITRDROOT}
+chroot ${INITRDROOT} /ldconfig
+rm ${INITRDROOT}/ldconfig
+
+# create module dependencies.
+cp /sbin/depmod ${INITRDROOT}
+chroot ${INITRDROOT} /depmod ${KERNEL_VERSION}
+rm -f ${INITRDROOT}/depmod
+
+# The initrd is complete now.
+
+mk_initrd_file $INITRDROOT initrd.gz
+
+rm -rf ${INITRDROOT}

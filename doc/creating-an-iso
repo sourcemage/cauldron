@@ -1,0 +1,15 @@
+Making an iso quickly, very-brief notes
+These should be extended.
+1. grab a chroot tarball
+2. unpack, chroot in, cast linux
+3. clean up a bit (rm linux source tree, binary cache, linux source)
+4. copy the chroot (one copy for the iso, one the system the user will install)
+5. copy the contents of the "iso" dir into the first chroot
+6. copy the contents of the "system" dir into the second chroot
+7. tar up the second chroot and copy it into the first
+8. run ./scripts/mkinitrd to create an initrd.gz
+9. copy that into iso-dir/boot/
+A. make sure iso-dir/isolinux/isolinux.cfg contains the right name for the
+   kernel image and the right (uncompressed) initrd size
+B. create an iso from your iso-dir, for example:
+mkisofs -quiet -R -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o smgl-0.0.0.iso iso-dir

@@ -1,1 +1,0 @@
-../skeleton/etc/sorcery/local/depends/linux.p

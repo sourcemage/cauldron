@@ -1,8 +1,0 @@
-# Uncomment the following lines for FHS 2.3-compliant mount points
-# Create directories if needed
-#/dev/fd0	/media/floppy	auto	defaults,noauto,users
-#/dev/cdrom	/media/cdrom	auto	defaults,noauto,ro,users
-#
-# If you like FHS 2.2-style mount points instead, use those lines:
-#/dev/fd0	/mnt/floppy	auto	defaults,noauto,users
-#/dev/cdrom	/mnt/cdrom	auto	defaults,noauto,users
