@@ -25,7 +25,7 @@ start()
     evaluate_retval
   fi
 
-  for i in etc root var/log var/lib/nfs ;do
+  for i in etc root var/log ;do
     echo "setting up a writeable /$i..."
     /bin/mkdir -p /tmp/$i &&
     /bin/cp -a --parents /$i /tmp &&
