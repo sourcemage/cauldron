@@ -262,10 +262,15 @@ main()  {
     if [ -f $ID ] ;then
       /bin/mount -t $VFSTYPE -o $OPTIONS $ROOT $MOUNT/mnt/cdrom
       cd $MOUNT/mnt/cdrom
+      #set up writeable /dev
+      echo "Setting up writeable /dev for the udevness"
+      /bin/mount -t tmpfs tmpfs $MOUNT/dev
+      $MOUNT/bin/cp -a --parents dev $MOUNT
+
       for i in etc root var/log var/lib/nfs ;do
-        echo "Setting up writable /$i for install"
-        /bin/mount -t tmpfs tmpfs $MOUNT/$i
-        $MOUNT/bin/cp -a --parents $i $MOUNT
+        echo "NOT!!! Setting up writable /$i for install"
+        #/bin/mount -t tmpfs tmpfs $MOUNT/$i
+        #$MOUNT/bin/cp -a --parents $i $MOUNT
       done
       cd $MOUNT
       /bin/umount $MOUNT/mnt/cdrom

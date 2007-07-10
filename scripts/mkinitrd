@@ -2,10 +2,10 @@
 # This script will crank out an initrd image for the ISO to use.
 
 # The kernel version I'm supposed to look for
-KERNEL_VERSION=2.6.19.5
+KERNEL_VERSION=2.6.18
 
 # The temporary dir I'll use to put the initrd files
-INITRDROOT=initrd-dir
+INITRDROOT=/tmp/initrd-dir
 
 #---------------------------------------------------------------------
 ## @param full path of binary to check
@@ -81,12 +81,14 @@ function mk_initrd_file() {
 
 # grab config
 MYDIR=${0%/*}/..
+# TODO: this needs a full path, doesn't seem to work with relative paths
 
 rm -rf $INITRDROOT
 mkdir -p $INITRDROOT
 
 # Create all dirs we need on the initrd
 while read line ; do
+	echo "Creating dir $line"
   mkdir -p ${INITRDROOT}/${line}
 done <$MYDIR/data/initrd.dirs
 
@@ -97,48 +99,59 @@ while read line ; do
 
   # If it has a leading /, treat it as a single file
   if [[ ${line:0:1} == '/' ]] ;then
+	  echo "Copying $line"
     cp -a --parents ${line} ${INITRDROOT}
 
   # Otherwise, it's a binary, find it and install its libs too
   else
+	  echo "Installing prog $line"
     install_prog $line
   fi
 done <$MYDIR/data/initrd.files
 
 # Copy the dynamic loader over
+echo "Copying over dynamic loader"
 cp --parents /lib/ld-2.* $INITRDROOT
 
 # Create a static /dev
+echo "Creating static dev"
 pushd $INITRDROOT/dev >/dev/null
- $MYDIR/iso/sbin/MAKEDEV generic-nopty
+$MYDIR/iso/sbin/MAKEDEV generic-nopty
 popd >/dev/null
 
 # Add kernel modules that are supposed to be on the iso
+echo "adding kernel modules"
 mkdir -p ${INITRDROOT}/lib/modules/${KERNEL_VERSION}/kernel
 pushd /lib/modules/${KERNEL_VERSION}/kernel >/dev/null
  while read line ; do
+	 echo "Adding module: $line"
    cp -pr --parents ./${line} ${INITRDROOT}/lib/modules/${KERNEL_VERSION}/kernel
  done <$MYDIR/data/initrd.kernel
 popd >/dev/null
 
 # Copy module listing and other files the kernel needs, omit dirs though
+echo "Copy module listing and other files"
 cp -dp --parents /lib/modules/$KERNEL_VERSION/* $INITRDROOT 2>/dev/null
 
 # Finally, copy everything from the skeleton on top
+echo "Copy skeleton"
 cp -af $MYDIR/initrd/* ${INITRDROOT}
 
 # Set up linker caches and symlinks
+echo "Set up linker caches and symlinks"
 cp /sbin/ldconfig ${INITRDROOT}
 chroot ${INITRDROOT} /ldconfig
 rm ${INITRDROOT}/ldconfig
 
 # create module dependencies.
+echo "create module dependencies"
 cp /sbin/depmod ${INITRDROOT}
 chroot ${INITRDROOT} /depmod ${KERNEL_VERSION}
 rm -f ${INITRDROOT}/depmod
 
 # The initrd is complete now.
-
+echo "Make the initrd"
 mk_initrd_file $INITRDROOT initrd.gz
 
+echo "remove initrd skeleton"
 rm -rf ${INITRDROOT}
