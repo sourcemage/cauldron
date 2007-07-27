@@ -1,0 +1,12 @@
+Welcome to the Source Mage Install CD.
+
+We're all about staying out of your way, and this installer is no different.
+There's a checklist in /root 
+  less /root/checklist
+
+That will provide you with enough information to install your system. If not,
+and you had to solicit help from elsewhere, write down what it was you were
+missing and get on IRC and tell us about it.
+
+Okay, you're all set! Hopefully your install goes well :D
+
