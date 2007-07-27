@@ -1,3 +1,3 @@
 #!/bin/bash
-cat /usr/share/doc/smgl.install/welcome
+cat /root/README
 exec /bin/login-shell.sh
