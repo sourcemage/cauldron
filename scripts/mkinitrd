@@ -2,10 +2,14 @@
 # This script will crank out an initrd image for the ISO to use.
 
 # The kernel version I'm supposed to look for
-KERNEL_VERSION=2.6.18
+# this will be the version we just installed
+KERNEL_VERSION=$(gaze version linux | grep linux | awk '{print $5}')
 
 # The temporary dir I'll use to put the initrd files
 INITRDROOT=/tmp/initrd-dir
+
+# set MYDIR because I'm being called from isoCaster
+MYDIR=/root/
 
 #---------------------------------------------------------------------
 ## @param full path of binary to check
@@ -79,9 +83,6 @@ function mk_initrd_file() {
 
 # ---- actual script starts here ----
 
-# grab config
-MYDIR=${0%/*}/..
-# TODO: this needs a full path, doesn't seem to work with relative paths
 
 rm -rf $INITRDROOT
 mkdir -p $INITRDROOT
