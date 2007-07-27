@@ -1,0 +1,112 @@
+#!/bin/bash
+
+# TODO: be able to specify configfile on command line
+
+
+#takes no arguments, gets all config from the file
+source ./config
+
+# do a root check!
+if [[ "$(who |grep root)" == "" ]]; then
+	echo "Need to run all this as root, sorry!"
+	exit 1
+fi
+
+#acquire the chroot tarball of choice only if it's not there...
+#TODO: validation!
+CHROOTFILE=smgl-$CHROOT_VERSION-basesystem-$CHROOT_ARCH.tar.bz2 
+if [ ! -f $DOWNLOAD_SPOOL/$CHROOTFILE ] ; then
+  wget http://download.sourcemage.org/image/official/$CHROOTFILE -O $DOWNLOAD_SPOOL/$CHROOTFILE
+fi
+
+
+# build chroot dirs
+ISO_CHROOT=$ISO_BUILD_ROOT/iso-chroot
+SYSTEM_CHROOT=$ISO_BUILD_ROOT/system-chroot
+mkdir -p $ISO_CHROOT $SYSTEM_CHROOT
+
+cd $ISO_BUILD_ROOT
+tar -jxf $DOWNLOAD_SPOOL/$CHROOTFILE
+cd $(basename $CHROOTFILE .tar.bz2)
+mv * $ISO_CHROOT/.
+cd $ISO_BUILD_ROOT
+rmdir $(basename $CHROOTFILE .tar.bz2)
+
+#iso chroot is ready to be haxx0red
+
+#prepare to cast the spells we want on the ISO
+cp $ISO_SPELLS $ISO_CHROOT/tmp/spells
+cp $CAULDRON_DIR/scripts/isoCaster $ISO_CHROOT/root/isoCaster
+# also get the mkinitrd stuff in there
+cp $CAULDRON_DIR/scripts/mkinitrd $ISO_CHROOT/root/mkinitrd
+
+# set up the chroot
+mount --bind /proc $ISO_CHROOT/proc
+mount --bind /dev $ISO_CHROOT/dev
+mount --bind /dev/pts $ISO_CHROOT/dev/pts
+# TODO: can safely mount /var/spool/sorcery into the chroot as well
+# chroot is ready for teh casting
+
+#this will enter the chroot and run my script
+chroot $ISO_CHROOT /root/isoCaster
+# isoCaster will build a kernel too
+
+
+# unmount binded things
+umount $ISO_CHROOT/dev/pts $ISO_CHROOT/dev $ISO_CHROOT/proc
+# TODO: if mounted /var/spool/sorcery UNMOUNT IT!
+
+# chose not to delete the source files and such right now, because they might be use
+# used in the system chroot. They'll get deleted, and if space proves to be an issue
+# it can be done here
+
+# DUPLICATE the chroot
+cd $ISO_BUILD_ROOT
+cp -a $ISO_CHROOT $SYSTEM_CHROOT
+
+# TODO: enter system chroot and cast spells specific to the system.
+# right now there aren't any!
+#TODO: enter system chroot
+#TODO: unmount system chroot
+
+# clean up of system chroot
+rm $SYSTEM_CHROOT/boot/initrd* $SYSTEM_CHROOT/root/initrd*
+rm -rf $SYSTEM_CHROOT/var/spool/sorcery/* $SYSTEM_CHROOT/var/cache/sorcery/*
+
+# copy over needed files into the system
+cp -a $CAULDRON_DIR/system/* $SYSTEM_CHROOT/.
+
+#tarball system chroot
+cd $SYSTEM_CHROOT
+tar -cjf $ISO_BUILD_ROOT/system.tar.bz2 *
+
+#okay, now we need to go completely clean up the ISO chroot
+# set up the chroot
+mount --bind /proc $ISO_CHROOT/proc
+mount --bind /dev $ISO_CHROOT/dev
+mount --bind /dev/pts $ISO_CHROOT/dev/pts
+cp $CAULDRON_DIR/scripts/isoDispeller $ISO_CHROOT/isoDispeller
+
+#okay, ready to chroot and delete the stuff!
+chroot $ISO_CHROOOT /root/isoDispeller
+
+#done with the chroot, unmount the goodies
+umount $ISO_CHROOT/dev/pts $ISO_CHROOT/dev $ISO_CHROOT/proc
+
+# delete cache files and sorcery spools
+rm -rf $ISO_CHROOT/var/spool/sorcery/* $ISO_CHROOT/var/cache/sorcery/*
+
+# TODO: do we need the kernel source? it takes up a lot of space in the system chroot :/
+rm -rf $ISO_CHROOT/usr/src/* 
+
+#okay almost done, move the system chroot tarball into the iso root
+cd $ISO_BUILD_ROOT
+mv $ISO_BUILD_ROOT/system.tar.bz2 $ISO_CHROOT/system.tar.bz2
+
+# copy over needed files to the iso
+cp -a $CAULDRON_DIR/iso/* $ISO_CHROOT/.
+
+#Construct the .ISO file!
+mkisofs -quiet -R -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o smgl-$ISO_VERSION-$CHROOT_ARCH.iso ${ISO_CHROOT//$ISO_BUILD_ROOT\//}
+
+echo "ISO COMPLETED!"

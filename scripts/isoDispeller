@@ -1,0 +1,7 @@
+#!/bin/bash 
+
+# a script to be run as the start of a chroot to dispel all the things
+# in the ISO chroot that aren't strictly needed to boot a system
+
+# TODO: verify if a force is needed or anything
+dispel gcc g++ 

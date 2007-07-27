@@ -1,0 +1,10 @@
+# configuration file for iso building
+
+ISO_BUILD_ROOT=/srv/isogen2
+DOWNLOAD_SPOOL=/tmp
+CHROOT_VERSION=stable-0.11
+CHROOT_ARCH=x86_64
+CAULDRON_SCRIPT_DIR=/home/dkowis/gitwork/cauldron
+   ISO_SPELLS=$CAULDRON_SCRIPT_DIR/isoSpells
+SYSTEM_SPELLS=$CAULDRON_SCRIPT_DIR/systemSpells
+ISO_VERSION=uber-devel

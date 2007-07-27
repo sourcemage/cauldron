@@ -1,0 +1,9 @@
+reiserfsprogs
+xfsprogs
+jfsutils
+lvm
+device-mapper
+pcmciautils
+dhcpcd
+wireless_tools
+pciutils

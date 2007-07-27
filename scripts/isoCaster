@@ -1,0 +1,27 @@
+#!/bin/bash
+
+# this is a simple program to be run in the chroot that will cast the spells
+# from the list and that's it
+
+
+# The builder script should've put these spells in /tmp/spells
+cast $(cat /tmp/spells)
+
+echo "Okay, now I'm going to cast -r linux for you"
+echo "This is the kernel for the ISO!" 
+echo "There's a kernel config in /root/"
+ls -l /root/*.config
+echo "you can load that, or configure your own..."
+echo "Press enter to continue"
+echo $'\a'
+read
+cast -r linux
+
+#BUILD the initrd for the ISO
+echo "okay going to make the ISO's initrd"
+cd /root
+./mkinitrd
+cp /root/initrd* /boot/.
+echo "okay initrd installed!"
+
+# Told you it was simple!
