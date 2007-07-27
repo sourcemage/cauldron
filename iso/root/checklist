@@ -1,0 +1,60 @@
+1. Partition disk
+ - Use cfdisk if you're a n00b ;) 
+ - If you're not a n00b you probably know what to use already
+ - There's fdisk and cfdisk at least
+ - make at least a few gigs for root, 4 is usually overly safe
+   As long as you're going to create additional partitions later
+ - Don't forget a swap partition
+  - You can make a swapfile if you'd like; noted below :)
+
+2. make the filesystem of your choice
+ - mkreiserfs
+ - mke2fs
+ - mke2fs -j (ext3)
+
+3. mount root partition
+ - Example: mount /dev/sda1 /
+ - If you didn't create a swap partition, create a swapfile
+  - 512mb swapfile: dd if=/dev/zero of=/swapfile1 bs=1024 count=524288
+  - Got that count number by (1024 * 512) so if you wanted a 1GB swap
+    it'd be 1024 * 1024 for the count; DO THIS AFTER MOUNTING
+  - One can do simple math in bash by doing: 
+     echo $((1024 * 512))
+
+4. If you like you can swapon the swap or swapfile
+
+5. cd to your freshly mounted root partition and extract the system tarball
+ - cd /mnt/root
+ - tar -jxvf /system.tar.bz2 .
+
+6. set up the root file system to chroot into
+ - mount --bind /dev dev
+ - mount --bind /dev/pts dev/pts
+ - mount --bind /proc proc
+
+7. chroot into it
+ - chroot .
+
+8. install the bootloader of your choice
+ - Should probably say yes to installing a default menu.lst (if grub)
+   cp /etc/lilo.example.conf /etc/lilo.conf to use lilo
+ - edit /etc/lilo.conf and run lilo
+ - edit /boot/grub/menu.lst and run grub-install
+
+9. default root password is
+                               "sourcemage"
+
+ - Probably wouldn't hurt to change that ;)
+ - Nothing is installed by default
+ - Available grimoires:
+  - scribe add test
+  - scribe add z-rejected
+  - scribe add games
+  - scribe add xorg-modular from http://codex.sourcemage.org/testing/xorg-modular.tar.bz2
+
+A. reboot and make with the casting!
+ - Don't forget to run scribe update and sorcery update, just to make sure
+   you've got the latest versions of things
+
+B. Don't forget to drop by and see us on #sourcemage on irc.freenode.net
+ - for some quick IRC'in cast irssi or weechat
