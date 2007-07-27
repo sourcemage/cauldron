@@ -6,11 +6,7 @@
 #takes no arguments, gets all config from the file
 source ./config
 
-# do a root check!
-if [[ "$(who |grep root)" == "" ]]; then
-	echo "Need to run all this as root, sorry!"
-	exit 1
-fi
+# TODO: do a root check!
 
 #acquire the chroot tarball of choice only if it's not there...
 #TODO: validation!
