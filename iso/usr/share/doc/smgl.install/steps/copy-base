@@ -1,1 +1,12 @@
-untar the big tarball.
+Now, it's time to set up the basic smgl installation.
+
+Run the following command:
+[1mtar -xjvf /system.tar.bz2 -C /mnt/root[m
+(if BearPerson gets his lazy ass in gear, we might have an alias for this
+soon to cut down on typing)
+
+If you don't need to see output rushing by to give you the feeling that
+something is going on, leave out the [1mv[m (turning [1m-xjvf[m into [1m-xjf[m)
+to make tar shut up unless there's errors.
+
+When the command has completed, type [1mnext[m as usual.
