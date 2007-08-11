@@ -60,7 +60,7 @@ umount $ISO_CHROOT/dev/pts $ISO_CHROOT/dev $ISO_CHROOT/proc &&
 
 # DUPLICATE the chroot
 cd $ISO_BUILD_ROOT &&
-cp -a $ISO_CHROOT $SYSTEM_CHROOT &&
+cp -a $ISO_CHROOT/* $SYSTEM_CHROOT/. &&
 
 # TODO: enter system chroot and cast spells specific to the system.
 # right now there aren't any!
