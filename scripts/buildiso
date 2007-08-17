@@ -35,8 +35,14 @@ cp $ISO_SPELLS $ISO_CHROOT/tmp/spells &&
 cp $CAULDRON_DIR/scripts/isoCaster $ISO_CHROOT/root/isoCaster &&
 # also get the mkinitrd stuff in there
 cp $CAULDRON_DIR/scripts/mkinitrd $ISO_CHROOT/root/mkinitrd &&
+# also get the kernel config in there
+cp $CAULDRON_DIR/scripts/$CHROOT_ARCH.config $ISO_CHROOT/root/kernel.config
 
 # set up the chroot
+
+#TODO: construct a sorcery config that is modified from the default a bit
+#  to remove the asking about viewing reports, ot make it go faster
+# TODO: set up a way to detect failure within the chroot, and automatically umount stuff.
 mount --bind /proc $ISO_CHROOT/proc &&
 mount --bind /dev $ISO_CHROOT/dev &&
 mount --bind /dev/pts $ISO_CHROOT/dev/pts &&
@@ -75,6 +81,9 @@ rm -rf $SYSTEM_CHROOT/var/spool/sorcery/* $SYSTEM_CHROOT/var/cache/sorcery/* &&
 # copy over needed files into the system
 cp -a $CAULDRON_DIR/system/* $SYSTEM_CHROOT/. &&
 
+# remove the kernel source, it's too big to fit on an ISO
+rm -rf $SYSTEM_CHROOT/usr/src/* &&
+
 #tarball system chroot
 cd $SYSTEM_CHROOT &&
 tar -cjf $ISO_BUILD_ROOT/system.tar.bz2 * &&
@@ -84,13 +93,14 @@ tar -cjf $ISO_BUILD_ROOT/system.tar.bz2 * &&
 mount --bind /proc $ISO_CHROOT/proc &&
 mount --bind /dev $ISO_CHROOT/dev &&
 mount --bind /dev/pts $ISO_CHROOT/dev/pts &&
-cp $CAULDRON_DIR/scripts/isoDispeller $ISO_CHROOT/isoDispeller &&
+cp $CAULDRON_DIR/scripts/isoDispeller $ISO_CHROOT/root/isoDispeller &&
 
 #okay, ready to chroot and delete the stuff!
-chroot $ISO_CHROOOT /root/isoDispeller &&
+chroot $ISO_CHROOT /root/isoDispeller &&
 
 #done with the chroot, unmount the goodies
 umount $ISO_CHROOT/dev/pts $ISO_CHROOT/dev $ISO_CHROOT/proc &&
+rm $ISO_CHROOT/root/isoDispeller
 
 #delete resolv.conf
 rm $ISO_CHROOT/etc/resolv.conf &&
@@ -107,7 +117,8 @@ mv $ISO_BUILD_ROOT/system.tar.bz2 $ISO_CHROOT/system.tar.bz2 &&
 # copy over needed files to the iso
 cp -a $CAULDRON_DIR/iso/* $ISO_CHROOT/. &&
 
-#Construct the .ISO file!
+# Construct the .ISO file
+cd $ISO_CHROOT/.. &&
 mkisofs -quiet -R -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o smgl-$ISO_VERSION-$CHROOT_ARCH.iso ${ISO_CHROOT//$ISO_BUILD_ROOT\//} &&
 
 echo "ISO COMPLETED!"
