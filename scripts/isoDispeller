@@ -4,4 +4,4 @@
 # in the ISO chroot that aren't strictly needed to boot a system
 
 # TODO: verify if a force is needed or anything
-dispel gcc g++ 
+dispel --nosustain gcc

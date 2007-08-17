@@ -100,7 +100,7 @@ chroot $ISO_CHROOT /root/isoDispeller &&
 
 #done with the chroot, unmount the goodies
 umount $ISO_CHROOT/dev/pts $ISO_CHROOT/dev $ISO_CHROOT/proc &&
-rm $ISO_CHROOT/root/isoDispeller
+rm $ISO_CHROOT/root/isoDispeller &&
 
 #delete resolv.conf
 rm $ISO_CHROOT/etc/resolv.conf &&
