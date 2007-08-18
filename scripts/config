@@ -1,12 +1,11 @@
 # configuration file for iso building
 
-ISO_BUILD_ROOT=/srv/isogen2
+ISO_BUILD_ROOT=/srv/isogen32
 DOWNLOAD_SPOOL=/tmp
-CHROOT_VERSION=stable-0.11
-CHROOT_ARCH=x86_64
-CAULDRON_DIR=/home/dkowis/gitwork/cauldron
+CHROOT_ARCH=i486
+CAULDRON_DIR=/root/newcauldron
    ISO_SPELLS=$CAULDRON_DIR/scripts/isoSpells
 SYSTEM_SPELLS=$CAULDRON_DIR/scripts/systemSpells
 ISO_VERSION=uber-devel
 
-CHROOTFILE=smgl-stable-0.11-basesystem-x86_64.tar.bz2
+CHROOTFILE=smgl-stable-0.12-basesystem-x86.tar.bz2
