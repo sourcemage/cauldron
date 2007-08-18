@@ -1,9 +1,5 @@
 #!/bin/bash
 
-echo "I SHOULD BE IN A CHROOT!!!"
-pwd
-echo "if not abort me"
-read
 # this is the first stage of building an ISO.
 # it'll be run as a chroot. and build things that both the ISO and the 
 # target system need.
