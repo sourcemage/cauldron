@@ -103,6 +103,9 @@ cp $CAULDRON_DIR/scripts/isoStage2 $ISO_CHROOT/root/isoStage2 &&
 
 # also get the mkinitrd stuff in there
 cp $CAULDRON_DIR/scripts/mkinitrd $ISO_CHROOT/root/mkinitrd &&
+cp -a $CAULDRON_DIR/data $ISO_CHROOT/root/. &&
+cp -a $CAULDRON_DIR/iso $ISO_CHROOT/root/.  &&
+cp -a $CAULDRON_DIR/initrd $ISO_CHROOT/root/. &&
 
 # run the stage2 script
 do_chroot $ISO_CHROOT /root/isoStage2
