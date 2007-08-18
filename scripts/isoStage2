@@ -14,7 +14,7 @@ cd /root
 cp /root/initrd* /boot/.
 
 #cat /boot/initrd.size into the /isolinux/isolinux.cfg file
-sed -i -e "s/@INITRD_SIZE@/$(cat /boot/initrd.size)" /isolinux/isolinux.cfg
+sed -i -e "s/@INITRD_SIZE@/$(cat /boot/initrd.size)/" /isolinux/isolinux.cfg
 
 # set up the boot directory so that isolinux can boot it
 cd /boot
