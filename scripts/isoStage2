@@ -1,0 +1,35 @@
+#!/bin/bash
+
+
+# !!!!! REMEMBER /VAR/SPOOL/SORCERY IS BIND MOUNTED !!!!!
+echo "I Should be in a chroot!!!!!"
+pwd
+echo "if not abort me!"
+read
+
+# second stage of the ISO. 
+# generate the initrd
+cd /root
+./mkinitrd
+cp /root/initrd* /boot/.
+
+#cat /boot/initrd.size into the /isolinux/isolinux.cfg file
+sed -i -e "s/@INITRD_SIZE@/$(cat /boot/initrd.size)" /isolinux/isolinux.cfg
+
+# set up the boot directory so that isolinux can boot it
+cd /boot
+rm vmlinuz config boot System.map
+mv System.map* System.map
+mv config-* config
+mv vmlinuz-* linux
+
+# dispel a bunch of stuff we don't need
+dispel --nosustain gcc autoconf automake bison flex installwatch make sorcery-pubkeys bin86 elvis
+
+#clean out extra files of uselessness
+rm -rf /var/cache/sorcery/*
+rm -rf /usr/src/*
+
+# remove my downloading information
+rm /etc/resolv.conf
+

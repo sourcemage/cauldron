@@ -1,0 +1,25 @@
+#!/bin/bash
+
+echo "I SHOULD BE IN A CHROOT!!!"
+pwd
+echo "if not abort me"
+read
+# this is the first stage of building an ISO.
+# it'll be run as a chroot. and build things that both the ISO and the 
+# target system need.
+
+#First cast the spells that are needed to to stuff, but not in 
+# base system.
+# The builder script should've put the spells in /tmp/spells
+cast $(cat /tmp/spells)
+
+echo "Okay, now I'm going to cast -r linux for you"
+echo "This is the kernel for the ISO!" 
+echo "There's a kernel config in /root/"
+ls -l /root/*.config
+echo "you can load that, or configure your own..."
+echo "Press enter to continue"
+echo $'\a'
+read
+cast -r linux
+

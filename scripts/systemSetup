@@ -1,0 +1,14 @@
+#!/bin/bash
+
+# a script to run in the system chroot to set it up for install
+
+# we'll do everything to prep the system here, within the chroot
+
+# !!!!REMEMBER THAT /VAR/SPOOL/SORCERY IS BIND MOUNTED!!!!
+
+rm /usr/src/* -rf
+rm /etc/resolv.conf
+
+
+# if there were any other spells to cast within the system, here's 
+# where to do it
