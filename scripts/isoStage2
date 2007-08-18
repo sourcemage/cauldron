@@ -24,7 +24,7 @@ mv config-* config
 mv vmlinuz-* linux
 
 # dispel a bunch of stuff we don't need
-dispel --nosustain gcc autoconf automake bison flex installwatch make sorcery-pubkeys bin86 elvis
+dispel --nosustain gcc autoconf automake bison flex installwatch make sorcery-pubkeys bin86 elvis perl
 
 #clean out extra files of uselessness
 rm -rf /var/cache/sorcery/*
@@ -33,3 +33,9 @@ rm -rf /usr/src/*
 # remove my downloading information
 rm /etc/resolv.conf
 
+# destroy useless things on the ISO
+rm -rf /var/state/sorcery/*
+rm -rf /var/lib/sorcery/codex
+
+# remove static libs
+find /lib -name '*.a' -delete
