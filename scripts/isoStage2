@@ -2,12 +2,12 @@
 
 
 # !!!!! REMEMBER /VAR/SPOOL/SORCERY IS BIND MOUNTED !!!!!
-echo "I Should be in a chroot!!!!!"
-pwd
-echo "if not abort me!"
-read
 
 # second stage of the ISO. 
+
+#add a few more spells 
+cast man
+
 # generate the initrd
 cd /root
 ./mkinitrd
@@ -25,6 +25,7 @@ mv vmlinuz-* linux
 
 # dispel a bunch of stuff we don't need
 dispel --nosustain gcc autoconf automake bison flex installwatch make sorcery-pubkeys bin86 elvis perl
+dispel --nosustain g++ 
 
 #clean out extra files of uselessness
 rm -rf /var/cache/sorcery/*
