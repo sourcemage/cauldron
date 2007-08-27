@@ -262,7 +262,7 @@ main()  {
     if [ -f $ID ] ;then
       /bin/mount -t $VFSTYPE -o $OPTIONS $ROOT $MOUNT/mnt/cdrom
       cd $MOUNT/mnt/cdrom
-      for i in etc root var/log var/lib/nfs ;do
+      for i in tmp etc root var/log var/lib/nfs ;do
         echo "Setting up writable /$i for install"
         /bin/mount -t tmpfs tmpfs $MOUNT/$i
         $MOUNT/bin/cp -a --parents $i $MOUNT
