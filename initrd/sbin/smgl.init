@@ -5,66 +5,6 @@ shell() {
   /bin/bash
 }
 
-show_modules()  {
-  for ITEM in "$1"/* ;do
-    echo ${ITEM%%*/}
-    if [[ -d "${ITEM}" ]] ;then
-      echo "Directory"
-    else
-      echo "Module"
-    fi
-  done
-}
-
-input_module_parameters()  {
-  "${DIALOG[@]}" --nocancel --inputbox \
-    "You can optionally enter module parameters" 0 60
-}
-
-# returns when the user is done loading modules
-
-load_module()  {
-
-  if [ -n "$1" ]; then
-    while true ;do
-      MODULE=$("${DIALOG[@]}"                                      \
-                  --title "Module Menu" --cancel-label "back"      \
-                  --menu "Please select a module to load:" 15 60 0 \
-                  $(show_modules  "$1"))
-
-      # if the user hit the <Cancel> button, we return.
-      [ -n "${MODULE}" ] ||
-        return -1;
-
-      if [ -d "$1/${MODULE}" ] ;then
-        #the user selected a directory, we display a new menu
-        load_module "$1/${MODULE}"
-      elif [ -f "$1/${MODULE}" ]; then
-        # he selected a file, load that menu
-        # remove .o (2.4 kernels) or .ko (2.6 kernels) extension.
-        MODULE=${MODULE%.o}     &&
-        MODULE=${MODULE%.ko}    &&
-        PARAMETERS=$(input_module_parameters) &&
-        echo "Running modprobe ${MODULE} ${PARAMETERS}"      &&
-        if modprobe "${MODULE}" $PARAMETERS ;then
-          read -p "Success. Press enter..."
-        else
-          read -p "Failure. Press enter..."
-        fi
-      fi
-    done
-
-  else
-    MODULE_DIR="/lib/modules/${KERNEL}/kernel"
-
-    if [ ! -d "${MODULE_DIR}" ]; then
-      "${DIALOG[@]}" --msgbox "Unable to find any modules" 6 60
-      return -1;
-    fi
-    load_module "${MODULE_DIR}"
-  fi
-}
-
 test_cdrom() {
   local found=false
   mount -n -r -t iso9660 $1 $MOUNT 2>/dev/null
@@ -80,8 +20,14 @@ test_cdrom() {
 
 scan_cdroms()  {
 
-  unset SMGL_CD
+  SMGL_CD='unknown'
 
+  if [[ -e /cdrom.hint ]] ;then
+    SMGL_CD=$(<cdrom.hint)
+    return
+  fi
+
+  echo "Trying to find the SMGL CD automatically..."
   for handler in /proc/*/*/media ;do
     if grep -q 'cdrom' $handler ;then
       handler=${handler%/media}
@@ -113,145 +59,49 @@ scan_cdroms()  {
   done </proc/partitions
 }
 
-
-toggle_hotplug() {
-  [[ "$HOTPLUG_ACTION" == "enable" ]] &&
-    HOTPLUG_ACTION="disable" ||
-    HOTPLUG_ACTION="enable"
-}
-
-show_filesystems()  {
-
-  for FILESYSTEM in `grep -v nodev /proc/filesystems`;
-  do
-
-    echo  "${FILESYSTEM}"
-    echo  filesystem
-
-  done
-
-}
-
-
-select_root()  {
-
-  FILESYSTEMS=`show_filesystems`                    &&
-
-  NEW_ROOT=`"${DIALOG[@]}"  --inputbox              \
-                    "Please enter the root device." \
-                    8 60                            \
-                    "${ROOT}"`                      &&
-
-  NEW_VFSTYPE=`"${DIALOG[@]}"  --menu               \
-                    "Please select a file system."  \
-                    7 60 0                          \
-                    $FILESYSTEMS`                   &&
-
-  NEW_OPTIONS=`"${DIALOG[@]}" --inputbox            \
-                    "Please enter mounting options" \
-                    8 60                            \
-                    "${OPTIONS}"`                   &&
-
-  ROOT="${NEW_ROOT}" &&
-  VFSTYPE="${NEW_VFSTYPE}" &&
-  OPTIONS="${NEW_OPTIONS}"
-
-}
-
-main_menu()  {
-
-    HOTPLUG_ACTION="disable"
-    # NOTE: this is the opposite of the status of the toggle
-
-    while true;
-      do
-
-      M_HELP="Select modules to load"
-      S_HELP="Shell out for a moment"
-      H_HELP="toggle if the ISO runs hotplug"
-      R_HELP="Choose the device to be mounted as /"
-      D_HELP="Continue the normal boot process"
-
-      scan_cdroms
-
-      if  [  -z  "$SMGL_CD"  ]   &&
-          [  -z  "$ROOT"    ];  then
-
-          HELP="Load the correct low level SCSI driver kernel module
-                to be able to detect and read the SCSI CDROM."
-
-          DEFAULT_ITEM="M"
-
-      elif  [  -z  "$ROOT"  ];  then
-
-          HELP="The Source Mage GNU/Linux Install/Rescue CDROM is
-                detected on $SMGL_CD"
-
-          DEFAULT_ITEM="D"
-
-      else
-
-          HELP="You have selected to mount $ROOT as the root file
-                system."
-
-          DEFAULT_ITEM="D"
-
-      fi
-
-      COMMAND=`"${DIALOG[@]}"  --title  "Initrd Menu"         \
-                        --nocancel                            \
-                        --item-help                           \
-                        --default-item  "$DEFAULT_ITEM"       \
-                        --menu                                \
-                        "$HELP"                               \
-                        8 60 0                                \
-                        "M"  "Load modules "       "$M_HELP"  \
-                        "S"  "Shell "              "$S_HELP"  \
-                        "H"  "$HOTPLUG_ACTION hotplug" "$H_HELP" \
-                        "R"  "Choose root device (For rescue mode)" "$R_HELP" \
-                        "D"  "Continue booting "   "$D_HELP"`
-
-      case  $COMMAND  in
-          M)  load_module  ;;
-          S)  shell        ;;
-          H)  toggle_hotplug ;;
-          R)  select_root  ;;
-          D)  return       ;;
-      esac
-
-    done
-}
-
-
 main()  {
+
+  # Process init options directed at us
+  while [[ $# -gt 0 ]] ;do
+    if [[ $1 == 'shellout' ]] ;then
+      echo "requested a shellout!"
+    else
+      INITOPTS[i++]=$1
+    fi
+    shift
+  done
 
   while true ;do
 
-    main_menu
-    if  [ -z $ROOT ] && [ -z $SMGL_CD ] ;then
-      # height is 6 lines :
-      # 1 line for drawing a top line
-      # 1 line for a blank line
-      # 1 line of text
-      # 1 line for drawing a line
-      # 1 line for <OK> button
-      # 1 line for drawing a bottom line
-      "${DIALOG[@]}" --msgbox "Unable to boot without a root." 6 60
+    scan_cdroms
+
+    if [[ $SMGL_CD == "unknown" ]] ;then
+      echo "Unable to find the SMGL CD in anything remotely looking like a"
+      echo "CD drive that I can see right now. Please load appropriate"
+      echo "modules, or explicitly specify a device to boot from by entering e.g."
+      echo "  boot-from /dev/hdc"
+      echo "Press Ctrl-D or type 'exit' when done."
+      /bin/bash
       continue
     fi
 
-       ROOT=${ROOT:-$SMGL_CD}
-    VFSTYPE=${VFSTYPE:-iso9660}
-    OPTIONS=${OPTIONS:-"defaults,ro"}
+    echo "Attempting to boot from $SMGL_CD..."
+
+       ROOT=$SMGL_CD
+    VFSTYPE=iso9660
+    OPTIONS="defaults,ro"
 
     mount -n -t $VFSTYPE  -o $OPTIONS  $ROOT  $MOUNT ||
     {
-      "${DIALOG[@]}" --msgbox "Unable to mount $ROOT as $VFSTYPE." 6 60
-      continue
+      echo "Unable to mount $ROOT as $VFSTYPE, retrying with type auto."
+      mount -n -t auto $ROOT $MOUNT || {
+        echo "ERROR: Unable to mount $ROOT even with type auto."
+        continue
+      }
     }
 
     if [ ! -x $MOUNT/sbin/init ]; then
-      "${DIALOG[@]}" --msgbox "Unable to locate /sbin/init on $ROOT." 6 60
+      echo "ERROR: Unable to locate /sbin/init on $ROOT."
       umount -n $MOUNT
       continue
     fi
@@ -274,11 +124,6 @@ main()  {
       echo "$ROOT" >$MOUNT/etc/cddev
     fi
 
-    if [[ "$HOTPLUG_ACTION" == "enable" ]] ;then
-      # Menu entry was "enable", so it was set to disabled
-      $MOUNT/bin/chmod a-x $MOUNT/etc/init.d/runlevels/%S/hotplug
-    fi
-
     cd $MOUNT
 
     if  [  -d  initrd  ];  then
@@ -287,7 +132,7 @@ main()  {
        pivot_root  .  mnt
     fi
 
-    echo "Running /sbin/init $@"
+    echo "Running /sbin/init ${INITOPTS[*]}"
 
 # if the new root filesystem uses devfs, /dev/console should not exist
     if [ ! -e dev/console ]; then
@@ -296,7 +141,7 @@ main()  {
 
     mount -n -t proc proc proc
 
-    exec chroot . /sbin/init "$@" <dev/console >dev/console 2>&1
+    exec chroot . /sbin/init "${INITOPTS[*]}" <dev/console >dev/console 2>&1
 
   done
 
@@ -305,9 +150,6 @@ main()  {
 # here is the real start of this shell script
 
 export PATH=/bin:/usr/bin:/sbin:/usr/sbin
-
-DIALOG=( "dialog" "--trim" "--stdout" \
-         "--backtitle" "Source Mage GNU/Linux initrd" )
 
 mount -n -t proc  proc  /proc
 

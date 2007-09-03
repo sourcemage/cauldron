@@ -1,15 +1,15 @@
 Welcome to the SMGL <insert version here> install CD!
 
-The install process is currently a guided shell prompt. Type 'next' to start.
-Everytime you finish a step, enter 'next' to advance to the next one.
-If you want to re-read the documentation for a step, type 'todo'.
-You can enter 'back' at any time to jump to the previous step.
+The install process is currently a guided shell prompt. Type [1mnext[m to start.
+Everytime you finish a step, enter [1mnext[m to advance to the next one.
+If you want to re-read the documentation for a step, type [1mtodo[m.
+You can enter [1mback[m at any time to jump to the previous step.
 
 Don't worry, there's no magic attached to the steps, you can jump between
 them as you please without breaking anything.
 
-If you ever get lost, type 'list-steps' to get a list of installer steps,
-and e.g. 'jump copy-base' to jump to a specific step.
+If you ever get lost, type [1mlist-steps[m to get a list of installer steps,
+and e.g. [1mjump copy-base[m to jump to a specific step.
 
 The Source Mage GNU/Linux cauldron team hopes that this new form of installer
 will help you setting up your systems efficiently, or learning a lot.
@@ -18,4 +18,4 @@ If you have any feedback you'd like us to hear, please drop by
 #sourcemage-cauldron on irc.freenode.net, file a bug on bugs.sourcemage.org,
 or just send an email to the mailing lists or to iso@sourcemage.org.
 
-Enter 'next' to begin the installation. Have fun!
+Enter [1mnext[m to begin the installation. Have fun!

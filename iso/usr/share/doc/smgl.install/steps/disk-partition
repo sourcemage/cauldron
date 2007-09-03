@@ -1,1 +1,21 @@
-describe partitioning here
+First, we'll need to create some partitions on your disk that we can install
+SMGL to. You'll need to know the device of your hard disk to do this
+(TODO: describe how to find that out).
+
+This image ships with several popular programs for partitioning:
+
+cfdisk is probably the most popular, a curses-based menu system:
+[1mcfdisk /dev/hda[m
+
+parted is also menu-based, can resize partitions, but may be a tad confusing:
+[1mparted /dev/hda[m
+
+Then for the purists there's plain line-based fdisk. Can be a bit hard to use:
+[1mfdisk /dev/hda[m
+
+The iso also ships with [1msfdisk[m, if you're insane enough to want to use
+it.
+
+Remember to save your new partitioning scheme before quitting the program,
+create a swap partition, and remember you can always see this screen again
+by typing [1mtodo[m. Type [1mnext[m when you're done.

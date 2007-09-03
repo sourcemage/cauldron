@@ -24,7 +24,7 @@ function next() {
   # get old status
   CURSTEP=$(cat $INSTALLER_STATUS)
   # find next status
-  CURSTEP=$(grep "^$CURSTEP:" $INSTALLER_DATA/order | cut -d: -f2)
+  CURSTEP=$(grep "^$CURSTEP:" $INSTALLER_DATA/order | head -n 1 | cut -d: -f2)
   # if we couldn't find a next status, jump to 'error'
   CURSTEP=${CURSTEP:-error}
   # save new status
