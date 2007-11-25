@@ -108,22 +108,6 @@ main()  {
 
     umount -n /proc
 
-    # setup writable /etc /root and nfs stat dir if ISO is ROOT
-    if [ -f $ID ] ;then
-      /bin/mount -t $VFSTYPE -o $OPTIONS $ROOT $MOUNT/mnt/cdrom
-      cd $MOUNT/mnt/cdrom
-      for i in tmp etc root var/log var/lib/nfs ;do
-        echo "Setting up writable /$i for install"
-        /bin/mount -t tmpfs tmpfs $MOUNT/$i
-        $MOUNT/bin/cp -a --parents $i $MOUNT
-      done
-      cd $MOUNT
-      /bin/umount $MOUNT/mnt/cdrom
-
-      # Installer needs this to do its "eject CD" magic
-      echo "$ROOT" >$MOUNT/etc/cddev
-    fi
-
     cd $MOUNT
 
     if  [  -d  initrd  ];  then
@@ -141,7 +125,7 @@ main()  {
 
     mount -n -t proc proc proc
 
-    exec chroot . /sbin/init "${INITOPTS[*]}" <dev/console >dev/console 2>&1
+    exec chroot . /sbin/init "${INITOPTS[@]}" <dev/console >dev/console 2>&1
 
   done
 
