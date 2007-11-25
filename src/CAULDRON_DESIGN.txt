@@ -1,0 +1,88 @@
+Autobuild notes:
+
+in order to get rid of basesystem dependence, we need a way to automatically set up a basic toolchain. The basic toolchain can then be used to build everything else that will go both on the iso and into the installed system.
+
+The basic toolchain can/should be gotten from the running host system. This can be accomplished by using binary caches from /var/cache/sorcery. If the cache file for a given toolchain spell does not exist, it should NOT be taken from a repository somewhere! Nor should the iso builder have to re-cast one of the tool-chain components in order to generate the cache file for use. Rather, it should be taken from the already existing installed files on the system. This will require sorcery to generate binary tarballs of installed spells. If it doesn't do this already, a solution can be had by grabbing files from the installwatch logs (/var/state/sorcery?) and rolling those into a tarball.
+
+Once the basic tool-chain tarball is generated/found/copied, it can be unpacked inside of the iso build dir. This, along with a copy of sorcery, should provide everything needed to generate the iso (aside from the spell packages themselves which should be gotten over the net or copied in manually from pre-downloaded files. For grabbing over the net, resolv.conf will be needed inside the iso build chroot).
+
+The settings for sorcery should be set for the target system (target cpu, etc.). For optimizations, strip should be used. The question of whether -Os should be used or not depends on how stable the resulting builds will be for the minimal architecture to be supported by the iso being built (e.g. i486, x86_64). If -Os will cause problems for some machines to boot the iso which the iso was intended to boot on, then it obviously should not be used. If -Os can be used without causing any problems for the booting of the iso on the target systems, -Os should be used in addition to --strip in order to reduce the size of the iso.
+
+Afterwards, a basic system can be built inside the iso build chroot using sorcery and the configured tool-chain. This basic system should be absolutely minimal, as it will be what is installed onto the target system. After the base system is generated/built, the chroot should be exited, and a copy should be made into a bzipped tarball. Don't forget to clean out unnecessary files from the COPY, _not_ the original, before making the bzipped tarball. [system.tar.bz2] (unnecessary files will include the host cross-compile tool-chain used to build the base system, as well as [possibly] sorcery files in /var, anything in /usr/src, etc.)
+
+Chroot back into the main iso build dir (i.e. not the system install copy). Build the iso system by casting additional spells on top of the base system generated in the previous step. This includes a kernel (config for the kernel SHOULD be something downloaded from a repository), filesystem tools (reiserfstools, xfstools, e2fstools, etc.), and anything else required not only to boot the target system but manipulate and install onto it. This means that all features desired in the installer must be present or provided for through the spells cast in this step or the previous step (though very little should come from the previous step, as the previous step should really only provide an absolute minimal tool-chain generated for the target system).
+
+Configure the boot/init process for the iso. This includes modifying isolinux/isolinux.cfg, as well as various scripts/configs in etc. Pay particular attention to the init system (including what will happen "before init"). (Is isolinux necessary? Can other bootloaders, such as lilo or grub, be used instead? Should they?)
+
+Exit the iso build chroot. Make a new copy of the iso build dir. This new copy will become the iso itself. Remove any unnecessary files/packages/etc. from the iso. Copy in the bzipped tarball of the system install (system.tar.bz2). Generate a bootable iso using mkisofs. Compress the iso using bzip2. [smgl-devel.iso.bz2]
+
+---------------------------------
+-- Functions for iso autobuild --
+---------------------------------
+
+In order to truly have an autobuild system, cauldron needs to be more than an idea or a name. It must be a tool. If cauldron is to be an effective tool that is also maintainable, in addition to integrating with the rest of the SMGL toolset, it must have a clean and separable API that will not collide with other SMGL API's or namesets.
+
+API definitions:
+
+All cauldron API functions are to be prefixed with cauldron_
+All cauldron API variables are to be prefixed with CAULDRON_
+
+cauldron_enter_chroot(): handles the entering of chroot environments. Essentially this will just call mount --bind for various directories (/{dev,dev/pts,proc} $CAULDRON_BUILD/{dev,dev/pts,proc}) <followed by the chroot command?>. Will also set $CAULDRON_BUILD="/" after entering the chroot?
+
+cauldron_exit_chroot(): called upon exit from chroot, and will unmount those directories mounted with mount --bind by a call to cauldron_enter_chroot(). For every cauldron_enter_chroot() call, there must be a matching cauldron_exit_chroot() call.
+
+cauldron_create_base_toolchain(): optionally generates and then unpacks a basic tool-chain into the dir designated for the iso build chroot. Generation of the tool-chain will be necessary if the relevant cache tarballs cannot be found in the user's sorcery cache dir (/var/cache/sorcery/). Tools to generate/unpack will be taken from a file, one tool per line. Necessary tools include things like gcc, make, glibc, sorcery, and their dependencies.
+
+cauldron_create_target_toolchain(): this uses the base tool-chain provided by cauldron_create_base_toolchain() to generate a new tool-chain geared for the target system. In essence, this step uses the host tool-chain to cross-compile a tool-chain for the target system. This can be accomplished by setting appropriate options for sorcery and doing a sorcery rebuild inside the chroot.
+
+cauldron_build_iso_system(): uses the tool-chain supplied by cauldron_create_toolchain() to pull in and cast all the spells needed for the iso. This will include spells such as lvm, reiserfstools, reiser4tools, linux, etc.
+
+cauldron_iso_init(): handles configuration and installation of the init system for the bootable iso. This includes configuring isolinux/isolinux.cfg, etc/inittab and friends, etc., as well as setting up the initrd/initramfs
+
+cauldron_add_installer(): responsible for adding in and setting up the installer system. Eventually, there will be functionality to add multiple installer systems onto a single iso (cli-based, dialog-based, perhaps someday in the distant future an X-based?)
+
+cauldron_clean_iso_system(): removes any spells unnecessary for actually booting and running the iso. This includes spells related to compiling (gcc and friends). The list of spells to remove will be pulled from a file, one spell per line.
+
+cauldron_mkisofs(): creates the iso filesystem using the chroot build dir. 
+
+cauldron_build_iso(): wrapper function which calls various above functions to build the iso system. Mostly a convenience function, but also does some minor things on its own (like copying resolv.conf)
+
+cauldron_build_iso() {
+	# set up basic tool-chain in order to cross-compile for target later
+	cauldron_create_toolchain();
+	
+	# copy the host's resolv.conf in order to dl packages from net
+	cp /etc/resolv.conf ${CAULDRON_BUILD}/
+	
+	# begin chroot
+	cauldron_enter_chroot(${CAULDRON_BUILD});
+	
+	# build the cross-compile tool-chain targeted for the target sys
+	cauldron_create_target_toolchain();
+	
+	# use the cross-compile tool-chain to cast all spells needed for the iso system
+	cauldron_build_iso_system();
+	
+	# configure the iso init system, initrd/initramfs, etc.
+	cauldron_iso_init();
+	
+	# build/create/copy/whatever installer system/data into the iso
+	cauldron_add_installer();
+	
+	# remove unnecessary files from iso and free up space
+	cauldron_clean_iso_system();
+	
+	# finished with iso building, exit chroot
+	cauldron_exit_chroot();
+	
+	# create the iso fs from the build dir
+	cauldron_mkisofs(${CAULDRON_BUILD});
+}
+
+cauldron_install_copy_linux() {
+	cp ${ISO}/boot/linux ${TARGET_SYSTEM};
+	cp --parents -r ${ISO}/lib/modules/${LINUX_VER}/* ${TARGET_SYSTEM};
+	cauldron_enter_chroot(${TARGET_SYSTEM});
+	depmod -a ${LINUX_VER};
+}
+
