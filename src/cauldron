@@ -1,0 +1,209 @@
+#!/bin/bash
+#---------------------------------------------------------------------
+##
+##=head1 SYNOPSIS
+##
+##  Cauldron is an iso generation and installer management utility
+##
+##=head1 DESCRIPTION
+##
+##  Cauldron is a utility meant to mirror sorcery's capabilities for
+##  spell management, but for ISO creation and installation method
+##  management. If called without arguments, it operates in an
+##  interactive menu-based TUI (like sorcery would). If called with
+##  arguments, it runs as a CLI-based command, which is also
+##  suitable for batch processing.
+##
+##=head1 COPYRIGHT
+##
+##  Copyright 2007 The Cauldron Team
+##
+##=head1 FUNCTIONS
+##
+##=over 4
+##
+#---------------------------------------------------------------------
+
+help() {
+
+  cat << EOF
+
+Cauldron is the menu system used for setting options for iso building,
+and for managing installers.
+
+EOF
+
+  exit 1
+}
+
+cauldron_enter_chroot() {
+	mount --bind ${HOST}/dev ${CAULDRON_BUILD}/dev
+	mount --bind ${HOST}/dev/pts ${CAULDRON_BUILD}/dev/pts
+	mount --bind ${HOST}/proc ${CAULDRON_BUILD}/proc
+}
+
+cauldron_exit_chroot() {
+	umount ${CAULDRON_BUILD}/dev
+	umount ${CAULDRON_BUILD}/dev/pts
+	umount ${CAULDRON_BUILD}/proc
+}
+
+cauldron_create_base_toolchain() {
+	for spell in ${HOST_TOOLCHAIN}
+	do
+		if [[ -f ${HOST_SORCERY_SPOOL}/${spell}-*-${HOST_ARCH}-${HOST_SYSTEM}-linux-gnu.tar.bz2 ]]
+		then
+			cp ${HOST_SORCERY_SPOOL}/${spell}-*-${HOST_ARCH}-${HOST_SYSTEM}-linux-gnu.tar.bz2
+		else
+			cauldron_build_cache_file ${spell}
+		fi
+	done
+	tar xjf ${spell}-*-${HOST_ARCH}.tar.bz2 -C ${CAULDRON_BUILD}/
+}
+
+cauldron_create_target_toolchain() {
+	cauldron_configure_toolchain
+	chroot sorcery rebuild
+}
+
+cauldron_build_iso_system() {
+}
+
+cauldron_iso_init() {
+}
+
+cauldron_add_installer() {
+}
+
+cauldron_clean_iso_system() {
+}
+
+cauldron_mkisofs() {
+	mkisofs -R -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -o ${SMGL_ISO} ${CAULDRON_BUILD}
+}
+
+cauldron_build_iso() {
+	# set up basic tool-chain in order to cross-compile for target later
+	cauldron_create_toolchain
+	
+	# copy the host's resolv.conf in order to dl packages from net
+	cp /etc/resolv.conf ${CAULDRON_BUILD}/
+	
+	# set up chroot for building inside $CAULDRON_BUILD
+	cauldron_enter_chroot
+	
+	# build the cross-compile tool-chain targeted for the target sys
+	cauldron_create_target_toolchain
+	
+	# use the cross-compile tool-chain to cast all spells needed for
+	# the iso system
+	cauldron_build_iso_system
+	
+	# configure the iso init system, initrd/initramfs, etc.
+	cauldron_iso_init
+	
+	# build/create/copy/whatever installer system/data into the iso
+	cauldron_add_installer
+	
+	# remove unnecessary files from iso and free up space
+	cauldron_clean_iso_system
+	
+	# finished with iso building, clean up from chroot setup
+	cauldron_exit_chroot
+	
+	# create the iso fs from the build dir
+	cauldron_mkisofs
+}
+
+cauldron_menu_main() {
+	local CAULDRON_B_HELP="Build directory location"
+	local CAULDRON_OK="Select"
+	local CAULDRON_CANCEL="Exit"
+
+	while
+		CAULDRON_COMMAND=$(eval ${DIALOG} ' --title "Main Menu"		\
+			--item-help						\
+			--ok-label	"${CAULDRON_OK}"			\
+			--cancel-label	"${CAULDRON_CANCEL}"			\
+			--menu							\
+			"Cauldron Version ${CAULDRON_VERSION}"			\
+			0 0 0							\
+			"B" "Build	Menu"	"${CAULDRON_B_HELP}"'		)
+	do
+		case ${CAULDRON_COMMAND} in
+			B) cauldron_menu_build;;
+		esac
+	done
+}
+
+cauldron_menu_build() {
+	local CAULDRON_OK="Commit"
+	local CAULDRON_CANCEL="Cancel"
+
+	if CAULDRON_BUILD=$(eval ${DIALOG} ' --ok-label ${CAULDRON_OK}		\
+					--cancel-label ${CAULDRON_CANCEL}	\
+					--input-menu				\
+					"Enter the path to the dir where	\
+					Cauldron should build your ISOs."	\
+					0 0					\
+					${CAULDRON_BUILD}'			)
+	then
+		cauldron_modify_local_config "CAULDRON_BUILD" "${CAULDRON_BUILD}"
+	fi
+}
+
+cauldron_main() {
+	if [[ -z $1 ]]
+	then
+		cauldron_menu_main
+	else
+		case $1 in
+			-h|--help|help) help	;;
+			*) help			;;
+		esac
+	fi
+}
+
+. /etc/cauldron/config
+if [[ $UID == 0 ]]
+then
+	DIALOG='$DIALOG_PROG --backtitle "Cauldron ISO builder and installer management utility" --stdout'
+
+	CAULDRON_VERSION=$(cat /etc/cauldron/version)
+	cauldron_main "$@"
+	CAULDRON_STATUS=$?
+	exit ${CAULDRON_STATUS}
+else
+	if [[ $1 == -h ]] || [[ $1 == --help ]] || [[ $1 == help ]]
+	then
+		cauldron_help
+	elif [[ $1 == -v ]] || [[ $1 == --version ]] || [[ $1 == version ]]
+	then
+		echo $(cat /etc/cauldron/version)
+	else
+		echo "Please enter the root password."
+		CAULDRON_PARAMS=$@
+		su -c "$0 ${CAULDRON_PARAMS}" root
+	fi
+fi
+
+#---------------------------------------------------------------------
+##=back
+##
+##=head1 LICENSE
+##
+## This software is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2 of the License, or
+## (at your option) any later version.
+##
+## This software is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this software; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+##
+#---------------------------------------------------------------------

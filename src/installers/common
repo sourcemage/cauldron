@@ -1,0 +1,53 @@
+#!/bin/bash
+#---------------------------------------------------------------------
+##
+##=head1 SYNOPSIS
+##
+##  Common functions and variables for different installers
+##
+##=head1 DESCRIPTION
+##
+##  This file provides common function and variable definitions for
+##  the different types of installers that can be included on an ISO.
+##  This file is meant to be sourced by the different installers,
+##  so this file should not be run directly. This file, as well as
+##  the installer which sources this file, is meant to be called from
+##  inside the ISO during the actual install onto the target system.
+##
+##=head1 COPYRIGHT
+##
+##  Copyright 2007 The Cauldron Team
+##
+##=head1 FUNCTIONS
+##
+##=over 4
+##
+#---------------------------------------------------------------------
+
+cauldron_install_copy_kernel() {
+	cp ${ISO}/boot/linux ${TARGET_SYSTEM};
+	cp --parents -r ${ISO}/lib/modules/${LINUX_VER}/* ${TARGET_SYSTEM};
+	cauldron_enter_chroot(${TARGET_SYSTEM});
+	depmod -a ${LINUX_VER};
+}
+
+#---------------------------------------------------------------------
+##=back
+##
+##=head1 LICENSE
+##
+## This software is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2 of the License, or
+## (at your option) any later version.
+##
+## This software is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this software; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+##
+#---------------------------------------------------------------------
