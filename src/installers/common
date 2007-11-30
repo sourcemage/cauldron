@@ -27,8 +27,7 @@
 cauldron_install_copy_kernel() {
 	cp ${ISO}/boot/linux ${TARGET_SYSTEM};
 	cp --parents -r ${ISO}/lib/modules/${LINUX_VER}/* ${TARGET_SYSTEM};
-	cauldron_enter_chroot(${TARGET_SYSTEM});
-	depmod -a ${LINUX_VER};
+	depmod -a -b ${ISO}/lib/modules/${LINUX_VER} ${LINUX_VER};
 }
 
 #---------------------------------------------------------------------
