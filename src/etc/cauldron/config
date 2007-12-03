@@ -1,0 +1,8 @@
+         HOST_PACKAGES=/var/state/sorcery/packages
+    HOST_SORCERY_SPOOL=/var/spool/sorcery
+        HOST_ARCH_PATH=/var/lib/sorcery/archspecs
+
+        CAULDRON_BUILD=
+              SMGL_ISO=
+        HOST_TOOLCHAIN=
+                  HOST=
