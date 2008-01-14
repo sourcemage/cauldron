@@ -66,10 +66,13 @@ function cauldron_create_base_toolchain() {
   local VERSION
   local SPELL_CACHE
   local HOST_TRIPLE
+  local CACHE_EXTENSION
   
   # set the value for HOST_TRIPLE
   cauldron_get_host_triple
   HOST_TRIPLE="$?"
+  CACHE_EXTENSION=$(grep "EXTENSION=" $HOST_SORCERY_CONFIG | \
+    cut -d = -f 2)
   
   # grab the list of spells needed as the base tool-chain which will be
   # used to create the cross-compile tool-chain
@@ -80,7 +83,7 @@ function cauldron_create_base_toolchain() {
     VERSION=$(grep "^${SPELL}" ${HOST_PACKAGES} | cut -d : -f 4)
     
     # set SPELL_CACHE as shorthand for SPELL-VERSION-HOST_TRIPLE.tar.bz2
-    SPELL_CACHE="${SPELL}-${VERSION}-${HOST_TRIPLE}.tar.bz2"
+    SPELL_CACHE="${SPELL}-${VERSION}-${HOST_TRIPLE}.tar${CACHE_EXTENSION}"
     
     # check to see if there is already a cache file from sorcery
     # this check could be based on spell-{names,versions} reported by
