@@ -1,0 +1,25 @@
+[1mdisk-format step[m
+Now, we need to create filesystems on the partitions you just created.
+Preferences for filesystems differ, and we're not here to tell you which you
+should use (should we?), so here's just a list of commands to create the
+different filesystems I know about:
+
+mke2fs /dev/hda1
+# This one is the same as mke2fs -j /dev/hda1
+mkfs.ext3 /dev/hda1
+# big TODO: seems we don't actually ship this yet 8)
+# We do now :-D
+mkreiserfs /dev/hda1
+# same for xfs and jfs
+mkfs.jfs /dev/hda1
+mkfs.xfs /dev/hda1
+
+We do provide support for reiser4 on the ISO. However, the ISO kernel does
+not yet support reiser4, so although you can create reiser4 filesystems and
+check ones already created, you cannot yet mount them. Only make a reiser4
+filesystem if you really know what you are doing.
+
+mkfs.reiser4
+
+# swap:
+mkswap /dev/hda2
