@@ -27,7 +27,7 @@
 function cauldron_install_copy_kernel() {
 	cp ${ISO}/boot/linux ${TARGET_SYSTEM};
 	cp --parents -r ${ISO}/lib/modules/${LINUX_VER}/* ${TARGET_SYSTEM};
-	depmod -a -b ${ISO}/lib/modules/${LINUX_VER} ${LINUX_VER};
+	depmod -a -b ${TARGET_SYSTEM}/lib/modules/${LINUX_VER} ${LINUX_VER};
 }
 
 #---------------------------------------------------------------------
@@ -50,3 +50,5 @@ function cauldron_install_copy_kernel() {
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 ##
 #---------------------------------------------------------------------
+
+# vim:ai:tw=80:tabstop=2:softtabstop=2:shiftwidth=2:expandtab
