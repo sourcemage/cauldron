@@ -1,9 +1,12 @@
 init:disk-partition
-disk-partition:disk-mount
+disk-partition:disk-format
+disk-format:disk-mount
 disk-mount:copy-base
 copy-base:edit-confs
-edit-confs:install-opt-spells
-install-opt-spells:reboot
+edit-confs:boot-loader
+boot-loader:install-opt-spells
+install-opt-spells:user-setup
+user-setup:reboot
 reboot:reboot
 init:init
 error:init
