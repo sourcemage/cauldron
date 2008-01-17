@@ -1,7 +1,16 @@
+        SORCERY_CONFIG=/etc/sorcery/config
+   HOST_SORCERY_CONFIG=/etc/sorcery/local/config
          HOST_PACKAGES=/var/state/sorcery/packages
     HOST_SORCERY_SPOOL=/var/spool/sorcery
-        HOST_ARCH_PATH=/var/lib/sorcery/archspecs
+        HOST_ARCH_PATH=$(grep "ARCH_SPEC=" ${SORCERY_CONFIG} | \
+                         cut -d = -f 2)
+             HOST_ARCH=$(grep "ARCHITECTURE=" ${HOST_SORCERY_CONFIG} | \
+                         cut -d = -f 2)
+       CACHE_EXTENSION=$(grep "EXTENSION=" ${HOST_SORCERY_CONFIG} | \
+                         cut -d = -f 2)
 
+        CAULDRON_CAST_SPELL="/usr/sbin/cast"
+        CAULDRON_REBUILD="/usr/sbin/sorcery rebuild"
         CAULDRON_BUILD=
               SMGL_ISO=
         HOST_TOOLCHAIN=
