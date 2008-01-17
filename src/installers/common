@@ -24,11 +24,34 @@
 ##
 #---------------------------------------------------------------------
 
+#---------------------------------------------------------------------
+##
+## Copies the kernel and it's associated modules from the ISO to the TARGET
+## system. Requires that / and /boot on the TARGET system are mounted.
+##
+#---------------------------------------------------------------------
 function cauldron_install_copy_kernel() {
-	cp ${ISO}/boot/linux ${TARGET_SYSTEM};
-	cp --parents -r ${ISO}/lib/modules/${LINUX_VER}/* ${TARGET_SYSTEM};
-	depmod -a -b ${TARGET_SYSTEM}/lib/modules/${LINUX_VER} ${LINUX_VER};
+  cp ${ISO}/boot/linux ${TARGET_SYSTEM}/boot/;
+  cp --parents -r ${ISO}/lib/modules/${LINUX_VER}/* ${TARGET_SYSTEM};
+  depmod -a -b ${TARGET_SYSTEM}/lib/modules/${LINUX_VER} ${LINUX_VER};
 }
+
+#---------------------------------------------------------------------
+##
+## Determines and returns the current step in the installation procedure
+##
+#---------------------------------------------------------------------
+function cauldron_install_currstep() {
+}
+
+#---------------------------------------------------------------------
+##
+## Determines and returns the next step in the installation procedure
+##
+#---------------------------------------------------------------------
+function cauldron_install_nextstep() {
+}
+
 
 #---------------------------------------------------------------------
 ##=back
