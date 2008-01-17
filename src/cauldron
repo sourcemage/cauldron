@@ -16,7 +16,7 @@
 ##
 ##=head1 COPYRIGHT
 ##
-##  Copyright 2007 The Cauldron Team
+##  Copyright 2007 by the Cauldron Team
 ##
 ##=head1 FUNCTIONS
 ##
@@ -36,137 +36,7 @@ EOF
   exit 1
 }
 
-function cauldron_enter_chroot() {
-  mount --bind ${HOST}/dev ${CAULDRON_BUILD}/dev
-  mount --bind ${HOST}/dev/pts ${CAULDRON_BUILD}/dev/pts
-  mount --bind ${HOST}/proc ${CAULDRON_BUILD}/proc
-}
-
-function cauldron_exit_chroot() {
-  umount ${CAULDRON_BUILD}/proc
-  umount ${CAULDRON_BUILD}/dev/pts
-  umount ${CAULDRON_BUILD}/dev
-}
-
-function cauldron_get_host_triple() {
-  local HOST_ARCH
-  local ARCH_SPEC
-  local HOST_TRIPLE
-
-  # get the value for the HOST triplet from sorcery archspecs
-  HOST_ARCH=$(grep "ARCHITECTURE=" ${HOST_SORCERY_CONFIG} | cut -d = -f 2)
-  ARCH_SPEC=$(find ${} -name ${HOST_ARCH})
-  HOST_TRIPLE=$(grep "HOST=" ${ARCH_SPEC} | cut -d = -f 2)
-
-  return ${HOST_TRIPLE}
-}
-
-function cauldron_create_base_toolchain() {
-  local SPELL
-  local VERSION
-  local SPELL_CACHE
-  local HOST_TRIPLE
-  local CACHE_EXTENSION
-  
-  # set the value for HOST_TRIPLE
-  cauldron_get_host_triple
-  HOST_TRIPLE="$?"
-  CACHE_EXTENSION=$(grep "EXTENSION=" $HOST_SORCERY_CONFIG | \
-    cut -d = -f 2)
-  
-  # grab the list of spells needed as the base tool-chain which will be
-  # used to create the cross-compile tool-chain
-  for SPELL in ${HOST_TOOLCHAIN}
-  do
-    # grab the version for the spell from sorcery's state info
-    # on what's installed
-    VERSION=$(grep "^${SPELL}" ${HOST_PACKAGES} | cut -d : -f 4)
-    
-    # set SPELL_CACHE as shorthand for SPELL-VERSION-HOST_TRIPLE.tar.bz2
-    SPELL_CACHE="${SPELL}-${VERSION}-${HOST_TRIPLE}.tar${CACHE_EXTENSION}"
-    
-    # check to see if there is already a cache file from sorcery
-    # this check could be based on spell-{names,versions} reported by
-    # gaze/sorcery/dispel. Mirroring code in dispel might be the best bet,
-    # since that has to find the version currently installed anyway.
-    if [[ -f ${HOST_SORCERY_SPOOL}/${SPELL_CACHE} ]]
-    then
-      # found a cache file, copy it to the BUILD dir
-      cp ${HOST_SORCERY_SPOOL}/${SPELL_CACHE} ${CAULDRON_BUILD}
-    else
-      # couldn't find a cache file, so we'll need to build one
-      cauldron_build_cache_file ${SPELL}
-    fi
-  done
-
-  # unpack the cache file, effectively installing
-  # the spell into the BUILD dir
-  # the unpacking is done against the BUILD dir as the root dir, so
-  # this should not touch the HOST filesystem at all
-  tar xjf ${CAULDRON_BUILD}/${SPELL_CACHE} -C ${CAULDRON_BUILD}/
-}
-
-function cauldron_configure_toolchain() {
-}
-
-function cauldron_create_target_toolchain() {
-  # set sorcery options, etc. for cross-compile
-  cauldron_configure_toolchain
-
-  # do a sorcery rebuild inside the BUILD dir to
-  # generate the cross-compile tool-chain
-  chroot ${CAULDRON_BUILD} "/usr/sbin/sorcery rebuild"
-}
-
-function cauldron_build_iso_system() {
-}
-
-function cauldron_iso_init() {
-}
-
-function cauldron_add_installer() {
-}
-
-function cauldron_clean_iso_system() {
-}
-
-function cauldron_mkisofs() {
-  mkisofs -R -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot \
-    -boot-load-size 4 -boot-info-table -o ${SMGL_ISO} ${CAULDRON_BUILD}
-}
-
-function cauldron_build_iso() {
-  # set up basic tool-chain in order to cross-compile for target later
-  cauldron_create_toolchain
-  
-  # TODO find a better way to copy resolv.conf, since it may be a symlink
-  # copy the host's resolv.conf in order to dl packages from net
-  cp /etc/resolv.conf ${CAULDRON_BUILD}/
-  
-  # set up chroot for building inside $CAULDRON_BUILD
-  cauldron_enter_chroot
-  
-  # build the cross-compile tool-chain targeted for the target sys
-  cauldron_create_target_toolchain
-  
-  # use the cross-compile tool-chain to cast all spells needed for
-  # the iso system
-  cauldron_build_iso_system
-  
-  # configure the iso init system, initrd/initramfs, etc.
-  cauldron_iso_init
-  
-  # build/create/copy/whatever installer system/data into the iso
-  cauldron_add_installer
-  
-  # remove unnecessary files from iso and free up space
-  cauldron_clean_iso_system
-  
-  # finished with iso building, clean up from chroot setup
-  cauldron_exit_chroot
-  
-  # create the iso fs from the build dir
-  cauldron_mkisofs
+function cauldron_modify_local_config() {
 }
 
 function cauldron_menu_main() {
@@ -224,6 +94,8 @@ function cauldron_main() {
 }
 
 . /etc/cauldron/config
+. /var/lib/cauldron/libcauldron
+
 if [[ $UID == 0 ]]
 then
   DIALOG='$DIALOG_PROG                                            \
