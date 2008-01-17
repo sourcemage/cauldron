@@ -1,0 +1,264 @@
+#!/bin/bash
+#---------------------------------------------------------------------
+##
+##=head1 SYNOPSIS
+##
+##  libcauldron is a set of functions used internally by the cauldron script
+##
+##=head1 COPYRIGHT
+##
+##  Copyright 2007 by the Cauldron Team
+##
+##=head1 FUNCTIONS
+##
+##=over 4
+##
+#---------------------------------------------------------------------
+
+#---------------------------------------------------------------------
+##
+## Prepares a chroot environment
+##
+#---------------------------------------------------------------------
+function cauldron_enter_chroot() {
+  mount --bind ${HOST}/dev ${CAULDRON_BUILD}/dev
+  mount --bind ${HOST}/dev/pts ${CAULDRON_BUILD}/dev/pts
+  mount --bind ${HOST}/proc ${CAULDRON_BUILD}/proc
+}
+
+#---------------------------------------------------------------------
+##
+## Cleans up the chroot environment after it is no longer needed
+##
+#---------------------------------------------------------------------
+function cauldron_exit_chroot() {
+  umount ${CAULDRON_BUILD}/proc
+  umount ${CAULDRON_BUILD}/dev/pts
+  umount ${CAULDRON_BUILD}/dev
+}
+
+#---------------------------------------------------------------------
+##
+## Scans the sorcery archspec files to find the host triplet
+## This will be used to set the value of HOST in /etc/cauldron/config
+##
+#---------------------------------------------------------------------
+function cauldron_get_host_triple() {
+  local HOST_ARCH
+  local ARCH_SPEC
+  local HOST_TRIPLE
+  local SPEC_FILE
+
+  # get the value for the HOST triplet from sorcery archspecs
+  for spec in ${HOST_ARCH_PATH[@]}
+  do
+    if [[ $(find --version|grep -q 'version 4\.1\(\.\|$\)') == 1 ]]
+    then
+      ARCH_SPEC=$(find ${spec} -perm 400 -type f -name ${HOST_ARCH} \
+        -print 2>/dev/null)
+    else
+      ARCH_SPEC=$(find -L ${spec} -perm 400 -type f -name ${HOST_ARCH} \
+        -print 2>/dev/null)
+    fi
+    [[ ARCH_SPEC ]] && break
+  done
+  HOST_TRIPLE=$(grep "HOST=" ${ARCH_SPEC} | cut -d = -f 2)
+
+  echo ${HOST_TRIPLE}
+}
+
+#---------------------------------------------------------------------
+##
+## Generates the base toolchain using the HOST information. This is
+## done by unpacking the cache file for each spell required for the
+## toolchain if it exists. If it does not exist, this may be because
+## caching is disabled on the host machine, or perhaps the cache file
+## was deleted by accident. Otherwise the spell must be cast within
+## a chroot environment in the CAULDRON_BUILD directory.
+##
+#---------------------------------------------------------------------
+function cauldron_create_base_toolchain() {
+  local SPELL
+  local VERSION
+  local SPELL_CACHE
+  local HOST_TRIPLE
+  local CACHE_EXTENSION
+  
+  # set the value for HOST_TRIPLE
+  HOST_TRIPLE=$(cauldron_get_host_triple)
+  
+  # grab the list of spells needed as the base tool-chain which will be
+  # used to create the cross-compile tool-chain
+  for SPELL in ${HOST_TOOLCHAIN}
+  do
+    # grab the version for the spell from sorcery's state info
+    # on what's installed
+    VERSION=$(grep "^${SPELL}" ${HOST_PACKAGES} | cut -d : -f 4)
+    
+    if [[ ${VERSION} ]]
+    then
+      # set SPELL_CACHE as shorthand for SPELL-VERSION-HOST_TRIPLE.tar.bz2
+      SPELL_CACHE="${SPELL}-${VERSION}-${HOST_TRIPLE}.tar${CACHE_EXTENSION}"
+      
+      # check to see if there is already a cache file from sorcery
+      # this check could be based on spell-{names,versions} reported by
+      # gaze/sorcery/dispel. Mirroring code in dispel might be the best bet,
+      # since that has to find the version currently installed anyway.
+      if [[ -f ${HOST_SORCERY_SPOOL}/${SPELL_CACHE} ]]
+      then
+        # found a cache file, copy it to the BUILD dir
+        cp ${HOST_SORCERY_SPOOL}/${SPELL_CACHE} ${CAULDRON_BUILD}
+      else
+        # couldn't find a cache file, so we'll need to build one
+        cauldron_build_cache_file ${SPELL}
+      fi
+      # unpack the cache file, effectively installing
+      # the spell into the BUILD dir
+      # the unpacking is done against the BUILD dir as the root dir, so
+      # this should not touch the HOST filesystem at all
+      tar xjf ${CAULDRON_BUILD}/${SPELL_CACHE} -C ${CAULDRON_BUILD}/
+    # the spell is not present on the HOST system, so it must be cast inside
+    # a chroot
+    else
+      cauldron_enter_chroot
+      chroot ${CAULDRON_BUILD} ${CAULDRON_CAST_SPELL} ${SPELL}
+      cauldron_exit_chroot
+    fi
+  done
+}
+
+#---------------------------------------------------------------------
+## @param XXX
+##
+## Configures the toolchain for building on the TARGET system. In other
+## words, this sets the options/variables necessary to build a
+## cross-compiler system to generate binaries for the target system.
+##
+#---------------------------------------------------------------------
+function cauldron_configure_toolchain() {
+}
+
+#---------------------------------------------------------------------
+## @param XXX
+##
+## This builds the cross-compiler to produce the TARGET binaries.
+##
+#---------------------------------------------------------------------
+function cauldron_create_target_toolchain() {
+  # set sorcery options, etc. for cross-compile
+  cauldron_configure_toolchain
+
+  # do a sorcery rebuild inside the BUILD dir to
+  # generate the cross-compile tool-chain
+  chroot ${CAULDRON_BUILD} ${CAULDRON_REBUILD}
+}
+
+#---------------------------------------------------------------------
+## @param XXX
+##
+## Generates the installation system that will be copied from the ISO to the
+## target system as a tarball
+##
+#---------------------------------------------------------------------
+function cauldron_build_iso_system() {
+}
+
+#---------------------------------------------------------------------
+## @param XXX
+##
+## Handles setting up the init process on the ISO. The ISO init is
+## responsible for detecting hardware, loading device drivers, setting
+## console fonts, etc.
+##
+#---------------------------------------------------------------------
+function cauldron_iso_init() {
+}
+
+#---------------------------------------------------------------------
+## @param INSTALLER_MODULE - one of shell or menu (future: X?)
+##
+## Adds the given installer to the ISO system. The user can then choose this
+## installer either at boot-time or run-time, depending on the installer
+##
+#---------------------------------------------------------------------
+function cauldron_add_installer() {
+}
+
+#---------------------------------------------------------------------
+##
+## Cleans out unneeded files that were used to generate the ISO, but should
+## not be present on the final ISO system
+##
+#---------------------------------------------------------------------
+function cauldron_clean_iso_system() {
+}
+
+#---------------------------------------------------------------------
+##
+## Builds the ISO filesystem using the generated ISO data and the filename
+## set in the cauldron config file.
+##
+#---------------------------------------------------------------------
+function cauldron_mkisofs() {
+  mkisofs -R -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot \
+    -boot-load-size 4 -boot-info-table -o ${SMGL_ISO} ${CAULDRON_BUILD}
+}
+
+#---------------------------------------------------------------------
+##
+## Wrapper function that calls all the functions necessary to generate the
+## final ISO file in the correct order
+##
+#---------------------------------------------------------------------
+function cauldron_build_iso() {
+  # set up basic tool-chain in order to cross-compile for target later
+  cauldron_create_toolchain
+  
+  # copy the host's resolv.conf in order to dl packages from net
+  cp -L /etc/resolv.conf ${CAULDRON_BUILD}/
+  
+  # set up chroot for building inside $CAULDRON_BUILD
+  cauldron_enter_chroot
+  
+  # build the cross-compile tool-chain targeted for the target sys
+  cauldron_create_target_toolchain
+  
+  # use the cross-compile tool-chain to cast all spells needed for
+  # the iso system
+  cauldron_build_iso_system
+  
+  # configure the iso init system, initrd/initramfs, etc.
+  cauldron_iso_init
+  
+  # build/create/copy/whatever installer system/data into the iso
+  cauldron_add_installer
+  
+  # remove unnecessary files from iso and free up space
+  cauldron_clean_iso_system
+  
+  # finished with iso building, clean up from chroot setup
+  cauldron_exit_chroot
+  
+  # create the iso fs from the build dir
+  cauldron_mkisofs
+}
+
+#---------------------------------------------------------------------
+##
+## This software is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2 of the License, or
+## (at your option) any later version.
+##
+## This software is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this software; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+##
+#---------------------------------------------------------------------
+
+# vim:ai:tw=80:tabstop=2:softtabstop=2:shiftwidth=2:expandtab
