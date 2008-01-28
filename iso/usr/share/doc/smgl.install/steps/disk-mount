@@ -1,22 +1,20 @@
-Now, we need to create filesystems on the partitions you just created.
-Preferences for filesystems differ, and we're not here to tell you which you
-should use (should we?), so here's just a list of commands to create the
-different filesystems I know about:
+[1mdisk-mount step[m
+Now you need to mount the filesystems. We'll be installing to /mnt/root,
+so mount the filesystem that will be / onto /mnt/root.
 
-mke2fs /dev/hda1
-# This one is the same as mke2fs -j /dev/hda1
-mkfs.ext3 /dev/hda1
-# big TODO: seems we don't actually ship this yet 8)
-mkfs.reiserfs /dev/hda1
-# same for xfs and jfs
-
-# swap:
-mkswap /dev/hda2
-
-Now, you need to mount the filesystems. We'll be installing to /mnt/root,
-so mount the filesystem that will be / as
+Examples:
 mount -t ext2 /dev/hda1 /mnt/root
-Then mount the others.
+mount -t ext3 /dev/hda1 /mnt/root
+mount -t reiserfs /dev/hda1 /mnt/root
+mount -t jfs /dev/hda1 /mnt/root
+mount -t xfs /dev/hda1 /mnt/root
+
+Then mount any other partitions you made at the proper subdirectories.
+
+For example, if you created /dev/hda2 for /home:
+mount -t ext2 /dev/hda1 /mnt/root/home
+
+Don't forget to mount [1mall[m the (system) partitions you plan to use.
 
 Don't forget to turn on swap via
 swapon /dev/hda2

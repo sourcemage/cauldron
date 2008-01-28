@@ -1,7 +1,8 @@
 Hmm. This is a bit fun to document. Big TODO.
 
 You need to edit /mnt/root/etc/fstab so the system knows your partitions on
-bootup. Also, pick either lilo or grub, edit its conf, and install it.
-We'll need better-documented conf file templates for this.
+bootup. We'll need better-documented conf file templates for this.
 
 And more doc monkeys.
+
+Type [1mnext[m to go to the boot-loader selection step.
