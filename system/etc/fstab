@@ -4,8 +4,26 @@
 # Virtual, memory only, or non physical file systems
 proc    /proc           proc    defaults        0 0
 devpts  /dev/pts        devpts  defaults        0 0
-#only for 2.6 kernel
+# only for 2.6 kernel
 sysfs   /sys            sysfs   defaults        0 0
+
+# Add your file systems here.
+
+# Examples:
+#/dev/hda2	/	reiserfs	defaults,noatime	0 1
+#/dev/hda1	/boot	ext2		defaults		0 2
+#/dev/hda3	swap	swap		defaults		0 0
+#
+# The schema is
+# <device> <mountpoint> <type> <options> <dump> <pass>
+# and is roughly executed as
+# mount -t <type> -o <options> <device> <mountpoint>
+
+# Note that, except for /, these need to be in "logical order" -
+# if you have both /usr and /usr/local, put /usr before /usr/local
+
+# For more information, see "man 5 fstab" from the man-pages spell.
+# also see fstab.examples for more examples from the smgl community.
 
 #
 # We do no longer use tmpfs since it wasted memory instead of disk space
