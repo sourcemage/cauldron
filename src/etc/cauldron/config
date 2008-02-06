@@ -9,7 +9,7 @@
        CACHE_EXTENSION=$(grep "EXTENSION=" ${HOST_SORCERY_CONFIG} | \
                          cut -d = -f 2)
 
-        CAULDRON_CAST_SPELL="/usr/sbin/cast"
+        CAULDRON_CAST="/usr/sbin/cast"
         CAULDRON_REBUILD="/usr/sbin/sorcery rebuild"
         CAULDRON_BUILD=
               SMGL_ISO=
