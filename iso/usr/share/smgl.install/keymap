@@ -104,7 +104,7 @@ function go_list {
 
 echo ""
 cat <<EOF
-Before beginning the isntallation, you should select your keymap. First,
+Before beginning the installation, you should select your keymap. First,
 choose your keyboard's hardware type from the list below. Some hardware
 types will also have a subtype, which will be presented in another menu.
 After you are done choosing your hardware type (and subtype), choose your
