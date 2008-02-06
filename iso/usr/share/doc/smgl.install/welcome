@@ -1,18 +1,18 @@
-Welcome to the SMGL <insert version here> install CD!
+Welcome to the SMGL 0.10.0-devel install CD!
 
 The install process is currently a guided shell prompt. Type [1mnext[m to start.
 Everytime you finish a step, enter [1mnext[m to advance to the next one.
 If you want to re-read the documentation for a step, type [1mtodo[m.
 You can enter [1mback[m at any time to jump to the previous step.
 
+If you ever get lost, type [1msteps[m to get a list of installer steps,
+and e.g. [1mjump copy-base[m to jump to a specific step.
+
 Don't worry, there's no magic attached to the steps, you can jump between
 them as you please without breaking anything.
 
-If you ever get lost, type [1mlist-steps[m to get a list of installer steps,
-and e.g. [1mjump copy-base[m to jump to a specific step.
-
-The Source Mage GNU/Linux cauldron team hopes that this new form of installer
-will help you setting up your systems efficiently, or learning a lot.
+If at any time you need help, type [1mhelp[m.
+To see this message again, type [1mwelcome[m.
 
 If you have any feedback you'd like us to hear, please drop by
 #sourcemage-cauldron on irc.freenode.net, file a bug on bugs.sourcemage.org,
