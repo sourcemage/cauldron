@@ -24,23 +24,3 @@ sysfs   /sys            sysfs   defaults        0 0
 
 # For more information, see "man 5 fstab" from the man-pages spell.
 # also see fstab.examples for more examples from the smgl community.
-
-#
-# We do no longer use tmpfs since it wasted memory instead of disk space
-#
-#tmpfs   /var/lock       tmpfs   defaults        0 0
-#tmpfs   /var/run        tmpfs   defaults        0 0
-#tmpfs   /tmp            tmpfs   defaults,size=256m,nr_inodes=64m    0 0
-
-# enable this to get POSIX shared memory support (needed for a few apps)
-#tmpfs   /dev/shm        tmpfs   defaults        0 0
-
-# Virtual memory swap file
-#   If you need it then create it with the following commands
-#     dd      if=/dev/zero of=/swapfile bs=1M count=1024
-#     mkswap  /swapfile
-#     chmod   000 /swapfile
-#   Then uncomment the line below.
-#/swapfile       none    swap    defaults        0 0
-
-# Add your own file systems here
