@@ -17,6 +17,71 @@
 
 #---------------------------------------------------------------------
 ##
+## @param Filename
+##
+## 
+##
+#---------------------------------------------------------------------
+function cauldron_lock_start_transaction() {
+}
+
+#---------------------------------------------------------------------
+##
+## @param Filename
+##
+## 
+##
+#---------------------------------------------------------------------
+function cauldron_lock_commit_transaction() {
+}
+
+#---------------------------------------------------------------------
+##
+## @param Filename
+## @param Variable
+## @param Value
+##
+## Modifies the values assigned to variables present in a config file.
+## Filename is typically either cauldron/config or cauldron/local/config.
+## Variable is the name of the variable to modify/update, and Value is the
+## value to assign to it.
+##
+#---------------------------------------------------------------------
+function cauldron_modify_config() {
+  local FILE=$1
+  local VAR=$2
+  local VAL=$3
+  local COL=$((20-${#1}))
+  local tFILE=""
+  local TEMP=""
+
+  if [[ -f ${FILE} ]]
+  then
+    # Open tFILE for the transactions for FILE, to be committed back to
+    # FILE later.
+    tFILE=$(cauldron_lock_start_transaction ${FILE})
+
+    # Copy everything _except_ the var we want to change to tFILE
+    # This effectively deletes the previous reference to var (in tFILE)
+    $(grep -v "^[[:blank:]]*${1}=" ${FILE} > ${tFILE})
+
+    # Justify (center) the text in the file based on the length of the var
+    [[ COL -lt 0 ]] && COL=0
+    for (( ; COL>0 ; COL-- )) ;
+    do
+      TEMP="${TEMP} "
+    done
+
+    # Write out the new variable=value assignment, including justification
+    # whitespace, to tFILE
+    echo "${TEMP}${1}=\"${2}\"" >> ${tFILE}
+
+    # Commit the changes back out to the original FILE
+    cauldron_lock_commit_transaction ${FILE}
+}
+
+#---------------------------------------------------------------------
+##
 ## Prepares a chroot environment
 ##
 #---------------------------------------------------------------------
@@ -83,10 +148,10 @@ function cauldron_create_base_toolchain() {
   local SPELL_CACHE
   local HOST_TRIPLE
   local CACHE_EXTENSION
-  
+
   # set the value for HOST_TRIPLE
   HOST_TRIPLE=$(cauldron_get_host_triple)
-  
+
   # grab the list of spells needed as the base tool-chain which will be
   # used to create the cross-compile tool-chain
   for SPELL in ${HOST_TOOLCHAIN}
@@ -94,12 +159,12 @@ function cauldron_create_base_toolchain() {
     # grab the version for the spell from sorcery's state info
     # on what's installed
     VERSION=$(grep "^${SPELL}" ${HOST_PACKAGES} | cut -d : -f 4)
-    
+
     if [[ ${VERSION} ]]
     then
       # set SPELL_CACHE as shorthand for SPELL-VERSION-HOST_TRIPLE.tar.bz2
       SPELL_CACHE="${SPELL}-${VERSION}-${HOST_TRIPLE}.tar${CACHE_EXTENSION}"
-      
+
       # check to see if there is already a cache file from sorcery
       # this check could be based on spell-{names,versions} reported by
       # gaze/sorcery/dispel. Mirroring code in dispel might be the best bet,
@@ -117,25 +182,46 @@ function cauldron_create_base_toolchain() {
       # the unpacking is done against the BUILD dir as the root dir, so
       # this should not touch the HOST filesystem at all
       tar xjf ${CAULDRON_BUILD}/${SPELL_CACHE} -C ${CAULDRON_BUILD}/
-    # the spell is not present on the HOST system, so it must be cast inside
-    # a chroot
     else
+      # the spell is not present on the HOST system, so it must be cast
+      # inside a chroot
       cauldron_enter_chroot
-      chroot ${CAULDRON_BUILD} ${CAULDRON_CAST_SPELL} ${SPELL}
+      chroot ${CAULDRON_BUILD} ${CAULDRON_CAST} ${SPELL}
       cauldron_exit_chroot
     fi
   done
 }
 
 #---------------------------------------------------------------------
-## @param XXX
+## @param stage
 ##
 ## Configures the toolchain for building on the TARGET system. In other
 ## words, this sets the options/variables necessary to build a
-## cross-compiler system to generate binaries for the target system.
+## cross-compiler system to generate binaries for the target system. The
+## parameter "stage" is an int and sets the variables for stage1 and stage2 of
+## the cross-compile. Stage1 is the building of the initial tools. Stage2 is for
+## the building of glibc, because it's a little bit special. Stage3 is
+## the cross-compilation of the basesystem via sorcery rebuild using the
+## cross-compiler.
 ##
 #---------------------------------------------------------------------
 function cauldron_configure_toolchain() {
+  local STAGE=$1
+
+  case ${STAGE} in
+    1)
+      cauldron_modify_config ${TARGET_LOCAL_CFG} CUSTOM_CFLAGS \ 
+        "--host=${HOST} --target=${TARGET}"
+    ;;
+    2)
+      cauldron_modify_config ${TARGET_LOCAL_CFG} CUSTOM_CFLAGS \
+        "--build=${HOST} --host=${TARGET}"
+    ;;
+    3)
+      cauldron_modify_config ${TARGET_LOCAL_CFG} CUSTOM_CFLAGS \
+        "--build=${HOST} --host=${TARGET} --target=${TARGET}"
+    ;;
+  esac
 }
 
 #---------------------------------------------------------------------
@@ -145,12 +231,32 @@ function cauldron_configure_toolchain() {
 ##
 #---------------------------------------------------------------------
 function cauldron_create_target_toolchain() {
-  # set sorcery options, etc. for cross-compile
-  cauldron_configure_toolchain
+  # build the stage 1 tools
+  cauldron_configure_toolchain 1
+  cauldron_enter_chroot
+  chroot ${CAULDRON_BUILD} ${CAULDRON_CAST} binutils
+  chroot ${CAULDRON_BUILD} ${CAULDRON_CAST} gcc
+  cauldron_exit_chroot
+
+  # build glibc (stage 2)
+  cauldron_configure_toolchain 2
+  cauldron_enter_chroot
+  chroot ${CAULDRON_BUILD} ${CAULDRON_CAST} glibc
+  cauldron_exit_chroot
+
+  # rebuild gcc (still stage 1, but this time linked against the
+  # cross-glibc
+  cauldron_configure_toolchain 1
+  cauldron_enter_chroot
+  chroot ${CAULDRON_BUILD} ${CAULDRON_CAST} gcc
+  cauldron_exit_chroot
 
   # do a sorcery rebuild inside the BUILD dir to
-  # generate the cross-compile tool-chain
+  # generate the cross-compile tool-chain (stage 3)
+  cauldron_configure_toolchain 3
+  cauldron_enter_chroot
   chroot ${CAULDRON_BUILD} ${CAULDRON_REBUILD}
+  cauldron_exit_chroot
 }
 
 #---------------------------------------------------------------------
@@ -182,6 +288,10 @@ function cauldron_iso_init() {
 ##
 #---------------------------------------------------------------------
 function cauldron_add_installer() {
+  local MODULE=$1
+
+  cp ${} ${CAULDRON_BUILD}/${CAULDRON_MODULEDIR}
+  ln -sf ${CAULDRON_BUILD}/${CAULDRON_MODULEDIR} /sbin/
 }
 
 #---------------------------------------------------------------------
