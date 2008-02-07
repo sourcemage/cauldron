@@ -1,0 +1,67 @@
+#!/bin/bash
+
+QUIET=
+rc=
+
+if [[ $# -gt 0 ]]
+then
+  while getopts "q" Option
+  do
+    case $Option in
+      q )   QUIET=1
+    esac
+  done
+  shift $(($OPTIND - 1))
+fi
+
+if [[ $QUIET = 1 ]]
+then
+  mount --bind /dev /mnt/root/dev         && \
+  mount --bind /dev/pts /mnt/root/dev/pts && \
+  mount --bind /proc /mnt/root/proc
+else
+	echo "mount --bind /dev /mnt/root/dev"  && \
+  mount --bind /dev /mnt/root/dev         && \
+	echo "mount --bind /dev /mnt/root/dev"  && \
+  mount --bind /dev/pts /mnt/root/dev/pts && \
+	echo "mount --bind /dev /mnt/root/dev"  && \
+  mount --bind /proc /mnt/root/proc
+fi
+
+rc=$?
+
+if [[ $rc -gt 0 ]]
+then
+  exit $rc
+fi
+
+if [[ $QUIET = 1 ]]
+then
+  chroot /mnt/root /bin/bash -l
+else
+  echo "Entering chroot..."
+  chroot /mnt/root /bin/bash -l
+fi
+
+if [[ $rc -gt 0 ]]
+then
+  exit $rc
+fi
+
+if [[ $QUIET = 1 ]]
+then
+  umount /mnt/root/proc               && \
+  umount /mnt/root/dev/pts            && \
+  umount /mnt/root/dev
+else
+  echo "Unmounting /mnt/root/proc"    && \
+  umount /mnt/root/proc               && \
+  echo "Unmounting /mnt/root/dev/pts" && \
+  umount /mnt/root/dev/pts            && \
+  echo "Unmounting /mnt/root/dev"     && \
+  umount /mnt/root/dev
+fi
+
+exit $rc
+
+# vim:sw=2:ts=2:softtabstop=2:expandtab:ai
