@@ -8,7 +8,7 @@ RESULT=1
 
 function prompt() {
   echo ""
-  printf "\tPlease enter a number:  "
+  printf "\tPlease enter a number (0 to go back):  "
   read INPUT
   if [[ -n $INPUT ]]
   then
