@@ -88,7 +88,24 @@ function steps() {
 }
 
 function jump() {
-  echo "$*" >$INSTALLER_STATUS
+  local i
+  local good=0
+
+  for i in $(cat $INSTALLER_DATA/steps | cut -d" " -f1)
+  do
+    if [[ $* = $i ]]
+    then
+      good=1
+      echo "$*" >$INSTALLER_STATUS
+      break
+    fi
+  done
+  if [[ $good = 0 ]]
+  then
+    echo ""
+    echo "Error: '$*' is not a recognized step."
+    echo "Type [1msteps[m to see a list of steps."
+  fi
 }
 
 function welcome() {
