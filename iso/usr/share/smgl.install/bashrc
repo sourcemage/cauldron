@@ -62,33 +62,6 @@ function next() {
   todo
 }
 
-function branch() {
-  local CURSTEP
-  local b1
-  local b2
-  # get old status
-  CURSTEP=$(cat $INSTALLER_STATUS)
-  # find next status
-  CURSTEP=$(grep "^$CURSTEP:" $INSTALLER_DATA/order | head -n 1 | cut -d: -f2)
-  # make sure next status is a branch
-  if [[ ${CURSTEP} == *'|'* ]] ; then
-	  b1=$(echo ${CURSTEP} | cut -d '|' -f 1)
-	  b2=$(echo ${CURSTEP} | cut -d '|' -f 2)
-	  if [[ $* = ${b1} || $* = ${b2} ]] ; then 
-	  	CURSTEP=$*
-	  else
-	  	CURSTEP="error"
-	  fi
-  else
-	  # couldn't match against the branches
-	  CURSTEP="error"
-  fi
-  # save new status
-  echo "$CURSTEP" >$INSTALLER_STATUS
-  # print new message
-  todo
-}
-
 function back() {
   local CURSTEP
   CURSTEP=$(cat $INSTALLER_STATUS)
