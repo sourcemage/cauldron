@@ -1,11 +1,26 @@
 #!/bin/bash
 # This script will crank out an initrd image for the ISO to use.
 
-# The kernel version I'm supposed to look for
-KERNEL_VERSION=2.6.18
+if [[ $# != 2 ]] ;then
+  echo "Usage: $0 <path to chroot> <kernel version>"
+  echo "(path to chroot can be / if you want to be sloppy)"
+  exit 1
+fi >&2
+
+CHROOT_DIR=$1
+KERNEL_VERSION=$2
+
+if ! [[ -d $CHROOT_DIR/lib/modules/$KERNEL_VERSION/kernel ]] ;then
+  echo "Chroot failed sanity check:"
+  echo "Unable to find $CHROOT_DIR/lib/modules/$KERNEL_VERSION/kernel"
+  exit 2
+fi >&2
 
 # The temporary dir I'll use to put the initrd files
 INITRDROOT=/tmp/initrd-dir
+
+# Dirs to look in for executables (no leading / please)
+EXECDIRS=(bin sbin usr/bin usr/sbin)
 
 #---------------------------------------------------------------------
 ## @param full path of binary to check
@@ -14,23 +29,34 @@ INITRDROOT=/tmp/initrd-dir
 #---------------------------------------------------------------------
 # Used to implicitly install linked-against-libs to the initrd with a binary
 function libscan() {
-  ldd "$1" 2> /dev/null |
+  chroot $CHROOT_DIR ldd "$1" 2> /dev/null |
    cut -d'>' -f2 |
    cut -d' ' -f2 |
    grep '^/'
 }
 
+function my_which() {
+  for dir in "${EXECDIRS[@]}" ;do
+    if [[ -x $dir/$1 ]] ;then
+      echo "$dir/$1"
+      return 0
+    fi
+  done
+  echo "Unable to find $1 in your chroot!" >&2
+  return 1
+}
+
 #---------------------------------------------------------------------
 ## Tries to find the given binary and copy it and its required libs
 ## onto the initrd at the same paths they are in the parent system.
+## (working directory is assumed to be the root dir of a chroot, or /)
 #---------------------------------------------------------------------
 function install_prog() {
   local prog progpath
   for prog in $* ;do
     # find executable
-    # TODO: check if we can use type -p here and avoid dependency on which
-    progpath=$( which $prog )         &&
-    # install executable
+    progpath=$(my_which $prog) &&
+    # install executable (path will be relative to $CHROOT_DIR)
     cp --parents -f $progpath $INITRDROOT &&
     # install needed libs
     cp --parents -f $( libscan $progpath ) $INITRDROOT
@@ -50,7 +76,7 @@ function mk_initrd_file() {
 
   # Measure size of the initrd files, add 20% for e2fs overhead and safety
   initrd_size=$(du -ks ${INITRDROOT} | cut -d$'\t' -f1)
-  initrd_size="$(( initrd_size / 5 + initrd_size ))"
+  initrd_size="$(( initrd_size + initrd_size / 5 ))"
 
   tmp_file="/tmp/initrd.$$"
   tmp_mountdir="/tmp/initrdmpoint.$$"
@@ -68,70 +94,68 @@ function mk_initrd_file() {
 
   gzip -c $tmp_file >$2
 
-  # We'll need the unpacked size for the bootloader config,
-  # as it'll want to know how much memory to allocate for the initrd
-  echo "${initrd_size}" >${2%.gz}.size
-
   rm -rf $tmp_file $tmp_mountdir
-  echo "initrd is compressed $(du -ks $2 | cut -d$'\t' -f1)K, uncompressed ${initrd_size}K."
+  echo "initrd is at $2, compressed $(du -ks $2 | cut -d$'\t' -f1)K, uncompressed ${initrd_size}K."
+  echo "Don't forget to adjust isolinux.cfg for the new size."
 }
 
 
-# ---- actual script starts here ----
+# Find my stuff
+MYDIR=$(readlink -f ${0%/*}/..)
 
-# grab config
-MYDIR=${0%/*}/..
-# TODO: this needs a full path, doesn't seem to work with relative paths
+if ! [[ -e $MYDIR/data/initrd.files ]] ;then
+  echo "Failed sanity check: Cannot find data/initrd.files in my dir"
+  echo "(assumed to be $MYDIR)"
+  exit 2
+fi >&2
 
 rm -rf $INITRDROOT
 mkdir -p $INITRDROOT
 
+OLDWD=$PWD
+# Unless otherwise noted, this is our working directory.
+cd $CHROOT_DIR >/dev/null
+
 # Create all dirs we need on the initrd
+echo "Creating dirs..."
 while read line ; do
-	echo "Creating dir $line"
   mkdir -p ${INITRDROOT}/${line}
 done <$MYDIR/data/initrd.dirs
 
 # Copy files onto the initrd that we need.
-# Locating in and extracting from tarballs would be a pain,
-# so we just use the current system (chroot)
+echo "Copying files and programs..."
 while read line ; do
-
   # If it has a leading /, treat it as a single file
   if [[ ${line:0:1} == '/' ]] ;then
-	  echo "Copying $line"
-    cp -a --parents ${line} ${INITRDROOT}
-
-  # Otherwise, it's a binary, find it and install its libs too
+    cp -a --parents ${line:1} ${INITRDROOT}
   else
-	  echo "Installing prog $line"
+    # Otherwise, it's a binary, find it and install its libs too
     install_prog $line
   fi
 done <$MYDIR/data/initrd.files
 
 # Copy the dynamic loader over
 echo "Copying over dynamic loader"
-cp --parents /lib/ld-2.* $INITRDROOT
+cp --parents lib/ld-2.* $INITRDROOT
 
 # Create a static /dev
 echo "Creating static dev"
 pushd $INITRDROOT/dev >/dev/null
-$MYDIR/iso/sbin/MAKEDEV generic-nopty
+$MYDIR/data/MAKEDEV generic-nopty
 popd >/dev/null
 
 # Add kernel modules that are supposed to be on the iso
 echo "adding kernel modules"
 mkdir -p ${INITRDROOT}/lib/modules/${KERNEL_VERSION}/kernel
-pushd /lib/modules/${KERNEL_VERSION}/kernel >/dev/null
+pushd $CHROOT_DIR/lib/modules/${KERNEL_VERSION}/kernel >/dev/null
  while read line ; do
-	 echo "Adding module: $line"
    cp -pr --parents ./${line} ${INITRDROOT}/lib/modules/${KERNEL_VERSION}/kernel
  done <$MYDIR/data/initrd.kernel
 popd >/dev/null
 
 # Copy module listing and other files the kernel needs, omit dirs though
 echo "Copy module listing and other files"
-cp -dp --parents /lib/modules/$KERNEL_VERSION/* $INITRDROOT 2>/dev/null
+cp -dp --parents lib/modules/$KERNEL_VERSION/* $INITRDROOT 2>/dev/null
 
 # Finally, copy everything from the skeleton on top
 echo "Copy skeleton"
@@ -139,19 +163,19 @@ cp -af $MYDIR/initrd/* ${INITRDROOT}
 
 # Set up linker caches and symlinks
 echo "Set up linker caches and symlinks"
-cp /sbin/ldconfig ${INITRDROOT}
+cp sbin/ldconfig ${INITRDROOT}
 chroot ${INITRDROOT} /ldconfig
 rm ${INITRDROOT}/ldconfig
 
 # create module dependencies.
 echo "create module dependencies"
-cp /sbin/depmod ${INITRDROOT}
+cp sbin/depmod ${INITRDROOT}
 chroot ${INITRDROOT} /depmod ${KERNEL_VERSION}
 rm -f ${INITRDROOT}/depmod
 
 # The initrd is complete now.
 echo "Make the initrd"
-mk_initrd_file $INITRDROOT initrd.gz
+mk_initrd_file $INITRDROOT $OLDWD/initrd.gz
 
-echo "remove initrd skeleton"
+echo "cleaning up..."
 rm -rf ${INITRDROOT}
