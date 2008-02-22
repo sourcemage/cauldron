@@ -4,7 +4,9 @@ disk-format:disk-mount
 disk-mount:copy-base
 copy-base:edit-confs
 edit-confs:boot-loader
-boot-loader:install-opt-spells
+boot-loader:grub
+grub:install-opt-spells
+lilo:install-opt-spells
 install-opt-spells:user-setup
 user-setup:reboot
 reboot:reboot

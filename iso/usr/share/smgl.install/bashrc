@@ -13,10 +13,37 @@ INSTALLER_DOCS=/usr/share/doc/smgl.install
 mkdir -p $INSTALLER_TMP
 [[ -e $INSTALLER_STATUS ]] || echo 'init' >$INSTALLER_STATUS
 
+function header() {
+  local doc
+  doc=$1
+  echo ""
+  echo ""
+  echo ""
+  cat $1
+}
+
 function todo() {
   local CURSTEP
   CURSTEP=$(cat $INSTALLER_STATUS)
-  cat $INSTALLER_DOCS/steps/$CURSTEP
+  header $INSTALLER_DOCS/steps/$CURSTEP
+}
+
+function next_step() {
+  local CURSTEP
+  # get old status
+  CURSTEP=$(cat $INSTALLER_STATUS)
+  # find next status
+  CURSTEP=$(grep "^$CURSTEP:" $INSTALLER_DATA/order | head -n 1 | cut -d: -f2)
+  # check if next status is a branch
+  [[ ${CURSTEP} == *'|'* ]] && CURSTEP="error"
+  # if we couldn't find a next status, jump to 'error'
+  CURSTEP=${CURSTEP:-error}
+  # print out new status
+  echo "$CURSTEP"
+}
+
+function cur_step() {
+  cat $INSTALLER_STATUS
 }
 
 function next() {
@@ -25,6 +52,8 @@ function next() {
   CURSTEP=$(cat $INSTALLER_STATUS)
   # find next status
   CURSTEP=$(grep "^$CURSTEP:" $INSTALLER_DATA/order | head -n 1 | cut -d: -f2)
+  # check if next status is a branch
+  [[ ${CURSTEP} == *'|'* ]] && CURSTEP="error"
   # if we couldn't find a next status, jump to 'error'
   CURSTEP=${CURSTEP:-error}
   # save new status
@@ -44,10 +73,47 @@ function back() {
   todo
 }
 
-function list-steps() {
-  cat $INSTALLER_DATA/steps
+function num_current() {
+  local CURSTEP
+  CURSTEP=$(cat $INSTALLER_STATUS)
+  grep -n "$CURSTEP" $INSTALLER_DATA/steps | cut -d: -f1
+}
+
+function num_steps() {
+  cat $INSTALLER_DATA/steps | wc -l
+}
+
+function steps() {
+  header $INSTALLER_DATA/steps
 }
 
 function jump() {
-  echo "$*" >$INSTALLER_STATUS
+  local i
+  local good=0
+
+  for i in $(cat $INSTALLER_DATA/steps | cut -d" " -f1)
+  do
+    if [[ $* = $i ]]
+    then
+      good=1
+      echo "$*" >$INSTALLER_STATUS
+      break
+    fi
+  done
+  if [[ $good = 0 ]]
+  then
+    echo ""
+    echo "Error: '$*' is not a recognized step."
+    echo "Type [1msteps[m to see a list of steps."
+  fi
 }
+
+function welcome() {
+  header $INSTALLER_DOCS/welcome
+}
+
+function help() {
+  header $INSTALLER_DATA/commands
+}
+
+PS1="[current:\$(cur_step) next:\$(next_step) \$(num_current)/\$(num_steps)] For a list of commands, type [1mhelp[m\n\u \w\$ "

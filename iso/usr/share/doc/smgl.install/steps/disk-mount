@@ -1,5 +1,5 @@
 [1mdisk-mount step[m
-Now you need to mount the filesystems. We'll be installing to /mnt/root,
+Now, you need to mount the filesystems. We'll be installing to /mnt/root,
 so mount the filesystem that will be / onto /mnt/root.
 
 Examples:
@@ -10,9 +10,12 @@ mount -t jfs /dev/hda1 /mnt/root
 mount -t xfs /dev/hda1 /mnt/root
 
 Then mount any other partitions you made at the proper subdirectories.
+You'll probably need to make directories for the other mount points first
+(assuming you just formatted the / partition). Make sure you mount / first.
 
-For example, if you created /dev/hda2 for /home:
-mount -t ext2 /dev/hda1 /mnt/root/home
+For example, if you created /dev/hda2 for /usr:
+mkdir /mnt/root/usr
+mount -t ext2 /dev/hda2 /mnt/root/usr
 
 Don't forget to mount [1mall[m the (system) partitions you plan to use.
 

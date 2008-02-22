@@ -1,0 +1,22 @@
+# ========== tmpfs ==========
+# If you want /tmp and pals stored in ram, use these lines.
+# Pro: always empty after reboot, should be fast
+# Con: always empty after reboot, uses memory/swap instead of disk space,
+#      kernel should be smart enough to coche stuff anyway
+#
+#tmpfs   /var/lock       tmpfs   defaults        0 0
+#tmpfs   /var/run        tmpfs   defaults        0 0
+#tmpfs   /tmp            tmpfs   defaults,size=256m,nr_inodes=64m    0 0
+
+# ========== shared memory ==========
+# enable this to get POSIX shared memory support (needed for a few apps)
+#tmpfs   /dev/shm        tmpfs   defaults        0 0
+
+# ========== swap file ==========
+# Virtual memory swap file
+#   Create with the following commands
+#     dd      if=/dev/zero of=/swapfile bs=1M count=1024
+#     mkswap  /swapfile
+#     chmod   000 /swapfile
+#   Then put the following in your /etc/fstab
+#/swapfile       none    swap    defaults        0 0

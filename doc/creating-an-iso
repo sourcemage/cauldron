@@ -14,13 +14,17 @@ These should be extended.
  * rm /var/cache/sorcery/*
  * rm /usr/src/linux* -rf
 
-4. copy the chroot (one copy for the iso, one the system the user will install) (call second chroot system-chroot)
+4. copy the contents of the "base" dir into the chroot
+   (this dir contains stuff like etc/shadow, make sure those files actually
+   end up as /etc/shadow in your chroot, and not as /base/etc/shadow)
+
+5. copy the chroot (one copy for the iso, one the system the user will install) (call second chroot system-chroot)
  * umount dev/pts dev proc
 
-5. copy the contents of the "iso" dir into iso-chroot
+5a. copy the contents of the "iso" dir into the iso-chroot
 
-6. copy the contents of the "system" dir into system-chroot
- * sanitize sorcery  - set prompt delay, and others to default
+6. sanitize system chroot - set sorcery configs to mostly-default (read: empty)
+   - chmod 0600 system-chroot/etc/shadow
 
 7. tar up system-chroot and copy it into iso-chroot
 

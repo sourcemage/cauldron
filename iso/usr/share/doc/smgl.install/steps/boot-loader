@@ -1,37 +1,15 @@
 [1mboot-loader step[m
 Now it is time to select a boot-loader. Since this is the x86 ISO, you can
 choose either grub or lilo. Both are included in the basesystem you copied
-over to /mnt/root in the copy-base step.
+over to /mnt/root in the copy-base step. Since grub seems to be more popular
+than lilo these days, the installer defaults to grub. Use whichever you please,
+but only use one of them.
 
 Once you have decided which boot loader to use, you need to configure the
-boot loader. For lilo, this is done by editing /mnt/root/etc/lilo.conf. For
-grub, follow the instructions below. The grub instructions are for
-installing grub to the MBR of the first hdd (e.g. /dev/hda). Change this
-according to your setup/needs.
+boot loader. After you finish configuring your boot loader, you need to
+"install" it.  This involves running the boot loader, which will install itself
+to the location you specified in the config file.
 
-After you finish configuring your boot loader, you need to "install" it.
-This simply involves running the boot loader, which will install itself to
-the location you specified in the config file.
+For lilo instructions, type [1mjump lilo[m.
 
-First, chroot into the target platform:
-mount --bind /dev /mnt/root/dev
-mount --bind /dev/pts /mnt/root/dev/pts
-mount --bind /proc /mnt/root/proc
-chroot /mnt/root /bin/bash
-
-For lilo:
-/sbin/lilo
-
-For grub:
-cp /usr/lib/grub/i386-pc /boot/grub
-/sbin/grub
-> root (hd0,0)
-> setup (hd0)
-> quit
-
-Exit the chroot:
-exit
-
-Unless you got an error message when you were installing the boot loader,
-you should be done with this step. Type [1mnext[m to go to the next
-step.
+For grub instructions, just type [1mnext[m.

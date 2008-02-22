@@ -1,4 +1,8 @@
 Now, it's time to set up the basic smgl installation.
+Don't forget to mount any partitions you need first (this depends on your
+partition scheme; i.e. if you have a separate partition that you intend to
+mount as /var, mount that now). You may need to create the directories for
+the mount points you intend to mount.
 
 Run the following command:
 [1mtar -xjvf /system.tar.bz2 -C /mnt/root[m

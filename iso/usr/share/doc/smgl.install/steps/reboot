@@ -1,2 +1,17 @@
+[1mFinished![m
+You should be all done with the installation! Congratulations!
+
+Now it is time to umount all of your partitions. For all partitions you mounted
+under /mnt/root, unmount them, starting with the deepest mount first and
+working back up to /mnt/root.
+
+Example - assume that there are separate partitions for /, /var, /var/spool,
+and /var/cache:
+
+umount /mnt/root/var/cache
+umount /mnt/root/var/spool
+umount /mnt/root/var
+umount /mnt/root
+
 You should be able to reboot now.
-Don't forget to take out the CD
+Don't forget to take out the CD before the machine boots back up!
