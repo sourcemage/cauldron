@@ -91,15 +91,18 @@ function jump() {
   local i
   local good=0
 
-  for i in $(cat $INSTALLER_DATA/steps | cut -d" " -f1)
+  cat $INSTALLER_DATA/steps | cut -d" " -f1 |
+  while read i
   do
     if [[ $* = $i ]]
     then
       good=1
       echo "$*" >$INSTALLER_STATUS
+      todo
       break
     fi
   done
+
   if [[ $good = 0 ]]
   then
     echo ""
