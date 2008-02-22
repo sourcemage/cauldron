@@ -13,7 +13,8 @@ passwd root
 
 If you would like to add additional users at this time, you may feel free
 to do so by typing the following:
-useradd -m USERNAME
+useradd -g 1000 -b /home -m USERNAME
+passwd USERNAME
 
 Replace USERNAME with the username you want to add. After you are done,
 make sure you exit the chroot:
