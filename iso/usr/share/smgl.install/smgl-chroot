@@ -1,7 +1,6 @@
 #!/bin/bash
 
 QUIET=
-rc=
 
 if [[ $# -gt 0 ]]
 then
@@ -26,14 +25,8 @@ else
   mount --bind /dev/pts /mnt/root/dev/pts && \
 	echo "mount --bind /dev /mnt/root/dev"  && \
   mount --bind /proc /mnt/root/proc
-fi
+fi || exit $?
 
-rc=$?
-
-if [[ $rc -gt 0 ]]
-then
-  exit $rc
-fi
 
 if [[ $QUIET = 1 ]]
 then
@@ -41,12 +34,7 @@ then
 else
   echo "Entering chroot..."
   chroot /mnt/root /bin/bash -l
-fi
-
-if [[ $rc -gt 0 ]]
-then
-  exit $rc
-fi
+fi || exit $?
 
 if [[ $QUIET = 1 ]]
 then
@@ -62,6 +50,6 @@ else
   umount /mnt/root/dev
 fi
 
-exit $rc
+exit $?
 
 # vim:sw=2:ts=2:softtabstop=2:expandtab:ai
