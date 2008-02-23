@@ -52,8 +52,6 @@ function next() {
   CURSTEP=$(cat $INSTALLER_STATUS)
   # find next status
   CURSTEP=$(grep "^$CURSTEP:" $INSTALLER_DATA/order | head -n 1 | cut -d: -f2)
-  # check if next status is a branch
-  [[ ${CURSTEP} == *'|'* ]] && CURSTEP="error"
   # if we couldn't find a next status, jump to 'error'
   CURSTEP=${CURSTEP:-error}
   # save new status
@@ -65,9 +63,7 @@ function next() {
 function back() {
   local CURSTEP
   CURSTEP=$(cat $INSTALLER_STATUS)
-  if [[ $CURSTEP != "init" ]] ;then
-    CURSTEP=$(grep ":$CURSTEP$" $INSTALLER_DATA/order | head -n 1 | cut -d: -f1)
-  fi
+  CURSTEP=$(grep ":$CURSTEP$" $INSTALLER_DATA/order | tail -n 1 | cut -d: -f1)
   CURSTEP=${CURSTEP:-error}
   echo "$CURSTEP" >$INSTALLER_STATUS
   todo
@@ -99,16 +95,12 @@ function jump() {
       good=1
       echo "$*" >$INSTALLER_STATUS
       todo
-      break
+      return
     fi
   done
-
-  if [[ $good = 0 ]]
-  then
-    echo ""
-    echo "Error: '$*' is not a recognized step."
-    echo "Type [1msteps[m to see a list of steps."
-  fi
+  echo ""
+  echo "Error: '$*' is not a recognized step."
+  echo "Type [1msteps[m to see a list of steps."
 }
 
 function welcome() {
@@ -116,7 +108,13 @@ function welcome() {
 }
 
 function help() {
-  header $INSTALLER_DATA/commands
+  helpfile=$INSTALLER_DOCS/help/${1:-index}
+  if [[ -e $helpfile ]] ;then
+    header $helpfile
+  else
+    echo "No installer help for '$1', falling back to bash's builtin help"
+    builtin help $1
+  fi
 }
 
 PS1="[current:\$(cur_step) next:\$(next_step) \$(num_current)/\$(num_steps)] For a list of commands, type [1mhelp[m\n\u \w\$ "

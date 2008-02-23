@@ -7,9 +7,10 @@ edit-confs:boot-loader
 boot-loader:grub
 grub:install-opt-spells
 lilo:install-opt-spells
+boot-loader:install-opt-spells
 install-opt-spells:user-setup
 user-setup:reboot
 reboot:reboot
-init:init
 error:init
+init:init
 init:error
