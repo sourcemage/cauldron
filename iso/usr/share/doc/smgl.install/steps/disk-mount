@@ -3,21 +3,21 @@ Now, you need to mount the filesystems. We'll be installing to /mnt/root,
 so mount the filesystem that will be / onto /mnt/root.
 
 Examples:
-mount -t ext2 /dev/hda1 /mnt/root
-mount -t ext3 /dev/hda1 /mnt/root
-mount -t reiserfs /dev/hda1 /mnt/root
-mount -t jfs /dev/hda1 /mnt/root
-mount -t xfs /dev/hda1 /mnt/root
+[1mmount -t ext2 /dev/hda1 /mnt/root[m
+[1mmount -t reiserfs /dev/hda1 /mnt/root[m
+[1mmount -t xfs /dev/hda1 /mnt/root[m
 
 Then mount any other partitions you made at the proper subdirectories.
 You'll probably need to make directories for the other mount points first
 (assuming you just formatted the / partition). Make sure you mount / first.
 
 For example, if you created /dev/hda2 for /usr:
-mkdir /mnt/root/usr
-mount -t ext2 /dev/hda2 /mnt/root/usr
+[1mmkdir /mnt/root/usr[m
+[1mmount -t ext2 /dev/hda2 /mnt/root/usr[m
+(or, for example, if it's a jfs partition)
+[1mmount -t jfs /dev/hda1 /mnt/root[m
 
 Don't forget to mount [1mall[m the (system) partitions you plan to use.
 
-Don't forget to turn on swap via
-swapon /dev/hda2
+Also, you may want to turn on swap via e.g.
+[1mswapon /dev/hda2[m

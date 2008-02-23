@@ -7,12 +7,13 @@ You can enter [1mback[m at any time to jump to the previous step.
 
 If you ever get lost, type [1msteps[m to get a list of installer steps,
 and e.g. [1mjump copy-base[m to jump to a specific step.
-
 Don't worry, there's no magic attached to the steps, you can jump between
 them as you please without breaking anything.
 
 If at any time you need help, type [1mhelp[m.
 To see this message again, type [1mwelcome[m.
+
+If you need to set a different keymap, type [1m539[m.
 
 If you have any feedback you'd like us to hear, please drop by
 #sourcemage-cauldron on irc.freenode.net, file a bug on bugs.sourcemage.org,

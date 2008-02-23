@@ -4,20 +4,18 @@ of example commands for the different types of filesystems supported on this
 ISO. The partitions given are examples. Be sure to format all the partitions
 you need.
 
-mke2fs /dev/hda1
-mkfs.ext3 /dev/hda1
-mkreiserfs /dev/hda1
-mkfs.jfs /dev/hda1
-mkfs.xfs /dev/hda1
+[1mmke2fs /dev/hda1[m
+[1mmkfs.ext3 /dev/hda1[m
+[1mmkreiserfs /dev/hda1[m
+[1mmkfs.jfs /dev/hda1[m
+[1mmkfs.xfs /dev/hda1[m
 
 # swap:
-mkswap /dev/hda2
+[1mmkswap /dev/hda2[m
 
 The reiser4 tools are provided on the ISO. However, the ISO kernel does not
 yet support reiser4, so although you can create reiser4 filesystems and
 check ones already created, you cannot yet mount them. Only make a reiser4
-filesystem if you really know what you are doing.
-
-mkfs.reiser4
+filesystem if you really know what you are doing. ([1mmkfs.reiser4[m)
 
 Type [1mnext[m to go to the next step.

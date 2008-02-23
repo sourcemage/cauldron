@@ -1,22 +1,22 @@
 [1mgrub instructions[m:
-First, chroot into the target platform. We provide a wrapper command that
-will help set up the chroot for you. It outputs messages about what it is
-doing by default. If you don't want to see these messages, pass the -q
-option (for quiet)
+To run grub properly, it needs to be chroot'ed into the new system. This needs
+some directories (/dev, /proc), so we provide a wrapper to set those up for
+you and clean them up again when you're done.
 
-Example:
-/usr/bin/smgl-chroot
-/usr/bin/smgl-chroot -q
+Run the script to get a shell inside the installed system:
+[1msmgl-chroot[m
 
-Then run grub so you can update the boot record:
-/sbin/grub
-> root (hd0,0)
-> setup (hd0)
-> quit
+Then run grub so you can update the boot record (TODO: use grub-install here?):
+[1m/sbin/grub[m
+
+You'll get a grub shell, where you need to enter the following commands,
+without the > in front (adjust for your disk layout):
+> [1mroot (hd0,0)[m
+> [1msetup (hd0)[m
+> [1mquit[m
 
 Exit the chroot:
-exit
+[1mexit[m
 
 Unless you got an error message when you were installing the boot loader,
-you should be done with this step. Type [1mnext[m to go to the next
-step.
+you should be done with this step. Type [1mnext[m to go to the next step.

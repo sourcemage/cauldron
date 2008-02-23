@@ -1,8 +1,13 @@
-Hmm. This is a bit fun to document. Big TODO.
+[1mediting basic configuration files[m
 
-You need to edit /mnt/root/etc/fstab so the system knows your partitions on
-bootup. We'll need better-documented conf file templates for this.
+Now, we need to set up our partitions so the system will find them again on
+bootup. For this, edit [1m/mnt/root/etc/fstab[m and add your partitions.
 
-And more doc monkeys.
+(For editors available on this iso, do [1mhelp editors[m)
+
+Also, take a look at the files in [1m/mnt/root/etc/sysconfig/[m and edit any you
+feel should be different. Especially, if you selected a custom keymap at the
+start of this install, you'll need to edit the file called [1mkeymap[m
+in that directory (do [1m cat /tmp/selected-keymap[m to see which you chose)
 
 Type [1mnext[m to go to the boot-loader selection step.

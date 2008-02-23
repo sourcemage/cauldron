@@ -13,5 +13,8 @@ umount /mnt/root/var/spool
 umount /mnt/root/var
 umount /mnt/root
 
-You should be able to reboot now.
-Don't forget to take out the CD before the machine boots back up!
+Now, reboot via something like
+[1mshutdown -r now "install finished"[m
+
+We don't (yet) eject the CD during shutdown, so be sure to take it out during
+reboot or configure your BIOS not to try and boot from it.

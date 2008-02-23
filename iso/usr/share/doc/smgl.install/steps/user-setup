@@ -1,24 +1,22 @@
 [1muser-setup step[m
-First, chroot into the target platform. We provide a wrapper command that
-will help set up the chroot for you. It outputs messages about what it is
-doing by default. If you don't want to see these messages, pass the -q
-option (for quiet)
+Finally, we need to give the root user a password and probably create an user
+for you to do your daily work with.
 
-Example:
-/usr/bin/smgl-chroot
-/usr/bin/smgl-chroot -q
+To set up users, you'll want to chroot into the target system again, as you
+already did to install the bootloader:
+[1msmgl-chroot[m
 
-Set up a password for the root user:
-passwd root
+Set up a password for the root user (pick a secure one, but not one you'll
+forget. Also, bear in mind that it can be bypassed with a screwdriver.):
+[1mpasswd root[m
 
 If you would like to add additional users at this time, you may feel free
 to do so by typing the following:
-useradd -g 1000 -b /home -m USERNAME
-passwd USERNAME
+[1museradd -b /home -m mbolton[m
+[1mpasswd mbolton[m
 
-Replace USERNAME with the username you want to add. After you are done,
-make sure you exit the chroot:
-exit
+Of course, you may not want to be called mbolton, so replace that with whatever
+login you want.
 
-Make sure it is a reasonably secure password, but not one you will forget.
-Type [1mnext[m to go to the next step.
+Finally, exit the chroot to return to the installer:
+[1mexit[m
