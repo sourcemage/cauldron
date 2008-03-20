@@ -29,10 +29,20 @@ EXECDIRS=(bin sbin usr/bin usr/sbin)
 #---------------------------------------------------------------------
 # Used to implicitly install linked-against-libs to the initrd with a binary
 function libscan() {
-  chroot $CHROOT_DIR ldd "$1" 2> /dev/null |
-   cut -d'>' -f2 |
-   cut -d' ' -f2 |
-   grep '^/'
+  chroot $CHROOT_DIR /usr/bin/ldd "$1" |
+  grep '/' |
+  cut -f 2 |
+  sed -e 's/.*=> //' |
+  sed -e 's/ (0x.*)$//' |
+  sed -e 's/^[/]//'
+}
+
+# This function gets the real library files from the symlinks returned
+# by running libscan (ldd returns symlinks if that's what the binary
+# links to). The leading '/' is removed for convenience.
+function reallib() {
+  chroot $CHROOT_DIR readlink -f $1 |
+  sed -e 's/^[/]//'
 }
 
 function my_which() {
@@ -53,13 +63,19 @@ function my_which() {
 #---------------------------------------------------------------------
 function install_prog() {
   local prog progpath
+  local i
   for prog in $* ;do
     # find executable
     progpath=$(my_which $prog) &&
     # install executable (path will be relative to $CHROOT_DIR)
     cp --parents -f $progpath $INITRDROOT &&
     # install needed libs
-    cp --parents -f $( libscan $progpath ) $INITRDROOT
+    for i in $(libscan $progpath) ; do
+      # Needed to copy both the lib and symlinks
+      # Some programs (like ldconfig) rely on the symlinks
+      cp --parents -f $(reallib $i) $INITRDROOT
+      cp -d --parents -f $i $INITRDROOT
+    done
   done
 }
 
