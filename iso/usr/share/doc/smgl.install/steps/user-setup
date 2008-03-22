@@ -12,7 +12,6 @@ forget. Also, bear in mind that it can be bypassed with a screwdriver.):
 
 If you would like to add additional users at this time, you may feel free
 to do so by typing the following:
-<<<<<<< HEAD:iso/usr/share/doc/smgl.install/steps/user-setup
 [1museradd -d /home/mbolton -m [m-g users[1m mbolton[m
 [1mpasswd mbolton[m
 
