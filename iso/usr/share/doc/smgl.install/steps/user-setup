@@ -12,11 +12,11 @@ forget. Also, bear in mind that it can be bypassed with a screwdriver.):
 
 If you would like to add additional users at this time, you may feel free
 to do so by typing the following:
-[1museradd -b /home -m mbolton[m
+[1museradd -d /home/mbolton -g users -m mbolton[m
 [1mpasswd mbolton[m
 
-Of course, you may not want to be called mbolton, so replace that with whatever
-login you want.
+Replace mbolton with whatever login you want. Don't forget to change
+/home/mbolton accordingly. You may also change the group (-g users).
 
 Finally, exit the chroot to return to the installer:
 [1mexit[m
