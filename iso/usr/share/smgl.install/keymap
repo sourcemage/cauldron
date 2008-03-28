@@ -90,7 +90,7 @@ function go_list {
     if [[ $INPUT == *.map.gz ]]
     then
       PREFIX="$PREFIX/$INPUT"
-      if [[ $(loadkeys $PREFIX) ]]
+      if loadkeys $PREFIX
       then
         # TODO: figure out what the user needs to enter in sysconfig/keymap
         echo "${prefix%.*map.*}" >/tmp/selected-keymap
