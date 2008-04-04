@@ -260,13 +260,30 @@ function cauldron_create_target_toolchain() {
 }
 
 #---------------------------------------------------------------------
-## @param XXX
+## @param target_spells - a list of spells that will be needed to install into
+## the target system from the iso.
 ##
-## Generates the installation system that will be copied from the ISO to the
-## target system as a tarball
+## Performs cast on the list of spells needed for installation to the target
+## system.
 ##
 #---------------------------------------------------------------------
 function cauldron_build_iso_system() {
+  local target_spells=$1
+  local spell
+
+  # Since we will be installing from the running ISO system instead of a giant
+  # tarball, for each spell we only need to make sure that the cache file is
+  # available. This will require that the ISO sorcery has caching enabled. The
+  # caching should really be turned on from the very beginning though...
+  [[ $ARCHIVE=="off" ]] && return $CERR_ARCHIVE
+  cauldron_chroot_init
+  for spell in $TARGET_SPELLS
+  do
+    cast $spell
+    dispel $spell
+  done
+  cauldron_chroot_done
+  return $CERR_OK
 }
 
 #---------------------------------------------------------------------
