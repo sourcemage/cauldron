@@ -322,14 +322,25 @@ function cauldron_clean_iso_system() {
 }
 
 #---------------------------------------------------------------------
+## @param KEEP - whether or not to keep the original .iso file in addition to
+## the compressed .iso.bz2
 ##
 ## Builds the ISO filesystem using the generated ISO data and the filename
 ## set in the cauldron config file.
 ##
 #---------------------------------------------------------------------
 function cauldron_mkisofs() {
+  local KEEP=$1
+
   mkisofs -R -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot \
     -boot-load-size 4 -boot-info-table -o ${SMGL_ISO} ${CAULDRON_BUILD}
+
+  if [[ KEEP == "1" ]] ;
+  then
+    bzip2 -k ${SMGL_ISO}
+  else
+    bzip2 ${SMGL_ISO}
+  fi
 }
 
 #---------------------------------------------------------------------
