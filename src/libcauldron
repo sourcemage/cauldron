@@ -85,7 +85,7 @@ function cauldron_modify_config() {
 ## Prepares a chroot environment
 ##
 #---------------------------------------------------------------------
-function cauldron_enter_chroot() {
+function cauldron_chroot_init() {
   mount --bind ${HOST}/dev ${CAULDRON_BUILD}/dev
   mount --bind ${HOST}/dev/pts ${CAULDRON_BUILD}/dev/pts
   mount --bind ${HOST}/proc ${CAULDRON_BUILD}/proc
@@ -96,7 +96,7 @@ function cauldron_enter_chroot() {
 ## Cleans up the chroot environment after it is no longer needed
 ##
 #---------------------------------------------------------------------
-function cauldron_exit_chroot() {
+function cauldron_chroot_done() {
   umount ${CAULDRON_BUILD}/proc
   umount ${CAULDRON_BUILD}/dev/pts
   umount ${CAULDRON_BUILD}/dev
@@ -185,9 +185,9 @@ function cauldron_create_base_toolchain() {
     else
       # the spell is not present on the HOST system, so it must be cast
       # inside a chroot
-      cauldron_enter_chroot
+      cauldron_chroot_init
       chroot ${CAULDRON_BUILD} ${CAULDRON_CAST} ${SPELL}
-      cauldron_exit_chroot
+      cauldron_chroot_done
     fi
   done
 }
@@ -233,30 +233,30 @@ function cauldron_configure_toolchain() {
 function cauldron_create_target_toolchain() {
   # build the stage 1 tools
   cauldron_configure_toolchain 1
-  cauldron_enter_chroot
+  cauldron_chroot_init
   chroot ${CAULDRON_BUILD} ${CAULDRON_CAST} binutils
   chroot ${CAULDRON_BUILD} ${CAULDRON_CAST} gcc
-  cauldron_exit_chroot
+  cauldron_chroot_done
 
   # build glibc (stage 2)
   cauldron_configure_toolchain 2
-  cauldron_enter_chroot
+  cauldron_chroot_init
   chroot ${CAULDRON_BUILD} ${CAULDRON_CAST} glibc
-  cauldron_exit_chroot
+  cauldron_chroot_done
 
   # rebuild gcc (still stage 1, but this time linked against the
   # cross-glibc
   cauldron_configure_toolchain 1
-  cauldron_enter_chroot
+  cauldron_chroot_init
   chroot ${CAULDRON_BUILD} ${CAULDRON_CAST} gcc
-  cauldron_exit_chroot
+  cauldron_chroot_done
 
   # do a sorcery rebuild inside the BUILD dir to
   # generate the cross-compile tool-chain (stage 3)
   cauldron_configure_toolchain 3
-  cauldron_enter_chroot
+  cauldron_chroot_init
   chroot ${CAULDRON_BUILD} ${CAULDRON_REBUILD}
-  cauldron_exit_chroot
+  cauldron_chroot_done
 }
 
 #---------------------------------------------------------------------
@@ -354,36 +354,38 @@ function cauldron_build_iso() {
   cauldron_create_toolchain
   
   # copy the host's resolv.conf in order to dl packages from net
-  cp -L /etc/resolv.conf ${CAULDRON_BUILD}/
+  cp -L /etc/resolv.conf ${CAULDRON_BUILD}/etc/resolv.conf
   
   # set up chroot for building inside $CAULDRON_BUILD
-  cauldron_enter_chroot
+  cauldron_chroot_init
   
   # build the cross-compile tool-chain targeted for the target sys
-  cauldron_create_target_toolchain
+  ${CAULDRON_CHROOT} cauldron_create_target_toolchain
   
   # use the cross-compile tool-chain to cast all spells needed for
   # the iso system
-  cauldron_build_iso_system
+  ${CAULDRON_CHROOT} cauldron_build_iso_system
   
   # configure the iso init system, initrd/initramfs, etc.
-  cauldron_iso_init
+  ${CAULDRON_CHROOT} cauldron_iso_init
   
   # build/create/copy/whatever installer system/data into the iso
-  cauldron_add_installer
+  ${CAULDRON_CHROOT} cauldron_add_installer
   
   # remove unnecessary files from iso and free up space
   # this needs to have error-checking added in later
   for cleaner in ${CAULDRON_BASE}/cleaners/* ;
   do
-    cauldron_clean_iso_system $cleaner
+    cp ${CAULDRON_BASE}/cleaners/${cleaner} ${CAULDRON_BUILD}/
+    ${CAULDRON_CHROOT} cauldron_clean_iso_system /${cleaner}
+    ${CAULDORN_CHROOT} rm /${cleaner}
   done
   
   # finished with iso building, clean up from chroot setup
-  cauldron_exit_chroot
+  cauldron_chroot_done
   
   # create the iso fs from the build dir
-  cauldron_mkisofs
+  cauldron_mkisofs $CAULDRON_KEEPISO
 }
 
 #---------------------------------------------------------------------
