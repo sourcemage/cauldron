@@ -295,12 +295,30 @@ function cauldron_add_installer() {
 }
 
 #---------------------------------------------------------------------
+## @param CLEANFILE - a file that lists paths to remove (absolute paths,
+## relative to a chroot of the iso), one file/path per line
 ##
 ## Cleans out unneeded files that were used to generate the ISO, but should
 ## not be present on the final ISO system
 ##
 #---------------------------------------------------------------------
 function cauldron_clean_iso_system() {
+  local CLEANFILE=$1
+
+  [[ -z "$CLEANFILE" ]] && return 1
+
+  for i in $(sort -r $CLEANFILE)
+  do
+    if [[ -d $i ]]
+    then
+      echo "Attempting to remove directory $i..."
+      rmdir $i
+    else
+      echo "Deleting $i"
+      rm $i
+    fi
+  done
+  return 0
 }
 
 #---------------------------------------------------------------------
