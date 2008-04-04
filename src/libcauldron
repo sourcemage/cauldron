@@ -373,7 +373,11 @@ function cauldron_build_iso() {
   cauldron_add_installer
   
   # remove unnecessary files from iso and free up space
-  cauldron_clean_iso_system
+  # this needs to have error-checking added in later
+  for cleaner in ${CAULDRON_BASE}/cleaners/* ;
+  do
+    cauldron_clean_iso_system $cleaner
+  done
   
   # finished with iso building, clean up from chroot setup
   cauldron_exit_chroot
