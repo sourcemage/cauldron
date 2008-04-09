@@ -36,6 +36,10 @@ EOF
   exit 1
 }
 
+function cauldron_brew () {
+  cauldron_build_iso
+}
+
 function cauldron_modify_local_config() {
 }
 
@@ -87,6 +91,7 @@ function cauldron_main() {
     cauldron_menu_main
   else
     case $1 in
+      -b|--brew|brew) cauldron_brew  ;;
       -h|--help|help) help  ;;
       *) help     ;;
     esac
