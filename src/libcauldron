@@ -32,9 +32,9 @@
 ##
 #---------------------------------------------------------------------
 function cauldron_chroot_init() {
-  mount --bind ${HOST}/dev ${CAULDRON_BUILD}/dev
-  mount --bind ${HOST}/dev/pts ${CAULDRON_BUILD}/dev/pts
-  mount --bind ${HOST}/proc ${CAULDRON_BUILD}/proc
+  mount --bind ${HOSTPATH}/dev ${CAULDRON_BUILD}/dev
+  mount --bind ${HOSTPATH}/dev/pts ${CAULDRON_BUILD}/dev/pts
+  mount --bind ${HOSTPATH}/proc ${CAULDRON_BUILD}/proc
 }
 
 #---------------------------------------------------------------------
