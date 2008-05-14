@@ -275,8 +275,8 @@ function cauldron_build_iso_system() {
   cauldron_chroot_init
   for spell in $TARGET_SPELLS
   do
-    cast $spell
-    dispel $spell
+    $CAULDRON_CAST $spell
+    $CAULDRON_DISPEL $spell
   done
   cauldron_chroot_done
   return $CERR_OK
