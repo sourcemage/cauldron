@@ -341,34 +341,8 @@ function cauldron_build_iso_system() {
   return $CERR_OK
 }
 
-#---------------------------------------------------------------------
-## @param XXX
-##
-## Handles setting up the init process on the ISO. The ISO init is
-## responsible for detecting hardware, loading device drivers, setting
-## console fonts, etc.
-##
-#---------------------------------------------------------------------
-function cauldron_iso_init() {
-}
-
-#---------------------------------------------------------------------
-## @param INSTALLER_MODULE - one of shell or menu (future: X?)
-##
-## Adds the given installer to the ISO system. The user can then choose this
-## installer either at boot-time or run-time, depending on the installer
-##
-#---------------------------------------------------------------------
-function cauldron_add_installer() {
-  local MODULE=$1
-
-  cp ${} ${CAULDRON_BUILD}/${CAULDRON_MODULEDIR}
-  ln -sf ${CAULDRON_BUILD}/${CAULDRON_MODULEDIR} /sbin/
-}
-
-#---------------------------------------------------------------------
-## @param CLEANFILE - a file that lists paths to remove (absolute paths,
-## relative to a chroot of the iso), one file/path per line
+#-------------------------------------------------------------------------------
+## @param CLEANFILE
 ##
 ## Cleans out unneeded files that were used to generate the ISO, but should
 ## not be present on the final ISO system
@@ -415,7 +389,26 @@ function cauldron_mkisofs() {
   fi
 }
 
-#---------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+## @param INSTALLER_MODULE
+##
+## Adds the given installer to the ISO system. The user can then choose this
+## installer either at boot-time or run-time, depending on the installer.
+## INSTALLER_MODULE is currently one of shell or menu (future: X?). In theory it
+## should support any installer, as long as it's packaged in its own directory and
+## the name of that dir is passed as the arg. This behavior may change in the
+## future though.
+##
+#-------------------------------------------------------------------------------
+function cauldron_add_installer() {
+  local MODULE=$1
+
+  cp -r ${CAULDRON_LIBS}/${MODULE} ${CAULDRON_BUILD}/${ENCHANT_DATA}/
+  ln -sf ${CAULDRON_BUILD}/${ENCHANT_DATA}/${MODULE}/bin/* \
+          ${CAULDRON_BUILD}/usr/sbin/
+}
+
+#-------------------------------------------------------------------------------
 ##
 ## Wrapper function that calls all the functions necessary to generate the
 ## final ISO file in the correct order
