@@ -87,13 +87,12 @@ function cauldron_get_host_triple() {
 ## was deleted by accident. Otherwise the spell must be cast within
 ## a chroot environment in the CAULDRON_BUILD directory.
 ##
-#---------------------------------------------------------------------
-function cauldron_create_base_toolchain() {
+#-------------------------------------------------------------------------------
+function cauldron_base_toolchain() {
   local SPELL
   local VERSION
   local SPELL_CACHE
   local HOST_TRIPLE
-  local CACHE_EXTENSION
 
   # set the value for HOST_TRIPLE
   HOST_TRIPLE=$(cauldron_get_host_triple)
@@ -226,8 +225,8 @@ function cauldron_configure_toolchain() {
 ##
 ## This builds the cross-compiler to produce the TARGET binaries.
 ##
-#---------------------------------------------------------------------
-function cauldron_create_target_toolchain() {
+#-------------------------------------------------------------------------------
+function cauldron_cross_toolchain() {
   # build the stage 1 tools
   cauldron_configure_toolchain 1
   cauldron_chroot_init
@@ -355,30 +354,33 @@ function cauldron_add_installer() {
 ## Wrapper function that calls all the functions necessary to generate the
 ## final ISO file in the correct order
 ##
-#---------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 function cauldron_build_iso() {
   # set up basic tool-chain in order to cross-compile for target later
-  cauldron_create_toolchain
-  
-  # copy the host's resolv.conf in order to dl packages from net
-  cp -L /etc/resolv.conf ${CAULDRON_BUILD}/etc/resolv.conf
-  
+  cauldron_base_toolchain
+
   # set up chroot for building inside $CAULDRON_BUILD
   cauldron_chroot_init
-  
+
   # build the cross-compile tool-chain targeted for the target sys
-  ${CAULDRON_CHROOT} cauldron_create_target_toolchain
-  
+  if [ -n $TARGET ]
+  then
+    if [ $TARGET != $HOST ]
+    then
+      ${CAULDRON_CHROOT} cauldron_cross_toolchain
+    fi
+  fi
+
   # use the cross-compile tool-chain to cast all spells needed for
   # the iso system
   ${CAULDRON_CHROOT} cauldron_build_iso_system
-  
+
   # configure the iso init system, initrd/initramfs, etc.
   ${CAULDRON_CHROOT} cauldron_iso_init
-  
+
   # build/create/copy/whatever installer system/data into the iso
   ${CAULDRON_CHROOT} cauldron_add_installer
-  
+
   # remove unnecessary files from iso and free up space
   # this needs to have error-checking added in later
   for cleaner in ${CAULDRON_BASE}/cleaners/* ;
@@ -387,10 +389,10 @@ function cauldron_build_iso() {
     ${CAULDRON_CHROOT} cauldron_clean_iso_system /${cleaner}
     ${CAULDORN_CHROOT} rm /${cleaner}
   done
-  
+
   # finished with iso building, clean up from chroot setup
   cauldron_chroot_done
-  
+
   # create the iso fs from the build dir
   cauldron_mkisofs $CAULDRON_KEEPISO
 }
