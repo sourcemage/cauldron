@@ -98,7 +98,13 @@ function cauldron_main() {
   fi
 }
 
-. /etc/cauldron/config
+if [[ -e /etc/cauldron/local/config ]]
+then
+  . /etc/cauldron/local/config
+else
+  . /etc/cauldron/config
+fi
+
 . /var/lib/cauldron/libcauldron
 
 if [[ $UID == 0 ]]
