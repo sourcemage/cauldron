@@ -428,14 +428,63 @@ function cauldron_prepare() {
   cauldron_chroot_done
 }
 
+#-------------------------------------------------------------------------------
+## @param sorcery_branch
+## @param download_path
+##
+## Downloads a fresh sorcery source tarball from the net, and places it in
+## download_path.
+##
+#-------------------------------------------------------------------------------
+function cauldron_download_sorcery() {
+  local BRANCH=$1
+  local SPOOL=$2
+  local SORCERY="sorcery-$BRANCH.tar.bz2"
+
+  # run in a subshell as an easy way of not messing with the working directory
+  (
+    cd ${SPOOL}
+    wget http://download.sourcemage.org/sorcery/${SORCERY}
+  )
+}
 
 #-------------------------------------------------------------------------------
-## @param INSTALL_DIR
+## @param force_download
 ##
-## Installs sorcery into the ISO system, relative to INSTALL_DIR
+## Installs sorcery into the ISO system. If force_download is "yes", it will
+## download a fresh copy from the net. Otherwise, it will check to see if the
+## sorcery sources are present in the host system, and copy those first, but if
+## they cannot be found it will resort to downloading them. It shouldn't matter
+## if the version of sorcery is a little old, since a system update can be
+## performed inside $CAULDRON_BUILD after the base toolchain is set up. The
+## branch should be one of {stable, test, devel}, and is set in the cauldron
+## config file.
 ##
 #-------------------------------------------------------------------------------
 function cauldron_sorcery_install() {
+  local force_download=$1
+  local BRANCH=$ISO_SORCERY_BRANCH
+  local SPOOL=${CAULDRON_BUILD}/var/spool/sorcery
+
+  # first, check to see if we will copy or download the sorcery source tarball
+  # and get the source tarball and place it in CAULDRON_BUILD
+  if [[ -e ${HOST_SORCERY_SPOOL}/sorcery-${BRANCH}.tar.bz2 ]]
+  then
+    if [[ "$force_download" == "yes" ]]
+    then
+      cauldron_download_sorcery ${BRANCH} ${SPOOL}
+    else
+      cp ${HOST_SORCERY_SPOOL}/sorcery-${BRANCH}.tar.bz2 ${SPOOL}
+    fi
+  else
+    cauldron_download_sorcery ${BRANCH} ${SPOOL}
+  fi
+
+  # unpack the source tarball
+  tar -C ${CAULDRON_BUILD}/usr/src -jxf ${SPOOL}/sorcery-${BRANCH}.tar.bz2
+
+  # install the source tarball, relative to CAULDRON_BUILD
+  ${CAULDRON_BUILD}/usr/src/sorcery/install ${CAULDRON_BUILD}
 }
 
 #-------------------------------------------------------------------------------
