@@ -1,5 +1,5 @@
 #!/bin/bash
-#---------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 ##
 ##=head1 SYNOPSIS
 ##
@@ -13,7 +13,7 @@
 ##
 ##=over 4
 ##
-#---------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 # Source the liberror file for error handling
 . ${CAULDRON_LIBS}/libinit
@@ -26,34 +26,37 @@
 . ${SORCERY_LIBS}/libstate
 . ${SORCERY_LIBS}/libtrack
 
-#---------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 ##
 ## Prepares a chroot environment
 ##
-#---------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 function cauldron_chroot_init() {
   mount --bind ${HOSTPATH}/dev ${CAULDRON_BUILD}/dev
   mount --bind ${HOSTPATH}/dev/pts ${CAULDRON_BUILD}/dev/pts
   mount --bind ${HOSTPATH}/proc ${CAULDRON_BUILD}/proc
 }
 
-#---------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 ##
 ## Cleans up the chroot environment after it is no longer needed
 ##
-#---------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 function cauldron_chroot_done() {
   umount ${CAULDRON_BUILD}/proc
   umount ${CAULDRON_BUILD}/dev/pts
   umount ${CAULDRON_BUILD}/dev
 }
 
-#---------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 ##
 ## Scans the sorcery archspec files to find the host triplet
-## This will be used to set the value of HOST in /etc/cauldron/config
 ##
-#---------------------------------------------------------------------
+## Later, this will be used to set the value of HOST_TRIPLE in
+## /etc/cauldron/config after the code to write the config file is in
+## place
+##
+#-------------------------------------------------------------------------------
 function cauldron_get_host_triple() {
   local HOST_ARCH
   local ARCH_SPEC
@@ -78,7 +81,7 @@ function cauldron_get_host_triple() {
   echo ${HOST_TRIPLE}
 }
 
-#---------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 ##
 ## Generates the base toolchain using the HOST information. This is
 ## done by unpacking the cache file for each spell required for the
@@ -200,7 +203,7 @@ function cauldron_build_cache_file() {
 ## the cross-compilation of the basesystem via sorcery rebuild using the
 ## cross-compiler.
 ##
-#---------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 function cauldron_configure_toolchain() {
   local STAGE=$1
 
@@ -220,7 +223,7 @@ function cauldron_configure_toolchain() {
   esac
 }
 
-#---------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 ## @param XXX
 ##
 ## This builds the cross-compiler to produce the TARGET binaries.
@@ -255,14 +258,14 @@ function cauldron_cross_toolchain() {
   cauldron_chroot_done
 }
 
-#---------------------------------------------------------------------
-## @param target_spells - a list of spells that will be needed to install into
-## the target system from the iso.
+#-------------------------------------------------------------------------------
+## @param target_spells
 ##
 ## Performs cast on the list of spells needed for installation to the target
-## system.
+## system. "target_spells" is a list of spells that will be needed to install
+## into the target system from the iso.
 ##
-#---------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 function cauldron_build_iso_system() {
   local target_spells=$1
   local spell
@@ -286,9 +289,11 @@ function cauldron_build_iso_system() {
 ## @param CLEANFILE
 ##
 ## Cleans out unneeded files that were used to generate the ISO, but should
-## not be present on the final ISO system
+## not be present on the final ISO system. CLEANFILE is a file that lists paths
+## to remove (absolute paths, relative to a chroot of the iso), one file/path
+## per line.
 ##
-#---------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 function cauldron_clean_iso_system() {
   local CLEANFILE=$1
 
@@ -308,14 +313,14 @@ function cauldron_clean_iso_system() {
   return $CERR_OK
 }
 
-#---------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 ## @param KEEP - whether or not to keep the original .iso file in addition to
 ## the compressed .iso.bz2
 ##
 ## Builds the ISO filesystem using the generated ISO data and the filename
 ## set in the cauldron config file.
 ##
-#---------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 function cauldron_mkisofs() {
   local KEEP=$1
 
@@ -459,6 +464,6 @@ function cauldron_cleanup() {
 ## along with this software; if not, write to the Free Software
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 ##
-#---------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 # vim:ai:tw=80:tabstop=2:softtabstop=2:shiftwidth=2:expandtab
