@@ -460,7 +460,53 @@ function cauldron_build_iso() {
   cauldron_mkisofs $CAULDRON_KEEPISO
 }
 
-#---------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+##
+## This creates the CAULDRON_BUILD directory, and copies sorcery and
+## cauldron files into it. It also configures the CAULDRON_BUILD
+## sorcery as necessary (i.e. ensures that CLEAN_SOURCE="off") for
+## sanity purposes
+##
+#-------------------------------------------------------------------------------
+function cauldron_prepare() {
+  # first, ensure that the build dir exists
+  mkdir -p ${CAULDRON_BUILD}
+
+  # copy the host's resolv.conf in order to dl packages from net
+  cp -L /etc/resolv.conf ${CAULDRON_BUILD}/etc/resolv.conf
+
+  cauldron_sorcery_install ${CAULDRON_BUILD}
+  mkdir -p ${CAULDRON_BUILD}/var/spool/sorcery
+  cp -f ${HOSTPATH}/var/spool/sorcery/sorcery-${SORCERY_BRANCH}.tar${EXTENSION}
+
+  # cauldron is a spell
+  # there is a spoon
+  cauldron_chroot_init
+  ${CAULDRON_CHROOT} ${CAULDRON_CAST} cauldron
+  cauldron_chroot_done
+}
+
+
+#-------------------------------------------------------------------------------
+## @param INSTALL_DIR
+##
+## Installs sorcery into the ISO system, relative to INSTALL_DIR
+##
+#-------------------------------------------------------------------------------
+function cauldron_sorcery_install() {
+}
+
+#-------------------------------------------------------------------------------
+##
+## Cleans up the tmp directories and such forth
+##
+#-------------------------------------------------------------------------------
+function cauldron_cleanup() {
+  [[ ${CAULDRON_CLEAN} == "yes" ]] && rm -fr ${CAULDRON_BUILD}
+  rm -fr ${CAULDRON_TMP}
+}
+
+#-------------------------------------------------------------------------------
 ##
 ## This software is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
