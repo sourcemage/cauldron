@@ -16,73 +16,15 @@
 #---------------------------------------------------------------------
 
 # Source the liberror file for error handling
-. liberror
+. ${CAULDRON_LIBS}/libinit
+. ${CAULDRON_LIBS}/liberror
 
-
-#---------------------------------------------------------------------
-##
-## @param Filename
-##
-## 
-##
-#---------------------------------------------------------------------
-function cauldron_lock_start_transaction() {
-}
-
-#---------------------------------------------------------------------
-##
-## @param Filename
-##
-## 
-##
-#---------------------------------------------------------------------
-function cauldron_lock_commit_transaction() {
-}
-
-#---------------------------------------------------------------------
-##
-## @param Filename
-## @param Variable
-## @param Value
-##
-## Modifies the values assigned to variables present in a config file.
-## Filename is typically either cauldron/config or cauldron/local/config.
-## Variable is the name of the variable to modify/update, and Value is the
-## value to assign to it.
-##
-#---------------------------------------------------------------------
-function cauldron_modify_config() {
-  local FILE=$1
-  local VAR=$2
-  local VAL=$3
-  local COL=$((20-${#1}))
-  local tFILE=""
-  local TEMP=""
-
-  if [[ -f ${FILE} ]]
-  then
-    # Open tFILE for the transactions for FILE, to be committed back to
-    # FILE later.
-    tFILE=$(cauldron_lock_start_transaction ${FILE})
-
-    # Copy everything _except_ the var we want to change to tFILE
-    # This effectively deletes the previous reference to var (in tFILE)
-    $(grep -v "^[[:blank:]]*${1}=" ${FILE} > ${tFILE})
-
-    # Justify (center) the text in the file based on the length of the var
-    [[ COL -lt 0 ]] && COL=0
-    for (( ; COL>0 ; COL-- )) ;
-    do
-      TEMP="${TEMP} "
-    done
-
-    # Write out the new variable=value assignment, including justification
-    # whitespace, to tFILE
-    echo "${TEMP}${1}=\"${2}\"" >> ${tFILE}
-
-    # Commit the changes back out to the original FILE
-    cauldron_lock_commit_transaction ${FILE}
-}
+#-------------------------------------------------------------------------------
+# Source needed sorcery library files
+#-------------------------------------------------------------------------------
+# Needed for modifying config files
+. ${SORCERY_LIBS}/libstate
+. ${SORCERY_LIBS}/libtrack
 
 #---------------------------------------------------------------------
 ##
