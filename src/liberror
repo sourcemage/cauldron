@@ -25,6 +25,9 @@ CERR_OK=0
 CERR_ARCHIVE=1
 CERR_CLEANFILE=2
 
+EERR_OK=0
+EERR_STEP=1
+
 #---------------------------------------------------------------------
 ##
 ## This software is free software; you can redistribute it and/or modify
