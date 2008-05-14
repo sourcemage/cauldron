@@ -1,4 +1,5 @@
         SORCERY_CONFIG=/etc/sorcery/config
+          SORCERY_LIBS=/var/lib/sorcery/modules
    HOST_SORCERY_CONFIG=/etc/sorcery/local/config
          HOST_PACKAGES=/var/state/sorcery/packages
     HOST_SORCERY_SPOOL=/var/spool/sorcery
