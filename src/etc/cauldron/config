@@ -35,6 +35,8 @@
           CAULDRON_TMP=${HOSTPATH}/tmp/cauldron
 # whether CAULDRON_BUILD should be rm'ed after cauldron has finished
         CAULDRON_CLEAN="no"
+# branch of sorcery to use in the ISO
+    ISO_SORCERY_BRANCH="stable"
 
 # The following variables are for Enchant
            ENCHANT_TMP=tmp/enchant
