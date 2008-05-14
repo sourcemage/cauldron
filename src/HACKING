@@ -1,0 +1,105 @@
+This file describes the layout of the project, and how the different components interconnect with each other.
+
+************
+* cauldron *
+************
+	This is the interface to all the different libraries. It accepts user
+input, and (when later implemented) presents an interface for modifying the
+cauldron config file. It will have both a command-line interface and a
+menu-driven interface (via dialog), much like sorcery.
+
+***************
+* libcauldron *
+***************
+	This is the real work-horse. It handles the building of packages
+(including setting up cross-compiler toolchains), the installation of both
+sorcery and cauldron scripts into the chroot build directory, etc. This is
+sourced by the cauldron script. It itself sources the liberror library (for
+returning error codes back to the calling script, in this case the cauldron
+script) and libinit library (for handling the ISO init boot stuff). The libinit
+sourcing will possibly be moved out into the cauldron script later, but for now
+it is in libcauldron.
+
+************
+* liberror *
+************
+	This library defines all the error codes recognized by the cauldron
+scripts, and (when implemented) functions to handle the printing of error
+messages using these codes. This is used by cauldron, libcauldron, and
+libenchant. It is sourced by libcauldron (and should be sourced by cauldron and
+libenchant?).
+
+***********
+* libinit *
+***********
+	The libinit module handles the init system for the ISO. It sets up
+inittab for booting into the correct enchant setup (i.e. putting the menu
+installer on tty1 and the shell installer on all the remaining tty's). It will
+also set up other necessary init scripts (and possibly the init system itself,
+if this is needed), though these should really be taken care of via sorcery and
+casting spells with their init scripts enabled. Sourced by libcauldron (perhaps
+later to be sourced by the cauldron script instead?).
+
+***********************
+* etc/cauldron/config *
+***********************
+	The config file contains all the global variables used by the cauldron
+scripts that can be user-configured. This includes both cauldron variables and
+enchant variables. This is used by everything.
+
+*******************************
+* etc/cauldron/iso-spells.lst *
+*******************************
+	A list of all the spells necessary for the ISO to function. These are
+all basic spells, like bash for example. Later we will likely also have
+arch-specific spell lists, since different archs will need, for example,
+different boot loaders (grub and lilo are only for x86). The spell list is used
+by libcauldron.
+
+*******************************
+* etc/cauldron/tool-chain.lst *
+*******************************
+	This is a list of all the spells needed for building the binaries to go
+onto the ISO. It includes things like gcc, and for x86 bin86. This will likely
+get split into arch-specific tool-chain lists later. The tool-chain list is
+used by libcauldron.
+
+**********************
+* enchant/libenchant *
+**********************
+	This library provides common functions to be used across the different
+ISO installers. Currently sourced by libcauldron, but likely will be sourced by
+cauldron instead of libcauldron soon. It is also sourced by the different
+installers, as it provides common functionality for them.
+
+
+****************
+* enchant/menu *
+****************
+	The menu installer (look at older ISOs (0.9.6.3 or earlier) for an idea
+of what this is). Everything relevant to the menu installer goes under this
+directory, to be copied onto the ISO later if the ISO is intended to make use
+of this module.
+
+*****************
+* enchant/shell *
+*****************
+	The shell installer (as seen on the 0.10.0 devel ISOs). Everything
+relevant to the shell installer goes under this directory, to be copied over to
+the ISO later if the ISO is intended to use this installer. (Note: The ISO
+really should have this installer! Whatever other installer is being used, this
+one is highly stable and robust, and requires very little in the way of system
+resources. It's a good backup if something goes wrong with another installer,
+and has proven capable of being the only installer on the ISO as well. Other
+installers are just eye-candy on top of this one.)
+
+*************
+* cleaners/ *
+*************
+	This directory contains text files with lists of files, one per line
+(note: files, not spells!). The files that are listed are ones that can/should
+be removed from the ISO before packaging it. For example, the build toolchain
+is removed from the ISO via the cleaners, since some of the toolchain libraries
+are needed for runtime binaries, even though the build tools themselves are
+not. No build tools should be on the ISO! Their spell caches are provided
+instead. The cleaners are used by libcauldron.
