@@ -206,15 +206,15 @@ function cauldron_configure_toolchain() {
 
   case ${STAGE} in
     1)
-      cauldron_modify_config ${TARGET_LOCAL_CFG} CUSTOM_CFLAGS \ 
+      modify_config ${TARGET_LOCAL_CFG} CUSTOM_CFLAGS \
         "--host=${HOST} --target=${TARGET}"
     ;;
     2)
-      cauldron_modify_config ${TARGET_LOCAL_CFG} CUSTOM_CFLAGS \
+      modify_config ${TARGET_LOCAL_CFG} CUSTOM_CFLAGS \
         "--build=${HOST} --host=${TARGET}"
     ;;
     3)
-      cauldron_modify_config ${TARGET_LOCAL_CFG} CUSTOM_CFLAGS \
+      modify_config ${TARGET_LOCAL_CFG} CUSTOM_CFLAGS \
         "--build=${HOST} --host=${TARGET} --target=${TARGET}"
     ;;
   esac
