@@ -1,0 +1,117 @@
+#!/bin/bash
+#-------------------------------------------------------------------------------
+##
+##=head1 SYNOPSIS
+##
+##  libinit is a set of functions used internally by the cauldron scripts
+##  responsible for handling the init setup, including initrd and initramfs, on
+##  the ISOs.
+##
+##=head1 COPYRIGHT
+##
+##  Copyright 2007 by the Cauldron Team
+##
+##=head1 FUNCTIONS
+##
+##=over 4
+##
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+## @param XXX
+##
+## Handles setting up the init process on the ISO. The ISO init is
+## responsible for detecting hardware, loading device drivers, setting
+## console fonts, etc.
+##
+#-------------------------------------------------------------------------------
+function cauldron_iso_init() {
+}
+
+#-------------------------------------------------------------------------------
+## @param XXX
+##
+## Makes the initrd to be used by the ISO on booting.
+##
+#-------------------------------------------------------------------------------
+function cauldron_ramdisk() {
+}
+
+#-------------------------------------------------------------------------------
+## @param XXX
+##
+## Makes the initramfs be used by the ISO on booting.
+##
+#-------------------------------------------------------------------------------
+function cauldron_ramfs() {
+}
+
+#-------------------------------------------------------------------------------
+## @param XXX
+##
+## Gathers and copies the necessary binaries into the initfs
+##
+#-------------------------------------------------------------------------------
+function cauldron_initfs_bins() {
+}
+
+#-------------------------------------------------------------------------------
+## @param XXX
+##
+## Gathers and copies the necessary libraries into the initfs
+##
+#-------------------------------------------------------------------------------
+function cauldron_initfs_libs() {
+}
+
+#-------------------------------------------------------------------------------
+## @param XXX
+##
+## Copies over any required kernel modules into the initfs
+##
+#-------------------------------------------------------------------------------
+function cauldron_initfs_mods() {
+}
+
+#-------------------------------------------------------------------------------
+## @param XXX
+##
+## Sets up the "init" in the initfs (AKA linuxrc)
+##
+#-------------------------------------------------------------------------------
+function cauldron_initfs_init() {
+}
+
+#-------------------------------------------------------------------------------
+## @param XXX
+##
+## Builds a "filesystem" to be used in an initrd or initramfs
+##
+#-------------------------------------------------------------------------------
+function cauldron_initfs() {
+  cauldron_gendirs
+  cauldron_initfs_bins
+  cauldron_initfs_libs
+  cauldron_initfs_mods
+  cauldron_initfs_init
+}
+
+#-------------------------------------------------------------------------------
+##
+## This software is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2 of the License, or
+## (at your option) any later version.
+##
+## This software is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this software; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+##
+#-------------------------------------------------------------------------------
+
+# vim:ai:tw=80:tabstop=2:softtabstop=2:shiftwidth=2:expandtab
