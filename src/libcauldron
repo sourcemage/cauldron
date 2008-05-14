@@ -196,7 +196,58 @@ function cauldron_create_base_toolchain() {
   done
 }
 
-#---------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+## @param spell
+##
+## Builds a cache file from the information provided by the install log for the
+## spell passed as an argument. It expects the provided spell to include the
+## version as a suffix (i.e. bash-3.2).
+##
+#-------------------------------------------------------------------------------
+function cauldron_create_cache() {
+  local SPELL=$1
+  local INSTALL_LOG="${HOSTPATH}/var/log/sorcery/install/${SPELL}"
+  local CACHE=${CAULDRON_CACHE}/${SPELL}.tar
+
+  create_cache_archive ${INSTALL_LOG} ${CACHE} ${CACHE}${EXTENSION}
+}
+
+#-------------------------------------------------------------------------------
+## @param spell
+## @param aggressive
+##
+## Generates a cache file for the given spell. It will try to use information
+## from an already installed/cast spell (in the case of the host system having
+## sorcery configured to not generate the caches), and, failing that, will cast the
+## spell and then dispel it (the second step only being performed if aggressive
+## is true).
+##
+#-------------------------------------------------------------------------------
+function cauldron_build_cache_file() {
+  local SPELL=$1
+  local AGGRESSIVE=$2
+  local VERSION=
+
+  # First check to see if the spell was installed, but no cache exists.
+  if gaze -q installed $SPELL
+  then
+    # Spell is installed, generate a cache file using the install log?
+    VERSION=$(grep "^${SPELL}" ${HOST_PACKAGES} | cut -d : -f 4)
+    cauldron_create_cache ${SPELL}-${VERSION}
+  else
+    # Only do this part if the caller wants us to be aggressive in building the
+    # cache.
+    if $AGGRESSIVE
+    then
+      # Do some trickery to get a cache file. Make sure that sorcery is set to
+      # generate a cache file, and if not then either set sorcery to do so or
+      # build the cache file afterwards by being recursive? This should be done
+      # in a build chroot so that the user's host filesystem is not polluted.
+    fi
+  fi
+}
+
+#-------------------------------------------------------------------------------
 ## @param stage
 ##
 ## Configures the toolchain for building on the TARGET system. In other
