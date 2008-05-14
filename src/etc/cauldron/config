@@ -10,9 +10,40 @@
        CACHE_EXTENSION=$(grep "EXTENSION=" ${HOST_SORCERY_CONFIG} | \
                          cut -d = -f 2)
 
-        CAULDRON_CAST="/usr/sbin/cast"
-        CAULDRON_REBUILD="/usr/sbin/sorcery rebuild"
-        CAULDRON_BUILD=
-              SMGL_ISO=
-        HOST_TOOLCHAIN=
-                  HOST=
+         CAULDRON_CAST="/usr/sbin/cast"
+       CAULDRON_DISPEL="/usr/sbin/dispel"
+      CAULDRON_REBUILD="/usr/sbin/sorcery rebuild"
+
+# path to the host system
+              HOSTPATH=
+# path to the ISO system (this should usually be null, unless
+# you are doing some tricky hacking)
+              ISOPATH=
+# path to the cauldron library modules
+        CAULDRON_LIBS=${HOSTPATH}/var/lib/cauldron
+# path to where the ISO build chroot is/will go
+        CAULDRON_BUILD="${HOSTPATH}/tmp/cauldron"
+# should point to a file listing all the spells needed for the toolchain
+        HOST_TOOLCHAIN="${HOSTPATH}/etc/cauldron/toolchain.x86"
+# should point to a file listing all the spells needed for the toolchain
+         TARGET_SPELLS="${HOSTPATH}/etc/cauldron/isospells.x86"
+# what the ISO will be called (should follow the ISO naming conventions)
+              SMGL_ISO="smgl-devel-$(date +%Y%m%d)"
+# contains the arch info for the HOST
+           HOST_TRIPLE=
+          CAULDRON_TMP=${HOSTPATH}/tmp/cauldron
+# whether CAULDRON_BUILD should be rm'ed after cauldron has finished
+        CAULDRON_CLEAN="no"
+
+# The following variables are for Enchant
+           ENCHANT_TMP=tmp/enchant
+        ENCHANT_STATUS=${ENCHANT_TMP}/status
+          ENCHANT_BACK=${ENCHANT_TMP}/history/back
+       ENCHANT_FORWARD=${ENCHANT_TMP}/history/forward
+          ENCHANT_DATA=usr/share/enchant
+          ENCHANT_MSGS=${ENCHANT_DATA}/messages
+          ENCHANT_DOCS=usr/share/doc/enchant
+        ENCHANT_TARGET=mnt/root
+# specifies the max. size of the history buffers
+# total history size = $ENCHANT_HISTORY * 2 = back + forward
+       ENCHANT_HISTORY=20
