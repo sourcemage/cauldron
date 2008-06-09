@@ -395,13 +395,16 @@ function cauldron_build_iso() {
 
   # use the cross-compile tool-chain to cast all spells needed for
   # the iso system
-  ${CAULDRON_CHROOT} cauldron_build_iso_system
+  ${CAULDRON_CHROOT} cauldron_build_iso_system ${TARGET_SPELLS}
 
   # configure the iso init system, initrd/initramfs, etc.
   ${CAULDRON_CHROOT} cauldron_iso_init
 
   # build/create/copy/whatever installer system/data into the iso
-  ${CAULDRON_CHROOT} cauldron_add_installer
+  for installer in $(cat ${TARGET_SPELLS})
+  do
+    ${CAULDRON_CHROOT} cauldron_add_installer $installer
+  done
 
   # remove unnecessary files from iso and free up space
   # this needs to have error-checking added in later
@@ -416,7 +419,7 @@ function cauldron_build_iso() {
   cauldron_chroot_done
 
   # create the iso fs from the build dir
-  cauldron_mkisofs $CAULDRON_KEEPISO
+  cauldron_mkisofs
 }
 
 #-------------------------------------------------------------------------------
