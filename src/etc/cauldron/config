@@ -21,6 +21,8 @@
                ISOPATH=""
 # path to the cauldron library modules
          CAULDRON_LIBS="${HOSTPATH}/var/lib/cauldron"
+# path to the cauldron configs
+         CAULDRON_DATA="/etc/cauldron"
 # path to where the ISO build chroot is/will go
         CAULDRON_BUILD="${HOSTPATH}/tmp/cauldron"
           CAULDRON_TMP="${CAULDRON_BUILD}/tmp"
@@ -30,10 +32,14 @@
          TARGET_SPELLS="${HOSTPATH}/etc/cauldron/isospells.x86"
 # what the ISO will be called (should follow the ISO naming conventions)
               SMGL_ISO="smgl-devel-$(date +%Y%m%d)"
+# the name of the kernel to be used in the ISO
+        CAULDRON_KVERS=""
 # contains the arch info for the HOST
            HOST_TRIPLE=""
 # whether CAULDRON_BUILD should be rm'ed after cauldron has finished
         CAULDRON_CLEAN="no"
+# do we keep the uncompressed .iso file in addition to the compressed one?
+      CAULDRON_KEEPISO="yes"
 # branch of sorcery to use in the ISO
     ISO_SORCERY_BRANCH="stable"
 
