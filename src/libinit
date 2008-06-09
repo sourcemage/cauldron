@@ -26,6 +26,7 @@
 ##
 #-------------------------------------------------------------------------------
 function cauldron_iso_init() {
+  cp ${CAULDRON_DATA}/inittab ${CAULDRON_BUILD}/etc/inittab
 }
 
 #-------------------------------------------------------------------------------
@@ -35,6 +36,16 @@ function cauldron_iso_init() {
 ##
 #-------------------------------------------------------------------------------
 function cauldron_ramdisk() {
+  local initrd="${CAULDRON_TEMP}/initrd"
+  local initmnt="${CAULDRON_TEMP}/initrd_mount"
+
+  mkdir -p ${initmnt}
+  dd -if /dev/null -of ${initrd}
+  mke2fs ${initrd}
+  mount -o loop ${initrd} ${initmnt}
+  cauldron_initfs ${initmnt}
+  umount ${initmnt}
+  gzip -9 ${initrd}
 }
 
 #-------------------------------------------------------------------------------
@@ -44,56 +55,104 @@ function cauldron_ramdisk() {
 ##
 #-------------------------------------------------------------------------------
 function cauldron_ramfs() {
+  local ramdir="${CAULDRON_TEMP}/initram"
+  local ramfs="${CAULDRON_TEMP}/initram.cpio"
+
+  mkdir -p ${ramdir}
+  cauldron_initfs ${ramdir}
+  (
+    cd ${ramdir}
+    find . -print -depth | cpio -o > ${ramfs}
+    gzip -9 ${ramfs}
+  )
 }
 
 #-------------------------------------------------------------------------------
-## @param XXX
+## @param path_to_initfs
+##
+## Sets up the basic directories that will be needed on the initfs
+##
+#-------------------------------------------------------------------------------
+function cauldron_initfs_dirs() {
+  local initfs=$1
+
+  for dir in $(cat ${CAULDRON_DATA}/initfs.dirs)
+  do
+    mkdir -p ${initfs}/${dir}
+  done
+}
+
+#-------------------------------------------------------------------------------
+## @param path_to_initfs
 ##
 ## Gathers and copies the necessary binaries into the initfs
 ##
 #-------------------------------------------------------------------------------
 function cauldron_initfs_bins() {
+  local initfs=$1
+
+  for bin in $(cat ${CAULDRON_DATA}/initfs.binaries)
+  do
+    cp $bin ${initfs}/bin
+  done
 }
 
 #-------------------------------------------------------------------------------
-## @param XXX
+## @param path_to_initfs
 ##
 ## Gathers and copies the necessary libraries into the initfs
 ##
 #-------------------------------------------------------------------------------
 function cauldron_initfs_libs() {
+  local initfs=$1
+
+  for lib in $(cat ${CAULDRON_DATA}/initfs.libs)
+  do
+    cp $lib ${initfs}/lib/
+  done
 }
 
 #-------------------------------------------------------------------------------
-## @param XXX
+## @param path_to_initfs
 ##
 ## Copies over any required kernel modules into the initfs
 ##
 #-------------------------------------------------------------------------------
 function cauldron_initfs_mods() {
+  local initfs=$1
+
+  for module in $(cat ${CAULDRON_DATA}/initfs.modules)
+  do
+    cp $module ${initfs}/lib/modules/$CAULDRON_KVERS
+  done
 }
 
 #-------------------------------------------------------------------------------
-## @param XXX
+## @param path_to_initfs
 ##
 ## Sets up the "init" in the initfs (AKA linuxrc)
 ##
 #-------------------------------------------------------------------------------
 function cauldron_initfs_init() {
+  local initfs=$1
+
+  cp ${CAULDRON_DATA}/initfs.init ${initfs}/linuxrc
 }
 
 #-------------------------------------------------------------------------------
-## @param XXX
+## @param path_to_initfs
 ##
 ## Builds a "filesystem" to be used in an initrd or initramfs
 ##
 #-------------------------------------------------------------------------------
 function cauldron_initfs() {
-  cauldron_gendirs
-  cauldron_initfs_bins
-  cauldron_initfs_libs
-  cauldron_initfs_mods
-  cauldron_initfs_init
+  local initfs=$1
+
+  cauldron_initfs_dirs $initfs
+  cauldron_initfs_bins $initfs
+  cauldron_initfs_libs $initfs
+  cauldron_initfs_mods $initfs
+  cauldron_initfs_init $initfs
 }
 
 #-------------------------------------------------------------------------------
