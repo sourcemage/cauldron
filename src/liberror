@@ -28,7 +28,37 @@ CERR_CLEANFILE=2
 EERR_OK=0
 EERR_STEP=1
 
-#---------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# Function definitions
+#-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+## @param type
+##
+## Checks for an error condition (via $?), and if found it will return an error
+## of the specified type (arg1).
+##
+#-------------------------------------------------------------------------------
+function cauldron_checkerror() {
+  local type=$1
+  local error=
+
+  if [[ $? -gt 0 ]]
+  then
+    error=$type
+  else
+    error="${${type:0:1}ERR_OK}"
+  fi
+  return $error
+}
+
+function cauldron_printerror() {
+  local error=$1
+  local errmsg=
+
+  echo "$CERR_COLOR" "$errmsg" "$CDEFAULT_COLOR"
+}
+
+#-------------------------------------------------------------------------------
 ##
 ## This software is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
