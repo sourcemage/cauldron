@@ -1,0 +1,90 @@
+#!/bin/bash
+
+# This file is the SMGL shell installer.
+# Take care not to pollute the user's namespace too much,
+# And make sure your functions don't collide with existing commands.
+
+. /etc/cauldron/local/config
+. ${ISO}/${ENCHANT_DATA}/libenchant
+
+# Ensure installer sanity
+enchant_prepare
+
+function header() {
+  local doc
+  doc=$1
+  echo ""
+  echo ""
+  echo ""
+  cat $1
+}
+
+function todo() {
+  local CURSTEP=$(enchant_getstep)
+
+  header ${ENCHANT_MSGS}/steps/$CURSTEP
+}
+
+function next_step() {
+  enchant_getnext
+}
+
+function cur_step() {
+  enchant_getstep
+}
+
+function next() {
+  enchant_setnext
+  todo
+}
+
+function prev() {
+  enchant_setprev
+  todo
+}
+
+function num_current() {
+  enchant_getnum
+}
+
+function num_steps() {
+  enchant_gettotal
+}
+
+function steps() {
+  header $ENCHANT_DATA/shell/steps
+}
+
+function back() {
+  enchant_back
+}
+
+function forward() {
+  enchant_forward
+}
+
+function jump() {
+  enchant_setstep $*
+  if [[ $? = $EERR_STEP ]]
+  then
+    echo ""
+    echo "Error: '$*' is not a recognized step."
+    echo "Type [1msteps[m to see a list of steps."
+  fi
+}
+
+function welcome() {
+  header ${ENCHANT_MSGS}/welcome
+}
+
+function help() {
+  helpfile=${ENCHANT_MSGS}/help/${1:-index}
+  if [[ -e $helpfile ]] ;then
+    header $helpfile
+  else
+    echo "No installer help for '$1', falling back to bash's builtin help"
+    builtin help $1
+  fi
+}
+
+PS1="[current:\$(cur_step) next:\$(next_step) \$(num_current)/\$(num_steps)] For a list of commands, type [1mhelp[m\n\u \w\$ "

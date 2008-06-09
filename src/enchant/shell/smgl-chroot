@@ -1,0 +1,17 @@
+#!/bin/bash
+
+# Note: don't use --rbind: It creates several mounts, and we wouldn't be able
+# to figure out easily what to umount.
+mount --bind /dev /mnt/root/dev         &&
+mount --bind /dev/pts /mnt/root/dev/pts &&
+mount --bind /proc /mnt/root/proc       &&
+export PS1="[inside chroot, type [1mexit[m to return to installer]\n\u \w\$ " &&
+chroot /mnt/root "$@"
+rc=$?
+umount /mnt/root/proc
+umount /mnt/root/dev/pts
+umount /mnt/root/dev
+
+exit $rc
+
+# vim:sw=2:ts=2:softtabstop=2:expandtab:ai
