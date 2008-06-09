@@ -341,12 +341,10 @@ function cauldron_clean_iso_system() {
 ##
 #-------------------------------------------------------------------------------
 function cauldron_mkisofs() {
-  local KEEP=$1
-
   mkisofs -R -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot \
     -boot-load-size 4 -boot-info-table -o ${SMGL_ISO} ${CAULDRON_BUILD}
 
-  if [[ KEEP == "1" ]] ;
+  if [[ "$CAULDRON_KEEPISO" == "yes" ]] ;
   then
     bzip2 -k ${SMGL_ISO}
   else
