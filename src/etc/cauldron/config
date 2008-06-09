@@ -14,7 +14,7 @@
        CAULDRON_DISPEL="/usr/sbin/dispel"
       CAULDRON_REBUILD="/usr/sbin/sorcery rebuild"
 
-# path to the host system
+# path to the host system (null for normal use)
               HOSTPATH=""
 # path to the ISO system (this should usually be null, unless
 # you are doing some tricky hacking)
@@ -25,6 +25,7 @@
          CAULDRON_DATA="/etc/cauldron"
 # path to where the ISO build chroot is/will go
         CAULDRON_BUILD="${HOSTPATH}/tmp/cauldron"
+# temporary files generated while cauldron does its work
           CAULDRON_TMP="${CAULDRON_BUILD}/tmp"
 # should point to a file listing all the spells needed for the toolchain
         HOST_TOOLCHAIN="${HOSTPATH}/etc/cauldron/toolchain.x86"
