@@ -1,5 +1,5 @@
 #!/bin/bash
-#---------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 ##
 ##=head1 SYNOPSIS
 ##
@@ -14,17 +14,45 @@
 ##
 ##=over 4
 ##
-#---------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
-#---------------------------------------------------------------------
-##
-## ERROR definitions
-##
-#---------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+# Local global variables
+#-------------------------------------------------------------------------------
+local CDEFAULT_COLOR="\e[0m"
+local CBOLD="\e[1m"
+local CBLACK="\e[30m"
+local CRED="\e[31m"
+local CGREEN="\e[32m"
+local CYELLOW="\e[33m"
+local CBLUE="\e[34m"
+local CVIOLET="\e[35m"
+local CCYAN="\e[36m"
+local CWHITE="\e[37m"
+
+local CERR_COLOR="${RED}${BOLD}"
+local EERR_COLOR="${RED}${BOLD}"
+
+local CSPELL_COLOR="${WHITE}${BOLD}\e[40m"
+local CVERSION_COLOR="${WHITE}${BOLD}\e[40m"
+local CQUERY_COLOR="${YELLOW}${BOLD}"
+local CDISPEL_COLOR="${YELLOW}${BOLD}"
+local CCHECK_COLOR="${CYAN}"
+local CRESURRECT_COLOR="${GREEN}${BOLD}"
+local CFILE_COLOR="${GREEN}${BOLD}"
+local CSYMLINK_COLOR="${CYAN}${BOLD}"
+local CPROBLEM_COLOR="${RED}${BOLD}"
+local CMESSAGE_COLOR="${CYAN}"
+
+#-------------------------------------------------------------------------------
+# ERROR definitions
+#-------------------------------------------------------------------------------
+# cauldron errors
 CERR_OK=0
 CERR_ARCHIVE=1
 CERR_CLEANFILE=2
 
+# enchant errors
 EERR_OK=0
 EERR_STEP=1
 
@@ -74,7 +102,7 @@ function cauldron_printerror() {
 ## along with this software; if not, write to the Free Software
 ## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 ##
-#---------------------------------------------------------------------
+#-------------------------------------------------------------------------------
 
 # vim:ai:tw=80:tabstop=2:softtabstop=2:shiftwidth=2:expandtab
 
