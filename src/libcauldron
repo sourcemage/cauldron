@@ -288,12 +288,17 @@ function cauldron_build_iso_system() {
   # tarball, for each spell we only need to make sure that the cache file is
   # available. This will require that the ISO sorcery has caching enabled. The
   # caching should really be turned on from the very beginning though...
-  [[ $ARCHIVE=="off" ]] && return $CERR_ARCHIVE
+  [[ "$ARCHIVE" == "off" ]] && return $CERR_ARCHIVE
   cauldron_chroot_init
   for spell in $TARGET_SPELLS
   do
-    $CAULDRON_CAST $spell
-    $CAULDRON_DISPEL $spell
+    # Cheap cop-out to get the cache generated - cast the spell to generate the
+    # cache, and then dispel it from the system so that it isn't wasting space
+    # on the ISO filesystem (any spells cast here should be those not required
+    # for the functioning of the ISO itself, only to be installed to the target
+    # system).
+    ${CAULDRON_CHROOT} ${CAULDRON_CAST} $spell
+    ${CAULDRON_CHROOT} ${CAULDRON_DISPEL} $spell
   done
   cauldron_chroot_done
   return $CERR_OK
