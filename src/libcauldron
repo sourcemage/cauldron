@@ -27,14 +27,24 @@
 . ${SORCERY_LIBS}/libtrack
 
 #-------------------------------------------------------------------------------
+# Local global variables
+#-------------------------------------------------------------------------------
+local CAULDRON_CHROOTINIT=0
+local CAULDRON_CHROOT="chroot $CAULDRON_BUILD"
+
+#-------------------------------------------------------------------------------
 ##
 ## Prepares a chroot environment
 ##
 #-------------------------------------------------------------------------------
 function cauldron_chroot_init() {
-  mount --bind ${HOSTPATH}/dev ${CAULDRON_BUILD}/dev
-  mount --bind ${HOSTPATH}/dev/pts ${CAULDRON_BUILD}/dev/pts
-  mount --bind ${HOSTPATH}/proc ${CAULDRON_BUILD}/proc
+  if [[ "$CAULDRON_CHROOTINIT" -ne 1 ]]
+  then
+    mount --bind ${HOSTPATH}/dev ${CAULDRON_BUILD}/dev
+    mount --bind ${HOSTPATH}/dev/pts ${CAULDRON_BUILD}/dev/pts
+    mount --bind ${HOSTPATH}/proc ${CAULDRON_BUILD}/proc
+    CAULDRON_CHROOTINIT=1
+  fi
 }
 
 #-------------------------------------------------------------------------------
@@ -43,9 +53,13 @@ function cauldron_chroot_init() {
 ##
 #-------------------------------------------------------------------------------
 function cauldron_chroot_done() {
-  umount ${CAULDRON_BUILD}/proc
-  umount ${CAULDRON_BUILD}/dev/pts
-  umount ${CAULDRON_BUILD}/dev
+  if [[ "$CAULDRON_CHROOTINIT" -eq 1 ]]
+  then
+    umount ${CAULDRON_BUILD}/proc
+    umount ${CAULDRON_BUILD}/dev/pts
+    umount ${CAULDRON_BUILD}/dev
+    CAULDRON_CHROOTINIT=0
+  fi
 }
 
 #-------------------------------------------------------------------------------
@@ -134,7 +148,7 @@ function cauldron_base_toolchain() {
       # the spell is not present on the HOST system, so it must be cast
       # inside a chroot
       cauldron_chroot_init
-      chroot ${CAULDRON_BUILD} ${CAULDRON_CAST} ${SPELL}
+      ${CAULDRON_CHROOT} ${CAULDRON_CAST} ${SPELL}
       cauldron_chroot_done
     fi
   done
@@ -233,28 +247,28 @@ function cauldron_cross_toolchain() {
   # build the stage 1 tools
   cauldron_configure_toolchain 1
   cauldron_chroot_init
-  chroot ${CAULDRON_BUILD} ${CAULDRON_CAST} binutils
-  chroot ${CAULDRON_BUILD} ${CAULDRON_CAST} gcc
+  ${CAULDRON_CHROOT} ${CAULDRON_CAST} binutils
+  ${CAULDRON_CHROOT} ${CAULDRON_CAST} gcc
   cauldron_chroot_done
 
   # build glibc (stage 2)
   cauldron_configure_toolchain 2
   cauldron_chroot_init
-  chroot ${CAULDRON_BUILD} ${CAULDRON_CAST} glibc
+  ${CAULDRON_CHROOT} ${CAULDRON_CAST} glibc
   cauldron_chroot_done
 
   # rebuild gcc (still stage 1, but this time linked against the
   # cross-glibc
   cauldron_configure_toolchain 1
   cauldron_chroot_init
-  chroot ${CAULDRON_BUILD} ${CAULDRON_CAST} gcc
+  ${CAULDRON_CHROOT} ${CAULDRON_CAST} gcc
   cauldron_chroot_done
 
   # do a sorcery rebuild inside the BUILD dir to
   # generate the cross-compile tool-chain (stage 3)
   cauldron_configure_toolchain 3
   cauldron_chroot_init
-  chroot ${CAULDRON_BUILD} ${CAULDRON_REBUILD}
+  ${CAULDRON_CHROOT} ${CAULDRON_REBUILD}
   cauldron_chroot_done
 }
 
