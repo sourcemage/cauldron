@@ -1,0 +1,20 @@
+# Boot automatically after 30 secs.
+timeout 10
+
+# By default, boot the first entry.
+default 0
+
+# Fallback to the second entry.
+fallback 1
+
+# use LBA
+lba32
+
+# Splashimage, provides a nice image for the background
+splashimage  (hd0,0)/boot/grub/images/smgl-splash.xpm.gz
+
+# defines menu foreground/background, highlight foreground/background
+color  black/light-gray white/red
+
+title Source Mage GNU/Linux
+kernel (hd0,0)/boot/vmlinuz root=/dev/hda1 ro
