@@ -93,7 +93,7 @@ function go_list {
       if loadkeys $PREFIX
       then
         # TODO: figure out what the user needs to enter in sysconfig/keymap
-        echo "${prefix%.*map.*}" >/tmp/selected-keymap
+        echo "${PREFIX%.*map.*}" >/tmp/selected-keymap
         RESULT=0
       else
         RESULT=2
