@@ -60,7 +60,7 @@ function next() {
   todo
 }
 
-function back() {
+function prev() {
   local CURSTEP
   CURSTEP=$(cat $INSTALLER_STATUS)
   CURSTEP=$(grep ":$CURSTEP$" $INSTALLER_DATA/order | tail -n 1 | cut -d: -f1)
@@ -99,7 +99,7 @@ function jump() {
     fi
   done
   echo ""
-  echo "Error: '$*' is not a recognized step."
+  [[ $good -eq 0 ]] && echo "Error: '$*' is not a recognized step."
   echo "Type [1msteps[m to see a list of steps."
 }
 

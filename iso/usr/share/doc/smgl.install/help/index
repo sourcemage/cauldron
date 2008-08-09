@@ -1,9 +1,9 @@
-back		return to the previous step in the list
 help		print a list of commands (this list)
 help index	print a list of commands (this list)
 help editors	print a list of editors available on the ISO
 jump <step>	jump directly to <step>
 next		go to the next step
+prev		return to the previous step in the list
 steps		print a listing of all possible steps
 todo		show what needs to be done for the current step
 welcome		show some help information (seen at the welcome screen)

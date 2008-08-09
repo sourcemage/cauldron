@@ -1,9 +1,9 @@
-Welcome to the SMGL devel-20080207  install CD!
+Welcome to the SMGL @release@  install CD!
 
 The install process is currently a guided shell prompt. Type [1mnext[m to start.
 Everytime you finish a step, enter [1mnext[m to advance to the next one.
 If you want to re-read the documentation for a step, type [1mtodo[m.
-You can enter [1mback[m at any time to jump to the previous step.
+You can enter [1mprev[m at any time to jump to the previous step.
 
 If you ever get lost, type [1msteps[m to get a list of installer steps,
 and e.g. [1mjump copy-base[m to jump to a specific step.
