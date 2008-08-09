@@ -1,22 +1,23 @@
 [1muser-setup step[m
-Finally, we need to give the root user a password and probably create an user
-for you to do your daily work with.
+To set up users, chroot into the target system as for the bootloader step:
+[1m smgl-chroot[m
 
-To set up users, you'll want to chroot into the target system again, as you
-already did to install the bootloader:
-[1msmgl-chroot[m
+Set a password for the root user (pick a secure one, but not one you'll forget,
+and bear in mind that it can be bypassed with a screwdriver):
+[1m passwd root[m
 
-Set up a password for the root user (pick a secure one, but not one you'll
-forget. Also, bear in mind that it can be bypassed with a screwdriver.):
-[1mpasswd root[m
-
-If you would like to add additional users at this time, you may feel free
-to do so by typing the following:
-[1museradd -d /home/mbolton -m [m-g users[1m mbolton[m
-[1mpasswd mbolton[m
+[1mRecommended[m: add at least one regular user for daily use:
+[1m useradd -d /home/mbolton -m [m-g users[1m mbolton[m
+[1m passwd mbolton[m
 
 Replace mbolton with whatever login you want. Don't forget to change
 /home/mbolton accordingly. You may also change the group (-g users).
 
+[1mWARNING[m: The default /etc/login.defs from the shadow spell makes use of
+/etc/securetty to determine which devices root is allowed to login on, but does
+not provide /etc/securetty by default. To login as root on consoles, either
+turn this feature off in /etc/login.defs, or create /etc/securetty and list the
+devices you want (e.g. /dev/tty1).
+
 Finally, exit the chroot to return to the installer:
-[1mexit[m
+[1m exit[m
