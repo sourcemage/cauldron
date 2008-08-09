@@ -1,0 +1,23 @@
+[1mcompile-kernel[m
+This step is optional. You may now set up a custom kernel for your
+installation. To do so, run the following commands.
+
+chroot into your system:
+[1m smgl-chroot[m
+
+Unpack the kernel sources:
+[1m cd /usr/src[m
+[1m tar -jxvf linux-2.6.22.tar.bz2[m (leave out [1mv[m to silence tar output)
+
+Symlink to /usr/src/linux
+[1m ln -sf /usr/src/linux-2.6.22 /usr/src/linux[m
+
+Configure, make, and install:
+[1m make menuconfig[m
+[1m make; make modules; make modules_install[m
+[1m cp -f /usr/src/linux/arch/i386/boot/bzImage /boot/vmlinuz-2.6.22[m
+
+Exit the chroot:
+[1mexit[m
+
+Type [1mnext[m to go to the next step.

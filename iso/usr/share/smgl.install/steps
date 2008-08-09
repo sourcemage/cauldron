@@ -3,10 +3,11 @@ disk-partition     - creating partitions
 disk-format        - creating filesystems
 disk-mount         - mounting filesystems at appropriate mount-points
 copy-base          - copying basesystem and basic /etc files
+edit-confs         - editing the basic configuration files
+compile-kernel     - compile a custom kernel
 boot-loader        - installing and setting up a boot manager
 lilo               - do this step to set up lilo
 grub               - do this step to set up grub
-edit-confs         - editing the basic configuration files
 install-opt-spells - installing other spells you may need
 user-setup         - set root password, create regular users
 reboot             - reboot into the new system
