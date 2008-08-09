@@ -1,5 +1,5 @@
 drivers/acpi
-drivers/base
+drivers/ata
 drivers/cdrom
 drivers/ide
 drivers/ieee1394
