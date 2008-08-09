@@ -1,4 +1,4 @@
-[1mFinished![m
+[1mreboot step[m
 You should be all done with the installation! Congratulations!
 
 Now it is time to umount all of your partitions. For all partitions you mounted
@@ -13,8 +13,8 @@ umount /mnt/root/var/spool
 umount /mnt/root/var
 umount /mnt/root
 
-Now, reboot via something like
-[1mshutdown -r now "install finished"[m
+Now, reboot via something like:
+[1m shutdown -r now "install finished"[m
 
 We don't (yet) eject the CD during shutdown, so be sure to take it out during
 reboot or configure your BIOS not to try and boot from it.

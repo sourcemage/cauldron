@@ -1,13 +1,13 @@
-[1mgrub instructions[m:
+[1mgrub step[m:
 To run grub properly, it needs to be chroot'ed into the new system. This needs
 some directories (/dev, /proc), so we provide a wrapper to set those up for
 you and clean them up again when you're done.
 
 Run the script to get a shell inside the installed system:
-[1msmgl-chroot[m
+[1m smgl-chroot[m
 
 Then run grub so you can update the boot record (TODO: use grub-install here?):
-[1m/sbin/grub[m
+[1m /sbin/grub[m
 
 You'll get a grub shell, where you need to enter the following commands,
 without the > in front (adjust for your disk layout):
@@ -16,7 +16,7 @@ without the > in front (adjust for your disk layout):
 > [1mquit[m
 
 Exit the chroot:
-[1mexit[m
+[1m exit[m
 
 Unless you got an error message when you were installing the boot loader,
 you should be done with this step. Type [1mnext[m to go to the next step.

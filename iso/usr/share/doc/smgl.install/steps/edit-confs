@@ -1,4 +1,4 @@
-[1mediting basic configuration files[m
+[1medit-confs step[m
 
 Now, we need to set up our partitions so the system will find them again on
 bootup. For this, edit [1m/mnt/root/etc/fstab[m and add your partitions.
