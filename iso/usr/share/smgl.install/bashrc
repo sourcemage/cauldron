@@ -16,7 +16,6 @@ mkdir -p $INSTALLER_TMP
 function header() {
   echo ""
   echo ""
-  echo ""
   echo "<-------------------------------------------------------------------->"
 }
 
