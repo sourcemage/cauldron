@@ -14,19 +14,17 @@ mkdir -p $INSTALLER_TMP
 [[ -e $INSTALLER_STATUS ]] || echo 'init' >$INSTALLER_STATUS
 
 function header() {
-  local doc
-  doc=$1
   echo ""
   echo ""
   echo ""
   echo "<-------------------------------------------------------------------->"
-  cat $1
 }
 
 function todo() {
   local CURSTEP
   CURSTEP=$(cat $INSTALLER_STATUS)
-  header $INSTALLER_DOCS/steps/$CURSTEP
+  header
+  cat $INSTALLER_DOCS/steps/$CURSTEP
 }
 
 function next_step() {
@@ -81,37 +79,33 @@ function num_steps() {
 }
 
 function steps() {
-  header $INSTALLER_DATA/steps
+  header
+  cat $INSTALLER_DATA/steps
 }
 
 function jump() {
-  local i
-  local good=0
-
   cat $INSTALLER_DATA/steps | cut -d" " -f1 |
-  while read i
-  do
-    if [[ $* = $i ]]
-    then
-      good=1
-      echo "$*" >$INSTALLER_STATUS
-      todo
-      return
-    fi
-  done
-  echo ""
-  [[ $good -eq 0 ]] && echo "Error: '$*' is not a recognized step."
+  grep -q "^$*" && {
+    echo "$*" >$INSTALLER_STATUS
+    todo
+    return 0
+  }
+  header
+  echo "Error: '$*' is not a recognized step."
   echo "Type [1msteps[m to see a list of steps."
+  return 1
 }
 
 function welcome() {
-  header $INSTALLER_DOCS/welcome
+  header
+  cat $INSTALLER_DOCS/welcome
 }
 
 function help() {
   helpfile=$INSTALLER_DOCS/help/${1:-index}
   if [[ -e $helpfile ]] ;then
-    header $helpfile
+    header
+    cat $helpfile
   else
     echo "No installer help for '$1', falling back to bash's builtin help"
     builtin help $1
