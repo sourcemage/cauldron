@@ -152,10 +152,10 @@ function enchant_setprev() {
 #-------------------------------------------------------------------------------
 function enchant_back() {
   # if the forward history is empty, then we can't go forward
-  [[ $(wc -l ${ENCHANT_BACK}) -eq 0 ]] && return $EERR_BACK
+  [[ $(wc -l < ${ENCHANT_BACK}) -eq 0 ]] && return $EERR_BACK
 
   # if the max history size has been reached, then we drop the oldest item
-  [[ $(wc -l ${ENCHANT_FORWARD}) -ge $ENCHANT_HISTORY ]] &&
+  [[ $(wc -l < ${ENCHANT_FORWARD}) -ge $ENCHANT_HISTORY ]] &&
     sed -i "" 1d ${ENCHANT_FORWARD}
 
   # copy the current status to the forward history, so we can go forward to
@@ -175,10 +175,10 @@ function enchant_back() {
 #-------------------------------------------------------------------------------
 function enchant_forward() {
   # if the forward history is empty, then we can't go forward
-  [[ $(wc -l ${ENCHANT_FORWARD}) -eq 0 ]] && return $EERR_FORWARD
+  [[ $(wc -l < ${ENCHANT_FORWARD}) -eq 0 ]] && return $EERR_FORWARD
 
   # if the max history size has been reached, then we drop the oldest item
-  [[ $(wc -l ${ENCHANT_BACK}) -ge $ENCHANT_HISTORY ]] &&
+  [[ $(wc -l < ${ENCHANT_BACK}) -ge $ENCHANT_HISTORY ]] &&
     sed -i "" 1d ${ENCHANT_BACK}
 
   # copy the current status to the back history, so we can go back to where we
@@ -208,7 +208,7 @@ function enchant_getnum() {
 ##
 #-------------------------------------------------------------------------------
 function enchant_gettotal() {
-  cat $ENCHANT_DATA/steps | wc -l
+  wc -l < $ENCHANT_DATA/steps
 }
 
 #-------------------------------------------------------------------------------
@@ -241,7 +241,7 @@ function enchant_setstep() {
       echo "$step" >$ENCHANT_STATUS
       # Now we do some work for the back history
       # if the max history size has been reached, then we drop the oldest item
-      [[ $(wc -l ${ENCHANT_BACK}) -ge $ENCHANT_HISTORY ]] &&
+      [[ $(wc -l < ${ENCHANT_BACK}) -ge $ENCHANT_HISTORY ]] &&
         sed -i "" 1d ${ENCHANT_BACK}
       # copy the current status to the back history, so we can go back to where we
       # are after we jump forward
