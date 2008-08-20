@@ -1,0 +1,88 @@
+#!/bin/bash
+# Exit code convention:
+# 0 - [re]launch menu for current step
+# 1 - display main menu
+# 2 - exit to shell (user-initiated)
+# * - exit to shell (unplanned)
+
+function initial() {
+  menu_docbox "Do the disk stuff"
+  STATE=get_part
+  return 0
+}
+
+function get_part() {
+  RESULT=$(dialog_menu /dev/hda1 /dev/sda2 custom)
+  rc=$?
+  if [[ $rc == 1 ]] ;then
+    STATE=initial
+    return 0
+  elif [[ $rc == 3 ]] ;then
+    STATE=finish
+    return 0
+  else
+    echo "Unrecognized exit code $? from dialog, bailing out" >&2
+    exit 3
+  fi
+
+  PARTITION=$RESULT
+  if [[ $PARTITION == custom ]] ;then
+    STATE=enter_part
+  else
+    STATE=get_fstype
+  fi
+}
+
+function enter_part() {
+  RESULT=$(menu_txtbox "Enter partition") ||
+  {
+    STATE=get_part
+    return 0
+  }
+  PARTITION=$RESULT
+  STATE=get_fstype
+}
+
+function get_fstype() {
+  RESULT=$(menu_menu ext2 ext3 jfs reiserfs xfs custom) ||
+  {
+    STATE=get_part
+    return 0
+  }
+  FSTYPE=$RESULT
+  MKFSCMD="mkfs.$FSTYPE $PARTITION"
+  STATE=confirm
+}
+
+function confirm() {
+  RESULT=$(menu_menu doit modify) ||
+  {
+    STATE=get_fstype
+    return 0
+  }
+  if [[ $RESULT == doit ]] ;then
+    STATE=result
+  else
+    STATE=tunecmd
+  fi
+}
+
+function result() {
+  echo "Creating filesystem..."
+  eval "$MKFSCMD"
+  rc=$?
+  if [[ $rc == 0 ]] ;then
+    STATE=get_partition
+  else
+    STATE=get_partition
+    STATE=tunecmd
+  fi
+}
+
+function finish() {
+  installer_next
+  exit 0
+}
+
+register_states initial get_part get_fstype confirm result finish
+menu_loop
