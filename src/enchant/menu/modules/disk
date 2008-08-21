@@ -1,9 +1,36 @@
 #!/bin/bash
-# Exit code convention:
-# 0 - [re]launch menu for current step
-# 1 - display main menu
-# 2 - exit to shell (user-initiated)
-# * - exit to shell (unplanned)
+
+load_partitions() {
+  #   Device Boot Start   End    MiB    #blocks   Id  System
+  #/dev/sda1   *     0+  9538-  9539-   9767488+  83  Linux
+  #/dev/sda2      9538+ 10236-   699-    714892+  82  Linux swap / Solaris
+
+  PARTITIONS=()
+  local i=0
+  local PART SIZE TYPE
+  # Poor man's pipe: doesn't spawn a subshell.
+  < <(sfdisk -l -uM | grep '^/' | sed 's/\*//;s/ \+/\t/' |
+    cut -d$'\t' -f1,6,8
+    sed 's/ .*  / /') \
+  while read PART _ _ SIZE _ _ TYPE ;do
+    PARTITIONS[i++]=$PARTITION
+    PARTITIONS[i++]="$SIZE MiB, $TYPE"
+  done
+}
+
+mkfs_command() {
+  case $1 in
+        ext2)  echo  "mke2fs $2"      ;;
+        ext3)  echo  "mke2fs -j $2"   ;;
+    reiserfs)  echo  "mkreiserfs $2"  ;;
+         xfs)  echo  "mkfs.xfs -f $2" ;; # ignore existing partition
+         jfs)  echo  "mkfs.jfs $2"    ;;
+        swap)  echo  "mkswap $2"      ;;
+      custom)  echo  "... $2"         ;;
+           *)  return 1               ;;
+  esac
+  return 0
+}
 
 function initial() {
   menu_docbox "Do the disk stuff"
@@ -12,7 +39,8 @@ function initial() {
 }
 
 function get_part() {
-  RESULT=$(dialog_menu /dev/hda1 /dev/sda2 custom)
+  load_partitions
+  RESULT=$(menu_central_menu "${PARTITIONS[@]}" custom "Enter one manually")
   rc=$?
   if [[ $rc == 1 ]] ;then
     STATE=initial
@@ -21,8 +49,7 @@ function get_part() {
     STATE=finish
     return 0
   else
-    echo "Unrecognized exit code $? from dialog, bailing out" >&2
-    exit 3
+    die_cmd "dialog" $?
   fi
 
   PARTITION=$RESULT
@@ -44,18 +71,30 @@ function enter_part() {
 }
 
 function get_fstype() {
-  RESULT=$(menu_menu ext2 ext3 jfs reiserfs xfs custom) ||
+  RESULT=$(menu_menu "Filesystem Selection Menu"           \
+    "Please select what filesystem to use for $PARTITION"  \
+    "ext2"      "Second Extended file system"              \
+    "ext3"      "Second Extended journaling file system"   \
+    "reiserfs"  "Reiserfs journaling file system"          \
+    "xfs"       "XFS journaling file system"               \
+    "jfs"       "JFS journaling file system"               \
+    "swap"      "Swap partition"
+    "custom"    "your call") ||
   {
     STATE=get_part
     return 0
   }
   FSTYPE=$RESULT
-  MKFSCMD="mkfs.$FSTYPE $PARTITION"
+  MKFSCMD="$(mkfs_command $FSTYPE $PARTITION)"
   STATE=confirm
 }
 
 function confirm() {
-  RESULT=$(menu_menu doit modify) ||
+  RESULT=$(menu_menu "Confirmation Menu" \
+    "Do you want to run the following command:
+$MKFSCMD"
+    "doit" "Energize!"
+    "modify" "Let me edit that line") ||
   {
     STATE=get_fstype
     return 0
@@ -69,20 +108,30 @@ function confirm() {
 
 function result() {
   echo "Creating filesystem..."
-  eval "$MKFSCMD"
+  eval "$MKFSCMD" 2>&1 | tee /tmp/mkfs.out
   rc=$?
   if [[ $rc == 0 ]] ;then
+    menu_message "Successful mkfs" \
+      "Command ran successfully. Output was:
+$(cat /tmp/mkfs.out)"
     STATE=get_partition
   else
-    STATE=get_partition
-    STATE=tunecmd
+    RESULT=$(menu_menu "mkfs failed" \
+         "Command failed with exit status $rc. Output was:
+$(cat /tmp/mkfs.out)" \
+         "edit" "Edit command and retry" \
+         "return" "Return to partition menu")
+    if [[ $RESULT == "return" ]] ;then
+      STATE=get_partition
+    else # return or "back"
+      STATE=tunecmd
+    fi
   fi
 }
 
 function finish() {
-  installer_next
-  exit 0
+  enchant_setnext
+  exit $EXIT_OK
 }
 
-register_states initial get_part get_fstype confirm result finish
 menu_loop
