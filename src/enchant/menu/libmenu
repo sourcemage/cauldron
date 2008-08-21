@@ -1,3 +1,32 @@
+#!/bin/bash
+# [not actually a script, just to teach vi proper hilighting]
+
+# Constants for exit codes recognized by the menu launcher
+# (menu modules should not exit with anything else,
+#  or it'll be treated as an error in the menu module itself)
+
+EXIT_OK=0        # Launches menu on the [now] current step
+EXIT_MAINMENU=21 # Brings up the main menu
+EXIT_SHELL=22    # Switches to shell installer (after user asked)
+EXIT_BAIL=23     # Exit to shell (to be used after weird errors)
+
+# for dialog
+export DIALOG_ESC=1 # Treat esc as cancel
+
+# die_cmd [failed_command [displayed_exitcode [exitcode_for_exit]]]
+function die_cmd() {
+  local rc=${2:-$?}
+  local message
+
+  [[ -n $1 ]] &&
+    message="Error: $1 failed with exit code $rc, "
+
+  message="${message}bailing out."
+
+  echo "$message" >&2
+  exit ${3:-$EXIT_BAIL}
+}
+
 # Menu / checklist / whatever
 # If this returns 0, use result from dialog, otherwise the user cancelled
 function menu_step() {
@@ -8,10 +37,9 @@ function menu_step() {
   elif [[ $rc == 1 ]] ;then # back
     return 1
   elif [[ $rc == 3 ]] ;then # abort/cancel
-    exit 1
+    exit $EXIT_MAINMENU
   else
-    echo "Unrecognized exit code $? from dialog, bailing out" >&2
-    exit 3
+    die_cmd "dialog" $rc
   fi
   return $rc
 }
@@ -25,12 +53,11 @@ function menu_docbox() {
   if [[ $rc == 0 ]] ;then
     ((STATE++))
   elif [[ $rc == 1 ]] ;then # main menu
-    exit 1
+    exit $EXIT_MAINMENU
   elif [[ $rc == 3 ]] ;then # shell
-    exit 2
+    exit $EXIT_SHELL
   else
-    echo "Unrecognized exit code $? from dialog, bailing out" >&2
-    exit 3
+    die_cmd "dialog" $rc
   fi
 }
 
@@ -38,12 +65,9 @@ function menu_loop() {
   STATE=initial
   while [[ $STATE != mainmenu ]] ;do
     $STATE || # Function call
-    {
-      echo "State $STATE failed (code $?), bailing out" >&2
-      exit 3
-    }
+      die_cmd "State $STATE"
   done
 
   # Exit to main menu on normal completion of loop
-  exit 1
+  exit $EXIT_MAINMENU
 }

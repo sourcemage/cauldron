@@ -1,6 +1,7 @@
 #!/bin/bash
 
 . /usr/share/smgl.install/libenchant
+. /wherever/libmenu
 
 function main_menu() {
 }
@@ -17,18 +18,20 @@ function main_loop() {
     fi
     /usr/share/smgl.install/menu/$step
     rc=$?
-    if [[ $rc == 0 ]] ;then
+    if [[ $rc == $EXIT_OK ]] ;then
       : # Carry on with the next step, nothing to do
       # (Step will have set the current installer step already)
-    elif [[ $rc == 1 ]] ;then
+    elif [[ $rc == $EXIT_MAINMENU ]] ;then
       MENU=true
-    elif [[ $rc == 2 ]] ;then
+    elif [[ $rc == $EXIT_SHELL ]] ;then
       echo "Switching to shell, type \e[1mmenu\e[1m to return to menu"
       echo "Type \e[1mtodo\e1m to see the current step's documentation"
       exit
-    else
-      echo "Bailing to shell (gui step returned $rc)..."
+    elif [[ $rc == $EXIT_BAIL ]] ;then
+      echo "Bailing to shell."
       exit
+    else
+      die_cmd "gui step $step" $rc
     fi
   fi
 }
