@@ -12,6 +12,7 @@ load_partitions() {
   local PART SIZE TYPE
   while read PART _ _ SIZE _ _ TYPE ;do
     [[ "$TYPE" == "Empty" ]] && continue
+    SIZE=${SIZE%+}; SIZE=${SIZE%-}
     PARTITIONS[i++]=$PART
     PARTITIONS[i++]="$SIZE MiB, $TYPE"
     # Poor man's pipe: doesn't spawn a subshell.
@@ -23,8 +24,8 @@ mkfs_command() {
         ext2)  echo  "mke2fs $2"      ;;
         ext3)  echo  "mke2fs -j $2"   ;;
     reiserfs)  echo  "mkreiserfs $2"  ;;
-         xfs)  echo  "mkfs.xfs -f $2" ;; # ignore existing partition
-         jfs)  echo  "mkfs.jfs -q $2" ;; # ditto
+         xfs)  echo  "mkfs.xfs $2" ;; # ignore existing partition
+         jfs)  echo  "mkfs.jfs $2" ;; # ditto
         swap)  echo  "mkswap $2"      ;;
       custom)  echo  "... $2"         ;;
            *)  return 1               ;;
@@ -127,22 +128,21 @@ It will be executed as if typed on the command line." \
 
 function result() {
   echo "Creating filesystem..."
-  eval "$MKFSCMD" 2>&1 | tee /tmp/mkfs.out
+  eval "$MKFSCMD"
   rc=$?
   if [[ $rc == 0 ]] ;then
-    menu_message "Successful mkfs" \
-      "Command ran successfully. Output was:
-$(cat /tmp/mkfs.out)"
+    echo "mkfs completed successfully. Press enter to continue..."
+    read LINE
     STATE=get_part
   else
-    menu_menu "mkfs failed" \
-         "Command failed with exit status $rc. Output was:
-$(cat /tmp/mkfs.out)" \
-         "edit" "Edit command and retry" \
-         "return" "Return to partition menu"
-    if [[ $ANSWER == "return" ]] ;then
+    cat <<EOF
+mkfs failed with exit status $rc. Enter 'cancel' to return
+to partition selection, anything else to re-edit the command...
+EOF
+    read ANSWER
+    if [[ $ANSWER == "cancel" ]] ;then
       STATE=get_part
-    else # return or "back"
+    else
       STATE=tunecmd
     fi
   fi
