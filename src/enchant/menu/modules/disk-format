@@ -33,14 +33,20 @@ mkfs_command() {
 }
 
 function initial() {
-  menu_docbox "Do the disk stuff"
+  menu_intro "Intro: disk-format" \
+"In this menu you will be formatting your disk.
+blah blah blather, ignorum ipsorum latin pretend
+more junk to get some test text creativity all
+gone and this should do"
   STATE=get_part
   return 0
 }
 
 function get_part() {
   load_partitions
-  RESULT=$(menu_central_menu "${PARTITIONS[@]}" custom "Enter one manually")
+  RESULT=$(menu_central_menu "Partition selection menu" \
+           "Select a partition to format or hit 'done'" \
+           "${PARTITIONS[@]}" custom "Enter one manually")
   rc=$?
   if [[ $rc == 1 ]] ;then
     STATE=initial
@@ -48,8 +54,6 @@ function get_part() {
   elif [[ $rc == 3 ]] ;then
     STATE=finish
     return 0
-  else
-    die_cmd "dialog" $?
   fi
 
   PARTITION=$RESULT
@@ -61,7 +65,9 @@ function get_part() {
 }
 
 function enter_part() {
-  RESULT=$(menu_txtbox "Enter partition") ||
+  RESULT=$(menu_inputbox "Enter partition" \
+           "Please enter a partition to be formatted (including /dev/)" \
+           "/dev/") ||
   {
     STATE=get_part
     return 0
@@ -104,6 +110,19 @@ $MKFSCMD"
   else
     STATE=tunecmd
   fi
+}
+
+function tunecmd() {
+  RESULT=$(menu_inputbox "Alter command" \
+           "Alter the command below whatever way you like.
+It will be executed as if typed on the command line." \
+           "$MKFSCMD") ||
+  {
+    STATE=get_fstype
+    return 0
+  }
+  MKFSCMD=$RESULT
+  STATE=confirm
 }
 
 function result() {

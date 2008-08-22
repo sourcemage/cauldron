@@ -27,16 +27,21 @@ function die_cmd() {
   exit ${3:-$EXIT_BAIL}
 }
 
+function run_dialog() {
+  dialog --backtitle "Source Mage GNU/Linux Installer, menu interface" \
+         --stdout --cr-wrap "$@"
+}
+
 # Menu / checklist / whatever
 # If this returns 0, use result from dialog, otherwise the user cancelled
 function menu_step() {
-  "${DIALOG[@]}" "$@"
+  run_dialog --extra-button --extra-label "back" --cancel-label "abort" "$@"
   rc=$?
   if [[ $rc == 0 ]] ;then # OK
     return 0
-  elif [[ $rc == 1 ]] ;then # back
+  elif [[ $rc == 3 ]] ;then # back
     return 1
-  elif [[ $rc == 3 ]] ;then # abort/cancel
+  elif [[ $rc == 1 ]] ;then # abort/cancel
     exit $EXIT_MAINMENU
   else
     die_cmd "dialog" $rc
@@ -47,11 +52,12 @@ function menu_step() {
 # Displays the doc blurb at the start of a step
 # Buttons: OK, main menu, shell
 # Only returns normally if the user pressed "OK", otherwise exits
-function menu_docbox() {
-  "${DIALOG[@]}" "$@"
+function menu_intro() {
+  run_dialog --extra-button --extra-label "shell" --yes-label "start" \
+             --no-label "main menu" --title "$1" --yesno "$2" 0 0
   rc=$?
   if [[ $rc == 0 ]] ;then
-    ((STATE++))
+    return 0
   elif [[ $rc == 1 ]] ;then # main menu
     exit $EXIT_MAINMENU
   elif [[ $rc == 3 ]] ;then # shell
@@ -59,6 +65,31 @@ function menu_docbox() {
   else
     die_cmd "dialog" $rc
   fi
+}
+
+function menu_central_menu() {
+  local title=$1
+  local text=$2
+  shift 2
+  run_dialog --extra-button --extra-label "done" --cancel-label "back" \
+             --title "$title" --menu "$text" 0 0 0 "$@"
+  local rc=$?
+  if [[ $rc != 0 ]] && [[ $rc != 1 ]] && [[ $rc != 3 ]] ;then
+    die_cmd "dialog" $rc
+  fi
+
+  return $rc
+}
+
+function menu_menu() {
+  local title=$1
+  local text=$2
+  shift 2
+  menu_step --title "$title" --menu "$text" 0 0 0 "$@"
+}
+
+function menu_inputbox() {
+  menu_step --title "$1" --inputbox "$2" 0 0 "$3"
 }
 
 function menu_loop() {
