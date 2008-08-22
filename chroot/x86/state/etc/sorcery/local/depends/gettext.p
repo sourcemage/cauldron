@@ -1,1 +1,0 @@
-GETTEXT_TETEX="n"

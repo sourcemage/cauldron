@@ -1,8 +1,0 @@
-TXTMESSAGE=""
-KERNEL_VERSION=2.6.12
-. ${SPELL_DIRECTORY}/info/kernels/${KERNEL_VERSION}
-SOURCE=$source
-SOURCE_URL=$source_url
-SOURCE2=${source}.sign
-SOURCE_GPG=kernel.gpg:${SOURCE2}:ESTABLISHED_UPSTREAM_KEY
-SOURCE2_URL=${source_url}.sign

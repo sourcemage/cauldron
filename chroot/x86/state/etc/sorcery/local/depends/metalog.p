@@ -1,5 +1,0 @@
-INIT_INSTALLED="smgl-metalog"
-INIT_NOT_INSTALLED=""
-INIT_ENABLED="smgl-metalog"
-INIT_DISABLED=""
-INIT_PROVIDES="smgl-metalog:syslog"

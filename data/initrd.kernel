@@ -1,7 +1,0 @@
-drivers/acpi
-drivers/ata
-drivers/cdrom
-drivers/ide
-drivers/ieee1394
-drivers/scsi
-drivers/usb

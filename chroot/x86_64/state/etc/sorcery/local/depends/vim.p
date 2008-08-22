@@ -1,5 +1,0 @@
-GVIM_MULTIBYTE="--enable-multibyte"
-GVIM_HANGUL="--disable-hangulinput"
-GVIM_GUI="none"
-GVIM_SUN="--disable-workshop"
-GVIM_SYMLINK="n"

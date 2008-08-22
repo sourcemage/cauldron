@@ -1,5 +1,0 @@
-INIT_INSTALLED="portmap"
-INIT_NOT_INSTALLED=""
-INIT_ENABLED="portmap"
-INIT_DISABLED=""
-INIT_PROVIDES="portmap:portmap"
