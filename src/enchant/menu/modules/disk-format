@@ -8,14 +8,13 @@ load_partitions() {
   PARTITIONS=()
   local i=0
   local PART SIZE TYPE
-  # Poor man's pipe: doesn't spawn a subshell.
-  < <(sfdisk -l -uM | grep '^/' | sed 's/\*//;s/ \+/\t/' |
-    cut -d$'\t' -f1,6,8
-    sed 's/ .*  / /') \
   while read PART _ _ SIZE _ _ TYPE ;do
+    [[ "$TYPE" == "Empty" ]] && continue
     PARTITIONS[i++]=$PARTITION
     PARTITIONS[i++]="$SIZE MiB, $TYPE"
-  done
+    # Poor man's pipe: doesn't spawn a subshell.
+  done < <(sfdisk -l -uM | grep '^/' |
+    sed 's/\*//;s/ \+/\t/g' | cut -d$'\t' -f1,5,7-)
 }
 
 mkfs_command() {
