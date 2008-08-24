@@ -156,7 +156,7 @@ function enchant_back() {
 
   # if the max history size has been reached, then we drop the oldest item
   [[ $(wc -l ${ENCHANT_FORWARD}) -ge $ENCHANT_HISTORY ]] &&
-    tail -n +2 ${ENCHANT_FORWARD} > ${ENCHANT_FORWARD}
+    sed -i "" 1d ${ENCHANT_FORWARD}
 
   # copy the current status to the forward history, so we can go forward to
   # where we are after we jump back
@@ -164,7 +164,7 @@ function enchant_back() {
   # set the current step to be the one we are jumping to
   tail -n 1 ${ENCHANT_BACK} > ${ENCHANT_STATUS}
   # remove the step we jumped to from the back history
-  head -n -1 ${ENCHANT_BACK} > ${ENCHANT_BACK}
+  sed -i "" $d ${ENCHANT_BACK}
 }
 
 #-------------------------------------------------------------------------------
@@ -179,7 +179,7 @@ function enchant_forward() {
 
   # if the max history size has been reached, then we drop the oldest item
   [[ $(wc -l ${ENCHANT_BACK}) -ge $ENCHANT_HISTORY ]] &&
-    tail -n +2 ${ENCHANT_BACK} > ${ENCHANT_BACK}
+    sed -i "" 1d ${ENCHANT_BACK}
 
   # copy the current status to the back history, so we can go back to where we
   # are after we jump forward
@@ -187,7 +187,7 @@ function enchant_forward() {
   # set the current step to be the one we are jumping to
   tail -n 1 ${ENCHANT_FORWARD} > ${ENCHANT_STATUS}
   # remove the step we jumped to from the forward history
-  head -n -1 ${ENCHANT_FORWARD} > ${ENCHANT_FORWARD}
+  sed -i "" $d ${ENCHANT_FORWARD}
 }
 
 #-------------------------------------------------------------------------------
@@ -242,7 +242,7 @@ function enchant_setstep() {
       # Now we do some work for the back history
       # if the max history size has been reached, then we drop the oldest item
       [[ $(wc -l ${ENCHANT_BACK}) -ge $ENCHANT_HISTORY ]] &&
-        tail -n +2 ${ENCHANT_BACK} > ${ENCHANT_BACK}
+        sed -i "" 1d ${ENCHANT_BACK}
       # copy the current status to the back history, so we can go back to where we
       # are after we jump forward
       cat < ${ENCHANT_STATUS} >> ${ENCHANT_BACK}
