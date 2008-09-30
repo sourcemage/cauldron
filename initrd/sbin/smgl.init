@@ -136,6 +136,10 @@ main()  {
 export PATH=/bin:/usr/bin:/sbin:/usr/sbin
 
 mount -n -t proc  proc  /proc
+mount -n -t sysfs sys	/sys
+mount -n -t tmpfs dev	/dev
+
+udevd --daemon
 
 KERNEL=`uname -r`
  MOUNT=/mnt/cdrom
