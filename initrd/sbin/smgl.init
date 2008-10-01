@@ -15,22 +15,26 @@ test_cdrom() {
   $found
 }
 
+boot-from() {
+  echo "$1" > /cdrom.hint
+}
+
 # at the end SMGL_CD is defined to the device where the SMGL CD is found
 # or else SMGL_CD is undefined
 
 scan_cdroms()  {
-
   SMGL_CD='unknown'
 
   if [[ -e /cdrom.hint ]] ;then
-    SMGL_CD=$(<cdrom.hint)
+    SMGL_CD=$(< /cdrom.hint)
     return
   fi
 
   echo "Trying to find the SMGL CD automatically..."
-  for handler in /proc/*/*/media ;do
-    if grep -q 'cdrom' $handler ;then
-      handler=${handler%/media}
+  for handler in /sys/block/*/removable ;do
+    if [[ $(cat $handler) -eq 1 ]]
+    then
+      handler=${handler%/removable}
       device=/dev/${handler##*/}
 
       test_cdrom $device &&
