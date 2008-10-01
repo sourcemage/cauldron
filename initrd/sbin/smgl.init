@@ -67,8 +67,9 @@ main()  {
 
   # Process init options directed at us
   while [[ $# -gt 0 ]] ;do
-    if [[ $1 == 'shellout' ]] ;then
+    if [[ $1 == 'shell' ]] ;then
       echo "requested a shellout!"
+      shell
     else
       INITOPTS[i++]=$1
     fi
@@ -110,6 +111,8 @@ main()  {
       continue
     fi
 
+    umount -n /dev
+    umount -n /sys
     umount -n /proc
 
     cd $MOUNT
@@ -129,7 +132,7 @@ main()  {
 
     mount -n -t proc proc proc
 
-    exec chroot . /sbin/init "${INITOPTS[@]}" <dev/console >dev/console 2>&1
+    exec /sbin/init "${INITOPTS[@]}" <dev/console >dev/console 2>&1
 
   done
 
@@ -144,6 +147,10 @@ mount -n -t sysfs sys	/sys
 mount -n -t tmpfs dev	/dev
 
 udevd --daemon
+udevadm trigger
+udevadm settle --timeout=60
+
+kill $(pidof udevd)
 
 KERNEL=`uname -r`
  MOUNT=/mnt/cdrom
