@@ -115,6 +115,9 @@ main()  {
     umount -n /sys
     umount -n /proc
 
+    echo "Killing initrd udev..."
+    kill $(pidof udevd)
+
     cd $MOUNT
 
     if  [  -d  initrd  ];  then
@@ -147,10 +150,8 @@ mount -n -t sysfs sys	/sys
 mount -n -t tmpfs dev	/dev
 
 udevd --daemon
-udevadm trigger
-udevadm settle --timeout=60
-
-kill $(pidof udevd)
+udevadm trigger 2>/dev/null
+udevadm settle --timeout=60 2>/dev/null
 
 KERNEL=`uname -r`
  MOUNT=/mnt/cdrom
