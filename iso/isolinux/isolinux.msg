@@ -1,9 +1,9 @@
-SMGL-devel-privatebear by the Source Mage GNU/Linux team 0e<www.sourcemage.org>07
+SMGL-@ISO_VERSION@ by the Source Mage GNU/Linux team 0e<www.sourcemage.org>07
 This ISO made using @GRIMOIRE_VERSION@.
 
 09Welcome07 to 04Source Mage GNU/Linux07
 Copyright (C) 2000-2001 by Kyle Sallee
-Copyright (C) 2002-2005 by Source Magers <www.sourcemage.org>
+Copyright (C) 2002-2008 by Source Magers <www.sourcemage.org>
 All Rights Reserved
 
 Source Mage is distributed under the terms of the GNU General Public License
