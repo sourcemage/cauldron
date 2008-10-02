@@ -54,5 +54,27 @@ chmod -R u=rwX,go=u-w $TEMPDIR/
 chmod 0600 $TEMPDIR/etc/shadow
 # ==== end fixup ====
 
-cp -a $TEMPDIR/* $CHROOTDIR/
+for i in $(find $TEMPDIR -print)
+do
+  FILE=${i#$TEMPDIR/}
+  if [[ -d $i ]]
+  then
+    continue
+  fi
+
+  if [[ -e $CHROOTDIR/$FILE ]]
+  then
+    echo -n "Overwrite ${FILE}? [yn] "
+    read -n1 OVERWRITE
+    echo ""
+    if [[ $OVERWRITE == y ]]
+    then
+      cp -a $TEMPDIR/$FILE $CHROOTDIR/
+    fi
+  else
+    cp -a $TEMPDIR/$FILE $CHROOTDIR/
+  fi
+done
+
 rm -rf $TEMPDIR
+
