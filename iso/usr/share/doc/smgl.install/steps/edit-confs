@@ -10,4 +10,4 @@ feel should be different. Especially, if you selected a custom keymap at the
 start of this install, you'll need to edit the file called [1mkeymap[m
 in that directory (do [1m cat /tmp/selected-keymap[m to see which you chose)
 
-Type [1mnext[m to go to the boot-loader selection step.
+Type [1mnext[m to go to the next step.
