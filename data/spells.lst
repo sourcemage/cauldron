@@ -53,7 +53,6 @@ make
 man
 mdadm
 memtest86+
-mktemp
 module-init-tools
 nano
 ncurses
