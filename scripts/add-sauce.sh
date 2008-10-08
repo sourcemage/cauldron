@@ -43,10 +43,18 @@ fi >&2
 rm -rf $TEMPDIR
 mkdir -m 0700 $TEMPDIR
 cp -a $MYDIR/base/* $TEMPDIR/
+
+# ISO Sauce
 if [[ $TYPE == "iso" ]] ;then
   cp -a $MYDIR/iso/* $TEMPDIR/
 fi
-# Insert copy of system here, once/if we need one.
+
+# System Sauce
+if [[ $TYPE == "system" ]]
+then
+  # make sure that grub the grub files are available in /boot
+  cp -a $CHROOTDIR/usr/lib/grub/i386-pc/* $TEMPDIR/boot/grub/
+fi
 
 # ==== FIXUP starts here ====
 chown -R 0:0 $TEMPDIR/
