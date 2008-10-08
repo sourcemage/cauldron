@@ -52,7 +52,7 @@ fi
 # System Sauce
 if [[ $TYPE == "system" ]]
 then
-  # make sure that grub the grub files are available in /boot
+  # make sure that the grub stage files are available in /boot
   cp -a $CHROOTDIR/usr/lib/grub/i386-pc/* $TEMPDIR/boot/grub/
 fi
 
