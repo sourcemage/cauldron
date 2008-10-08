@@ -16,3 +16,5 @@ video:x:44:
 wheel:x:55:
 users:x:1000:
 nogroup:x:65534:
+utmp:x:43:
+games:x:60:
