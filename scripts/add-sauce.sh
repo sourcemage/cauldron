@@ -69,25 +69,38 @@ chmod -R u=rwX,go=u-w $TEMPDIR/
 chmod 0600 $TEMPDIR/etc/shadow
 # ==== end fixup ====
 
-for i in $(find $TEMPDIR -print)
+# Get a list of all files we want to install
+for i in $(find $TEMPDIR -mindepth 1 -print)
 do
   FILE=${i#$TEMPDIR/}
+  # If FILE is a directory, mkdir in CHROOTDIR
+  # This is safe even if the dir already exists
   if [[ -d $i ]]
   then
+    mkdir -p $CHROOTDIR/$FILE
     continue
   fi
 
-  if [[ -e $CHROOTDIR/$FILE ]]
+  # For each file, check to see if it already
+  # exists in CHROOTDIR, and if so prompt if
+  # we should overwrite or not. If
+  # 'a' is passed then skip the prompting and
+  # just overwrite. Else, if 'y' is passed
+  # overwrite that file and prompt on next.
+  # Since this is checked via an env var,
+  # you can be clever and run this as
+  # OVERWRITE='a' add-sauce.sh [-i|-s] CHROOTDIR
+  if [[ -e $CHROOTDIR/$FILE && $OVERWRITE != a ]]
   then
-    echo -n "Overwrite ${FILE}? [yn] "
+    echo -n "Overwrite ${FILE}? [yna] "
     read -n1 OVERWRITE
     echo ""
     if [[ $OVERWRITE == y ]]
     then
-      cp -a $TEMPDIR/$FILE $CHROOTDIR/
+      cp -a $TEMPDIR/$FILE $CHROOTDIR/$FILE
     fi
   else
-    cp -a $TEMPDIR/$FILE $CHROOTDIR/
+    cp -a $TEMPDIR/$FILE $CHROOTDIR/$FILE
   fi
 done
 
