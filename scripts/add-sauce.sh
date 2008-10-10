@@ -47,12 +47,19 @@ if ! [[ -e $MYDIR/base/etc/shadow ]] ;then
 fi >&2
 
 
+# make sure we start with a clean TEMPDIR each run
 rm -rf $TEMPDIR
 mkdir -m 0700 $TEMPDIR
+
+# add the contents of base, which are files that
+# should go onto both iso and system chroots
+# this is mostly /etc content
 cp -a $MYDIR/base/* $TEMPDIR/
 
 # ISO Sauce
 if [[ $TYPE == "iso" ]] ;then
+  # copy everything from the cauldron repo iso dir
+  # into the TEMPDIR staging area
   cp -a $MYDIR/iso/* $TEMPDIR/
 fi
 
@@ -60,6 +67,8 @@ fi
 if [[ $TYPE == "system" ]]
 then
   # make sure that the grub stage files are available in /boot
+  # by copying them from CHROOTDIR (system) into the /boot dir
+  # in our TEMPDIR staging area
   cp -a $CHROOTDIR/usr/lib/grub/i386-pc/* $TEMPDIR/boot/grub/
 fi
 
