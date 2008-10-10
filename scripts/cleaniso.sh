@@ -2,6 +2,9 @@
 
 # CLEANFILEs are located in cauldron/data/cleaners
 
+CLEANALL=false
+CLEANERS="$(dirname $0)/../data/cleaners"
+
 if [[ $# -lt 2  ]]
 then
 	echo ""
@@ -15,11 +18,27 @@ then
 	exit 1
 fi >&2
 
+while getopts ":a" Option
+do
+	case $Option in
+		a ) CLEANALL=true ;;
+		* ) ;;
+	esac
+done
+shift $((OPTIND - 1))
+
 # location of ISO chroot to clean from
 ISOCHROOT="$1"
 shift
 
-for CLEANER in "$@"
+if $CLEANALL
+then
+	LIST=( $(ls $CLEANERS/*) )
+else
+	LIST=( $@ )
+fi
+
+for CLEANER in "${LIST[@]}"
 do
 	# Reverse sort ensures that the gaze install output we have lists files
 	# before directories, so that directories can be cleaned using rmdir
