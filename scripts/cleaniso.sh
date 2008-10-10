@@ -25,19 +25,22 @@ do
 	# before directories, so that directories can be cleaned using rmdir
 	# after the files are cleaned first. This is safer, since it avoids the
 	# mighty 'rm -fr' oopses.
-	for i in $(sort -r "$CLEANFILE")
+	for DIRT in $(sort -r "$CLEANER")
 	do
-		# test if current listing is a dir, should only be true after
-		# the files under the dir are already cleaned
-		if [[ -d "$i" ]]
+		if [[ -e $ISOCHROOT/$DIRT ]]
 		then
-			# chroot and clean a directory using rmdir
-			echo "Attempting to remove directory $i..."
-			chroot "$ISOCHROOT" rmdir "$i"
-		else
-			# chroot and clean an individual file
-			echo "Deleting $i"
-			chroot "$ISOCHROOT" rm "$i"
+			# test if current listing is a dir, should only be true after
+			# the files under the dir are already cleaned
+			if [[ -d "$DIRT" ]]
+			then
+				# chroot and clean a directory using rmdir
+				echo "Attempting to remove directory $ISOCHROOT/$DIRT"
+				chroot "$ISOCHROOT" rmdir "$DIRT"
+			else
+				# chroot and clean an individual file
+				echo "Attempting to delete $ISOCHROOT/$DIRT"
+				chroot "$ISOCHROOT" rm "$DIRT"
+			fi
 		fi
 	done
 done
