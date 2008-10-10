@@ -3,26 +3,33 @@
 TEMPDIR="/tmp/sauce.$$"
 
 FORCE=false
-if [[ $1 == "-f" ]] ;then
-  shift
-  FORCE=true
-fi
+TYPE="bad"
 
-TYPE=bad
-if [[ $1 == "-i" ]] ;then
-  TYPE=iso
-elif [[ $1 == "-s" ]] ;then
-  TYPE=system
-fi
-
-if [[ $TYPE == "bad" || -z $2 ]] ;then
-  echo "Usage: $0 [-f] <-i|-s> /path/to/target"
-  echo "Adds the cauldron team files to the given chroot"
-  echo "Use -i for an iso target, -s for the system tarball"
+function usage() {
+  cat << EndUsage
+Usage: $0 [-f] -i|-s /path/to/target
+Adds the cauldron team files to the given chroot
+Use -i for an iso target, -s for the system tarball
+EndUsage
   exit 1
-fi >&2
+} >&2
 
-CHROOTDIR=$2
+while getopts ":fis" Option
+do
+  case $Option in
+    f ) FORCE=true ;;
+    i ) TYPE="iso" ;;
+    s ) TYPE="system" ;;
+    * ) usage ;;
+  esac
+done
+shift $((OPTIND - 1))
+
+if [[ $TYPE == "bad" || -z $1 ]] ;then
+  usage
+fi
+
+CHROOTDIR=$1
 
 if ! $FORCE ;then
   if [[ ! -x $CHROOTDIR/bin/bash ]] ;then
