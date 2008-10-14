@@ -2,7 +2,7 @@
 
 function usage() {
 	cat << EndUsage
-Usage: $(basename $0) -d /path/to/target /path/to/output
+Usage: $(basename $0) /path/to/target /path/to/output
 Generates a compressed tarball of the "system" directory specified in
 /path/to/target. This script requires superuser privileges.
 
@@ -21,7 +21,7 @@ EndUsage
 	exit 1
 } >&2
 
-while getopts ":v" Option
+while getopts ":vh" Option
 do
 	case $Option in
 		v ) VERBOSE="-v" ;;
