@@ -14,12 +14,36 @@ SELF=$0
 CHROOT_DIR=
 CHROOT_CMD=
 
+function usage() {
+	cat << EndUsage
+Usage: $(basename $0) [-h] [-d /path/to/target] [CHROOT_CMD]
+Chroots to target with mounts taken care of (proc, dev, etc.).
+This script requires superuser privileges.
+
+Options:
+	-d /path/to/target
+	    The target directory you would like to chroot to. Defaults to
+	    current working directory.
+
+	-h  Shows this help information
+
+	CHROOT_CMD
+	    Any arbitrary command you wish to run inside the chroot. Note that
+	    you must specify an absolute path or the command will not likely be
+	    found (a way around this would be to either set the path as part of
+	    the command to execute, or to set the command to be /bin/bash -l
+	    some_command_without_abs_path). Defaults to "/bin/bash -l".
+EndUsage
+	exit 1
+} >&2
+
 # dir to chroot to is either $1 or $CWD
-while getopts ":d:" Option
+while getopts ":d:h" Option
 do
 	case $Option in
 		d ) CHROOT_DIR="$OPTARG" ;;
-		* ) ;;
+		h ) usage ;;
+		* ) echo "Unrecognized option." >&2 && usage ;;
 	esac
 done
 shift $(($OPTIND - 1))
