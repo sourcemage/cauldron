@@ -41,6 +41,20 @@ do
 done
 shift $(($OPTIND - 1))
 
+SELF=$0
+SUDOCMD=""
+
+if [[ $UID -ne 0 ]]
+then
+  if [[ -x $(which sudo) ]]
+  then
+    SUDOCMD="sudo"
+  else
+    echo "Please enter the root password."
+    exec su -c "$SELF $*" root
+  fi
+fi
+
 if [[ $TYPE == "bad" || -z $1 ]] ;then
   usage
 fi
@@ -64,19 +78,19 @@ fi >&2
 
 
 # make sure we start with a clean TEMPDIR each run
-rm -rf $TEMPDIR
-mkdir -m 0700 $TEMPDIR
+$SUDOCMD rm -rf $TEMPDIR
+$SUDOCMD mkdir -m 0700 $TEMPDIR
 
 # add the contents of base, which are files that
 # should go onto both iso and system chroots
 # this is mostly /etc content
-cp -a $MYDIR/base/* $TEMPDIR/
+$SUDOCMD cp -a $MYDIR/base/* $TEMPDIR/
 
 # ISO Sauce
 if [[ $TYPE == "iso" ]] ;then
   # copy everything from the cauldron repo iso dir
   # into the TEMPDIR staging area
-  cp -a $MYDIR/iso/* $TEMPDIR/
+  $SUDOCMD cp -a $MYDIR/iso/* $TEMPDIR/
 fi
 
 # System Sauce
@@ -85,13 +99,13 @@ then
   # make sure that the grub stage files are available in /boot
   # by copying them from CHROOTDIR (system) into the /boot dir
   # in our TEMPDIR staging area
-  cp -a $CHROOTDIR/usr/lib/grub/i386-pc/* $TEMPDIR/boot/grub/
+  $SUDOCMD cp -a $CHROOTDIR/usr/lib/grub/i386-pc/* $TEMPDIR/boot/grub/
 fi
 
 # ==== FIXUP starts here ====
-chown -R 0:0 $TEMPDIR/
-chmod -R u=rwX,go=u-w $TEMPDIR/
-chmod 0600 $TEMPDIR/etc/shadow
+$SUDOCMD chown -R 0:0 $TEMPDIR/
+$SUDOCMD chmod -R u=rwX,go=u-w $TEMPDIR/
+$SUDOCMD chmod 0600 $TEMPDIR/etc/shadow
 # ==== end fixup ====
 
 # Get a list of all files we want to install
@@ -102,7 +116,7 @@ do
   # This is safe even if the dir already exists
   if [[ -d $i ]]
   then
-    mkdir -p $CHROOTDIR/$FILE
+    $SUDOCMD mkdir -p $CHROOTDIR/$FILE
     continue
   fi
 
@@ -122,12 +136,12 @@ do
     echo ""
     if [[ $OVERWRITE == y ]]
     then
-      cp -a $TEMPDIR/$FILE $CHROOTDIR/$FILE
+      $SUDOCMD cp -a $TEMPDIR/$FILE $CHROOTDIR/$FILE
     fi
   else
-    cp -a $TEMPDIR/$FILE $CHROOTDIR/$FILE
+    $SUDOCMD cp -a $TEMPDIR/$FILE $CHROOTDIR/$FILE
   fi
 done
 
-rm -rf $TEMPDIR
+$SUDOCMD rm -rf $TEMPDIR
 

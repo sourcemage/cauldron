@@ -39,16 +39,30 @@ do
 done
 shift $(($OPTIND - 1))
 
+SELF=$0
+SUDOCMD=""
+
+if [[ $UID -ne 0 ]]
+then
+	if [[ -x $(which sudo) ]]
+	then
+		SUDOCMD="sudo"
+	else
+		echo "Please enter the root password."
+		exec su -c "$SELF $*" root
+	fi
+fi
+
 [[ $# -lt 2 ]] && usage
 
 GRIMOIRE_VER=$(< "$TARGET"/var/lib/sorcery/codex/stable/VERSION)
 
 for file in $(grep -qr '@ISO_VERSION@' $TARGET/{etc,isolinux,usr/share/doc/smgl.install}/*)
 do
-	sed -i "s/@ISO_VERSION@/$VERSION/" "$file"
+	$SUDOCMD sed -i "s/@ISO_VERSION@/$VERSION/" "$file"
 done
 
-sed -i "s/@GRIMOIRE_VERSION@/$GRIMOIRE_VER/" "$TARGET"/isolinux/isolinux.msg
+$SUDOCMD sed -i "s/@GRIMOIRE_VERSION@/$GRIMOIRE_VER/" "$TARGET"/isolinux/isolinux.msg
 
-$(dirname $0)/mkiso.sh -k "$TARGET" "smgl-$VERSION"
+$SUDOCMD $(dirname $0)/mkiso.sh $ISOCHOWN -kz "$TARGET" "smgl-$VERSION"
 

@@ -31,6 +31,20 @@ do
 done
 shift $(($OPTIND - 1))
 
+SELF=$0
+SUDOCMD=""
+
+if [[ $UID -ne 0 ]]
+then
+	if [[ -x $(which sudo) ]]
+	then
+		SUDOCMD="sudo"
+	else
+		echo "Please enter the root password."
+		exec su -c "$SELF $*" root
+	fi
+fi
+
 SYSDIR=${1:-system}
 SYSTAR="${2:-$(basename $SYSDIR).tar.bz2}"
 
@@ -41,7 +55,7 @@ SYSTAR="${2:-$(basename $SYSDIR).tar.bz2}"
 [[ -z $SYSDIR ]] && usage
 
 cd $SYSDIR
-tar $VERBOSE -jcf "$SYSTAR" *
+$SUDOCMD tar $VERBOSE -jcf "$SYSTAR" *
 echo "Output written to: $SYSTAR"
 
 exit

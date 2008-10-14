@@ -42,13 +42,26 @@ do
 done
 shift $(($OPTIND - 1))
 
+SELF=$0
+SUDOCMD=""
+
+if [[ $UID -ne 0 ]]
+then
+	if [[ -x $(which sudo) ]]
+	then
+		SUDOCMD="sudo"
+	else
+		echo "Please enter the root password."
+		exec su -c "$SELF $*" root
+	fi
+fi
 ISO_CHROOT=$1
 ISO_VERSION=$2
 
-mkisofs -R -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -V SOURCEMAGE -o "${ISO_VERSION}.iso" "$ISO_CHROOT"
+$SUODOCMD mkisofs -R -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -V ${ISO_VERSION} -publisher "Source Mage GNU/Linux" -p "Cauldron" -o "${ISO_VERSION}.iso" "$ISO_CHROOT"
 
 if [[ "$COMPRESS" == yes || -n "$KEEP" ]]
 then
-	bzip2 -f -v $KEEP "${ISO_VERSION}.iso"
+	$SUODOCMD bzip2 -f -v $KEEP "${ISO_VERSION}.iso"
 fi
 
