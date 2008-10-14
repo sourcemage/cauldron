@@ -6,26 +6,33 @@ CLEANALL=false
 CLEANERS="$(dirname $0)/../data/cleaners"
 
 function usage() {
-	cat <<-USAGE
-	Usage: $0 [-a] iso_chroot cleaner(s)
+	cat <<EndUsage
+Usage: $(basename $0) [-a] iso_chroot cleaner(s)
 
-	For each cleaner specified as an argument, cleans the
-	files and directories listed therein from iso_chroot.
-	A cleaner is the ouput of 'gaze install \$SPELL' minus
-	whatever you don't want removed. If -a is specified,
-	it will use all cleaners found in the cauldron cleaner dir.
-	USAGE
+For each cleaner specified as an argument, cleans the files and
+directories listed therein from iso_chroot.  A cleaner is the ouput of
+'gaze install \$SPELL' minus whatever you don't want removed. This
+script requires superuser privileges.
+
+Options:
+	-a  Run on all cleaner files in the cauldron cleaner
+	    directory. If this option is specified, any arguments
+	    provided beyond iso_chroot are ignored.
+
+	-h  Shows this help information
+EndUsage
 	exit 1
 } >&2
 
-while getopts ":a" Option
+while getopts ":ah" Option
 do
 	case $Option in
 		a ) CLEANALL=true ;;
-		* ) ;;
+		h ) usage ;;
+		* ) echo "Unrecognized option." >&2 && usage ;;
 	esac
 done
-shift $((OPTIND - 1))
+shift $(($OPTIND - 1))
 
 # Check to make sure we have the right number of arguments
 # taking the option flag into account
