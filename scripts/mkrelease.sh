@@ -32,7 +32,7 @@ EndUsage
 	exit 1
 } >&2
 
-while getopts ":h" Option
+while getopts ":uh" Option
 do
 	case $Option in
 		u ) ISOCHOWN="-u" ;;
