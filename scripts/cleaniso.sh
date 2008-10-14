@@ -70,12 +70,12 @@ shift
 if ! [[ -e "$ISOCHROOT/bin/rm" ]]
 then
 	echo "Error: /bin/rm not found in $ISOCHROOT" >&2
-	exit 1
+	exit 2
 fi
 if ! [[ -e "$ISOCHROOT/bin/rmdir" ]]
 then
 	echo "Error: /bin/rmdir not found in $ISOCHROOT" >&2
-	exit 1
+	exit 2
 fi
 
 if $CLEANALL
