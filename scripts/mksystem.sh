@@ -48,11 +48,10 @@ fi
 SYSDIR=${1:-system}
 SYSTAR="${2:-$(basename $SYSDIR).tar.bz2}"
 
+[[ -z $SYSDIR ]] && usage
+
 [[ $(dirname $SYSDIR) == '.' ]] && SYSDIR="$PWD/$SYSDIR"
 [[ $(dirname $SYSTAR) == '.' ]] && SYSTAR="$PWD/$SYSTAR"
-
-
-[[ -z $SYSDIR ]] && usage
 
 cd $SYSDIR
 $SUDOCMD tar $VERBOSE -jcf "$SYSTAR" *
