@@ -3,11 +3,41 @@
 COMPRESS="no"
 KEEP=
 
+function usage() {
+	cat << EndUsage
+Usage: $(basename $0) [-hu] /path/to/target ISO_VERSION
+
+Generates a bootable iso9660 iso file using /path/to/target. The output file is
+named ISO_VERSION. Also creates metadata information appropriate to the iso
+(publisher, preparer, volume_id, etc.). Uses ISO_VERSION for the volume_id
+field. This script requires superuser privileges.
+
+Required:
+	/path/to/target
+	    The target directory you would like to chroot to. Defaults to
+	    current working directory.
+
+	ISO_VERSION
+	    A string that specifies the filename of the iso output file.
+	    you must specify an absolute path or the command will not likely be
+	    found (a way around this would be to either set the path as part of
+	    the command to execute, or to set the command to be /bin/bash -l
+	    some_command_without_abs_path). Defaults to "/bin/bash -l".
+Options:
+	-u  Change ownership of output files to $UID:$GID
+
+	-h  Shows this help information
+EndUsage
+	exit 1
+} >&2
+
 while getopts "z" Options
 do
 	case $Options in
-		"z") COMPRESS="yes"
-		"k") KEEP="-k"
+		k ) KEEP="-k" ;;
+		z ) COMPRESS=true ;;
+		h ) usage ;;
+		* ) echo "Unrecognized option" >&2 && usage ;;
 	esac
 done
 shift $(($OPTIND - 1))
