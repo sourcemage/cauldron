@@ -42,13 +42,12 @@ done
 shift $(($OPTIND - 1))
 
 SELF=$0
-SUDOCMD=""
 
 if [[ $UID -ne 0 ]]
 then
 	if [[ -x $(which sudo > /dev/null) ]]
 	then
-		SUDOCMD="sudo"
+		exec sudo "$SELF $*"
 	else
 		echo "Please enter the root password."
 		exec su -c "$SELF $*" root
@@ -59,12 +58,12 @@ CHROOT_DIR="${CHROOT_DIR:-.}"
 [[ $# -gt 0 ]] && CHROOT_CMD="$@"
 CHROOT_CMD="${CHROOT_CMD:-/bin/bash -l}"
 
-$SUDOCMD mount --bind /dev "$CHROOT_DIR"/dev
-$SUDOCMD mount --bind /dev/pts "$CHROOT_DIR"/dev/pts
-$SUDOCMD mount --bind /proc "$CHROOT_DIR"/proc
+ mount --bind /dev "$CHROOT_DIR"/dev
+ mount --bind /dev/pts "$CHROOT_DIR"/dev/pts
+ mount --bind /proc "$CHROOT_DIR"/proc
 
-$SUDOCMD chroot "$CHROOT_DIR" $CHROOT_CMD
+ chroot "$CHROOT_DIR" $CHROOT_CMD
 
-$SUDOCMD umount "$CHROOT_DIR"/proc
-$SUDOCMD umount "$CHROOT_DIR"/dev/pts
-$SUDOCMD umount "$CHROOT_DIR"/dev
+ umount "$CHROOT_DIR"/proc
+ umount "$CHROOT_DIR"/dev/pts
+ umount "$CHROOT_DIR"/dev

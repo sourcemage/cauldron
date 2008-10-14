@@ -45,13 +45,12 @@ done
 shift $(($OPTIND - 1))
 
 SELF=$0
-SUDOCMD=""
 
 if [[ $UID -ne 0 ]]
 then
 	if [[ -x $(which sudo > /dev/null) ]]
 	then
-		SUDOCMD="sudo"
+		exec sudo "$SELF $*"
 	else
 		echo "Please enter the root password."
 		exec su -c "$SELF $*" root
@@ -67,5 +66,5 @@ then
 	$SUODOCMD bzip2 -f -v $KEEP "${ISO_VERSION}.iso"
 fi
 
-[[ $ISOCHOWN ]] && $SUDOCMD chown $UID:$GID ${ISO_VERSION}.iso*
+[[ $ISOCHOWN ]] &&  chown $UID:$GID ${ISO_VERSION}.iso*
 

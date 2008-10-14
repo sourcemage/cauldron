@@ -42,13 +42,12 @@ done
 shift $(($OPTIND - 1))
 
 SELF=$0
-SUDOCMD=""
 
 if [[ $UID -ne 0 ]]
 then
   if [[ -x $(which sudo > /dev/null) ]]
   then
-    SUDOCMD="sudo"
+    exec sudo "$SELF $*"
   else
     echo "Please enter the root password."
     exec su -c "$SELF $*" root
@@ -78,19 +77,19 @@ fi >&2
 
 
 # make sure we start with a clean TEMPDIR each run
-$SUDOCMD rm -rf $TEMPDIR
-$SUDOCMD mkdir -m 0700 $TEMPDIR
+ rm -rf $TEMPDIR
+ mkdir -m 0700 $TEMPDIR
 
 # add the contents of base, which are files that
 # should go onto both iso and system chroots
 # this is mostly /etc content
-$SUDOCMD cp -a $MYDIR/base/* $TEMPDIR/
+ cp -a $MYDIR/base/* $TEMPDIR/
 
 # ISO Sauce
 if [[ $TYPE == "iso" ]] ;then
   # copy everything from the cauldron repo iso dir
   # into the TEMPDIR staging area
-  $SUDOCMD cp -a $MYDIR/iso/* $TEMPDIR/
+   cp -a $MYDIR/iso/* $TEMPDIR/
 fi
 
 # System Sauce
@@ -99,13 +98,13 @@ then
   # make sure that the grub stage files are available in /boot
   # by copying them from CHROOTDIR (system) into the /boot dir
   # in our TEMPDIR staging area
-  $SUDOCMD cp -a $CHROOTDIR/usr/lib/grub/i386-pc/* $TEMPDIR/boot/grub/
+   cp -a $CHROOTDIR/usr/lib/grub/i386-pc/* $TEMPDIR/boot/grub/
 fi
 
 # ==== FIXUP starts here ====
-$SUDOCMD chown -R 0:0 $TEMPDIR/
-$SUDOCMD chmod -R u=rwX,go=u-w $TEMPDIR/
-$SUDOCMD chmod 0600 $TEMPDIR/etc/shadow
+ chown -R 0:0 $TEMPDIR/
+ chmod -R u=rwX,go=u-w $TEMPDIR/
+ chmod 0600 $TEMPDIR/etc/shadow
 # ==== end fixup ====
 
 # Get a list of all files we want to install
@@ -116,7 +115,7 @@ do
   # This is safe even if the dir already exists
   if [[ -d $i ]]
   then
-    $SUDOCMD mkdir -p $CHROOTDIR/$FILE
+     mkdir -p $CHROOTDIR/$FILE
     continue
   fi
 
@@ -136,12 +135,12 @@ do
     echo ""
     if [[ $OVERWRITE == y ]]
     then
-      $SUDOCMD cp -a $TEMPDIR/$FILE $CHROOTDIR/$FILE
+       cp -a $TEMPDIR/$FILE $CHROOTDIR/$FILE
     fi
   else
-    $SUDOCMD cp -a $TEMPDIR/$FILE $CHROOTDIR/$FILE
+     cp -a $TEMPDIR/$FILE $CHROOTDIR/$FILE
   fi
 done
 
-$SUDOCMD rm -rf $TEMPDIR
+ rm -rf $TEMPDIR
 

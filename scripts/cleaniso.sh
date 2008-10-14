@@ -35,13 +35,12 @@ done
 shift $(($OPTIND - 1))
 
 SELF=$0
-SUDOCMD=""
 
 if [[ $UID -ne 0 ]]
 then
 	if [[ -x $(which sudo > /dev/null) ]]
 	then
-		SUDOCMD="sudo"
+		exec sudo "$SELF $*"
 	else
 		echo "Please enter the root password."
 		exec su -c "$SELF $*" root
@@ -101,11 +100,11 @@ do
 			then
 				# chroot and clean a directory using rmdir
 				echo "Attempting to remove directory $ISOCHROOT/$DIRT"
-				$SUDOCMD chroot "$ISOCHROOT" rmdir --ignore-fail-on-non-empty "$DIRT"
+				 chroot "$ISOCHROOT" rmdir --ignore-fail-on-non-empty "$DIRT"
 			else
 				# chroot and clean an individual file
 				echo "Attempting to delete $ISOCHROOT/$DIRT"
-				$SUDOCMD chroot "$ISOCHROOT" rm "$DIRT"
+				 chroot "$ISOCHROOT" rm "$DIRT"
 			fi
 		fi
 	done
