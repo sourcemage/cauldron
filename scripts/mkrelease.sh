@@ -3,6 +3,8 @@
 TARGET=$1
 VERSION=$2
 
+ISOCHOWN=""
+
 function usage() {
 	cat << EndUsage
 Usage: $(basename $0) [-h] /path/to/target VERSION
@@ -33,6 +35,7 @@ EndUsage
 while getopts ":h" Option
 do
 	case $Option in
+		u ) ISOCHOWN="-u" ;;
 		h ) usage ;;
 		* ) echo "Unrecognized option." >&2 && usage ;;
 	esac

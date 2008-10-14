@@ -1,6 +1,7 @@
 #!/bin/bash
 
 COMPRESS="no"
+ISOCHOWN=false
 KEEP=
 
 function usage() {
@@ -35,6 +36,7 @@ while getopts "z" Options
 do
 	case $Options in
 		k ) KEEP="-k" ;;
+		u ) ISOCHOWN=true ;;
 		z ) COMPRESS=true ;;
 		h ) usage ;;
 		* ) echo "Unrecognized option" >&2 && usage ;;
@@ -64,4 +66,6 @@ if [[ "$COMPRESS" == yes || -n "$KEEP" ]]
 then
 	$SUODOCMD bzip2 -f -v $KEEP "${ISO_VERSION}.iso"
 fi
+
+[[ $ISOCHOWN ]] && $SUDOCMD chown $UID:$GID ${ISO_VERSION}.iso*
 
