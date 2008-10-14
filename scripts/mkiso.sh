@@ -62,7 +62,7 @@ ISO_VERSION=$2
 
 $SUODOCMD mkisofs -R -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -V ${ISO_VERSION} -publisher "Source Mage GNU/Linux" -p "Cauldron" -o "${ISO_VERSION}.iso" "$ISO_CHROOT"
 
-if [[ $COMPRESS || -n $KEEP ]]
+if $COMPRESS || [[ -n $KEEP ]]
 then
 	$SUODOCMD bzip2 -f -v $KEEP "${ISO_VERSION}.iso"
 fi
