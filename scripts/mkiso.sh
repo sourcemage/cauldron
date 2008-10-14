@@ -32,7 +32,7 @@ EndUsage
 	exit 1
 } >&2
 
-while getopts "z" Options
+while getopts ":kuzh" Options
 do
 	case $Options in
 		k ) KEEP="-k" ;;
