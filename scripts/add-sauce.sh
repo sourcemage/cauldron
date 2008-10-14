@@ -7,23 +7,39 @@ TYPE="bad"
 
 function usage() {
   cat << EndUsage
-Usage: $0 [-f] -i|-s /path/to/target
-Adds the cauldron team files to the given chroot
-Use -i for an iso target, -s for the system tarball
+Usage: $(basename $0) [-ofh] -i|-s /path/to/target
+
+Adds the cauldron team files to the given chroot.
+This script requires superuser privileges.
+
+Required:
+	-i  Use for "iso" targets
+
+	-s  Use for "system" targets
+
+Options:
+	-f  Forces the script to add the files to the target directory, even if
+	    that directory is not detected to be a proper chroot environment.
+
+	-o  Forces overwriting files in the target directory
+
+	-h  Shows this help information
 EndUsage
   exit 1
 } >&2
 
-while getopts ":fis" Option
+while getopts ":fhios" Option
 do
   case $Option in
     f ) FORCE=true ;;
     i ) TYPE="iso" ;;
+    o ) OVERWRITE="a" ;;
     s ) TYPE="system" ;;
-    * ) usage ;;
+    h ) usage ;;
+    * ) echo "Unrecognized option." >&2 && usage ;;
   esac
 done
-shift $((OPTIND - 1))
+shift $(($OPTIND - 1))
 
 if [[ $TYPE == "bad" || -z $1 ]] ;then
   usage
