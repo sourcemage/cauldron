@@ -47,7 +47,7 @@ SUDOCMD=""
 
 if [[ $UID -ne 0 ]]
 then
-	if [[ -x $(which sudo) ]]
+	if [[ -x $(which sudo > /dev/null) ]]
 	then
 		SUDOCMD="sudo"
 	else
