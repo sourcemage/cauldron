@@ -1,5 +1,14 @@
-[1minstall-opt-spells step[m
-At this point, you would be installing other spells that might come in handy.
+[1mextra-spells step[m
+At this point, you may install any extra spells you desire. These
+exist as bzip2-compressed tarballs (sorcery caches). You can either
+install these manually, or run the following script to do it for you.
+If you mounted your harddisk to a location other than /mnt/root, then
+you can specify that location as an argument to the script.
 
-Except that this version of the iso doesn't actually ship with any yet,
-so just hit that [1mnext[m.
+Using default location:
+[1m smgl-spellcaster[m
+
+Example for some other location:
+[1m smgl-spellcaster /mnt/some-dir[m
+
+When you are finished, type [1mnext[m to go to the next step.

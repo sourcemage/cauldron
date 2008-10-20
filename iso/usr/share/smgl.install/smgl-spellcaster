@@ -1,0 +1,141 @@
+#!/bin/bash
+
+PREFIX=/var/cache/sorcery
+EXTENSION="*.tar.bz2"
+CACHES=
+SELECTED=
+NUM_CACHES=
+
+function usage() {
+  cat <<USAGE
+$(basename $0) [/path/to/target]
+Generates a listing of cache files available to install, and then
+installs the selected caches to the target directory (defined as
+/mnt/root if not specified).
+USAGE
+}
+
+function prompt() {
+  local input=
+
+  echo ""
+  printf "\tPlease enter a number (0 when finished):  "
+  while [[ -z $input ]]
+  do
+    read input
+    if [[ -n $input ]]
+    then
+      # fancy way to make sure that we have the correct input
+      # if the user passes 1-12, that will be evaluated mathematically fist,
+      # yielding -11, which fals outside the range of allowable input
+      # this may be changed later, but currently we only support entering one
+      # value at a time
+      if [[ $(echo $((input)) ) -lt 0 || $(echo $((input)) ) -gt $NUM_CACHES ]]
+      then
+        echo "Error: You must enter a number corresponding to one"
+        echo "of the choices in the list."
+        input=
+      fi
+    fi
+  done
+  return $input
+}
+
+function make_list {
+  # get a list of all the caches available and get the spell names from them,
+  # sorted and uniq'ed
+  CACHES=( $(find $PREFIX/ -maxdepth 1 -type f -name "$EXTENSION" | sed 's#.*/##' | sed 's/-[0-9].*//' | sort | uniq) )
+  NUM_CACHES=${#CACHES[*]}
+
+  # for each cache available, check to see if it was already selected before
+  # and mark it as selected if found
+  for ((i=0; i < $NUM_CACHES; i++))
+  do
+    grep -s -q "^${CACHES[i]}$" /tmp/spells && SELECTED[i]="*"
+  done
+}
+
+function print_list {
+  echo ""
+  for ((i=0; i < $NUM_CACHES; i++))
+  do
+    printf "[%2d] %s %s\n" "$(($i + 1))" "${SELECTED[i]:- }" "${CACHES[i]}"
+  done | column | more
+}
+
+function main {
+  local choice=-1
+
+  # generate the list of spells to choose from by scanning the contents of
+  # /var/caches/sorcery on the ISO
+  echo "Generating cache list, please be patient..."
+  make_list
+
+  # present the menu and prompt for user input, until the user enters 0 to
+  # finish
+  while [[ $choice -ne 0 ]]
+  do
+    print_list
+    prompt
+    choice="$?"
+    [[ $choice -gt 0 ]] && SELECTED[$((choice-1))]="*"
+  done
+
+  # for each selected spell, output it to the spell listing file
+  for (( i=0; i < $NUM_CACHES; i++ ))
+  do
+    if [[ ${SELECTED[i]} = '*' ]]
+    then
+      echo ${CACHES[i]} >> /tmp/spells
+    fi
+  done
+
+  # make sure we don't have duplicates
+  sort /tmp/spells | uniq > /tmp/spells
+
+  # copy the selected list so that it's available inside the chroot
+  cp -f /tmp/spells "$TARGET"/spells
+
+  # mount bind to get to the caches from inside the chroot
+  # this is cheaper than copying, plus the user doesn't have a bunch of
+  # "useless" cache files on their system since presumably they will be
+  # changing both compile options (like arch) and spell version when they
+  # update their grimoires
+  mount --bind /var/cache/sorcery "$TARGET"/var/cache/sorcery
+
+  # cast inside the chroot using the selected list and ISO caches
+  chroot "$TARGET" /usr/sbin/cast $(< /spells)
+
+  # clean up
+  umount "$TARGET"/var/cache/sorcery
+  rm "$TARGET"/spells
+}
+
+function message() {
+  echo ""
+  cat <<-Message
+    Spell selection menu.
+    You may select any number of the following spells to install. Some of them may
+    be necessary, depending on how you have set up your installation. For example,
+    if you formatted your disk with xfs, then you will need xfsprogs. Also, you
+    will need at least one bootloader installed (e.g. lilo, grub, etc.).
+
+    When you are satisfied with your selections, enter 0 (zero) and the list of
+    spells to cast will be compiled. Sorcery will then ask you if the list of
+    spells is correct and if you would like to cast them, as it normally does when
+    casting.
+
+Message
+}
+
+[[ $# -lt 1 ]] && TARGET="/mnt/root"
+TARGET=$1
+
+message
+
+main
+#clear
+
+
+
+# vim:tabstop=2:softtabstop=2:shiftwidth=2:expandtab:ai
