@@ -19,7 +19,7 @@ pivot_root
 rmmod
 /bin/sh
 pidof
-killall
+killall5
 udevadm
 udevcontrol
 udevd
