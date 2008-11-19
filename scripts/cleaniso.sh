@@ -38,7 +38,7 @@ SELF=$0
 
 if [[ $UID -ne 0 ]]
 then
-	if [[ -x $(which sudo > /dev/null) ]]
+	if [[ -x $(which sudo > /dev/null 2>&1) ]]
 	then
 		exec sudo "$SELF $*"
 	else
