@@ -1,18 +1,65 @@
 #!/bin/bash
 # This script will crank out an initrd image for the ISO to use.
 
-if [[ $# != 2 ]] ;then
-  echo "Usage: $0 <path to chroot> <kernel version>"
-  echo "(path to chroot can be / if you want to be sloppy)"
-  exit 1
-fi >&2
+function usage() {
+	cat << EndUsage
+Usage: $(basename $0) [-o OUTPUT_FILE] /path/to/target ISO_KERNEL_VERSION
 
-CHROOT_DIR=$1
+Generates an initrd using /path/to/target. The output file is named initrd.gz
+and is placed in the current working directory by default, but can be
+overridden by the -o option. This script requires superuser privileges.
+
+Required:
+	/path/to/target
+	    The target directory you would like to chroot to. Defaults to
+	    current working directory.
+
+	ISO_KERNEL_VERSION
+	    A string that specifies the version of the kernel to use. Typically
+	    you will only have one kernel version in your iso build directory,
+	    but there's nothing which prevents you from having more than one,
+	    so you need to specify the version the initrd will be built
+	    against.
+Options:
+	-o FILENAME
+	    Specify the output file as FILENAME (can include a path prefix).
+	    Defaults to "initrd.gz" in the current working directory.
+
+	-h  Shows this help information.
+EndUsage
+	exit 1
+} >&2
+
+while getopts ":o:h" Options
+do
+	case $Options in
+		o ) OUTPUT="$OPTARG" ;;
+		h ) usage ;;
+		* ) echo "Unrecognized option" >&2 && usage ;;
+	esac
+done
+shift $(($OPTIND - 1))
+
+SELF=$0
+
+if [[ $UID -ne 0 ]]
+then
+	if [[ -x $(which sudo > /dev/null 2>&1) ]]
+	then
+		exec sudo "$SELF $*"
+	else
+		echo "Please enter the root password."
+		exec su -c "$SELF $*" root
+	fi
+fi
+
+[[ $# -ne 2 ]] && usage
+ISO_DIR=$1
 KERNEL_VERSION=$2
 
-if ! [[ -d $CHROOT_DIR/lib/modules/$KERNEL_VERSION/kernel ]] ;then
+if ! [[ -d $ISO_DIR/lib/modules/$KERNEL_VERSION/kernel ]] ;then
   echo "Chroot failed sanity check:"
-  echo "Unable to find $CHROOT_DIR/lib/modules/$KERNEL_VERSION/kernel"
+  echo "Unable to find $ISO_DIR/lib/modules/$KERNEL_VERSION/kernel"
   exit 2
 fi >&2
 
@@ -29,7 +76,7 @@ EXECDIRS=(bin sbin usr/bin usr/sbin)
 #---------------------------------------------------------------------
 # Used to implicitly install linked-against-libs to the initrd with a binary
 function libscan() {
-  chroot $CHROOT_DIR /usr/bin/ldd "$1" |
+  chroot $ISO_DIR /usr/bin/ldd "$1" |
   grep '/' |
   cut -f 2 |
   sed -e 's/.*=> //' |
@@ -41,7 +88,7 @@ function libscan() {
 # by running libscan (ldd returns symlinks if that's what the binary
 # links to). The leading '/' is removed for convenience.
 function reallib() {
-  chroot $CHROOT_DIR readlink -f $1 |
+  chroot $ISO_DIR readlink -f $1 |
   sed -e 's/^[/]//'
 }
 
@@ -67,7 +114,7 @@ function install_prog() {
   for prog in $* ;do
     # find executable
     progpath=$(my_which $prog) &&
-    # install executable (path will be relative to $CHROOT_DIR)
+    # install executable (path will be relative to $ISO_DIR)
     cp --parents -f $progpath $INITRDROOT &&
     # install needed libs
     for i in $(libscan $progpath) ; do
@@ -128,9 +175,8 @@ fi >&2
 rm -rf $INITRDROOT
 mkdir -p $INITRDROOT
 
-OLDWD=$PWD
 # Unless otherwise noted, this is our working directory.
-cd $CHROOT_DIR >/dev/null
+pushd $ISO_DIR >/dev/null
 
 # Create all dirs we need on the initrd
 echo "Creating dirs..."
@@ -167,7 +213,7 @@ touch $INITRDROOT/var/log/dmesg
 # Add kernel modules that are supposed to be on the iso
 echo "adding kernel modules"
 mkdir -p ${INITRDROOT}/lib/modules/${KERNEL_VERSION}/kernel
-pushd $CHROOT_DIR/lib/modules/${KERNEL_VERSION}/kernel >/dev/null
+pushd $ISO_DIR/lib/modules/${KERNEL_VERSION}/kernel >/dev/null
  while read line ; do
    cp -pr --parents ./${line} ${INITRDROOT}/lib/modules/${KERNEL_VERSION}/kernel
  done <$MYDIR/data/initrd.kernel
@@ -195,7 +241,8 @@ rm -f ${INITRDROOT}/depmod
 
 # The initrd is complete now.
 echo "Make the initrd"
-mk_initrd_file $INITRDROOT $OLDWD/initrd.gz
+popd >/dev/null
+mk_initrd_file $INITRDROOT "$OUTPUT"
 
 echo "cleaning up..."
 rm -rf ${INITRDROOT}
