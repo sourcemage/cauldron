@@ -1,7 +1,9 @@
 drivers/acpi
 drivers/ata
+drivers/block
 drivers/cdrom
 drivers/ide
 drivers/ieee1394
+drivers/md
 drivers/scsi
 drivers/usb
