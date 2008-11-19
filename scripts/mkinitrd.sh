@@ -160,6 +160,10 @@ pushd $INITRDROOT/dev >/dev/null
 $MYDIR/data/MAKEDEV generic-nopty
 popd >/dev/null
 
+# Create an empty /var/log/dmesg so dmesg can be used
+echo "Creating empty /var/log/dmesg"
+touch $INITRDROOT/var/log/dmesg
+
 # Add kernel modules that are supposed to be on the iso
 echo "adding kernel modules"
 mkdir -p ${INITRDROOT}/lib/modules/${KERNEL_VERSION}/kernel
