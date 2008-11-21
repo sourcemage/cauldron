@@ -62,8 +62,11 @@ mount --bind /dev "$CHROOT_DIR"/dev
 mount --bind /dev/pts "$CHROOT_DIR"/dev/pts
 mount --bind /proc "$CHROOT_DIR"/proc
 
+export CAULDRON_CHROOT="$CHROOT_DIR"
 
 chroot "$CHROOT_DIR" $CHROOT_CMD
+
+unset CAULDRON_CHROOT
 
 umount "$CHROOT_DIR"/proc
 umount "$CHROOT_DIR"/dev/pts
