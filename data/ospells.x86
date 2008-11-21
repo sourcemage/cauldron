@@ -20,6 +20,7 @@ mdadm
 memtest86+
 ndiswrapper
 nfs-utils
+ntfsprogs
 openssl
 parted
 pciutils
