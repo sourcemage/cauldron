@@ -96,11 +96,13 @@ then
 	fi
 fi
 
+$(grep -q linux "$CAULDRONDIR/{$rspells,$ospells}") && cp "$CAULDRONDIR/config.$TYPE" "$TARGET/etc/sorcery/local/kernel.config"
 cp "$CAULDRONDIR/$rspells" "$TARGET"/
 cp "$CAULDRONDIR/$ospells" "$TARGET"/
 "$MYDIR/cauldronchr.sh" -d "$TARGET" /"$(basename $0)"
 rm "$TARGET/$rspells"
 rm "$TARGET/$ospells"
+[[ -e "$TARGET/etc/sorcery/local/kernel.config" ]] && rm "$TARGET/etc/sorcery/local/kernel.config"
 rm "$TARGET/$(basename $0)"
 
 unset rspells
