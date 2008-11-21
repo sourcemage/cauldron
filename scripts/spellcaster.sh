@@ -98,7 +98,7 @@ fi
 
 cp "$CAULDRONDIR/$rspells" "$TARGET"/
 cp "$CAULDRONDIR/$ospells" "$TARGET"/
-"$MYDIR/cauldronchr.sh" "$TARGET" /"$(basename $0)"
+"$MYDIR/cauldronchr.sh" -d "$TARGET" /"$(basename $0)"
 rm "$TARGET/$rspells"
 rm "$TARGET/$ospells"
 rm "$TARGET/$(basename $0)"
