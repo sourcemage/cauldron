@@ -75,7 +75,7 @@ then
 
 		if [[ $CHOICE == 'y' ]]
 		then
-			sed -i 's/ARCHIVE=.*/ARCHIVE=on/' "$TARGET"/etc/sorcery/local/config
+			sed -i 's/ARCHIVE=.*/ARCHIVE="on"/' "$TARGET"/etc/sorcery/local/config
 		else
 			exit 2
 		fi
