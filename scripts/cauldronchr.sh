@@ -58,9 +58,9 @@ CHROOT_DIR="${CHROOT_DIR:-.}"
 [[ $# -gt 0 ]] && CHROOT_CMD="$@"
 CHROOT_CMD="${CHROOT_CMD:-/bin/bash}"
 
-mount --bind /dev "$CHROOT_DIR"/dev
-mount --bind /dev/pts "$CHROOT_DIR"/dev/pts
-mount --bind /proc "$CHROOT_DIR"/proc
+mount --bind /dev "$CHROOT_DIR"/dev &&
+mount --bind /dev/pts "$CHROOT_DIR"/dev/pts &&
+mount --bind /proc "$CHROOT_DIR"/proc &&
 
 export CAULDRON_CHROOT="$CHROOT_DIR"
 export PS1="[chroot]\u \w$ "
