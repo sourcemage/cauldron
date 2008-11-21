@@ -58,12 +58,13 @@ CHROOT_DIR="${CHROOT_DIR:-.}"
 [[ $# -gt 0 ]] && CHROOT_CMD="$@"
 CHROOT_CMD="${CHROOT_CMD:-/bin/bash -l}"
 
- mount --bind /dev "$CHROOT_DIR"/dev
- mount --bind /dev/pts "$CHROOT_DIR"/dev/pts
- mount --bind /proc "$CHROOT_DIR"/proc
+mount --bind /dev "$CHROOT_DIR"/dev
+mount --bind /dev/pts "$CHROOT_DIR"/dev/pts
+mount --bind /proc "$CHROOT_DIR"/proc
 
- chroot "$CHROOT_DIR" $CHROOT_CMD
 
- umount "$CHROOT_DIR"/proc
- umount "$CHROOT_DIR"/dev/pts
- umount "$CHROOT_DIR"/dev
+chroot "$CHROOT_DIR" $CHROOT_CMD
+
+umount "$CHROOT_DIR"/proc
+umount "$CHROOT_DIR"/dev/pts
+umount "$CHROOT_DIR"/dev
