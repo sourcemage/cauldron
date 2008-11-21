@@ -4,6 +4,20 @@
 # chroot, and also the casting and subsequent dispelling (with caches enabled)
 # of the optional spells.
 
+if [[ -n $CAULDRON_CHROOT && $# -eq 0 ]]
+then
+	# first cast the required spells (don't dispel, since these are needed
+	# for the ISO to function)
+	/usr/bin/cast $(tr '\n' ' ' </"$rspells") &&
+
+	# now cast and dispel the optional spells, so that we have the cache
+	# files available
+	/usr/bin/cast $(tr '\n' ' ' </"$rspells") &&
+	/usr/bin/cast $(tr '\n' ' ' </"$rspells")
+
+	exit $?
+fi
+
 MYDIR="$(dirname $0)"
 CAULDRONDIR="$MYDIR"/../data
 
@@ -60,8 +74,8 @@ shift
 TYPE="x86"
 [[ $# -gt 0 ]] && TYPE="$1"
 
-rspells="rspells.$TYPE"
-ospells="ospells.$TYPE"
+export rspells="rspells.$TYPE"
+export ospells="ospells.$TYPE"
 
 # check to make sure that the chroot has sorcery set to do caches
 if [[ -e "$TARGET"/etc/sorcery/local/config ]]
@@ -82,15 +96,14 @@ then
 	fi
 fi
 
-# first cast all the required spells
-cp "$CAULDRONDIR"/"$rspells" "$TARGET"/
-chroot "$TARGET" /usr/sbin/cast </"$rspells"
-rm "$TARGET"/"$rspells"
+cp "$CAULDRONDIR/$rspells" "$TARGET"/
+cp "$CAULDRONDIR/$ospells" "$TARGET"/
+"$MYDIR/cauldronchr.sh" "$TARGET" /"$(basename $0)"
+rm "$TARGET/$rspells"
+rm "$TARGET/$ospells"
+rm "$TARGET/$(basename $0)"
 
-# now cast all the optional spells
-cp "$CAULDRONDIR"/"$ospells" "$TARGET"/
-chroot "$TARGET" /usr/sbin/cast </"$ospells"
-chroot "$TARGET" /usr/sbin/dispel </"$ospells"
-rm "$TARGET"/"$ospells"
+unset rspells
+unset ospells
 
 exit 0
