@@ -66,7 +66,7 @@ ospells="ospells.$TYPE"
 # check to make sure that the chroot has sorcery set to do caches
 if [[ -e "$TARGET"/etc/sorcery/local/config ]]
 then
-	CONFIG_ARCHIVE=$(grep 'ARCHIVE=' "$TARGET"/etc/sorcery/local/config | cut -d = -f 2)
+	CONFIG_ARCHIVE=$(grep 'ARCHIVE=' "$TARGET"/etc/sorcery/local/config | cut -d = -f 2 | sed 's/"//')
 	if [[ -n $CONFIG_ARCHIVE && $CONFIG_ARCHIVE != "on" ]]
 	then
 		echo "Error! TARGET sorcery configured to not archive!" >&2
