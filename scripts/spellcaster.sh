@@ -12,8 +12,8 @@ then
 
 	# now cast and dispel the optional spells, so that we have the cache
 	# files available
-	/usr/bin/cast $(tr '\n' ' ' </"$rspells") &&
-	/usr/bin/cast $(tr '\n' ' ' </"$rspells")
+	/usr/bin/cast $(tr '\n' ' ' </"$ospells") &&
+	/usr/bin/dispel $(tr '\n' ' ' </"$ospells")
 
 	exit $?
 fi
