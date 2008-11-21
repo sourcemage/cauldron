@@ -68,11 +68,11 @@ then
 fi
 
 [[ $# -lt 1 ]] && usage
-TARGET=$1
+TARGET="$1"
 shift
 
-TYPE="x86"
 [[ $# -gt 0 ]] && TYPE="$1"
+TYPE="${TYPE:-x86}"
 
 export rspells="rspells.$TYPE"
 export ospells="ospells.$TYPE"
