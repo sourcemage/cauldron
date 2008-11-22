@@ -13,6 +13,7 @@ then
 		/usr/bin/cast $(tr '\n' ' ' </"$ospells")
 
 	elif [[ $CAULDRON_DISPEL = y ]]
+	then
 		# dispel the optional spells, so that we have only their cache files
 		# available
 		/usr/bin/dispel $(tr '\n' ' ' </"$ospells")
