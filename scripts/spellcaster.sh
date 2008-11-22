@@ -6,14 +6,17 @@
 
 if [[ -n $CAULDRON_CHROOT && $# -eq 0 ]]
 then
-	# first cast the required spells (don't dispel, since these are needed
-	# for the ISO to function)
-	/usr/bin/cast $(tr '\n' ' ' </"$rspells") &&
+	if [[ $CAULDRON_CAST = y ]]
+	then
+		# cast all spells
+		/usr/bin/cast $(tr '\n' ' ' </"$rspells") &&
+		/usr/bin/cast $(tr '\n' ' ' </"$ospells") &&
 
-	# now cast and dispel the optional spells, so that we have the cache
-	# files available
-	/usr/bin/cast $(tr '\n' ' ' </"$ospells") &&
-	/usr/bin/dispel $(tr '\n' ' ' </"$ospells")
+	elif [[ $CAULDRON_DISPEL = y ]]
+		# dispel the optional spells, so that we have only their cache files
+		# available
+		/usr/bin/dispel $(tr '\n' ' ' </"$ospells")
+	fi
 
 	exit $?
 fi
@@ -23,12 +26,19 @@ CAULDRONDIR="$MYDIR"/../data
 
 function usage() {
   cat << EndUsage
-Usage: $(basename $0) [-h] /path/to/target ARCHITECTURE
+Usage: $(basename $0) [-h] -c | -d /path/to/target ARCHITECTURE
 
 Casts the required and optional spells onto the ISO.
 This script requires superuser privileges.
 
 Required:
+	-c
+	    Cast the required and optional spells in the target directory. This
+	    is the default action.
+
+	-d
+	    Dispel the optional spells only from the target directory.
+
 	/path/to/target
 	    The location of the chroot directory you would like to have the
 	    casting done in.
@@ -45,9 +55,13 @@ EndUsage
   exit 1
 } >&2
 
-while getopts ":h" Option
+export CAULDRON_CAST=y
+
+while getopts ":cdh" Option
 do
   case $Option in
+    c ) export CAULDRON_DISPEL=n ; export CAULDRON_CAST=y ;;
+    d ) export CAULDRON_CAST=n ; export CAULDRON_DISPEL=y ;;
     h ) usage ;;
     * ) echo "Unrecognized option." >&2 && usage ;;
   esac
@@ -96,16 +110,21 @@ then
 	fi
 fi
 
+# Copy necessary files to the target and chroot
 $(grep -q linux "$CAULDRONDIR/{$rspells,$ospells}") && cp "$CAULDRONDIR/config.$TYPE" "$TARGET/etc/sorcery/local/kernel.config"
-cp "$CAULDRONDIR/$rspells" "$TARGET"/
+[[ CAULDRON_CAST = y ]] && cp "$CAULDRONDIR/$rspells" "$TARGET"/
 cp "$CAULDRONDIR/$ospells" "$TARGET"/
 "$MYDIR/cauldronchr.sh" -d "$TARGET" /"$(basename $0)"
-rm "$TARGET/$rspells"
+
+# Clean up the target
+[[ CAULDRON_CAST = y ]] && rm "$TARGET/$rspells"
 rm "$TARGET/$ospells"
 [[ -e "$TARGET/etc/sorcery/local/kernel.config" ]] && rm "$TARGET/etc/sorcery/local/kernel.config"
 rm "$TARGET/$(basename $0)"
 
 unset rspells
 unset ospells
+unset CAULDRON_CAST
+unset CAULDRON_DISPEL
 
 exit 0
