@@ -10,7 +10,7 @@ then
 	then
 		# cast all spells
 		/usr/bin/cast $(tr '\n' ' ' </"$rspells") &&
-		/usr/bin/cast $(tr '\n' ' ' </"$ospells") &&
+		/usr/bin/cast $(tr '\n' ' ' </"$ospells")
 
 	elif [[ $CAULDRON_DISPEL = y ]]
 		# dispel the optional spells, so that we have only their cache files
