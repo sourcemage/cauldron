@@ -62,7 +62,7 @@ GRIMOIRE_VER=$(< "$TARGET"/var/lib/sorcery/codex/stable/VERSION)
 
 # Replace all ISO_VERSION placeholders with the ISO version passed on the
 # commandline.
-for file in $(grep -qr '@ISO_VERSION@' $TARGET/{etc,isolinux,usr/share/doc/smgl.install}/*)
+for file in $(grep -lr '@ISO_VERSION@' $TARGET/{etc,isolinux,usr/share/doc/smgl.install}/*)
 do
 	 sed -i "s/@ISO_VERSION@/$VERSION/" "$file"
 done
