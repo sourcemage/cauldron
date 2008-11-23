@@ -1,0 +1,92 @@
+12 (Easy) Steps to Generate an ISO
+
+Hi. My name is Hank, and I'm an addict. :-P
+
+The following are the general steps that need to be taken in order to create an
+ISO from scratch. These are not necessarily the steps that have to be followed,
+but this is how I generate ISOs. Steps 11 and 12 are more necessary if you are
+building an official ISO, but at least step 11 is recommended even for home
+use. Before doing anything in the recipe, you will need a working kitchen. Get
+yourself a cauldron to brew in (and check out the test branch):
+
+
+git clone git://scm.sourcemage.org/smgl/cauldron.git
+
+cd cauldron
+
+git checkout -b test origin/test
+
+All cauldron ISO scripts (for the test ISOs) are located in the cauldron/scripts dir.
+
+1.  Get a fresh basesystem tarball, unpack it into a directory, and rename that
+    directory "build".
+
+2.  Cast all the spells that will go on the ISO (required and optional) via
+    cauldron/scripts/spellcaster.sh -c build x86. The list of standard x86
+    spells to cast for the official x86 isos can be found in the repo in
+    cauldron/data/rspells.x86 (required) and cauldron/data/ospells.x86
+    (optional).  Note: the terms "required" and "optional" here refer to what
+    is required vs.  optional for the user to install onto the target system.
+    All spells are required to be on official ISOs. Also, only the required
+    spells should be in the final system.tar.bz2, and optional spells should
+    only be present on the ISO itself.
+
+3.  build a linux kernel and modules, however you choose to do so (manually or
+    by casting the linux spell). We have a kernel config that you can use in
+    our git repo. (cauldron/data/config-2.6)
+
+4.  Check the build tree for sanity (make sure nothing left over from
+    basesystem is there that should not be there, for example
+    /etc/udev/rules.d/70-persistent-net.rules). Some of this will be taken care
+    of in steps #6 and #7 via the use of the cauldron/scripts/add-sauce.sh
+    script.
+
+5.  Make two copies of the build directory tree, call one iso and the other
+    system. Run cauldron/scripts/spellcaster.sh -d system x86 to remove all the
+    optional spells from the system tree (leaving only the required spells).
+
+6.  Make any necessary adjustments to the system tree. This includes running
+    cauldron/scripts/add-sauce.sh -s /path/to/system/tree and cleaning up
+    var/cache/sorcery and var/spool/sorcery (e.g. via cleanse), removing linux
+    source trees in /usr/src, and creating a symlink to the latest linux source
+    under /var/spool/sorcery e.g., ln -sf
+    /var/spool/sorcery/linux-VERSION.tar.bz2 /usr/src/ for easy access.
+
+7.  Make adjustments to the iso tree. This will be more extensive than what is
+    done for the system tree. First, the iso does not need a build environment,
+    so (most) of all the build tools can be completely wiped from the ISO. This
+    can be done by running cauldron/scripts/cleaniso.sh -a /path/to/iso/tree.
+    Additionally, run cauldron/scripts/add-sauce.sh -i /path/to/iso/tree.
+
+8.  Make a compressed tarball of the system tree, and copy it into
+    cauldron/iso/system.tar.bz2. This can be done easily by running
+    cauldron/scripts/mksystem.sh /path/to/system/tree /path/to/system.tar.bz2.
+    Don't forget to copy the tarball to the cauldron/iso tree after creating
+    it!
+
+9.  Make an initrd, and copy it to cauldron/iso/boot/initrd.gz. This can be
+    done via cauldron/scripts/mkinitrd.sh /path/to/iso/tree iso_kernel_version
+    (where iso_kernel_version is, for example, 2.6.22; just make sure it
+    matches the /path/to/iso/tree/lib/modules/iso_kernel_version name).
+
+10. Generate the iso (i.e. mkisofs) and compress. If you are making a custom
+    ISO, then you may find cauldron/scripts/mkiso.sh useful. However, for
+    official releases, you can do cauldron/scripts/mkrelease.sh
+    /path/to/iso/tree VERSION (e.g., cauldron/scripts/mkrelease.sh iso
+    0.10.0-test5). This will give you both a compressed and uncompressed
+    finished product. You can use the uncompressed ISO for immediate testing,
+    and if it works, you can go ahead and ship the compressed version.
+
+11. TEST the ISO (minimally in a VM). Go through a full install, following all
+    of the steps, and try to catch anything out of the ordinary. Make sure the
+    directions for the steps make sense and produce something that works, to
+    the best of your ability.
+
+12. Assuming everything worked, it's time for a release. Go through and make
+    sure (again) that all the files are as they should be (especially in /etc
+    and /var). You can run cauldron/scripts/add-sauce.sh again (it will ask
+    before overwriting any files, for all files that already exist which it
+    wants to write). There will eventually be another script that will go
+    through and sanity-check an iso (i.e. the script is in progress). If
+    everything is as it should be and the iso worked as expected during
+    testing, release it. Congratulations.
