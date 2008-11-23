@@ -1,4 +1,4 @@
 This directory contains the *test* version of ISO, installer and
 general cauldron tools.
 
-See doc/current_recipe.txt for information on how to generate a release.
+See doc/release.recipe for information on how to generate a release.
