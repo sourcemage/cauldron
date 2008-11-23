@@ -1,5 +1,4 @@
-This directory contains the *development* version of ISO, installer and
+This directory contains the *test* version of ISO, installer and
 general cauldron tools.
 
-Trigger a release by running misc/release.sh
-Devel releases need not be logged in the ChangeLog
+See doc/current_recipe.txt for information on how to generate a release.
