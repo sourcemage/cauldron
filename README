@@ -1,5 +1,9 @@
 This directory contains the *development* version of ISO, installer and
 general cauldron tools.
 
-Trigger a release by running misc/release.sh
-Devel releases need not be logged in the ChangeLog
+If you would like to contribute to Cauldron development, please read HACKING
+and API first. DESIGN will explain the general design principles motivating how
+Cauldron is set up and what needs to be done to build an ISO.
+
+If you are looking for an area that you can contribute to, feel free to read
+TODO, or ask around in #sourcemage-cauldron on irc.freenode.net.
