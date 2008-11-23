@@ -71,17 +71,6 @@ using bzip2. [smgl-devel.iso.bz2]
 -- Functions for iso autobuild --
 ---------------------------------
 
-In order to truly have an autobuild system, cauldron needs to be more than
-an idea or a name. It must be a tool. If cauldron is to be an effective
-tool that is also maintainable, in addition to integrating with the rest of
-the SMGL toolset, it must have a clean and separable API that will not
-collide with other SMGL API's or namesets.
-
-API definitions:
-
-All cauldron API functions are to be prefixed with cauldron_
-All cauldron API variables are to be prefixed with CAULDRON_
-
 cauldron_enter_chroot(): handles the entering of chroot environments.
 Essentially this will just call mount --bind for various directories
 (/{dev,dev/pts,proc} $CAULDRON_BUILD/{dev,dev/pts,proc}) <followed by the
