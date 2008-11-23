@@ -57,14 +57,19 @@ fi
 
 [[ $# -lt 2 ]] && usage
 
+# Get the grimoire version used to generate all the spells in the ISO.
 GRIMOIRE_VER=$(< "$TARGET"/var/lib/sorcery/codex/stable/VERSION)
 
+# Replace all ISO_VERSION placeholders with the ISO version passed on the
+# commandline.
 for file in $(grep -qr '@ISO_VERSION@' $TARGET/{etc,isolinux,usr/share/doc/smgl.install}/*)
 do
 	 sed -i "s/@ISO_VERSION@/$VERSION/" "$file"
 done
 
- sed -i "s/@GRIMOIRE_VERSION@/$GRIMOIRE_VER/" "$TARGET"/isolinux/isolinux.msg
+# Replace the GRIMOIRE_VERSION placeholder (currently only in isolinux.msg).
+sed -i "s/@GRIMOIRE_VERSION@/$GRIMOIRE_VER/" "$TARGET"/isolinux/isolinux.msg
 
- $(dirname $0)/mkiso.sh $ISOCHOWN -kz "$TARGET" "smgl-$VERSION"
+# Generate the release ISO. Currently we force KEEP and COMPRESSION.
+$(dirname $0)/mkiso.sh $ISOCHOWN -kz "$TARGET" "smgl-$VERSION"
 
