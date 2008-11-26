@@ -10,8 +10,8 @@ sysfs   /sys            sysfs   defaults        0 0
 # Add your file systems here.
 
 # Examples:
-#/dev/hda2	/	reiserfs	defaults,noatime	0 1
 #/dev/hda1	/boot	ext2		defaults		0 2
+#/dev/hda2	/	reiserfs	defaults,noatime	0 1
 #LABEL=home	/home	ext3		defaults		0 2
 #/dev/hda3	swap	swap		defaults		0 0
 #
