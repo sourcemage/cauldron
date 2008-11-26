@@ -34,5 +34,6 @@ rpmunpack
 sysfsutils
 tcp_wrappers
 udev
+usbutils
 wireless_tools
 xfsprogs
