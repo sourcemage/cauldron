@@ -8,7 +8,7 @@ This image ships with several popular programs for partitioning:
 cfdisk is probably the most popular, a curses-based menu system:
 [1m cfdisk /dev/hda[m
 
-parted is also menu-based, can resize partitions, but may be a tad confusing:
+parted can resize partitions, but may be a tad confusing:
 [1m parted /dev/hda[m
 
 Then for the purists there's plain line-based fdisk. Can be a bit hard to use:
