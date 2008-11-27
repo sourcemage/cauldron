@@ -21,6 +21,11 @@ Options:
 	-f  Forces the script to add the files to the target directory, even if
 	    that directory is not detected to be a proper chroot environment.
 
+	-k KERNEL_VERSION
+	    Specify the kernel version to include the blacklist modules for.
+	    Defaults to the first version it finds in /lib/modules/ if not
+	    specified. Only applies to "iso" targets.
+
 	-o  Forces overwriting files in the target directory
 
 	-h  Shows this help information
@@ -28,11 +33,12 @@ EndUsage
   exit 1
 } >&2
 
-while getopts ":fhios" Option
+while getopts ":fhik:os" Option
 do
   case $Option in
     f ) FORCE=true ;;
     i ) TYPE="iso" ;;
+    k ) KVER="$OPTARG" ;;
     o ) OVERWRITE="a" ;;
     s ) TYPE="system" ;;
     h ) usage ;;
@@ -75,6 +81,21 @@ if ! [[ -e "$MYDIR"/base/etc/shadow ]] ;then
   exit 2
 fi >&2
 
+function blacklist_modules {
+  local SRC=$1
+  local DEST=$2
+
+  [[ ! -d "$SRC" || ! -d "$DEST" ]] && exit 3
+  mkdir -p "$DEST"/etc/modprobe.d
+
+  find "$SRC" -name "*.ko" |
+    sed '#.*/##' |
+    sed '#^\(.*\)\.ko$#install \1 /bin/true#' |
+    sort >> "$DEST"/etc/modprobe.d/blacklist
+}
+
+KVER=${KVER:-$(find "$CHROOTDIR"/lib/modules -mindepth 1 -maxdepth 1 -print | head -n1 | sed 's#.*/##')}
+[[ -z $KVER ]] && exit 3
 
 # make sure we start with a clean TEMPDIR each run
  rm -rf "$TEMPDIR"
@@ -84,12 +105,13 @@ fi >&2
 # should go onto both iso and system chroots
 # this is mostly /etc content
  cp -a "$MYDIR"/base/* "$TEMPDIR"/
+ blacklist_modules "$CHROOTDIR/lib/modules/$KVER/kernel/drivers/video" "$TEMPDIR"/
 
 # ISO Sauce
 if [[ $TYPE == "iso" ]] ;then
   # copy everything from the cauldron repo iso dir
   # into the TEMPDIR staging area
-   cp -a "$MYDIR"/iso/* "$TEMPDIR"/
+  cp -a "$MYDIR"/iso/* "$TEMPDIR"/
 fi
 
 # System Sauce
