@@ -17,6 +17,11 @@ with "cauldron_" for example). If you are contributing to any part of the
 Cauldron codebase, you are asked to adhere to the following guidelines when
 naming functions and variables.
 
+Where it makes sense, I have loosely modeled the Cauldron API after the OpenGL
+API because I consider the OpenGL API to be an excellent example of a clean and
+efficient API. Familiarity with the OpenGL API is however not required to code
+or understand the Cauldron API.
+
 In the context of the API, "cauldron" refers to the cauldron suite itself.
 Anything pertaining to installers is referred to collectively as "enchant" (the
 enchant suite).
