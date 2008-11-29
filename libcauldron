@@ -110,7 +110,7 @@ function cauldron_base_toolchain() {
   local HOST_TRIPLE
 
   # exit with error if chroot not defined
-  [[ -n "$CAULDRON_CHROOT" ]] || exit CERR_CHROOT
+  [[ -n "$CAULDRON_CHROOT" ]] || exit $CERR_CHROOT
 
   # set the value for HOST_TRIPLE
   HOST_TRIPLE=$(cauldron_get_host_triple)
@@ -247,7 +247,7 @@ function cauldron_configure_toolchain() {
 #-------------------------------------------------------------------------------
 function cauldron_cross_toolchain() {
   # exit with error if chroot not defined
-  [[ -n "$CAULDRON_CHROOT" ]] || exit CERR_CHROOT
+  [[ -n "$CAULDRON_CHROOT" ]] || exit $CERR_CHROOT
 
   # build the stage 1 tools
   cauldron_configure_toolchain 1
@@ -290,7 +290,7 @@ function cauldron_build_iso_system() {
   local spell
 
   # exit with error if chroot not defined
-  [[ -n "$CAULDRON_CHROOT" ]] || exit CERR_CHROOT
+  [[ -n "$CAULDRON_CHROOT" ]] || exit $CERR_CHROOT
 
   # Since we will be installing from the running ISO system instead of a giant
   # tarball, for each spell we only need to make sure that the cache file is
@@ -389,7 +389,7 @@ function cauldron_add_installer() {
 #-------------------------------------------------------------------------------
 function cauldron_prepare() {
   # exit with error if chroot not defined
-  [[ -n "$CAULDRON_CHROOT" ]] || exit CERR_CHROOT
+  [[ -n "$CAULDRON_CHROOT" ]] || exit $CERR_CHROOT
 
   # first, ensure that the build dir exists
   mkdir -p ${CAULDRON_BUILD}
