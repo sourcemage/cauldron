@@ -34,13 +34,15 @@
 ##
 #-------------------------------------------------------------------------------
 function cauldron_chroot_init() {
+  local TARGET="${1:-$CAULDRON_BUILD}"
+
   if [[ "$CAULDRON_CHROOTINIT" -ne 1 ]]
   then
-    mount --bind ${HOSTPATH}/dev ${CAULDRON_BUILD}/dev
-    mount --bind ${HOSTPATH}/dev/pts ${CAULDRON_BUILD}/dev/pts
-    mount --bind ${HOSTPATH}/proc ${CAULDRON_BUILD}/proc
+    mount --bind ${HOSTPATH}/dev ${TARGET}/dev
+    mount --bind ${HOSTPATH}/dev/pts ${TARGET}/dev/pts
+    mount --bind ${HOSTPATH}/proc ${TARGET}/proc
     export CAULDRON_CHROOTINIT=1
-    export CAULDRON_CHROOT="chroot \"$CAULDRON_BUILD\""
+    export CAULDRON_CHROOT="chroot \"$TARGET\""
   fi
 }
 
@@ -50,11 +52,13 @@ function cauldron_chroot_init() {
 ##
 #-------------------------------------------------------------------------------
 function cauldron_chroot_done() {
+  local TARGET="${1:-$CAULDRON_BUILD}"
+
   if [[ "$CAULDRON_CHROOTINIT" -eq 1 ]]
   then
-    umount ${CAULDRON_BUILD}/proc
-    umount ${CAULDRON_BUILD}/dev/pts
-    umount ${CAULDRON_BUILD}/dev
+    umount ${TARGET}/proc
+    umount ${TARGET}/dev/pts
+    umount ${TARGET}/dev
     unset CAULDRON_CHROOTINIT
     unset CAULDRON_CHROOT
   fi
