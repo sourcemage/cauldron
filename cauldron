@@ -36,8 +36,57 @@ EOF
   exit 1
 }
 
+#-------------------------------------------------------------------------------
+##
+## The brew command calls the necessary functions to generate a complete ISO
+## using the settings configured for cauldron.
+##
+#-------------------------------------------------------------------------------
 function cauldron_brew () {
-  cauldron_build_iso
+  # set up basic tool-chain needed for building everything else.
+  cauldron_base_toolchain
+
+  # set up chroot for building inside $CAULDRON_BUILD
+  cauldron_chroot_init
+  # exit with error if chroot not defined
+  [[ -n "$CAULDRON_CHROOT" ]] || exit CERR_CHROOT
+
+  # build the cross-compile tool-chain targeted for the target sys
+  if [ -n $TARGET ]
+  then
+    if [ $TARGET != $HOST ]
+    then
+      ${CAULDRON_CHROOT} cauldron_cross_toolchain
+    fi
+  fi
+
+  # use the cross-compile tool-chain to cast all spells needed for
+  # the iso system
+  ${CAULDRON_CHROOT} cauldron_build_iso_system ${TARGET_SPELLS}
+
+  # configure the iso init system, initrd/initramfs, etc.
+  ${CAULDRON_CHROOT} cauldron_iso_init
+
+  # build/create/copy/whatever installer system/data into the iso
+  for installer in $(cat ${TARGET_SPELLS})
+  do
+    ${CAULDRON_CHROOT} cauldron_add_installer $installer
+  done
+
+  # remove unnecessary files from iso and free up space
+  # this needs to have error-checking added in later
+  for cleaner in ${CAULDRON_BASE}/cleaners/* ;
+  do
+    cp ${CAULDRON_BASE}/cleaners/${cleaner} ${CAULDRON_BUILD}/
+    ${CAULDRON_CHROOT} cauldron_clean_iso_system /${cleaner}
+    ${CAULDORN_CHROOT} rm /${cleaner}
+  done
+
+  # finished with iso building, clean up from chroot setup
+  cauldron_chroot_done
+
+  # create the iso fs from the build dir
+  cauldron_mkisofs
 }
 
 function cauldron_modify_local_config() {
