@@ -50,7 +50,8 @@ local CMESSAGE_COLOR="${CYAN}"
 # cauldron errors
 CERR_OK=0
 CERR_ARCHIVE=1
-CERR_CLEANFILE=2
+CERR_CHROOT=2
+CERR_CLEANFILE=3
 
 # enchant errors
 EERR_OK=0
