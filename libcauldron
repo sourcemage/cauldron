@@ -191,7 +191,6 @@ function cauldron_build_cache_file() {
   local SPELL=$1
   local AGGRESSIVE=$2
   local VERSION=
-  local AGGR_BUILD="$CAULDRON_BUILD/tmp/cauldron_aggressive_cache"
 
   # First check to see if the spell was installed, but no cache exists.
   if gaze -q installed $SPELL
@@ -208,15 +207,31 @@ function cauldron_build_cache_file() {
       # generate a cache file, and if not then either set sorcery to do so or
       # build the cache file afterwards by being recursive? This should be done
       # in a build chroot so that the user's host filesystem is not polluted.
-      rm -fr "$AGGR_BUILD"
-      mkdir -p "$AGGR_BUILD"
-      for file in "$HOSTPATH/var/log/sorcery/install/${SPELL}-${VERSION}"
-      do
-        cp -a --parents "$file" "$AGGR_BUILD"/
-      done
-      tar jcf "${SPELL}-${VERSION}.tar.bz2" \
-        --transform "s#$AGGR_BUILD/##" $AGGR_BUILD/*
-      [[ $? -eq 0 ]] && rm -fr "$AGGR_BUILD"
+      local AGGR_BUILD="$CAULDRON_BUILD/tmp/cauldron_aggressive_cache"
+      if [[ -e "$HOSTPATH/var/log/sorcery/install/${SPELL}-${VERSION}" ]]
+      then
+        rm -fr "$AGGR_BUILD"
+        mkdir -p "$AGGR_BUILD"
+        for file in "$HOSTPATH/var/log/sorcery/install/${SPELL}-${VERSION}"
+        do
+          cp -a --parents "$file" "$AGGR_BUILD"/
+        done
+        tar jcf "${SPELL}-${VERSION}.tar.bz2" \
+          --transform "s#$AGGR_BUILD/##" $AGGR_BUILD/*
+        [[ $? -eq 0 ]] && rm -fr "$AGGR_BUILD"
+      else
+        if [[ -e "$CAULDRON_BUILD/etc/sorcery/local/config" ]]
+        then
+          local CONFIG="$CAULDRON_BUILD/etc/sorcery/local/config"
+          local ARCHIVE=$(grep "ARCHIVE=" "$CONFIG" | cut -d= -f2)
+          [[ $ARCHIVE != "on" ]] &&
+          sed -i 's/ARCHIVE=.*/ARCHIVE="on"/' "$CONFIG"
+        fi
+        cauldron_chroot_init
+        "$CAULDRON_CHROOT" $CAULDRON_CAST $SPELL
+        "$CAULDRON_CHROOT" $CAULDRON_DISPEL $SPELL
+        cauldron_chroot_done
+      fi
     fi
   fi
 }
