@@ -314,7 +314,7 @@ function cauldron_cross_toolchain() {
 ## into the target system from the iso.
 ##
 #-------------------------------------------------------------------------------
-function cauldron_build_iso_system() {
+function cauldron_build_target_system() {
   local target_spells=$1
   local spell
 
