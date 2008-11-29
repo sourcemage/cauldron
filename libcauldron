@@ -130,10 +130,10 @@ function cauldron_base_toolchain() {
       # this check could be based on spell-{names,versions} reported by
       # gaze/sorcery/dispel. Mirroring code in dispel might be the best bet,
       # since that has to find the version currently installed anyway.
-      if [[ -f ${HOST_SORCERY_SPOOL}/${SPELL_CACHE} ]]
+      if [[ -f "${HOST_SORCERY_SPOOL}/${SPELL_CACHE}" ]]
       then
         # found a cache file, copy it to the BUILD dir
-        cp ${HOST_SORCERY_SPOOL}/${SPELL_CACHE} ${CAULDRON_BUILD}
+        cp "${HOST_SORCERY_SPOOL}/${SPELL_CACHE}" "${CAULDRON_BUILD}"
       else
         # couldn't find a cache file, so we'll need to build one
         cauldron_build_cache_file ${SPELL}
@@ -142,7 +142,8 @@ function cauldron_base_toolchain() {
       # the spell into the BUILD dir
       # the unpacking is done against the BUILD dir as the root dir, so
       # this should not touch the HOST filesystem at all
-      tar xjf ${CAULDRON_BUILD}/${SPELL_CACHE} -C ${CAULDRON_BUILD}/
+      tar xjf "${CAULDRON_BUILD}/${SPELL_CACHE}" -C "${CAULDRON_BUILD}"/
+      [[ $? -eq 0 ]] && rm "${CAULDRON_BUILD}/${SPELL_CACHE}"
     else
       # the spell is not present on the HOST system, so it must be cast
       # inside a chroot
