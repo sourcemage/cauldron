@@ -296,7 +296,7 @@ function cauldron_build_iso_system() {
   # caching should really be turned on from the very beginning though...
   [[ "$ARCHIVE" == "off" ]] && return $CERR_ARCHIVE
   cauldron_chroot_init
-  for spell in $TARGET_SPELLS
+  for spell in $target_spells
   do
     # Cheap cop-out to get the cache generated - cast the spell to generate the
     # cache, and then dispel it from the system so that it isn't wasting space
