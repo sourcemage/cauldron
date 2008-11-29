@@ -27,14 +27,8 @@
 . ${SORCERY_LIBS}/libtrack
 
 #-------------------------------------------------------------------------------
-# Local global variables
-#-------------------------------------------------------------------------------
-local CAULDRON_CHROOTINIT=0
-local CAULDRON_CHROOT="chroot $CAULDRON_BUILD"
-
-#-------------------------------------------------------------------------------
 ##
-## Prepares a chroot environment
+## Prepares a chroot environment and exports necessary variables
 ##
 #-------------------------------------------------------------------------------
 function cauldron_chroot_init() {
@@ -43,7 +37,8 @@ function cauldron_chroot_init() {
     mount --bind ${HOSTPATH}/dev ${CAULDRON_BUILD}/dev
     mount --bind ${HOSTPATH}/dev/pts ${CAULDRON_BUILD}/dev/pts
     mount --bind ${HOSTPATH}/proc ${CAULDRON_BUILD}/proc
-    CAULDRON_CHROOTINIT=1
+    export CAULDRON_CHROOTINIT=1
+    export CAULDRON_CHROOT="chroot \"$CAULDRON_BUILD\""
   fi
 }
 
@@ -58,7 +53,8 @@ function cauldron_chroot_done() {
     umount ${CAULDRON_BUILD}/proc
     umount ${CAULDRON_BUILD}/dev/pts
     umount ${CAULDRON_BUILD}/dev
-    CAULDRON_CHROOTINIT=0
+    unset CAULDRON_CHROOTINIT
+    unset CAULDRON_CHROOT
   fi
 }
 
@@ -110,6 +106,9 @@ function cauldron_base_toolchain() {
   local VERSION
   local SPELL_CACHE
   local HOST_TRIPLE
+
+  # exit with error if chroot not defined
+  [[ -n "$CAULDRON_CHROOT" ]] || exit CERR_CHROOT
 
   # set the value for HOST_TRIPLE
   HOST_TRIPLE=$(cauldron_get_host_triple)
@@ -244,6 +243,9 @@ function cauldron_configure_toolchain() {
 ##
 #-------------------------------------------------------------------------------
 function cauldron_cross_toolchain() {
+  # exit with error if chroot not defined
+  [[ -n "$CAULDRON_CHROOT" ]] || exit CERR_CHROOT
+
   # build the stage 1 tools
   cauldron_configure_toolchain 1
   cauldron_chroot_init
@@ -283,6 +285,9 @@ function cauldron_cross_toolchain() {
 function cauldron_build_iso_system() {
   local target_spells=$1
   local spell
+
+  # exit with error if chroot not defined
+  [[ -n "$CAULDRON_CHROOT" ]] || exit CERR_CHROOT
 
   # Since we will be installing from the running ISO system instead of a giant
   # tarball, for each spell we only need to make sure that the cache file is
@@ -380,6 +385,9 @@ function cauldron_add_installer() {
 ##
 #-------------------------------------------------------------------------------
 function cauldron_prepare() {
+  # exit with error if chroot not defined
+  [[ -n "$CAULDRON_CHROOT" ]] || exit CERR_CHROOT
+
   # first, ensure that the build dir exists
   mkdir -p ${CAULDRON_BUILD}
 
