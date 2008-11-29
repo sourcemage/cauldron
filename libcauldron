@@ -38,9 +38,9 @@ function cauldron_chroot_init() {
 
   if [[ "$CAULDRON_CHROOTINIT" -ne 1 ]]
   then
-    mount --bind ${HOSTPATH}/dev ${TARGET}/dev
-    mount --bind ${HOSTPATH}/dev/pts ${TARGET}/dev/pts
-    mount --bind ${HOSTPATH}/proc ${TARGET}/proc
+    mount --bind "$HOSTPATH"/dev "$TARGET"/dev
+    mount --bind "$HOSTPATH"/dev/pts "$TARGET"/dev/pts
+    mount --bind "$HOSTPATH"/proc "$TARGET"/proc
     export CAULDRON_CHROOTINIT=1
     export CAULDRON_CHROOT="chroot \"$TARGET\""
   fi
@@ -56,9 +56,9 @@ function cauldron_chroot_done() {
 
   if [[ "$CAULDRON_CHROOTINIT" -eq 1 ]]
   then
-    umount ${TARGET}/proc
-    umount ${TARGET}/dev/pts
-    umount ${TARGET}/dev
+    umount "TARGET"/proc
+    umount "TARGET"/dev/pts
+    umount "TARGET"/dev
     unset CAULDRON_CHROOTINIT
     unset CAULDRON_CHROOT
   fi
@@ -403,9 +403,9 @@ function cauldron_mkisofs() {
 function cauldron_add_installer() {
   local MODULE=$1
 
-  cp -r ${CAULDRON_LIBS}/${MODULE} ${CAULDRON_BUILD}/${ENCHANT_DATA}/
-  ln -sf ${CAULDRON_BUILD}/${ENCHANT_DATA}/${MODULE}/bin/* \
-          ${CAULDRON_BUILD}/usr/sbin/
+  cp -r "$CAULDRON_LIBS/$MODULE" "$CAULDRON_BUILD/$ENCHANT_DATA/"
+  ln -sf "$CAULDRON_BUILD/$ENCHANT_DATA/$MODULE"/bin/* \
+          "$CAULDRON_BUILD"/usr/sbin/
 }
 
 #-------------------------------------------------------------------------------
@@ -421,19 +421,19 @@ function cauldron_prepare() {
   [[ -n "$CAULDRON_CHROOT" ]] || exit $CERR_CHROOT
 
   # first, ensure that the build dir exists
-  mkdir -p ${CAULDRON_BUILD}
+  mkdir -p "$CAULDRON_BUILD"
 
   # copy the host's resolv.conf in order to dl packages from net
-  cp -L /etc/resolv.conf ${CAULDRON_BUILD}/etc/resolv.conf
+  cp -L /etc/resolv.conf "$CAULDRON_BUILD"/etc/resolv.conf
 
-  cauldron_sorcery_install ${CAULDRON_BUILD}
-  mkdir -p ${CAULDRON_BUILD}/var/spool/sorcery
-  cp -f ${HOSTPATH}/var/spool/sorcery/sorcery-${SORCERY_BRANCH}.tar${EXTENSION}
+  cauldron_sorcery_install "$CAULDRON_BUILD"
+  mkdir -p "$CAULDRON_BUILD"/var/spool/sorcery
+  cp -f "$HOSTPATH"/var/spool/sorcery/sorcery-${SORCERY_BRANCH}.tar${EXTENSION}
 
   # cauldron is a spell
   # there is a spoon
   cauldron_chroot_init
-  ${CAULDRON_CHROOT} ${CAULDRON_CAST} cauldron
+  "$CAULDRON_CHROOT" "$CAULDRON_CAST" cauldron
   cauldron_chroot_done
 }
 
@@ -453,7 +453,7 @@ function cauldron_download_sorcery() {
   # run in a subshell as an easy way of not messing with the working directory
   (
     cd ${SPOOL}
-    wget http://download.sourcemage.org/sorcery/${SORCERY}
+    wget http://download.sourcemage.org/sorcery/$SORCERY
   )
 }
 
@@ -472,28 +472,28 @@ function cauldron_download_sorcery() {
 #-------------------------------------------------------------------------------
 function cauldron_sorcery_install() {
   local force_download=$1
-  local BRANCH=$ISO_SORCERY_BRANCH
-  local SPOOL=${CAULDRON_BUILD}/var/spool/sorcery
+  local BRANCH="$ISO_SORCERY_BRANCH"
+  local SPOOL="$CAULDRON_BUILD/var/spool/sorcery"
 
   # first, check to see if we will copy or download the sorcery source tarball
   # and get the source tarball and place it in CAULDRON_BUILD
-  if [[ -e ${HOST_SORCERY_SPOOL}/sorcery-${BRANCH}.tar.bz2 ]]
+  if [[ -e "$HOST_SORCERY_SPOOL"/sorcery-${BRANCH}.tar.bz2 ]]
   then
     if [[ "$force_download" == "yes" ]]
     then
-      cauldron_download_sorcery ${BRANCH} ${SPOOL}
+      cauldron_download_sorcery $BRANCH "$SPOOL"
     else
-      cp ${HOST_SORCERY_SPOOL}/sorcery-${BRANCH}.tar.bz2 ${SPOOL}
+      cp "$HOST_SORCERY_SPOOL"/sorcery-${BRANCH}.tar.bz2 "$SPOOL"
     fi
   else
-    cauldron_download_sorcery ${BRANCH} ${SPOOL}
+    cauldron_download_sorcery ${BRANCH} "$SPOOL"
   fi
 
   # unpack the source tarball
-  tar -C ${CAULDRON_BUILD}/usr/src -jxf ${SPOOL}/sorcery-${BRANCH}.tar.bz2
+  tar -C "$CAULDRON_BUILD"/usr/src -jxf "$SPOOL"/sorcery-${BRANCH}.tar.bz2
 
   # install the source tarball, relative to CAULDRON_BUILD
-  ${CAULDRON_BUILD}/usr/src/sorcery/install ${CAULDRON_BUILD}
+  "$CAULDRON_BUILD"/usr/src/sorcery/install "$CAULDRON_BUILD"
 }
 
 #-------------------------------------------------------------------------------
@@ -502,8 +502,8 @@ function cauldron_sorcery_install() {
 ##
 #-------------------------------------------------------------------------------
 function cauldron_cleanup() {
-  [[ ${CAULDRON_CLEAN} == "yes" ]] && rm -fr ${CAULDRON_BUILD}
-  rm -fr ${CAULDRON_TMP}
+  [[ ${CAULDRON_CLEAN} == "yes" ]] && rm -fr "$CAULDRON_BUILD"
+  rm -fr "$CAULDRON_TMP"
 }
 
 #-------------------------------------------------------------------------------
