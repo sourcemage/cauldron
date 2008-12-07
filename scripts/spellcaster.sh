@@ -9,8 +9,8 @@ then
 	if [[ $CAULDRON_CAST = y ]]
 	then
 		# cast all spells
-		/usr/bin/cast $(tr '\n' ' ' </"$rspells") &&
-		/usr/bin/cast $(tr '\n' ' ' </"$ospells")
+		/usr/sbin/cast $(tr '\n' ' ' </"$rspells") &&
+		/usr/sbin/cast $(tr '\n' ' ' </"$ospells")
 
 	elif [[ $CAULDRON_DISPEL = y ]]
 	then
@@ -112,13 +112,14 @@ then
 fi
 
 # Copy necessary files to the target and chroot
-$(grep -q linux "$CAULDRONDIR/{$rspells,$ospells}") && cp "$CAULDRONDIR/config.$TYPE" "$TARGET/etc/sorcery/local/kernel.config"
-[[ CAULDRON_CAST = y ]] && cp "$CAULDRONDIR/$rspells" "$TARGET"/
+$(grep -q linux "$CAULDRONDIR/$rspells" "$CAULDRONDIR/$ospells" ) && cp "$CAULDRONDIR/config-2.6" "$TARGET/etc/sorcery/local/kernel.config"
+[[ $CAULDRON_CAST = y ]] && cp "$CAULDRONDIR/$rspells" "$TARGET"/
 cp "$CAULDRONDIR/$ospells" "$TARGET"/
+cp "$0" "$TARGET"/
 "$MYDIR/cauldronchr.sh" -d "$TARGET" /"$(basename $0)"
 
 # Clean up the target
-[[ CAULDRON_CAST = y ]] && rm "$TARGET/$rspells"
+[[ $CAULDRON_CAST = y ]] && rm "$TARGET/$rspells"
 rm "$TARGET/$ospells"
 [[ -e "$TARGET/etc/sorcery/local/kernel.config" ]] && rm "$TARGET/etc/sorcery/local/kernel.config"
 rm "$TARGET/$(basename $0)"
