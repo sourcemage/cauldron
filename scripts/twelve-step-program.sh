@@ -14,6 +14,9 @@
   test -d /root/build || 
   echo 'step 1 failed' >> /var/log/sorcery/activity
 
+  # step 1.5 (add resolv.conf)
+  cp /etc/resolv.conf /root/build/etc/resolv.conf
+
   # step 2 (build spells)
   echo step 2
   bash /root/cauldron/scripts/spellcaster.sh -c /root/build x86 ||
