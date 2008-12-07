@@ -14,8 +14,9 @@
   test -d /root/build || 
   echo 'step 1 failed' >> /var/log/sorcery/activity
 
-  # step 1.5 (add resolv.conf)
+  # step 1.5 (add resolv.conf and sorcery url configuration)
   cp /etc/resolv.conf /root/build/etc/resolv.conf
+  cp /etc/sorcery/local/url /root/build/etc/sorcery/local/url
 
   # step 2 (build spells)
   echo step 2
