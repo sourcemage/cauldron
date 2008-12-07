@@ -4,21 +4,6 @@
 # TODO: re-factor variable names and messaging logging
 #
 
-  # step 0 (install cauldron support scripts)
-  echo 'step 0 started' >> /var/log/sorcery/activity
-  cd /root &&
-  yes ""|cast git &&
-  ping -c 1 scm.sourcemage.org &&
-  git clone git://scm.sourcemage.org/smgl/cauldron /root/cauldron &&
-  cd cauldron &&
-  git checkout origin/test &&
-  cd .. &&
-  ls -l /root &&
-  find /root/cauldron &&
-  test -d /root/cauldron || 
-  echo 'step 0 failed' >> /var/log/sorcery/activity
-
-
   # step 1 (get basesystem)
   echo step 1
   cd /root
