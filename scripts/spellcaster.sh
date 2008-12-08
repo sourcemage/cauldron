@@ -16,7 +16,7 @@ then
 	then
 		# dispel the optional spells, so that we have only their cache files
 		# available
-		/usr/bin/dispel $(tr '\n' ' ' </"$ospells")
+		/usr/sbin/dispel $(tr '\n' ' ' </"$ospells")
 	fi
 
 	exit $?
