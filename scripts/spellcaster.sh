@@ -112,7 +112,7 @@ then
 fi
 
 # Copy necessary files to the target and chroot
-$(grep -q linux "$CAULDRONDIR/$rspells" "$CAULDRONDIR/$ospells" ) && cp "$CAULDRONDIR/config-2.6" "$TARGET/etc/sorcery/local/kernel.config"
+grep -q '^linux$' "$CAULDRONDIR/$rspells" "$CAULDRONDIR/$ospells" && cp "$CAULDRONDIR/config-2.6" "$TARGET/etc/sorcery/local/kernel.config"
 [[ $CAULDRON_CAST = y ]] && cp "$CAULDRONDIR/$rspells" "$TARGET"/
 cp "$CAULDRONDIR/$ospells" "$TARGET"/
 cp "$0" "$TARGET"/
