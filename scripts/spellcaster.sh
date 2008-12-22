@@ -16,7 +16,7 @@ then
 	then
 		# dispel the optional spells, so that we have only their cache files
 		# available
-		/usr/bin/dispel $(tr '\n' ' ' </"$ospells")
+		/usr/sbin/dispel $(tr '\n' ' ' </"$ospells")
 	fi
 
 	exit $?
@@ -112,16 +112,26 @@ then
 fi
 
 # Copy necessary files to the target and chroot
-$(grep -q linux "$CAULDRONDIR/$rspells" "$CAULDRONDIR/$ospells" ) && cp "$CAULDRONDIR/config-2.6" "$TARGET/etc/sorcery/local/kernel.config"
+grep -q '^linux$' "$CAULDRONDIR/$rspells" "$CAULDRONDIR/$ospells" &&
+	cp "$CAULDRONDIR/config-2.6" "$TARGET/etc/sorcery/local/kernel.config"
+
+# Copy the list of spells needed for casting into the TARGET if casting
 [[ $CAULDRON_CAST = y ]] && cp "$CAULDRONDIR/$rspells" "$TARGET"/
+
+# ospells needs to be there whether casting or dispelling
 cp "$CAULDRONDIR/$ospells" "$TARGET"/
+
+# copy the script into the TARGET so it can do the casting/dispelling
 cp "$0" "$TARGET"/
+
+# chroot and run the script inside the TARGET
 "$MYDIR/cauldronchr.sh" -d "$TARGET" /"$(basename $0)"
 
 # Clean up the target
 [[ $CAULDRON_CAST = y ]] && rm "$TARGET/$rspells"
 rm "$TARGET/$ospells"
-[[ -e "$TARGET/etc/sorcery/local/kernel.config" ]] && rm "$TARGET/etc/sorcery/local/kernel.config"
+[[ -e "$TARGET/etc/sorcery/local/kernel.config" ]] &&
+	rm "$TARGET/etc/sorcery/local/kernel.config"
 rm "$TARGET/$(basename $0)"
 
 unset rspells
