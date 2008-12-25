@@ -1,9 +1,9 @@
 spell listings:
 	rspells.*  spells that should be in system.tar.bz2
 	ispells.*  spells that are needed on the ISO or for optional install
-	tspells.*  spells from either rspells or ispells that should only exist
-			as caches (not actually be "installed" in either
-			system.tar.bz2 or the ISO runtime environment)
+	tspells.*  spells that should only exist as caches (not actually be
+			"installed" in either system.tar.bz2 or the ISO runtime
+			environment)
 
 system.tar.bz2 consists entirely (and only) of those spells explicitly listed
 in rspells.*
@@ -11,12 +11,12 @@ in rspells.*
 	system.tar.bz2 = rspells
 
 The ISO runtime environment/filesystem will consist of those spells listed in
-rspells.* combined with those listed in ispells.*, but with the spells in
-tspells.* dispelled so that only their caches remain for installation.
+ispells.*, but with the spells in tspells.* dispelled so that only their caches
+remain for installation.
 
-	ISO = rspells + ispells - tspells
+	ISO = ispells + tspells(caches)
 
-Anything which is mean _only_ for optional installation to the target system
+Anything which is meant _only_ for optional installation to the target system
 should be listed in tspells.*
 
 The listing in spells.x86 is the older leftover listing from before optional

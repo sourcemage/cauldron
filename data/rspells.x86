@@ -30,6 +30,7 @@ net-tools
 patch
 procps
 readline
+run-parts
 sed
 shadow
 simpleinit-msb
