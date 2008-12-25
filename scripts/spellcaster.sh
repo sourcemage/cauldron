@@ -72,7 +72,7 @@ function sanity_check() {
 
 	if [[ -e "$config" ]]
 	then
-		arch=$(grep 'ARCHIVE=' "$config" | cut -d= -f2 | sed 's/"//g')
+		arch="$(source "$config" && echo $ARCHIVE)"
 		if [[ -n $arch && $arch != "on" ]]
 		then
 			echo "Error! TARGET sorcery does not archive!" >&2
@@ -81,7 +81,8 @@ function sanity_check() {
 
 			if [[ $choice == 'y' ]]
 			then
-				sed -i 's/ARCHIVE=.*/ARCHIVE="on"/' "$config"
+				. "$TARGET/var/lib/sorcery/modules/libstate"
+				modify_config $config ARCHIVE on
 			else
 				exit 2
 			fi
@@ -113,15 +114,13 @@ function prepare_target() {
 	if [[ -n $CAULDRON_CHROOT && $# -eq 0 ]]
 	then
 		# cast basic/required spells
-		/usr/sbin/cast $(tr '\n' ' ' </rspells)
-		exit $?
+		/usr/sbin/cast $(tr '\n' ' ' </rspells) || exit $?
 
 		# make a list of the caches to unpack for system
 		for spell in $(</rspells)
 		do
 			echo $spell-$(gaze -q installed $spell) >> /sys-list
-		done
-		[[ $? -eq 0 ]] || exit 42
+		done || exit 42
 	fi
 BASE
 
@@ -131,15 +130,13 @@ BASE
 	if [[ -n $CAULDRON_CHROOT && $# -eq 0 ]]
 	then
 		# cast optional spells
-		/usr/sbin/cast $(tr '\n' ' ' </ispells)
-		exit $?
+		/usr/sbin/cast $(tr '\n' ' ' </ispells) || exit $?
 
 		# make a list of the caches to unpack for iso
 		for spell in $(</ispells)
 		do
 			echo $spell-$(gaze -q installed $spell) >> /iso-list
-		done
-		[[ $? -eq 0 ]] || exit 42
+		done || exit 42
 	fi
 ISO
 
@@ -149,24 +146,22 @@ ISO
 	if [[ -n $CAULDRON_CHROOT && $# -eq 0 ]]
 	then
 		# cast optional spells
-		/usr/sbin/cast $(tr '\n' ' ' </ospells)
-		exit $?
+		/usr/sbin/cast $(tr '\n' ' ' </ospells) || exit $?
 
 		# make a list of the caches to unpack for iso
 		for spell in $(</ospells)
 		do
 			echo $spell-$(gaze -q installed $spell) >> /opt-list
-		done
-		[[ $? -eq 0 ]] || exit 42
+		done || exit 42
 
 		# dispel the optional spells, so that we have only their cache files
 		# available
-		/usr/sbin/dispel $(tr '\n' ' ' </ospells)
-		exit $?
+		/usr/sbin/dispel $(tr '\n' ' ' </ospells) || exit $?
 	fi
 OPTIONAL
 
 	chmod a+x "$TARGET"/build_base.sh
+	chmod a+x "$TARGET"/build_iso.sh
 	chmod a+x "$TARGET"/build_optional.sh
 }
 
