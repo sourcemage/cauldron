@@ -19,6 +19,8 @@ init.d
 ifupdown
 installwatch
 kbd
+libidn
+libtool
 locale
 make
 module-init-tools
