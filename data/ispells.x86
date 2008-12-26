@@ -20,7 +20,6 @@ gnupg
 gpm
 grep
 groff
-grub
 gzip
 hdparm
 iana-etc
@@ -34,7 +33,6 @@ libaal
 libidn
 libpcap
 libtool
-lilo
 locale
 lsscsi
 lvm
