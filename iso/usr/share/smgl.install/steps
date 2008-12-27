@@ -2,10 +2,10 @@ init               - start of the install
 disk-partition     - creating partitions
 disk-format        - creating filesystems
 disk-mount         - mounting filesystems at appropriate mount-points
-copy-base          - copying basesystem and basic /etc files
+select-spells      - choose the spells to install
+install            - install the spells and base system
 edit-confs         - editing the basic configuration files
-compile-kernel     - compile a custom kernel
-boot-loader        - installing and setting up a boot manager
-install-opt-spells - installing other spells you may need
+kernel             - install ISO kernel and/or compile a custom kernel
+boot-loader        - install and set up a boot manager
 user-setup         - set root password, create regular users
 reboot             - reboot into the new system

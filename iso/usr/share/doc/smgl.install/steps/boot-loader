@@ -1,11 +1,10 @@
 [1mboot-loader step[m
-Now it is time to select a boot-loader. Since this is the x86 ISO, you can
-choose either grub or lilo. Both are included in the basesystem you copied
-over to /mnt/root in the copy-base step. Since grub seems to be more popular
-than lilo these days, the installer defaults to grub. Use whichever you please,
-but only use one of them.
+Now it is time to set up a boot loader. Since this is the x86 ISO, you can
+set up either grub or lilo. Use whichever you please, but only use one of them.
+It is assumed that whichever boot loader you will set up here was selected and
+installed during the [1mselect-spells[m and [1minstall[m steps.
 
-Once you have decided which boot loader to use, you need to configure the
+Once you have decided which boot loader to set up, you need to configure the
 boot loader. After you finish configuring your boot loader, you need to
 "install" it.  This involves running the boot loader, which will install itself
 to the location you specified in the config file.
