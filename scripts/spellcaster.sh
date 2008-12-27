@@ -71,16 +71,25 @@ function sanity_check() {
 	local choice=
 
 	# Ensure that TARGET is a directory
-	[[ -d "$TARGET" ]] ||
+	[[ -d "$TARGET" ]] || {
 		echo "$TARGET does not exist!" && exit 3
+	}
 
 	# If ISODIR is not a directory, create it.
-	[[ ! -d "$ISODIR" ]] && mkdir -p "$ISODIR" ||
-		echo "couldn't create $ISODIR" && exit 3
+	[[ ! -d "$ISODIR" ]] && {
+		mkdir -p "$ISODIR" || {
+			echo "couldn't create $ISODIR" &&
+			exit 3
+		}
+	}
 
 	# If SYSDIR is not a directory, create it.
-	[[ ! -d "$SYSDIR" ]] && mkdir -p "$SYSDIR" ||
-		echo "couldn't create $SYSDIR" exit 3
+	[[ ! -d "$SYSDIR" ]] && {
+		mkdir -p "$SYSDIR" || {
+			echo "couldn't create $SYSDIR" &&
+			exit 3
+		}
+	}
 
 	if [[ -e "$config" ]]
 	then
