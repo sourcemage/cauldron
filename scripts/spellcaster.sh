@@ -189,8 +189,8 @@ shift
 [[ $# -gt 0 ]] && TYPE="$1"
 TYPE="${TYPE:-x86}"
 
-ISODIR="${$ISODIR:-/tmp/cauldron/iso}"
-SYSDIR="${$SYSDIR:-/tmp/cauldron/sys}"
+ISODIR="${ISODIR:-/tmp/cauldron/iso}"
+SYSDIR="${SYSDIR:-/tmp/cauldron/sys}"
 
 sanity_check
 
