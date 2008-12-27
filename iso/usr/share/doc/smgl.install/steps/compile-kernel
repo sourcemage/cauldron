@@ -1,7 +1,6 @@
-[1mcompile-kernel[m
-This step is optional but recommended. You may now set up a custom kernel for
-your installation. You can either do this by casting the spell or
-compiling and installing manually.
+[1mcompile-kernel step[m
+You may now set up a custom kernel for your installation by casting the linux
+spell or compiling and installing manually.
 
 chroot into your system:
 [1m smgl-chroot[m
