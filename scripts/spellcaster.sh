@@ -78,6 +78,7 @@ function sanity_check() {
 			echo "Error! TARGET sorcery does not archive!" >&2
 			echo -n "Set TARGET sorcery to archive? [yn]" >&2
 			read -n1 choice
+			echo ""
 
 			if [[ $choice == 'y' ]]
 			then
