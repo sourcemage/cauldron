@@ -71,13 +71,16 @@ function sanity_check() {
 	local choice=
 
 	# Ensure that TARGET is a directory
-	[[ -d "$TARGET" ]] || exit 3
+	if [[ -d "$TARGET" ]] ||
+		echo "$TARGET does not exist!" && exit 3
 
 	# If ISODIR is not a directory, create it.
-	[[ ! -d "$ISODIR" ]] && mkdir -p "$ISODIR" || exit 3
+	[[ ! -d "$ISODIR" ]] && mkdir -p "$ISODIR" ||
+		echo "couldn't create $ISODIR" && exit 3
 
 	# If SYSDIR is not a directory, create it.
-	[[ ! -d "$SYSDIR" ]] && mkdir -p "$SYSDIR" || exit 3
+	[[ ! -d "$SYSDIR" ]] && mkdir -p "$SYSDIR" ||
+		echo "couldn't create $SYSDIR" exit 3
 
 	if [[ -e "$config" ]]
 	then
@@ -182,7 +185,9 @@ OPTIONAL
 function clean_target() {
 	local config="$TARGET/etc/sorcery/local/kernel.config"
 
-	# Restore resolv.conf
+	# Restore resolv.conf, the first rm is needed in case something
+	# installs a hardlink (like ppp)
+	rm -f "$TARGET/etc/resolv.conf" &&
 	cp -f "$TARGET/tmp/resolv.conf" "$TARGET/etc/resolv.conf" &&
 		rm -f "$TARGET/tmp/resolv.conf"
 
