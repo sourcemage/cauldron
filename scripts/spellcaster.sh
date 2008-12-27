@@ -83,10 +83,26 @@ function sanity_check() {
 		}
 	}
 
+	# If ISODIR/var/cache/sorcery is not a directory, create it.
+	[[ ! -d "$ISODIR/var/cache/sorcery" ]] && {
+		mkdir -p "$ISODIR/var/cache/sorcery" || {
+			echo "couldn't create $ISODIR/var/cache/sorcery" &&
+			exit 3
+		}
+	}
+
 	# If SYSDIR is not a directory, create it.
 	[[ ! -d "$SYSDIR" ]] && {
 		mkdir -p "$SYSDIR" || {
 			echo "couldn't create $SYSDIR" &&
+			exit 3
+		}
+	}
+
+	# If SYSDIR/var/cache/sorcery is not a directory, create it.
+	[[ ! -d "$SYSDIR/var/cache/sorcery" ]] && {
+		mkdir -p "$SYSDIR/var/cache/sorcery" || {
+			echo "couldn't create $SYSDIR/var/cache/sorcery" &&
 			exit 3
 		}
 	}
