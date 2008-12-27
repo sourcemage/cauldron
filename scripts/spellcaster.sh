@@ -161,6 +161,7 @@ function prepare_target() {
 		# make a list of the caches to unpack for system
 		for spell in $(</rspells)
 		do
+			gaze installed $spell &> /dev/null &&
 			echo $spell-$(gaze -q installed $spell) >> /sys-list
 		done || exit 42
 	fi
@@ -177,6 +178,7 @@ BASE
 		# make a list of the caches to unpack for iso
 		for spell in $(</ispells)
 		do
+			gaze installed $spell &> /dev/null &&
 			echo $spell-$(gaze -q installed $spell) >> /iso-list
 		done || exit 42
 	fi
@@ -193,6 +195,7 @@ ISO
 		# make a list of the caches to unpack for iso
 		for spell in $(</ospells)
 		do
+			gaze installed $spell &> /dev/null &&
 			echo $spell-$(gaze -q installed $spell) >> /opt-list
 		done || exit 42
 
