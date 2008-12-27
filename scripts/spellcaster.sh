@@ -96,6 +96,10 @@ function prepare_target() {
 	export ispells="ispells.$TYPE"
 	export ospells="ospells.$TYPE"
 
+	# Copy resolv.conf so spell sources can be downloaded inside the TARGET
+	cp -f "$TARGET"/etc/resolv.conf "$TARGET"/tmp/resolv.conf &&
+		cp -f /etc/resolv.conf "$TARGET"/etc/resolv.conf
+
 	# If using the linux spell copy the kernel config to TARGET sorcery
 	grep -q '^linux$' "$CAULDRONDIR/$rspells" "$CAULDRONDIR/$ospells" &&
 	cp "$CAULDRONDIR/config-2.6" "$TARGET/etc/sorcery/local/kernel.config"
@@ -168,6 +172,9 @@ OPTIONAL
 
 function clean_target() {
 	local config="etc/sorcery/local/kernel.config"
+
+	# Restore resolv.conf
+	cp -f "$TARGET"/tmp/resolv.conf "$TARGET"/etc/resolv.conf
 
 	# Clean up the target
 	rm -f "$TARGET/rspells" \
