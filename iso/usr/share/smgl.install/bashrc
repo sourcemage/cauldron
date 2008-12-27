@@ -20,8 +20,7 @@ function header() {
 }
 
 function todo() {
-  local CURSTEP
-  CURSTEP=$(cat $INSTALLER_STATUS)
+  local CURSTEP="${1:-$(cat $INSTALLER_STATUS)}"
   header
   cat $INSTALLER_DOCS/steps/$CURSTEP
 }

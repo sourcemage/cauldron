@@ -5,10 +5,6 @@ disk-mount:copy-base
 copy-base:edit-confs
 edit-confs:compile-kernel
 compile-kernel:boot-loader
-boot-loader:grub
-boot-loader:lilo
-grub:install-opt-spells
-lilo:install-opt-spells
 boot-loader:install-opt-spells
 install-opt-spells:user-setup
 user-setup:reboot
