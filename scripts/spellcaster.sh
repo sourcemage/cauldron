@@ -37,7 +37,7 @@ EndUsage
 } >&2
 
 function parse_options() {
-	while getopts ":cdh" Option
+	while getopts ":ish" Option
 	do
 		case $Option in
 			i ) ISODIR="${OPTARG%/}" ;;
