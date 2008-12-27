@@ -70,6 +70,15 @@ function sanity_check() {
 	local arch=
 	local choice=
 
+	# Ensure that TARGET is a directory
+	[[ -d "$TARGET" ]] || exit 3
+
+	# If ISODIR is not a directory, create it.
+	[[ ! -d "$ISODIR" ]] && mkdir -p "$ISODIR" || exit 3
+
+	# If SYSDIR is not a directory, create it.
+	[[ ! -d "$SYSDIR" ]] && mkdir -p "$SYSDIR" || exit 3
+
 	if [[ -e "$config" ]]
 	then
 		arch="$(source "$config" && echo $ARCHIVE)"
