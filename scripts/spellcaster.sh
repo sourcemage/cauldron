@@ -40,8 +40,8 @@ function parse_options() {
 	while getopts ":cdh" Option
 	do
 		case $Option in
-			i ) ISODIR="$OPTARG" ;;
-			s ) SYSDIR="$OPTARG" ;;
+			i ) ISODIR="${OPTARG%/}" ;;
+			s ) SYSDIR="${OPTARG%/}" ;;
 			h ) usage ;;
 			* ) echo "Unrecognized option." >&2 && usage ;;
 		esac
@@ -200,7 +200,7 @@ parse_options
 priv_check
 
 [[ $# -lt 1 ]] && usage
-TARGET="$1"
+TARGET="${1%/}"
 shift
 
 [[ $# -gt 0 ]] && TYPE="$1"
