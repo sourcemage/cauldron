@@ -180,10 +180,11 @@ OPTIONAL
 }
 
 function clean_target() {
-	local config="etc/sorcery/local/kernel.config"
+	local config="$TARGET/etc/sorcery/local/kernel.config"
 
 	# Restore resolv.conf
-	cp -f "$TARGET"/tmp/resolv.conf "$TARGET"/etc/resolv.conf
+	cp -f "$TARGET/tmp/resolv.conf" "$TARGET/etc/resolv.conf" &&
+		rm -f "$TARGET/tmp/resolv.conf"
 
 	# Clean up the target
 	rm -f "$TARGET/rspells" \
@@ -191,6 +192,7 @@ function clean_target() {
 		"$TARGET/ospells" \
 		"$TARGET/$config" \
 		"$TARGET/build_base.sh" \
+		"$TARGET/build_iso.sh" \
 		"$TARGET/build_optional.sh"
 }
 
