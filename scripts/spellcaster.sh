@@ -230,7 +230,7 @@ function clean_target() {
 }
 
 # main()
-parse_options
+parse_options $*
 
 priv_check
 
