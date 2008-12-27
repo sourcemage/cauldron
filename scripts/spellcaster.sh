@@ -46,7 +46,7 @@ function parse_options() {
 			* ) echo "Unrecognized option." >&2 && usage ;;
 		esac
 	done
-	shift $(($OPTIND - 1))
+	return $(($OPTIND - 1))
 }
 
 function priv_check() {
@@ -231,6 +231,7 @@ function clean_target() {
 
 # main()
 parse_options $*
+shift $?
 
 priv_check
 
