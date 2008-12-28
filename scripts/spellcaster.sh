@@ -199,9 +199,7 @@ function clean_target() {
 		"$TARGET/ispells" \
 		"$TARGET/ospells" \
 		"$TARGET/$config" \
-		"$TARGET/build_base.sh" \
-		"$TARGET/build_iso.sh" \
-		"$TARGET/build_optional.sh"
+		"$TARGET/build_spell.sh" \
 }
 
 # main()
