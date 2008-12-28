@@ -141,67 +141,48 @@ function prepare_target() {
 	cp "$CAULDRONDIR/ospells.$TYPE" "$TARGET"/ospells
 
 	# generate basesystem casting script inside of TARGET
-	cat > "$TARGET"/build_base.sh <<-'BASE'
-
-	# If console-tools is found in TARGET, get rid of it to make way for kbd
-	[[ $(gaze -q installed console-tools) != "not installed" ]] &&
-		dispel --orphan always console-tools
+	cat > "$TARGET"/build_spells.sh <<-'SPELLS'
 
 	if [[ -n $CAULDRON_CHROOT && $# -eq 0 ]]
 	then
-		# cast basic/required spells
-		/usr/sbin/cast $(tr '\n' ' ' </rspells) || exit $?
+
+		# If console-tools is found in TARGET, get rid of it to make
+		# way for kbd
+		[[ $(gaze -q installed console-tools) != "not installed" ]] &&
+		dispel --orphan always console-tools
+
+		# push the needed spells into the install queue
+		cat rspells ispells ospells > /var/log/sorcery/queue/install
+
+		# cast all the spells using the install queue and save the
+		# return value to a log file
+		/usr/sbin/cast --queue 2> /build_spells.log
+		echo $? >> /build_spells.log
 
 		# make a list of the caches to unpack for system
 		for spell in $(</rspells)
 		do
 			gaze installed $spell &> /dev/null &&
-			echo $spell-$(gaze -q installed $spell) >> /sys-list
-		done || exit 42
-	fi
-BASE
-
-	# generate iso spell casting script inside of TARGET
-	cat > "$TARGET"/build_iso.sh <<-'ISO'
-
-	if [[ -n $CAULDRON_CHROOT && $# -eq 0 ]]
-	then
-		# cast optional spells
-		/usr/sbin/cast $(tr '\n' ' ' </ispells) || exit $?
+			echo $spell-$(gaze -q installed $spell)
+		done > /sys-list || exit 42
 
 		# make a list of the caches to unpack for iso
 		for spell in $(</ispells)
 		do
 			gaze installed $spell &> /dev/null &&
-			echo $spell-$(gaze -q installed $spell) >> /iso-list
-		done || exit 42
-	fi
-ISO
+			echo $spell-$(gaze -q installed $spell)
+		done > /iso-list || exit 42
 
-	# generate optional spell casting script inside of TARGET
-	cat > "$TARGET"/build_optional.sh <<-'OPTIONAL'
-
-	if [[ -n $CAULDRON_CHROOT && $# -eq 0 ]]
-	then
-		# cast optional spells
-		/usr/sbin/cast $(tr '\n' ' ' </ospells) || exit $?
-
-		# make a list of the caches to unpack for iso
+		# make a list of the optional caches to unpack for iso
 		for spell in $(</ospells)
 		do
 			gaze installed $spell &> /dev/null &&
-			echo $spell-$(gaze -q installed $spell) >> /opt-list
-		done || exit 42
-
-		# dispel the optional spells, so that we have only their cache files
-		# available
-		/usr/sbin/dispel $(tr '\n' ' ' </ospells) || exit $?
+			echo $spell-$(gaze -q installed $spell)
+		done > /opt-list || exit 42
 	fi
-OPTIONAL
+SPELLS
 
-	chmod a+x "$TARGET"/build_base.sh
-	chmod a+x "$TARGET"/build_iso.sh
-	chmod a+x "$TARGET"/build_optional.sh
+	chmod a+x "$TARGET"/build_spells.sh
 }
 
 function clean_target() {
@@ -243,16 +224,13 @@ sanity_check
 
 prepare_target
 
-# chroot and build the basesystem inside the TARGET
-"$MYDIR/cauldronchr.sh" -d "$TARGET" /build_base.sh
+# chroot and build all of the spells inside the TARGET
+"$MYDIR/cauldronchr.sh" -d "$TARGET" /build_spells.sh
 
 for cache in $(<"$TARGET"/sys-list)
 do
 	tar xjf "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 -C "$SYSDIR"/
 done
-
-# chroot and build the iso inside the TARGET
-"$MYDIR/cauldronchr.sh" -d "$TARGET" /build_iso.sh
 
 # copy the caches over and unpack their contents
 for cache in $(<"$TARGET"/iso-list)
@@ -260,9 +238,6 @@ do
 	tar xjf "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 -C "$ISODIR"/
 	cp "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 "$ISODIR"/var/cache/sorcery/
 done
-
-# chroot and build the optional spells inside the TARGET
-"$MYDIR/cauldronchr.sh" -d "$TARGET" /build_optional.sh
 
 # copy the caches over (only!)
 for cache in $(<"$TARGET"/opt-list)
