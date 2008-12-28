@@ -64,6 +64,13 @@ function priv_check() {
 	fi
 }
 
+function directory_check() {
+	if [[ ! -d $1 ]]
+	then
+		mkdir -p $1
+	fi
+}
+
 # check to make sure that the chroot has sorcery set to do caches
 function sanity_check() {
 	local config="$TARGET/etc/sorcery/local/config"
@@ -72,40 +79,27 @@ function sanity_check() {
 
 	# Ensure that TARGET is a directory
 	[[ -d "$TARGET" ]] || {
-		echo "$TARGET does not exist!" && exit 3
+		echo "$TARGET does not exist!"
+		exit 3
 	}
 
 	# If ISODIR is not a directory, create it.
-	[[ ! -d "$ISODIR" ]] && {
-		mkdir -p "$ISODIR" || {
-			echo "couldn't create $ISODIR" &&
-			exit 3
-		}
-	}
+	directory_check "$ISODIR"
 
 	# If ISODIR/var/cache/sorcery is not a directory, create it.
-	[[ ! -d "$ISODIR/var/cache/sorcery" ]] && {
-		mkdir -p "$ISODIR/var/cache/sorcery" || {
-			echo "couldn't create $ISODIR/var/cache/sorcery" &&
-			exit 3
-		}
-	}
+	directory_check "$ISODIR/var/cache/sorcery"
+
+	# If ISODIR/var/spool/sorcery is not a directory, create it.
+	directory_check "$ISODIR/var/spool/sorcery"
 
 	# If SYSDIR is not a directory, create it.
-	[[ ! -d "$SYSDIR" ]] && {
-		mkdir -p "$SYSDIR" || {
-			echo "couldn't create $SYSDIR" &&
-			exit 3
-		}
-	}
+	directory_check "$SYSDIR"
 
 	# If SYSDIR/var/cache/sorcery is not a directory, create it.
-	[[ ! -d "$SYSDIR/var/cache/sorcery" ]] && {
-		mkdir -p "$SYSDIR/var/cache/sorcery" || {
-			echo "couldn't create $SYSDIR/var/cache/sorcery" &&
-			exit 3
-		}
-	}
+	directory_check "$SYSDIR/var/cache/sorcery"
+
+	# If SYSDIR/var/spool/sorcery is not a directory, create it.
+	directory_check "$SYSDIR/var/spool/sorcery"
 
 	if [[ -e "$config" ]]
 	then
