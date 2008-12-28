@@ -25,7 +25,7 @@ Options:
 	    you must specify an absolute path or the command will not likely be
 	    found (a way around this would be to either set the path as part of
 	    the command to execute, or to set the command to be /bin/bash -l
-	    some_command_without_abs_path). Defaults to "/bin/bash -l".
+	    some_command_without_abs_path). Defaults to "/bin/bash".
 EndUsage
 	exit 1
 } >&2
