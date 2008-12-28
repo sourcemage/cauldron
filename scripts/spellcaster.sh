@@ -103,7 +103,7 @@ function sanity_check() {
 
 	if [[ -e "$config" ]]
 	then
-		arch="$(source "$config" && echo $ARCHIVE)"
+		arch="$(source "$config" &> /dev/null && echo $ARCHIVE)"
 		if [[ -n $arch && $arch != "on" ]]
 		then
 			echo "Error! TARGET sorcery does not archive!" >&2
