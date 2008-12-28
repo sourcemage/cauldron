@@ -48,9 +48,9 @@ SELF=$0
 
 if [[ $UID -ne 0 ]]
 then
-	if [[ -x $(which sudo > /dev/null 2>&1) ]]
+	if [[ -x $(which sudo 2> /dev/null) ]]
 	then
-		exec sudo "$SELF $*"
+		exec sudo -H $SELF $*
 	else
 		echo "Please enter the root password."
 		exec su -c "$SELF $*" root
