@@ -185,6 +185,42 @@ SPELLS
 	chmod a+x "$TARGET"/build_spells.sh
 }
 
+function setup_sys() {
+	local SPOOL="$TARGET/var/spool"
+	local SORCERY="sorcery-stable.tar.bz2"
+
+	# unpack the sys caches into SYSDIR
+	for cache in $(<"$TARGET"/sys-list)
+	do
+		tar xjf "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 -C "$SYSDIR"/
+	done
+
+	# download sorcery source
+	(
+		cd "$SPOOL"
+		wget http://download.sourcemage.org/sorcery/$SORCERY
+	)
+
+	# unpack and install sorcery into SYSDIR
+	tar jxf "$SPOOL"/$SORCERY -C "$TARGET/usr/src"
+	"$TARGET/usr/src/sorcery/install" "$SYSDIR"
+}
+
+function setup_iso() {
+	# copy the iso caches over and unpack their contents
+	for cache in $(<"$TARGET"/iso-list)
+	do
+		tar xjf "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 -C "$ISODIR"/
+		cp "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 "$ISODIR"/var/cache/sorcery/
+	done
+
+	# copy (only!) the optional caches over
+	for cache in $(<"$TARGET"/opt-list)
+	do
+		cp "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 "$ISODIR"/var/cache/sorcery/
+	done
+}
+
 function clean_target() {
 	local config="$TARGET/etc/sorcery/local/kernel.config"
 
@@ -203,10 +239,10 @@ function clean_target() {
 }
 
 # main()
+priv_check $*
+
 parse_options $*
 shift $?
-
-priv_check $*
 
 [[ $# -lt 1 ]] && usage
 TARGET="${1%/}"
@@ -225,23 +261,11 @@ prepare_target
 # chroot and build all of the spells inside the TARGET
 "$MYDIR/cauldronchr.sh" -d "$TARGET" /build_spells.sh
 
-for cache in $(<"$TARGET"/sys-list)
-do
-	tar xjf "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 -C "$SYSDIR"/
-done
+# unpack sys caches and set up sorcery into SYSDIR
+setup_sys
 
-# copy the caches over and unpack their contents
-for cache in $(<"$TARGET"/iso-list)
-do
-	tar xjf "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 -C "$ISODIR"/
-	cp "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 "$ISODIR"/var/cache/sorcery/
-done
-
-# copy the caches over (only!)
-for cache in $(<"$TARGET"/opt-list)
-do
-	cp "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 "$ISODIR"/var/cache/sorcery/
-done
+# unpack iso caches and copy iso and optional caches into ISODIR
+setup_iso
 
 # Keep a clean kitchen, wipes up the leftovers from the preparation step
 clean_target
