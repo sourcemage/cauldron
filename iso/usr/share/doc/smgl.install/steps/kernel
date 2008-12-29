@@ -1,0 +1,12 @@
+[1mkernel[m
+You can install the ISO kernel (fast and easy), set up a custom kernel
+(recommended), or both (best of both worlds). Whatever you choose, you must
+install at least one kernel.
+
+For instructions on how to install the ISO kernel, type [1mtodo iso-kernel[m.
+
+For instructions on how to install a custom kernel, type [1mtodo compile-kernel[m.
+
+To see the instructions for this step again, just type [1mtodo[m.
+
+When you are finished, type [1mnext[m.

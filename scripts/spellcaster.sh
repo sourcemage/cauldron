@@ -4,42 +4,17 @@
 # chroot, and also the casting and subsequent dispelling (with caches enabled)
 # of the optional spells.
 
-if [[ -n $CAULDRON_CHROOT && $# -eq 0 ]]
-then
-	if [[ $CAULDRON_CAST = y ]]
-	then
-		# cast all spells
-		/usr/sbin/cast $(tr '\n' ' ' </"$rspells") &&
-		/usr/sbin/cast $(tr '\n' ' ' </"$ospells")
-
-	elif [[ $CAULDRON_DISPEL = y ]]
-	then
-		# dispel the optional spells, so that we have only their cache files
-		# available
-		/usr/sbin/dispel $(tr '\n' ' ' </"$ospells")
-	fi
-
-	exit $?
-fi
-
 MYDIR="$(dirname $0)"
 CAULDRONDIR="$MYDIR"/../data
 
 function usage() {
   cat << EndUsage
-Usage: $(basename $0) [-h] -c | -d /path/to/target ARCHITECTURE
+Usage: $(basename $0) [-h] [-i ISO] [-s SYS] /path/to/target ARCHITECTURE
 
 Casts the required and optional spells onto the ISO.
 This script requires superuser privileges.
 
 Required:
-	-c
-	    Cast the required and optional spells in the target directory. This
-	    is the default action.
-
-	-d
-	    Dispel the optional spells only from the target directory.
-
 	/path/to/target
 	    The location of the chroot directory you would like to have the
 	    casting done in.
@@ -52,91 +27,247 @@ Required:
 
 Options:
 	-h  Shows this help information
+
+	-i  Path to iso build directory (ISO). Defaults to /tmp/cauldron/iso.
+
+	-s  Path to system build directory (SYS). Defaults to
+	    /tmp/cauldron/system.
 EndUsage
   exit 1
 } >&2
 
-export CAULDRON_CAST=y
+function parse_options() {
+	while getopts ":i:s:h" Option
+	do
+		case $Option in
+			i ) ISODIR="${OPTARG%/}" ;;
+			s ) SYSDIR="${OPTARG%/}" ;;
+			h ) usage ;;
+			* ) echo "Unrecognized option." >&2 && usage ;;
+		esac
+	done
+	return $(($OPTIND - 1))
+}
 
-while getopts ":cdh" Option
-do
-  case $Option in
-    c ) export CAULDRON_DISPEL=n ; export CAULDRON_CAST=y ;;
-    d ) export CAULDRON_CAST=n ; export CAULDRON_DISPEL=y ;;
-    h ) usage ;;
-    * ) echo "Unrecognized option." >&2 && usage ;;
-  esac
-done
-shift $(($OPTIND - 1))
+function priv_check() {
+	local SELF="$0"
 
-SELF="$0"
+	if [[ $UID -ne 0 ]]
+	then
+		if [[ -x $(which sudo 2> /dev/null) ]]
+		then
+			exec sudo -H $SELF $*
+		else
+			echo "Please enter the root password."
+			exec su -c "$SELF $*" root
+		fi
+	fi
+}
 
-if [[ $UID -ne 0 ]]
-then
-  if [[ -x $(which sudo > /dev/null 2>&1) ]]
-  then
-    exec sudo "$SELF $*"
-  else
-    echo "Please enter the root password."
-    exec su -c "$SELF $*" root
-  fi
-fi
+function directory_check() {
+	if [[ ! -d $1 ]]
+	then
+		mkdir -p $1
+	fi
+}
+
+# check to make sure that the chroot has sorcery set to do caches
+function sanity_check() {
+	local config="$TARGET/etc/sorcery/local/config"
+	local arch=
+	local choice=
+
+	# Ensure that TARGET is a directory
+	[[ -d "$TARGET" ]] || {
+		echo "$TARGET does not exist!"
+		exit 3
+	}
+
+	# If ISODIR is not a directory, create it.
+	directory_check "$ISODIR"
+
+	# If ISODIR/var/cache/sorcery is not a directory, create it.
+	directory_check "$ISODIR/var/cache/sorcery"
+
+	# If ISODIR/var/spool/sorcery is not a directory, create it.
+	directory_check "$ISODIR/var/spool/sorcery"
+
+	# If SYSDIR is not a directory, create it.
+	directory_check "$SYSDIR"
+
+	# If SYSDIR/var/cache/sorcery is not a directory, create it.
+	directory_check "$SYSDIR/var/cache/sorcery"
+
+	# If SYSDIR/var/spool/sorcery is not a directory, create it.
+	directory_check "$SYSDIR/var/spool/sorcery"
+
+	if [[ -e "$config" ]]
+	then
+		arch="$(source "$config" &> /dev/null && echo $ARCHIVE)"
+		if [[ -n $arch && $arch != "on" ]]
+		then
+			echo "Error! TARGET sorcery does not archive!" >&2
+			echo -n "Set TARGET sorcery to archive? [yn]" >&2
+			read -n1 choice
+			echo ""
+
+			if [[ $choice == 'y' ]]
+			then
+				. "$TARGET/var/lib/sorcery/modules/libstate"
+				modify_config $config ARCHIVE on
+			else
+				exit 2
+			fi
+		fi
+	fi
+}
+
+function prepare_target() {
+	export rspells="rspells.$TYPE"
+	export ispells="ispells.$TYPE"
+	export ospells="ospells.$TYPE"
+
+	# Copy resolv.conf so spell sources can be downloaded inside the TARGET
+	cp -f "$TARGET"/etc/resolv.conf "$TARGET"/tmp/resolv.conf &&
+		cp -f /etc/resolv.conf "$TARGET"/etc/resolv.conf
+
+	# If using the linux spell copy the kernel config to TARGET sorcery
+	grep -q '^linux$' "$CAULDRONDIR/$rspells" "$CAULDRONDIR/$ospells" &&
+	cp "$CAULDRONDIR/config-2.6" "$TARGET/etc/sorcery/local/kernel.config"
+
+	# Copy the list of spells needed for casting into the TARGET if casting
+	cp "$CAULDRONDIR/rspells.$TYPE" "$TARGET"/rspells
+	cp "$CAULDRONDIR/ispells.$TYPE" "$TARGET"/ispells
+	cp "$CAULDRONDIR/ospells.$TYPE" "$TARGET"/ospells
+
+	# generate basesystem casting script inside of TARGET
+	cat > "$TARGET"/build_spells.sh <<-'SPELLS'
+
+	if [[ -n $CAULDRON_CHROOT && $# -eq 0 ]]
+	then
+
+		# If console-tools is found in TARGET, get rid of it to make
+		# way for kbd
+		[[ $(gaze -q installed console-tools) != "not installed" ]] &&
+		dispel --orphan always console-tools
+
+		# push the needed spells into the install queue
+		cat rspells ispells ospells > /var/log/sorcery/queue/install
+
+		# cast all the spells using the install queue and save the
+		# return value to a log file
+		/usr/sbin/cast --queue 2> /build_spells.log
+		echo $? >> /build_spells.log
+
+		# make a list of the caches to unpack for system
+		for spell in $(</rspells)
+		do
+			gaze installed $spell &> /dev/null &&
+			echo $spell-$(gaze -q installed $spell)
+		done > /sys-list || exit 42
+
+		# make a list of the caches to unpack for iso
+		for spell in $(</ispells)
+		do
+			gaze installed $spell &> /dev/null &&
+			echo $spell-$(gaze -q installed $spell)
+		done > /iso-list || exit 42
+
+		# make a list of the optional caches to unpack for iso
+		for spell in $(</ospells)
+		do
+			gaze installed $spell &> /dev/null &&
+			echo $spell-$(gaze -q installed $spell)
+		done > /opt-list || exit 42
+	fi
+SPELLS
+
+	chmod a+x "$TARGET"/build_spells.sh
+}
+
+function setup_sys() {
+	local SPOOL="$TARGET/var/spool"
+	local SORCERY="sorcery-stable.tar.bz2"
+
+	# unpack the sys caches into SYSDIR
+	for cache in $(<"$TARGET"/sys-list)
+	do
+		tar xjf "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 -C "$SYSDIR"/
+	done
+
+	# download sorcery source
+	(
+		cd "$SPOOL"
+		wget http://download.sourcemage.org/sorcery/$SORCERY
+	)
+
+	# unpack and install sorcery into SYSDIR
+	tar jxf "$SPOOL"/$SORCERY -C "$TARGET/usr/src"
+	"$TARGET/usr/src/sorcery/install" "$SYSDIR"
+}
+
+function setup_iso() {
+	# copy the iso caches over and unpack their contents
+	for cache in $(<"$TARGET"/iso-list)
+	do
+		tar xjf "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 -C "$ISODIR"/
+		cp "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 "$ISODIR"/var/cache/sorcery/
+	done
+
+	# copy (only!) the optional caches over
+	for cache in $(<"$TARGET"/opt-list)
+	do
+		cp "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 "$ISODIR"/var/cache/sorcery/
+	done
+}
+
+function clean_target() {
+	local config="$TARGET/etc/sorcery/local/kernel.config"
+
+	# Restore resolv.conf, the first rm is needed in case something
+	# installs a hardlink (like ppp)
+	rm -f "$TARGET/etc/resolv.conf" &&
+	cp -f "$TARGET/tmp/resolv.conf" "$TARGET/etc/resolv.conf" &&
+		rm -f "$TARGET/tmp/resolv.conf"
+
+	# Clean up the target
+	rm -f "$TARGET/rspells" \
+		"$TARGET/ispells" \
+		"$TARGET/ospells" \
+		"$TARGET/$config" \
+		"$TARGET/build_spell.sh"
+}
+
+# main()
+priv_check $*
+
+parse_options $*
+shift $?
 
 [[ $# -lt 1 ]] && usage
-TARGET="$1"
+TARGET="${1%/}"
 shift
 
 [[ $# -gt 0 ]] && TYPE="$1"
 TYPE="${TYPE:-x86}"
 
-export rspells="rspells.$TYPE"
-export ospells="ospells.$TYPE"
+ISODIR="${ISODIR:-/tmp/cauldron/iso}"
+SYSDIR="${SYSDIR:-/tmp/cauldron/sys}"
 
-# check to make sure that the chroot has sorcery set to do caches
-if [[ -e "$TARGET"/etc/sorcery/local/config ]]
-then
-	CONFIG_ARCHIVE=$(grep 'ARCHIVE=' "$TARGET"/etc/sorcery/local/config | cut -d = -f 2 | sed 's/"//g')
-	if [[ -n $CONFIG_ARCHIVE && $CONFIG_ARCHIVE != "on" ]]
-	then
-		echo "Error! TARGET sorcery configured to not archive!" >&2
-		echo -n "Set the TARGET sorcery to archive? [yn]" >&2
-		read -n1 CHOICE
+sanity_check
 
-		if [[ $CHOICE == 'y' ]]
-		then
-			sed -i 's/ARCHIVE=.*/ARCHIVE="on"/' "$TARGET"/etc/sorcery/local/config
-		else
-			exit 2
-		fi
-	fi
-fi
+prepare_target
 
-# Copy necessary files to the target and chroot
-grep -q '^linux$' "$CAULDRONDIR/$rspells" "$CAULDRONDIR/$ospells" &&
-	cp "$CAULDRONDIR/config-2.6" "$TARGET/etc/sorcery/local/kernel.config"
+# chroot and build all of the spells inside the TARGET
+"$MYDIR/cauldronchr.sh" -d "$TARGET" /build_spells.sh
 
-# Copy the list of spells needed for casting into the TARGET if casting
-[[ $CAULDRON_CAST = y ]] && cp "$CAULDRONDIR/$rspells" "$TARGET"/
+# unpack sys caches and set up sorcery into SYSDIR
+setup_sys
 
-# ospells needs to be there whether casting or dispelling
-cp "$CAULDRONDIR/$ospells" "$TARGET"/
+# unpack iso caches and copy iso and optional caches into ISODIR
+setup_iso
 
-# copy the script into the TARGET so it can do the casting/dispelling
-cp "$0" "$TARGET"/
-
-# chroot and run the script inside the TARGET
-"$MYDIR/cauldronchr.sh" -d "$TARGET" /"$(basename $0)"
-
-# Clean up the target
-[[ $CAULDRON_CAST = y ]] && rm "$TARGET/$rspells"
-rm "$TARGET/$ospells"
-[[ -e "$TARGET/etc/sorcery/local/kernel.config" ]] &&
-	rm "$TARGET/etc/sorcery/local/kernel.config"
-rm "$TARGET/$(basename $0)"
-
-unset rspells
-unset ospells
-unset CAULDRON_CAST
-unset CAULDRON_DISPEL
+# Keep a clean kitchen, wipes up the leftovers from the preparation step
+clean_target
 
 exit 0

@@ -6,4 +6,5 @@ next		go to the next step
 prev		return to the previous step in the list
 steps		print a listing of all possible steps
 todo		show what needs to be done for the current step
+todo <step>	show what needs to be done for <step>
 welcome		show some help information (seen at the welcome screen)
