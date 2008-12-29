@@ -199,7 +199,7 @@ function clean_target() {
 		"$TARGET/ispells" \
 		"$TARGET/ospells" \
 		"$TARGET/$config" \
-		"$TARGET/build_spell.sh" \
+		"$TARGET/build_spell.sh"
 }
 
 # main()
