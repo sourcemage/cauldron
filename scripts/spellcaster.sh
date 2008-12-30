@@ -188,6 +188,7 @@ SPELLS
 function setup_sys() {
 	local SPOOL="$TARGET/var/spool"
 	local SORCERY="sorcery-stable.tar.bz2"
+	local SORCERYDIR="$TARGET/usr/src/sorcery"
 
 	# unpack the sys caches into SYSDIR
 	for cache in $(<"$TARGET"/sys-list)
@@ -203,7 +204,9 @@ function setup_sys() {
 
 	# unpack and install sorcery into SYSDIR
 	tar jxf "$SPOOL"/$SORCERY -C "$TARGET/usr/src"
-	"$TARGET/usr/src/sorcery/install" "$SYSDIR"
+	pushd "$SORCERYDIR" &> /dev/null
+	./install "$SYSDIR"
+	popd
 }
 
 function setup_iso() {
