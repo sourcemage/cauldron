@@ -140,6 +140,11 @@ function prepare_target() {
 	cp "$CAULDRONDIR/ispells.$TYPE" "$TARGET"/ispells
 	cp "$CAULDRONDIR/ospells.$TYPE" "$TARGET"/ospells
 
+	# Copy any spell-specific required options into the TARGET
+	[[ -d "$TARGET"/etc/sorcery/local/depends/ ]] ||
+		mkdir -p "$TARGET"/etc/sorcery/local/depends/
+	cp "$CAULDRONDIR"/depends/* "$TARGET"/etc/sorcery/local/depends/
+
 	# generate basesystem casting script inside of TARGET
 	cat > "$TARGET"/build_spells.sh <<-'SPELLS'
 
