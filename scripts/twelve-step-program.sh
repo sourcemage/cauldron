@@ -8,7 +8,8 @@
   echo step 1
   cd /root
   #wget http://10.0.0.199/smgl-stable-0.24-basesystem-x86.tar.bz2 &&
-  tar xvf smgl-stable-0.24-basesystem-x86.tar.bz2 &&
+  echo unpacking build environment
+  tar xf smgl-stable-0.24-basesystem-x86.tar.bz2 &&
   mv smgl-stable-0.24-basesystem-x86 /root/build &&
   ls -l /root
   test -d /root/build || 
@@ -17,6 +18,8 @@
   # step 1.5 (add resolv.conf and sorcery url configuration)
   echo "step 1.5"
   cp /etc/resolv.conf /root/build/etc/resolv.conf
+  cp -fa /lib/modules/* /root/build/lib/modules
+  cp -fa /usr/src/* /root/build/usr/src
   echo LEAPFORWARD_URL=http://10.0.0.11/smgl/spool/ > /root/build/etc/sorcery/local/url
 
   echo step 2 build spells
