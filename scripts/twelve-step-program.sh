@@ -4,7 +4,7 @@
 # TODO: re-factor variable names and messaging logging
 #
 
-  # step 1 (get basesystem)
+  # step 1 get basesystem
   echo step 1
   cd /root
   #wget http://10.0.0.199/smgl-stable-0.24-basesystem-x86.tar.bz2 &&
@@ -17,15 +17,14 @@
   # step 1.5 (add resolv.conf and sorcery url configuration)
   echo "step 1.5"
   cp /etc/resolv.conf /root/build/etc/resolv.conf
-  #cp /etc/sorcery/local/url /root/build/etc/sorcery/local/url
+  echo LEAPFORWARD_URL=http://10.0.0.11/smgl/spool/ > /root/build/etc/sorcery/local/url
 
-  # step 2 (build spells)
-  echo step 2
+  echo step 2 build spells
   bash /root/cauldron/scripts/spellcaster.sh /root/build x86 ||
   echo 'step 2 failed' >> /var/log/sorcery/activity
 
   
-  echo step 3 (build kernel)
+  echo step 3 build kernel
   pushd /usr/src &&
   wget http://10.0.0.11/smgl/spool/linux-2.6.24.tar.bz2 &&
   tar xf linux-2.6.24.tar.bz2 &&
@@ -41,15 +40,15 @@
   echo 'step 3 failed' >> /var/log/sorcery/activity
 
 
-  echo step 4 (sanity fixes)
+  echo step 4 sanity fixes
   # TODO check for ppp/resolv.conf borkage
-  if test -f /etc/udev/rules.d/70-persistent-net.rules; then
+  if test -f /root/build/etc/udev/rules.d/70-persistent-net.rules; then
     echo "twelve step program failure (udev rules)" >>  /var/log/sorcery/activity &&
-    rm /etc/udev/rules.d/70-persistent-net.rules
+    rm /root/build/etc/udev/rules.d/70-persistent-net.rules
   fi ||
   echo 'step 4 failed' >> /var/log/sorcery/activity
 
-  echo step 5 (adjust system tree)
+  echo step 5 adjust system tree
   yes ""|bash /root/cauldron/scripts/add-sauce.sh -s /tmp/cauldron/sys &&
   # TODO: cleanse --sweep &&
   rm /tmp/cauldron/sys/var/spool/sorcery/* &&
@@ -59,15 +58,15 @@
   cp /usr/src/linux-2.6.24.tar.bz2 /tmp/cauldron/sys/usr/src ||
   echo 'step 5 failed' >> /var/log/sorcery/activity
 
-  echo step 6 (prune iso tree)
+  echo step 6 prune iso tree
   bash /root/cauldron/scripts/cleaniso.sh -a /tmp/cauldron/iso ||
   echo 'step 6 failed' >> /var/log/sorcery/activity
 
-  echo step 7 (adjust iso tree)
+  echo step 7 adjust iso tree
   yes ""|bash /root/cauldron/scripts/add-sauce.sh -i /tmp/cauldron/iso ||
   echo 'step 7 failed' >> /var/log/sorcery/activity
 
-  echo step 8 (create system.tar.bz2)
+  echo step 8 create system.tar.bz2
   bash /root/cauldron/scripts/mksystem.sh /tmp/cauldron/sys /tmp/cauldron/iso/system.tar.bz2 ||
   echo 'step 8 failed' >> /var/log/sorcery/activity
 
