@@ -48,7 +48,6 @@ locale
 lvm
 lynx
 m4
-madwifi
 make
 man
 mdadm
@@ -56,7 +55,6 @@ memtest86+
 module-init-tools
 nano
 ncurses
-ndiswrapper
 net-tools
 netkit-base
 netkit-ping
@@ -74,7 +72,6 @@ procps
 readline
 reiser4progs
 reiserfsprogs
-rp-pppoe
 rpmunpack
 run-parts
 sed

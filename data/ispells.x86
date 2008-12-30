@@ -37,7 +37,6 @@ locale
 lsscsi
 lvm
 lynx
-madwifi
 man
 mdadm
 memtest86+
@@ -45,7 +44,6 @@ module-init-tools
 nano
 ncurses
 net-tools
-ndiswrapper
 nfs-utils
 ntfsprogs
 openssl
@@ -58,7 +56,6 @@ procps
 readline
 reiser4progs
 reiserfsprogs
-rp-pppoe
 rpmunpack
 run-parts
 sed
