@@ -79,6 +79,7 @@
   echo 'step 9 failed' >> /var/log/sorcery/activity
 
   echo step 10 make iso
+  cast -c cdrtools &&
   bash /root/cauldron/scripts/mkrelease.sh /tmp/cauldron/iso omfga-test0 ||
   echo 'step 10 failed' >> /var/log/sorcery/activity
 
