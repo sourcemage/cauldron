@@ -22,12 +22,7 @@
   cp -fa /usr/src/* /root/build/usr/src
   echo LEAPFORWARD_URL=http://10.0.0.11/smgl/spool/ > /root/build/etc/sorcery/local/url
 
-  echo step 2 build spells
-  bash /root/cauldron/scripts/spellcaster.sh /root/build x86 ||
-  echo 'step 2 failed' >> /var/log/sorcery/activity
-
-  
-  echo step 3 build kernel
+  echo step 2 build kernel
   pushd /usr/src &&
   wget http://10.0.0.11/smgl/spool/linux-2.6.24.tar.bz2 &&
   tar xf linux-2.6.24.tar.bz2 &&
@@ -40,8 +35,11 @@
   ls /lib/modules &&
   cp -fav /lib/modules/2.6.24 /root/build/lib/modules &&
   cp -fav /usr/src/linux-2.6.22 /root/build/usr/src ||
-  echo 'step 3 failed' >> /var/log/sorcery/activity
+  echo 'step 2 failed' >> /var/log/sorcery/activity
 
+  echo step 3 build spells
+  bash /root/cauldron/scripts/spellcaster.sh /root/build x86 ||
+  echo 'step 3 failed' >> /var/log/sorcery/activity
 
   echo step 4 sanity fixes
   # TODO check for ppp/resolv.conf borkage
