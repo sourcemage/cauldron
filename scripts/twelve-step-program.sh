@@ -7,10 +7,10 @@
   # step 1 get basesystem
   echo step 1
   cd /root
-  #wget http://10.0.0.199/smgl-stable-0.24-basesystem-x86.tar.bz2 &&
+  #wget http://10.0.0.199/smgl-stable-0.27-basesystem-x86.tar.bz2 &&
   echo unpacking build environment
-  tar xf smgl-stable-0.24-basesystem-x86.tar.bz2 &&
-  mv smgl-stable-0.24-basesystem-x86 /root/build &&
+  tar xf smgl-stable-0.27-basesystem-x86.tar.bz2 &&
+  mv smgl-stable-0.27-basesystem-x86 /root/build &&
   ls -l /root
   test -d /root/build || 
   echo 'step 1 failed' >> /var/log/sorcery/activity
