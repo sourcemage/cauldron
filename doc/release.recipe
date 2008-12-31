@@ -21,48 +21,46 @@ All cauldron ISO scripts (for the test ISOs) are located in the cauldron/scripts
 1.  Get a fresh basesystem tarball, unpack it into a directory, and rename that
     directory "build".
 
-2.  Cast all the spells that will go on the ISO (required and optional) via
-    cauldron/scripts/spellcaster.sh -c build x86. The list of standard x86
-    spells to cast for the official x86 isos can be found in the repo in
-    cauldron/data/rspells.x86 (required) and cauldron/data/ospells.x86
-    (optional).  Note: the terms "required" and "optional" here refer to what
-    is required vs.  optional for the user to install onto the target system.
-    All spells are required to be on official ISOs. Also, only the required
-    spells should be in the final system.tar.bz2, and optional spells should
-    only be present on the ISO itself.
-
-3.  build a linux kernel and modules, however you choose to do so (manually or
+2.  Build a linux kernel and modules, however you choose to do so (manually or
     by casting the linux spell). We have a kernel config that you can use in
     our git repo. (cauldron/data/config-2.6)
 
-4.  Check the build tree for sanity (make sure nothing left over from
-    basesystem is there that should not be there, for example
-    /etc/udev/rules.d/70-persistent-net.rules). Some of this will be taken care
-    of in steps #6 and #7 via the use of the cauldron/scripts/add-sauce.sh
-    script.
+3.  Cast all the spells that will go on the ISO (required and optional) via
+    cauldron/scripts/spellcaster.sh build x86. The list of standard x86 spells
+    to cast for the official x86 isos can be found in the repo in
+    cauldron/data/rspells.x86 (required), cauldron/data/ispells.x86 (iso), and
+    cauldron/data/ospells.x86 (optional). Note: the terms "required" and
+    "optional" here refer to what is required vs. optional for the user to
+    install onto the target system. All spells are required to be on official
+    ISOs. Also, only the required spells should be in the final system.tar.bz2,
+    and optional spells should only be present on the ISO itself.
 
-5.  Make two copies of the build directory tree, call one iso and the other
-    system. Run cauldron/scripts/spellcaster.sh -d system x86 to remove all the
-    optional spells from the system tree (leaving only the required spells).
+4.  Check the iso and sys trees for sanity. Especially make sure that all
+    the requisite directories are present (smgl-fhs) and there is nothing
+    astray in their etc/ directories. Some of this will be taken care of in
+    steps #5 and #7 via the use of the cauldron/scripts/add-sauce.sh script.
 
-6.  Make any necessary adjustments to the system tree. This includes running
-    cauldron/scripts/add-sauce.sh -s /path/to/system/tree and cleaning up
-    var/cache/sorcery and var/spool/sorcery (e.g. via cleanse), removing linux
-    source trees in /usr/src, and creating a symlink to the latest linux source
-    under /var/spool/sorcery e.g., ln -sf
-    /var/spool/sorcery/linux-VERSION.tar.bz2 /usr/src/ for easy access.
+5.  Make any necessary adjustments to the system tree (/tmp/cauldron/sys). This
+    includes running cauldron/scripts/ add-sauce.sh -s /tmp/cauldron/sys and
+    cleaning up var/cache/sorcery and var/spool/sorcery (e.g. via cleanse),
+    removing linux source trees in /usr/src, and creating a symlink to the
+    latest linux source under /var/spool/sorcery e.g., ln -sf /
+    var/spool/sorcery/linux-VERSION.tar.bz2 /usr/src/ for easy access.
 
-7.  Make adjustments to the iso tree. This will be more extensive than what is
-    done for the system tree. First, the iso does not need a build environment,
-    so (most) of all the build tools can be completely wiped from the ISO. This
-    can be done by running cauldron/scripts/cleaniso.sh -a /path/to/iso/tree.
-    Additionally, run cauldron/scripts/add-sauce.sh -i /path/to/iso/tree.
+6.  Prune the iso tree (/tmp/cauldron/iso). The iso does not need a build
+    environment, so (most of) the build tools can be completely wiped from the
+    ISO. This can be done by running cauldron/scripts/cleaniso.sh -a
+    /path/to/iso/tree.
 
-8.  Make a compressed tarball of the system tree, and copy it into
-    cauldron/iso/system.tar.bz2. This can be done easily by running
-    cauldron/scripts/mksystem.sh /path/to/system/tree /path/to/system.tar.bz2.
-    Don't forget to copy the tarball to the cauldron/iso tree after creating
-    it!
+7.  Make adjustments to the iso tree (/tmp/cauldron/iso) by running
+    cauldron/scripts/add-sauce.sh -i /tmp/cauldron/iso.
+
+8.  Make a compressed tarball of the system tree, and copy it to
+    /tmp/cauldron/iso/system.tar.bz2. Creation of the tarball can be done
+    easily by running cauldron/scripts/mksystem.sh /tmp/cauldron/sys
+    /tmp/cauldron/iso/system.tar.bz2. Don't forget to copy the tarball to the
+    iso tree after creating it if you save it to a path other than the root of
+    the iso tree!
 
 9.  Make an initrd, and copy it to cauldron/iso/boot/initrd.gz. This can be
     done via cauldron/scripts/mkinitrd.sh /path/to/iso/tree iso_kernel_version
