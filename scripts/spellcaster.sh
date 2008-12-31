@@ -197,34 +197,72 @@ function install_kernel() {
 	local version=
 	local kernel=
 
+	# Exit if DST undefined, otherwise we could damage the host system
+	[[ -z $DST ]] && exit 12
+
+	if grep -q '^linux:' "$SRC"/var/state/sorcery/packages
+	then
+		version=$(grep '^linux:' "$SRC"/var/state/sorcery/packages)
+		version=${version##*:}
+		kernel="$SRC"/boot/vmlinuz
+		${kconfig:="$SRC"/etc/sorcery/local/kernel.config}
+	fi
+
 	# Try to autodetect the location of the kernel config based on whether
 	# the linux spell was used or not.
 	if [[ -z $kconfig ]]
 	then
+		if [[ -f "$SRC"/usr/src/linux/.config ]]
+		then
+			kconfig="$SRC/usr/src/linux/.config"
+		elif [[ -f "$SRC"/boot/config ]]
+		then
+			kconfig="$SRC/boot/config"
+		fi
 	fi
+	[[ -z $kconfig ]] && exit 13
 
-	if gaze -q installed linux &> /dev/null
-	then
-		version=$(gaze -q installed linux)
-		kernel=/boot/vmlinuz
-
-	# Try to autodetect the linux kernel version using spell version or
+	# Try to autodetect the linux kernel version using kernel directory or
 	# kernel config
 	if [[ -z $version ]]
 	then
-		version="$(zgrep 'Linux kernel version:')"
-		version="${version#*version: }"
+		if [[ -h "$SRC"/usr/src/linux ]]
+		then
+			if readlink "$SRC"/usr/src/linux
+			then
+				version="$(readlink "$SRC"/usr/src/linux)"
+				version="${version#linux-}"
+			fi
+		else
+			version=$(grep 'version:' "$kconfig")
+			version="${version##*version: }"
+		fi
 	fi
+	[[ -z $version ]] && exit 14
 
 	# Try to guess the location of the kernel itself
-	kernel=
+	if [[ -z $kernel ]]
+	then
+		if [[ -e "$SRC"/boot/vmlinuz ]]
+		then
+			kernel="$SRC/boot/vmlinuz"
+		elif [[ -e "$SRC"/usr/src/linux/arch/i386/boot/bzImage ]]
+		then
+			kernel="$SRC/usr/src/linux/arch/i386/boot/bzImage"
+		fi
+	fi
+	[[ -z $kernel ]] && exit 15
 
-	cp "$kconfig" "$DST"/boot/config-$version
-	cp "$SRC"/ "$DST"/
-	cp "$SRC"/ "$DST"/
-	cp "$SRC"/ "$DST"/
-	cp "$SRC"/ "$DST"/
-	cp "$SRC"/ "$DST"/
+	# Copy the kernel config and symlink
+	cp -f "$kconfig" "$DST"/boot/config-$version
+	ln -sf /boot/config-$version "$DST"/boot/config
+
+	# Copy the kernel image
+	cp -f "$kernel" "$DST"/boot/linux
+
+	# Copy all kernel modules
+	[[ -d "$DST"/lib/modules ]] || mkdir -p "$DST"/lib/modules
+	cp -fr "$SRC"/lib/modules/$version "$DST"/lib/modules/
 }
 
 function setup_sys() {
@@ -293,6 +331,8 @@ function setup_iso() {
 	do
 		cp "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 "$ISODIR"/var/cache/sorcery/
 	done
+
+	install_kernel "$TARGET" "$ISODIR"
 }
 
 function clean_target() {
