@@ -234,6 +234,9 @@ function setup_sys() {
 	local gvers=$(head -n1 "$TARGET"/var/lib/sorcery/codex/stable/VERSION)
 	local stable="stable-${gvers%-*}.tar.bz2"
 	local syscodex="$SYSDIR/var/lib/sorcery/codex"
+	local tablet="$SYSDIR/var/state/sorcery/tablet"
+	local packages="$SYSDIR/var/state/sorcery/packages"
+	local depends="$SYSDIR/var/state/sorcery/depends"
 
 	# unpack the sys caches into SYSDIR
 	for cache in $(<"$TARGET"/sys-list)
@@ -261,6 +264,20 @@ function setup_sys() {
 	[[ -d "$syscodex" ]] || mkdir -p $syscodex &&
 	tar jxf $stable -C "$syscodex"/
 	mv "$syscodex"/${stable%.tar.bz2} "$syscodex"/stable
+
+	# generate the depends and packages info for sorcery to use
+	. "$SYSDIR"/etc/sorcery/config
+	for spell in "$tablet"/*
+	do
+		for date in "$spell"/*
+		do
+			tablet_get_version $date ver
+			tablet_get_status $date stat
+			tablet_get_depends $date dep
+			echo "${spell##*/}:${date##*/}:$stat:$ver" >> "$packages"
+			cat "$dep" >> "$depends"
+		done
+	done
 }
 
 function setup_iso() {
