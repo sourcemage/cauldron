@@ -15,11 +15,10 @@
   test -d /root/build || 
   echo 'step 1 failed' >> /var/log/sorcery/activity
 
-  # step 1.5 (add resolv.conf and sorcery url configuration)
+  # step 1.5 (add resolv.conf and host sorcery url/compiler configuration)
   echo "step 1.5"
   cp /etc/resolv.conf /root/build/etc/resolv.conf
-  cp -fa /lib/modules/* /root/build/lib/modules
-  cp -fa /usr/src/* /root/build/usr/src
+  cp /etc/sorcery/local/compile_config /root/build/etc/sorcery/local/compile_config
   echo LEAPFORWARD_URL=http://10.0.0.11/smgl/spool/ > /root/build/etc/sorcery/local/url
 
   echo step 2 build kernel
@@ -34,7 +33,7 @@
     make -j 4 && make modules -j 4 && make modules_install &&
   popd &&
   ls /lib/modules &&
-  cp -fav /lib/modules/2.6.24 /root/build/lib/modules &&
+  cp -fav /lib/modules/2.6.24-SMGL-iso /root/build/lib/modules &&
   cp -fav /usr/src/linux-2.6.24 /root/build/usr/src ||
   echo 'step 2 failed' >> /var/log/sorcery/activity
 
@@ -44,7 +43,7 @@
 
   step 3.5 copy kernel sources to iso and sys tree
   # may be handled by step 3 later on
-  cp -fav /lib/modules/2.6.24 /tmp/cauldron/iso/lib/modules &&
+  cp -fav /lib/modules/2.6.24-SMGL-iso /tmp/cauldron/iso/lib/modules &&
   cp -fav /usr/src/linux-2.6.24 /tmp/cauldron/iso/usr/src ||
   echo 'step 3.5 failed' >> /var/log/sorcery/activity
 
@@ -79,7 +78,7 @@
   echo 'step 8 failed' >> /var/log/sorcery/activity
 
   echo step 9 make initrd
-  bash /root/cauldron/scripts/mkinitrd.sh /tmp/cauldron/iso 2.6.24 &&
+  bash /root/cauldron/scripts/mkinitrd.sh /tmp/cauldron/iso 2.6.24-SMGL-iso &&
   cp initrd.gz /root/cauldron/iso/boot/initrd.gz ||
   echo 'step 9 failed' >> /var/log/sorcery/activity
 
