@@ -190,10 +190,50 @@ SPELLS
 	chmod a+x "$TARGET"/build_spells.sh
 }
 
+function install_kernel() {
+	local SRC=$1
+	local DST=$2
+	local kconfig=$3
+	local version=
+	local kernel=
+
+	# Try to autodetect the location of the kernel config based on whether
+	# the linux spell was used or not.
+	if [[ -z $kconfig ]]
+	then
+	fi
+
+	if gaze -q installed linux &> /dev/null
+	then
+		version=$(gaze -q installed linux)
+		kernel=/boot/vmlinuz
+
+	# Try to autodetect the linux kernel version using spell version or
+	# kernel config
+	if [[ -z $version ]]
+	then
+		version="$(zgrep 'Linux kernel version:')"
+		version="${version#*version: }"
+	fi
+
+	# Try to guess the location of the kernel itself
+	kernel=
+
+	cp "$kconfig" "$DST"/boot/config-$version
+	cp "$SRC"/ "$DST"/
+	cp "$SRC"/ "$DST"/
+	cp "$SRC"/ "$DST"/
+	cp "$SRC"/ "$DST"/
+	cp "$SRC"/ "$DST"/
+}
+
 function setup_sys() {
 	local SPOOL="$TARGET/var/spool"
 	local SORCERY="sorcery-stable.tar.bz2"
 	local SORCERYDIR="$TARGET/usr/src/sorcery"
+	local gvers=$(head -n1 "$TARGET"/var/lib/sorcery/codex/stable/VERSION)
+	local stable="stable-${gvers%-*}.tar.bz2"
+	local syscodex="$SYSDIR/var/lib/sorcery/codex"
 
 	# unpack the sys caches into SYSDIR
 	for cache in $(<"$TARGET"/sys-list)
@@ -212,6 +252,15 @@ function setup_sys() {
 	pushd "$SORCERYDIR" &> /dev/null
 	./install "$SYSDIR"
 	popd
+
+	# install the stable grimoire used for build into SYSDIR
+	(
+		cd "$TARGET/tmp"
+		wget http://download.sourcemage.org/codex/$stable
+	)
+	[[ -d "$syscodex" ]] || mkdir -p $syscodex &&
+	tar jxf $stable -C "$syscodex"/
+	mv "$syscodex"/${stable%.tar.bz2} "$syscodex"/stable
 }
 
 function setup_iso() {
