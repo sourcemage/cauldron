@@ -100,11 +100,11 @@ do
 			then
 				# chroot and clean a directory using rmdir
 				echo "Attempting to remove directory $ISOCHROOT/$DIRT"
-				 chroot "$ISOCHROOT" rmdir --ignore-fail-on-non-empty "$DIRT"
+				chroot "$ISOCHROOT" rmdir --ignore-fail-on-non-empty "$DIRT"
 			else
 				# chroot and clean an individual file
 				echo "Attempting to delete $ISOCHROOT/$DIRT"
-				 chroot "$ISOCHROOT" rm "$DIRT"
+				chroot "$ISOCHROOT" rm -f "$DIRT"
 			fi
 		fi
 	done
