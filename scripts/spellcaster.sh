@@ -140,6 +140,11 @@ function prepare_target() {
 	cp "$CAULDRONDIR/ispells.$TYPE" "$TARGET"/ispells
 	cp "$CAULDRONDIR/ospells.$TYPE" "$TARGET"/ospells
 
+	# Copy any spell-specific required options into the TARGET
+	[[ -d "$TARGET"/etc/sorcery/local/depends/ ]] ||
+		mkdir -p "$TARGET"/etc/sorcery/local/depends/
+	cp "$CAULDRONDIR"/depends/* "$TARGET"/etc/sorcery/local/depends/
+
 	# generate basesystem casting script inside of TARGET
 	cat > "$TARGET"/build_spells.sh <<-'SPELLS'
 
@@ -185,10 +190,53 @@ SPELLS
 	chmod a+x "$TARGET"/build_spells.sh
 }
 
+function install_kernel() {
+	local SRC=$1
+	local DST=$2
+	local kconfig=$3
+	local version=
+	local kernel=
+
+	# Try to autodetect the location of the kernel config based on whether
+	# the linux spell was used or not.
+	if [[ -z $kconfig ]]
+	then
+	fi
+
+	if gaze -q installed linux &> /dev/null
+	then
+		version=$(gaze -q installed linux)
+		kernel=/boot/vmlinuz
+
+	# Try to autodetect the linux kernel version using spell version or
+	# kernel config
+	if [[ -z $version ]]
+	then
+		version="$(zgrep 'Linux kernel version:')"
+		version="${version#*version: }"
+	fi
+
+	# Try to guess the location of the kernel itself
+	kernel=
+
+	cp "$kconfig" "$DST"/boot/config-$version
+	cp "$SRC"/ "$DST"/
+	cp "$SRC"/ "$DST"/
+	cp "$SRC"/ "$DST"/
+	cp "$SRC"/ "$DST"/
+	cp "$SRC"/ "$DST"/
+}
+
 function setup_sys() {
 	local SPOOL="$TARGET/var/spool"
 	local SORCERY="sorcery-stable.tar.bz2"
 	local SORCERYDIR="$TARGET/usr/src/sorcery"
+	local gvers=$(head -n1 "$TARGET"/var/lib/sorcery/codex/stable/VERSION)
+	local stable="stable-${gvers%-*}.tar.bz2"
+	local syscodex="$SYSDIR/var/lib/sorcery/codex"
+	local tablet="$SYSDIR/var/state/sorcery/tablet"
+	local packages="$SYSDIR/var/state/sorcery/packages"
+	local depends="$SYSDIR/var/state/sorcery/depends"
 
 	# unpack the sys caches into SYSDIR
 	for cache in $(<"$TARGET"/sys-list)
@@ -207,6 +255,29 @@ function setup_sys() {
 	pushd "$SORCERYDIR" &> /dev/null
 	./install "$SYSDIR"
 	popd
+
+	# install the stable grimoire used for build into SYSDIR
+	(
+		cd "$TARGET/tmp"
+		wget http://download.sourcemage.org/codex/$stable
+	)
+	[[ -d "$syscodex" ]] || mkdir -p $syscodex &&
+	tar jxf $stable -C "$syscodex"/
+	mv "$syscodex"/${stable%.tar.bz2} "$syscodex"/stable
+
+	# generate the depends and packages info for sorcery to use
+	. "$SYSDIR"/etc/sorcery/config
+	for spell in "$tablet"/*
+	do
+		for date in "$spell"/*
+		do
+			tablet_get_version $date ver
+			tablet_get_status $date stat
+			tablet_get_depends $date dep
+			echo "${spell##*/}:${date##*/}:$stat:$ver" >> "$packages"
+			cat "$dep" >> "$depends"
+		done
+	done
 }
 
 function setup_iso() {
