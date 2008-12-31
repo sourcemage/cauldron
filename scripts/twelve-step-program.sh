@@ -41,7 +41,7 @@
   bash /root/cauldron/scripts/spellcaster.sh /root/build x86 ||
   echo 'step 3 failed' >> /var/log/sorcery/activity
 
-  step 3.5 copy kernel sources to iso and sys tree
+  echo step 3.5 copy kernel sources to iso and sys tree
   # may be handled by step 3 later on
   cp -fav /lib/modules/2.6.24-SMGL-iso /tmp/cauldron/iso/lib/modules &&
   cp -fav /usr/src/linux-2.6.24 /tmp/cauldron/iso/usr/src ||

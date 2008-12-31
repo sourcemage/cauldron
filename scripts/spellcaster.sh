@@ -201,6 +201,7 @@ function install_kernel() {
 	# the linux spell was used or not.
 	if [[ -z $kconfig ]]
 	then
+             :
 	fi
 
 	if gaze -q installed linux &> /dev/null
