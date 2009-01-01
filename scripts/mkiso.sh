@@ -25,7 +25,14 @@ Required:
 	    the command to execute, or to set the command to be /bin/bash -l
 	    some_command_without_abs_path). Defaults to "/bin/bash -l".
 Options:
-	-u  Change ownership of output files to $UID:$GID
+	-u  Change ownership of output files to $UID:$GID. You must specify the
+	    $UID:$GID pair as a string such as root:root or 0:0 or the script
+	    will fail.
+
+	-z  Compress the resulting ISO with bzip2.
+
+	-k  Keep the original ISO file in addition to the compressed version
+	    when compressing. Implies -z.
 
 	-h  Shows this help information
 EndUsage
