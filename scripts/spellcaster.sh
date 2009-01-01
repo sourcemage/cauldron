@@ -319,6 +319,8 @@ function setup_sys() {
 }
 
 function setup_iso() {
+	local GVERS="$TARGET/var/lib/sorcery/stable/VERSION"
+
 	# copy the iso caches over and unpack their contents
 	for cache in $(<"$TARGET"/iso-list)
 	do
@@ -333,6 +335,9 @@ function setup_iso() {
 	done
 
 	install_kernel "$TARGET" "$ISODIR"
+
+	# save the grimoire version used for building everything to ISODIR for reference
+	cp -f $GVERS "$ISODIR"/etc/grimoire_version
 }
 
 function clean_target() {
