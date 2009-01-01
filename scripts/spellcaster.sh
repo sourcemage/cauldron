@@ -194,7 +194,7 @@ function install_kernel() {
 	local SRC=$1
 	local DST=$2
 	local kconfig=$3
-	local version=
+	local version=$4
 	local kernel=
 
 	# Exit if DST undefined, otherwise we could damage the host system
@@ -226,7 +226,14 @@ function install_kernel() {
 	# kernel config
 	if [[ -z $version ]]
 	then
-		if [[ -h "$SRC"/usr/src/linux ]]
+		local modules="$SRC/lib/modules"
+		modules="$(find "$modules" -mindepth 1 -maxdepth 1 -type d)"
+		modules="$(echo "$modules" | sed 's#.*/##')"
+
+		if [[ $(echo "$modules" | wc -l) -eq 1 ]]
+		then
+			version="$modules"
+		elif [[ -h "$SRC"/usr/src/linux ]]
 		then
 			if readlink "$SRC"/usr/src/linux
 			then
@@ -334,6 +341,7 @@ function setup_iso() {
 		cp "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 "$ISODIR"/var/cache/sorcery/
 	done
 
+	# install the kernel into ISODIR
 	install_kernel "$TARGET" "$ISODIR"
 
 	# save the grimoire version used for building everything to ISODIR for reference
