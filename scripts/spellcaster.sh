@@ -383,6 +383,16 @@ TYPE="${TYPE:-x86}"
 ISODIR="${ISODIR:-/tmp/cauldron/iso}"
 SYSDIR="${SYSDIR:-/tmp/cauldron/sys}"
 
+# ensure full pathnames
+if [[ $(dirname "$ISODIR") == "." ]]
+then
+	ISODIR="$(pwd)/$ISODIR"
+fi
+if [[ $(dirname "$SYSDIR") == "." ]]
+then
+	SYSDIR="$(pwd)/$SYSDIR"
+fi
+
 sanity_check
 
 prepare_target
