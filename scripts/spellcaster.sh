@@ -273,7 +273,7 @@ function install_kernel() {
 }
 
 function setup_sys() {
-	local SPOOL="$TARGET/var/spool"
+	local SPOOL="$TARGET/tmp"
 	local SORCERY="sorcery-stable.tar.bz2"
 	local SORCERYDIR="$TARGET/usr/src/sorcery"
 	local gvers=$(head -n1 "$TARGET"/var/lib/sorcery/codex/stable/VERSION)
@@ -299,18 +299,20 @@ function setup_sys() {
 	tar jxf "$SPOOL"/$SORCERY -C "$TARGET/usr/src"
 	pushd "$SORCERYDIR" &> /dev/null
 	./install "$SYSDIR"
-	popd
+	popd &> /dev/null
 
 	# install the stable grimoire used for build into SYSDIR
 	(
-		cd "$TARGET/tmp"
+		cd "$SPOOL"
 		wget http://download.sourcemage.org/codex/$stable
 	)
+	echo "Installing grimoire ${stable%.tar.bz2} ..."
 	[[ -d "$syscodex" ]] || mkdir -p $syscodex &&
-	tar jxf $stable -C "$syscodex"/
+	tar jxf "$SPOOL"/$stable -C "$syscodex"/ &&
 	mv "$syscodex"/${stable%.tar.bz2} "$syscodex"/stable
 
 	# generate the depends and packages info for sorcery to use
+	rm -f "$depends" "$packages"
 	. "$SYSDIR"/etc/sorcery/config
 	for spell in "$tablet"/*
 	do
