@@ -64,7 +64,7 @@ if [[ $TYPE == "bad" || -z $1 ]] ;then
   usage
 fi
 
-CHROOTDIR="$1"
+CHROOTDIR="${1%/}"
 
 if ! $FORCE ;then
   if [[ ! -x "$CHROOTDIR"/bin/bash ]] ;then
@@ -94,8 +94,11 @@ function blacklist_modules {
     sort >> "$DEST"/etc/modprobe.d/blacklist
 }
 
-KVER=${KVER:-$(find "$CHROOTDIR"/lib/modules -mindepth 1 -maxdepth 1 -print | head -n1 | sed 's#.*/##')}
-[[ -z $KVER ]] && exit 3
+if [[ $TYPE == "iso" ]] ;then
+  # ensure kernel presence/sanity
+  KVER=${KVER:-$(find "$CHROOTDIR"/lib/modules -mindepth 1 -maxdepth 1 -print | head -n1 | sed 's#.*/##')}
+  [[ -z $KVER ]] && exit 3
+fi
 
 # make sure we start with a clean TEMPDIR each run
  rm -rf "$TEMPDIR"
@@ -105,10 +108,12 @@ KVER=${KVER:-$(find "$CHROOTDIR"/lib/modules -mindepth 1 -maxdepth 1 -print | he
 # should go onto both iso and system chroots
 # this is mostly /etc content
  cp -a "$MYDIR"/base/* "$TEMPDIR"/
- blacklist_modules "$CHROOTDIR/lib/modules/$KVER/kernel/drivers/video" "$TEMPDIR"/
 
 # ISO Sauce
 if [[ $TYPE == "iso" ]] ;then
+  # add the relevant modules to the blacklist
+  blacklist_modules "$CHROOTDIR/lib/modules/$KVER/kernel/drivers/video" "$TEMPDIR"/
+
   # copy everything from the cauldron repo iso dir
   # into the TEMPDIR staging area
   cp -a "$MYDIR"/iso/* "$TEMPDIR"/
@@ -164,5 +169,9 @@ do
   fi
 done
 
- rm -rf "$TEMPDIR"
+# ensure that ld has an up-to-date cache
+"${0%/*}"/cauldronchr.sh -d "$CHROOTDIR" /sbin/ldconfig
+
+# clean up
+rm -rf "$TEMPDIR"
 
