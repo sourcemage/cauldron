@@ -341,13 +341,13 @@ function setup_iso() {
 }
 
 function clean_target() {
-	local config="$TARGET/etc/sorcery/local/kernel.config"
+	local config="etc/sorcery/local/kernel.config"
 
 	# Restore resolv.conf, the first rm is needed in case something
 	# installs a hardlink (like ppp)
 	rm -f "$TARGET/etc/resolv.conf" &&
 	cp -f "$TARGET/tmp/resolv.conf" "$TARGET/etc/resolv.conf" &&
-		rm -f "$TARGET/tmp/resolv.conf"
+	rm -f "$TARGET/tmp/resolv.conf"
 
 	# Clean up the target
 	rm -f "$TARGET/rspells" \
