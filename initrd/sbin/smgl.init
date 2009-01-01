@@ -7,7 +7,7 @@ shell() {
 
 test_cdrom() {
   local found=false
-  mount -n -r -t iso9660 $1 $MOUNT 2>/dev/null
+  mount -n -r $1 $MOUNT 2>/dev/null
   if [ -f $ID ] ;then
     found=true
   fi
@@ -92,7 +92,7 @@ main()  {
 
     echo "Attempting to boot from $SMGL_CD..."
 
-       ROOT=$SMGL_CD
+       ROOT="${ROOT:-$SMGL_CD}"
     VFSTYPE=iso9660
     OPTIONS="defaults,ro"
 
