@@ -62,7 +62,7 @@ fi
 [[ $# -lt 2 ]] && usage
 
 # Get the grimoire version used to generate all the spells in the ISO.
-GRIMOIRE_VER=$(< "$TARGET"/var/lib/sorcery/codex/stable/VERSION)
+GRIMOIRE_VER=$(< "$TARGET"/etc/grimoire_version)
 
 # Replace all ISO_VERSION placeholders with the ISO version passed on the
 # commandline.
