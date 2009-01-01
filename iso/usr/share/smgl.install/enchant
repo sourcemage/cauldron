@@ -1,0 +1,108 @@
+#!/bin/bash
+
+function usage() {
+  cat <<USAGE
+Usage: $(basename $0) [-h] [-d /path/to/target] [CACHE1 [CACHE2..]]
+
+Installs caches to the target system (defined as /mnt/root if not
+specified). The caches installed can either be specified on the
+command-line as arguments, or they will be taken from information
+provided via /tmp/opt-spells. Note: if you are providing caches on the
+command-line, you must give the full cache filename, and caches with
+an extension of .tar.bz2 are expected.
+
+Options:
+  -d  Path to target directory. Defaults to /mnt/root.
+
+	-h  Shows this help information
+USAGE
+  exit 1
+} >&2
+
+function die() {
+  echo "$1"
+  exit 42
+}
+
+function generate_state() {
+  local spell="$1"
+	local packages="$TARGET/var/state/sorcery/packages"
+	local depends="$TARGET/var/state/sorcery/depends"
+
+  spell=${spell%-*}
+  while ! grep -q $spell $TABLETS
+  do
+    echo $spell | grep -q '.\+[-].\+' || break
+    spell=${spell%-*}
+  done
+  grep -q $spell $TABLETS ||
+    die "Couldn't create tablet information for $spell"
+
+	# generate the depends and packages info for sorcery to use
+  for date in "$tablet/$spell"/*
+  do
+    tablet_get_version $date ver
+    tablet_get_status $date stat
+    tablet_get_depends $date dep
+    echo "${spell##*/}:${date##*/}:$stat:$ver" >> "$packages"
+    cat "$dep" >> "$depends"
+  done
+}
+
+while getopts ":d:h" Option
+do
+  case $Option in
+    d ) TARGET="$OPTARG" ;;
+    h ) usage ;;
+    * ) echo "Unrecognized option." >&2 && usage ;;
+  esac
+done
+shift $(($OPTIND - 1))
+
+CACHE_DIR="${CACHE_DIR:-/var/cache/sorcery}"
+CACHE_LIST="${CACHE_LIST:-/tmp/opt-spells}"
+TABLETS="${TABLETS:-/tmp/tablets}"
+TARGET="${TARGET:-/mnt/root}"
+
+. "$TARGET"/etc/sorcery/config ||
+  die "Couldn't source $TARGET/etc/sorcery/config"
+
+# generate a listing of all tablet directories if needed
+tablet="${tablet:-$TARGET/var/state/sorcery/tablet}"
+if [[ ! -f $TABLETS ]]
+then
+  echo "Gathering tablet information..."
+  find $tablet -maxdepth 1 -type d | sed 's#^.*/##' > $TABLETS
+fi
+
+if [[ $# -ge 1 ]]
+then
+  # for each cache file specified on the command line, process them one at a
+  # time and generate the necessary sorcery state for each as they are
+  # processed
+  while [[ $# -ge 1 ]]
+  do
+    CACHE="$1"
+    echo "Installing ${CACHE##*/} ..."
+    tar jxf "$CACHE" -C "$TARGET"/ &&
+    generate_state "${CACHE##*/}" &&
+    echo "${CACHE##*/} installed."
+    shift
+  done
+else
+  # for each spell-version listed in /tmp/opt-spells, untar the corresponding
+  # cache file from the ISO into the TARGET system and generate the necessary
+  # sorcery state information afterwards so the TARGET sorcery can deal with
+  # after the new system is booted
+  for cache in $(<$CACHE_LIST)
+  do
+    echo "Installing $cache ..."
+    tar jxf $CACHE_DIR/$cache*.tar.bz2 -C "$TARGET"/ &&
+    generate_state $cache &&
+    echo "$cache installed."
+  done
+fi
+
+
+
+# vim:tabstop=2:softtabstop=2:shiftwidth=2:expandtab:ai
