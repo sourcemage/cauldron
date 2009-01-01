@@ -25,17 +25,21 @@ Required:
 	    resulting in smgl-VERSION.iso for the final ISO output.
 
 Options:
-	-u  chown output files to $UID:$GID
+	-u  Change ownership of output files to $UID:$GID. You must specify the
+	    $UID:$GID pair as a string such as root:root or 0:0 or the script
+	    will fail.
 
 	-h  Shows this help information
 EndUsage
 	exit 1
 } >&2
 
-while getopts ":uh" Option
+while getopts ":u:h" Option
 do
 	case $Option in
-		u ) ISOCHOWN="-u" ;;
+		u ) ISOCHOWN="-u"
+			CHOWNSTR="$OPTARG"
+			;;
 		h ) usage ;;
 		* ) echo "Unrecognized option." >&2 && usage ;;
 	esac
@@ -71,5 +75,5 @@ done
 sed -i "s/@GRIMOIRE_VERSION@/$GRIMOIRE_VER/" "$TARGET"/isolinux/isolinux.msg
 
 # Generate the release ISO. Currently we force KEEP and COMPRESSION.
-$(dirname $0)/mkiso.sh $ISOCHOWN -kz "$TARGET" "smgl-$VERSION"
+$(dirname $0)/mkiso.sh "$ISOCHOWN $CHOWNSTR" -kz "$TARGET" "smgl-$VERSION"
 

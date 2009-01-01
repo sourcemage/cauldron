@@ -32,11 +32,13 @@ EndUsage
 	exit 1
 } >&2
 
-while getopts ":kuzh" Options
+while getopts ":ku:zh" Options
 do
 	case $Options in
 		k ) KEEP="-k" ;;
-		u ) ISOCHOWN=true ;;
+		u ) ISOCHOWN=true
+			CHOWNSTR="$OPTARG"
+			;;
 		z ) COMPRESS=true ;;
 		h ) usage ;;
 		* ) echo "Unrecognized option" >&2 && usage ;;
@@ -66,5 +68,5 @@ then
 	$SUODOCMD bzip2 -f -v $KEEP "${ISO_VERSION}.iso"
 fi
 
-[[ $ISOCHOWN ]] &&  chown $UID:$GID ${ISO_VERSION}.iso*
+[[ $ISOCHOWN ]] &&  chown "$CHOWNSTR" "${ISO_VERSION}".iso*
 
