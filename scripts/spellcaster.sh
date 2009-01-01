@@ -402,9 +402,13 @@ prepare_target
 
 # unpack sys caches and set up sorcery into SYSDIR
 setup_sys
+touch "$SYSDIR"/etc/ld.so.conf
+"$MYDIR/cauldronchr.sh" -d "$SYSDIR" /sbin/ldconfig
 
 # unpack iso caches and copy iso and optional caches into ISODIR
 setup_iso
+touch "$SYSDIR"/etc/ld.so.conf
+"$MYDIR/cauldronchr.sh" -d "$ISODIR" /sbin/ldconfig
 
 # Keep a clean kitchen, wipes up the leftovers from the preparation step
 clean_target
