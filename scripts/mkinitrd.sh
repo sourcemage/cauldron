@@ -175,7 +175,12 @@ function mk_initrd_file() {
 
   rm -rf $tmp_file $tmp_mountdir
   echo "initrd is at $2, compressed $(du -ks $2 | cut -d$'\t' -f1)K, uncompressed ${initrd_size}K."
-  echo "Don't forget to adjust isolinux.cfg for the new size."
+  if grep -q '@INITRD_SIZE@' "$ISO_DIR"/isolinux/isolinux.cfg
+  then
+    sed -i "s/@INITRD_SIZE@/$initrd_size/" "$ISO_DIR"/isolinux/isolinux.cfg
+  else
+    echo "Don't forget to adjust isolinux.cfg for the new size."
+  fi
 }
 
 
