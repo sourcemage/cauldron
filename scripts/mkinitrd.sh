@@ -57,11 +57,25 @@ fi
 ISO_DIR=$1
 KERNEL_VERSION=$2
 
+# ensure full pathnames
+if [[ $(dirname "$ISO_DIR") == "." ]]
+then
+	ISO_DIR="$(pwd)/$ISO_DIR"
+fi
+echo "Chroot dir: $ISO_DIR"
+
 OUTPUT="${OUTPUT:-./initrd.gz}"
 
-if ! [[ -d $ISO_DIR/lib/modules/$KERNEL_VERSION/kernel ]] ;then
+if ! [[ -d "$ISO_DIR"/lib/modules/$KERNEL_VERSION/kernel ]] ;then
   echo "Chroot failed sanity check:"
   echo "Unable to find $ISO_DIR/lib/modules/$KERNEL_VERSION/kernel"
+  exit 2
+fi >&2
+
+if ! [[ -f "$ISO_DIR"/isolinux/isolinux.cfg ]]
+then
+  echo "Chroot failed sanity check:"
+  echo "Chroot is missing isolinux.cfg!"
   exit 2
 fi >&2
 
