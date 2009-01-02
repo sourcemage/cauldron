@@ -325,6 +325,19 @@ function setup_sys() {
 			cat "$dep" >> "$depends"
 		done
 	done
+
+	# populate /dev with static device nodes
+	cat > "$SYSDIR/makedev" <<-"DEV"
+		#!/bin/bash
+		cd /dev
+		/sbin/MAKEDEV generic
+DEV
+	chmod a+x "$SYSDIR/makedev"
+	chroot "$SYSDIR" /makedev
+	rm -f "$SYSDIR/makedev"
+
+	# ensure the existence of /dev/initctl
+	chroot "$SYSDIR" mkfifo -m 0600 /dev/initctl
 }
 
 function setup_iso() {
@@ -348,6 +361,19 @@ function setup_iso() {
 
 	# save the grimoire version used for building everything to ISODIR for reference
 	cp -f $GVERS "$ISODIR"/etc/grimoire_version
+
+	# populate /dev with static device nodes
+	cat > "$ISODIR/makedev" <<-"DEV"
+		#!/bin/bash
+		cd /dev
+		/sbin/MAKEDEV generic
+DEV
+	chmod a+x "$ISODIR/makedev"
+	chroot "$ISODIR" /makedev
+	rm -f "$ISODIR/makedev"
+
+	# ensure the existence of /dev/initctl
+	chroot "$ISODIR" mkfifo -m 0600 /dev/initctl
 }
 
 function clean_target() {
