@@ -194,7 +194,7 @@ function install_kernel() {
 	local SRC=$1
 	local DST=$2
 	local kconfig=$3
-	local version=
+	local version=$4
 	local kernel=
 
 	# Exit if DST undefined, otherwise we could damage the host system
@@ -226,7 +226,14 @@ function install_kernel() {
 	# kernel config
 	if [[ -z $version ]]
 	then
-		if [[ -h "$SRC"/usr/src/linux ]]
+		local modules="$SRC/lib/modules"
+		modules="$(find "$modules" -mindepth 1 -maxdepth 1 -type d)"
+		modules="$(echo "$modules" | sed 's#.*/##')"
+
+		if [[ $(echo "$modules" | wc -l) -eq 1 ]]
+		then
+			version="$modules"
+		elif [[ -h "$SRC"/usr/src/linux ]]
 		then
 			if readlink "$SRC"/usr/src/linux
 			then
@@ -266,7 +273,7 @@ function install_kernel() {
 }
 
 function setup_sys() {
-	local SPOOL="$TARGET/var/spool"
+	local SPOOL="$TARGET/tmp"
 	local SORCERY="sorcery-stable.tar.bz2"
 	local SORCERYDIR="$TARGET/usr/src/sorcery"
 	local gvers=$(head -n1 "$TARGET"/var/lib/sorcery/codex/stable/VERSION)
@@ -292,18 +299,20 @@ function setup_sys() {
 	tar jxf "$SPOOL"/$SORCERY -C "$TARGET/usr/src"
 	pushd "$SORCERYDIR" &> /dev/null
 	./install "$SYSDIR"
-	popd
+	popd &> /dev/null
 
 	# install the stable grimoire used for build into SYSDIR
 	(
-		cd "$TARGET/tmp"
+		cd "$SPOOL"
 		wget http://download.sourcemage.org/codex/$stable
 	)
+	echo "Installing grimoire ${stable%.tar.bz2} ..."
 	[[ -d "$syscodex" ]] || mkdir -p $syscodex &&
-	tar jxf $stable -C "$syscodex"/
+	tar jxf "$SPOOL"/$stable -C "$syscodex"/ &&
 	mv "$syscodex"/${stable%.tar.bz2} "$syscodex"/stable
 
 	# generate the depends and packages info for sorcery to use
+	rm -f "$depends" "$packages"
 	. "$SYSDIR"/etc/sorcery/config
 	for spell in "$tablet"/*
 	do
@@ -319,6 +328,8 @@ function setup_sys() {
 }
 
 function setup_iso() {
+	local GVERS="$TARGET/var/lib/sorcery/stable/VERSION"
+
 	# copy the iso caches over and unpack their contents
 	for cache in $(<"$TARGET"/iso-list)
 	do
@@ -332,17 +343,21 @@ function setup_iso() {
 		cp "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 "$ISODIR"/var/cache/sorcery/
 	done
 
+	# install the kernel into ISODIR
 	install_kernel "$TARGET" "$ISODIR"
+
+	# save the grimoire version used for building everything to ISODIR for reference
+	cp -f $GVERS "$ISODIR"/etc/grimoire_version
 }
 
 function clean_target() {
-	local config="$TARGET/etc/sorcery/local/kernel.config"
+	local config="etc/sorcery/local/kernel.config"
 
 	# Restore resolv.conf, the first rm is needed in case something
 	# installs a hardlink (like ppp)
 	rm -f "$TARGET/etc/resolv.conf" &&
 	cp -f "$TARGET/tmp/resolv.conf" "$TARGET/etc/resolv.conf" &&
-		rm -f "$TARGET/tmp/resolv.conf"
+	rm -f "$TARGET/tmp/resolv.conf"
 
 	# Clean up the target
 	rm -f "$TARGET/rspells" \
@@ -368,6 +383,16 @@ TYPE="${TYPE:-x86}"
 ISODIR="${ISODIR:-/tmp/cauldron/iso}"
 SYSDIR="${SYSDIR:-/tmp/cauldron/sys}"
 
+# ensure full pathnames
+if [[ $(dirname "$ISODIR") == "." ]]
+then
+	ISODIR="$(pwd)/$ISODIR"
+fi
+if [[ $(dirname "$SYSDIR") == "." ]]
+then
+	SYSDIR="$(pwd)/$SYSDIR"
+fi
+
 sanity_check
 
 prepare_target
@@ -377,9 +402,13 @@ prepare_target
 
 # unpack sys caches and set up sorcery into SYSDIR
 setup_sys
+touch "$SYSDIR"/etc/ld.so.conf
+"$MYDIR/cauldronchr.sh" -d "$SYSDIR" /sbin/ldconfig
 
 # unpack iso caches and copy iso and optional caches into ISODIR
 setup_iso
+touch "$SYSDIR"/etc/ld.so.conf
+"$MYDIR/cauldronchr.sh" -d "$ISODIR" /sbin/ldconfig
 
 # Keep a clean kitchen, wipes up the leftovers from the preparation step
 clean_target

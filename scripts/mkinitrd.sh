@@ -57,6 +57,8 @@ fi
 ISO_DIR=$1
 KERNEL_VERSION=$2
 
+OUTPUT="${OUTPUT:-./initrd.gz}"
+
 if ! [[ -d $ISO_DIR/lib/modules/$KERNEL_VERSION/kernel ]] ;then
   echo "Chroot failed sanity check:"
   echo "Unable to find $ISO_DIR/lib/modules/$KERNEL_VERSION/kernel"
@@ -155,7 +157,7 @@ function mk_initrd_file() {
   cp -a $1/* $tmp_mountdir
   umount -d $tmp_mountdir
 
-  gzip -c $tmp_file >$2
+  gzip -c $tmp_file > $2
 
   rm -rf $tmp_file $tmp_mountdir
   echo "initrd is at $2, compressed $(du -ks $2 | cut -d$'\t' -f1)K, uncompressed ${initrd_size}K."
