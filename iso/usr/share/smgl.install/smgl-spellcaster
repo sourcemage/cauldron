@@ -56,10 +56,14 @@ function make_list {
 
   # for each cache available, check to see if it was already selected before
   # and mark it as selected if found
-  for ((i=0; i < $NUM_CACHES; i++))
-  do
-    grep -s -q "^${CACHES[i]}$" /tmp/spells && SELECTED[i]="*"
-  done
+  if [[ -e /tmp/spells ]]
+  then
+    for ((i=0; i < $NUM_CACHES; i++))
+    do
+      grep -s -q "^${CACHES[i]}$" /tmp/spells &&
+      SELECTED[i]="*"
+    done
+  fi
 }
 
 function print_list {
