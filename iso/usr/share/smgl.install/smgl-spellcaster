@@ -14,32 +14,6 @@ Generates a listing of cache files available to install.
 USAGE
 }
 
-function prompt() {
-  local input=
-
-  echo ""
-  printf "\tPlease enter a number (0 when finished):  "
-  while [[ -z $input ]]
-  do
-    read input
-    if [[ -n $input ]]
-    then
-      # fancy way to make sure that we have the correct input
-      # if the user passes 1-12, that will be evaluated mathematically fist,
-      # yielding -11, which fals outside the range of allowable input
-      # this may be changed later, but currently we only support entering one
-      # value at a time
-      if [[ $(echo $((input)) ) -lt 0 || $(echo $((input)) ) -gt $NUM_CACHES ]]
-      then
-        echo "Error: You must enter a number corresponding to one"
-        echo "of the choices in the list."
-        input=
-      fi
-    fi
-  done
-  return $input
-}
-
 function make_list {
   # get a list of all the caches available and get the spell names from them,
   # sorted and uniq'ed
@@ -74,28 +48,100 @@ function print_list {
   done | column | less -F -J
 }
 
-function main {
-  local choice=-1
+function toggle_choice {
+  local choice="$1"
+  if [[ $choice -gt 0 ]]
+  then
+    choice=$((choice-1))
+    # if the choice was not previously selected, select it, otherwise
+    # deselect it (toggle)
+    if [[ SELECTED[choice] == '*' ]]
+    then
+      SELECTED[choice]=
+    else
+      SELECTED[choice]="*"
+    fi
+  fi
+}
 
+function prompt() {
+  local choice=
+  local input=
+
+  echo ""
+  echo -n "Please make a selection (a for all, n for none, 0 when finished):  "
+  read input
+  if $(echo "$input" | grep -q '\*')
+  then
+    echo "$input" >&2
+    input=$(echo "$input" | sed 's/\*//g')
+    echo "New:" >&2
+    echo "$input" >&2
+  fi
+  for choice in $input
+  do
+    # if the user entered 0, we're done here
+    [[ $choice == "0" ]] && break 2
+
+    # if 'a', we want everything
+    if [[ $choice == "a" ]]
+    then
+      for ((i=0; i < $NUM_CACHES; i++))
+      do
+        SELECTED[$i]="*"
+      done
+      continue
+    fi
+
+    # if 'n', we want none
+    if [[ $choice == "n" ]]
+    then
+      echo "none" >&2
+      for ((i=0; i < $NUM_CACHES; i++))
+      do
+        SELECTED[i]=
+      done
+      continue
+    fi
+
+    # ignore anything that doesn't consist of numbers or '-'
+    if $(echo $choice | grep -q -v '^\([0-9]\+-\?[0-9]*\)\|[*]$')
+    then
+      echo "Error: You must enter only numbers or ranges like 4-8, or "all"" >&2
+      continue
+    fi
+
+    # if the user passed something like 5-12, process the sequence
+    if $(echo $choice | grep -q '-')
+    then
+      for num in $(seq $(echo $choice | cut -d- -f1-2 --output-delimiter=' '))
+      do
+        toggle_choice $num
+      done
+    else
+      toggle_choice $choice
+    fi
+  done
+}
+
+function main {
   # generate the list of spells to choose from by scanning the contents of
   # /var/caches/sorcery on the ISO
-  echo "Generating cache list, please be patient..."
+  echo "Populating internal cache list, please be patient..."
   make_list
 
   # present the menu and prompt for user input, until the user enters 0 to
   # finish
-  while [[ $choice -ne 0 ]]
+  while true
   do
     print_list
     prompt
-    choice="$?"
-    [[ $choice -gt 0 ]] && SELECTED[$((choice-1))]="*"
   done
 
   # for each selected spell, output it to the spell listing file
   for (( i=0; i < $NUM_CACHES; i++ ))
   do
-    if [[ ${SELECTED[i]} = '*' ]]
+    if [[ ${SELECTED[i]} = "*" ]]
     then
       echo ${CACHES[i]} >> /tmp/spells
     fi
