@@ -43,7 +43,15 @@ function prompt() {
 function make_list {
   # get a list of all the caches available and get the spell names from them,
   # sorted and uniq'ed
-  CACHES=( $(find $PREFIX/ -maxdepth 1 -type f -name "$EXTENSION" | sed 's#.*/##' | sed 's/-[0-9].*//' | sort | uniq) )
+  if [[ ! -e /tmp/caches ]]
+  then
+    find $PREFIX/ -maxdepth 1 -type f -name "$EXTENSION" |
+    sed 's#.*/##' |
+    sed 's#-[0-9].*$##' |
+    sort |
+    uniq > /tmp/caches
+  fi
+  CACHES=( $(</tmp/caches) )
   NUM_CACHES=${#CACHES[*]}
 
   # for each cache available, check to see if it was already selected before
