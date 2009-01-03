@@ -1,22 +1,19 @@
 [1mselect-spells step[m
 You may now select the spells you would like that are provided on the ISO.
 There are currently two ways that you can accomplish this. Both methods make
-use of /tmp/opt-spells. Note that it is crucial to install some spells (such as
-a bootloader) or your system may not function, so some of these have been
-included as defaults in /tmp/opt-spells.
+use of /tmp/spells. Note that it is crucial to install some spells (such as a
+bootloader) or your system may not function, so some of these have been
+included as defaults in /tmp/spells.
 
-The menu will present a list of the spells available on the ISO, as well as
-mark which ones are selected for install. The menu is accessed as follows.
-
-menu:
-[1m alchemy[m
+text menu:
+[1m smgl-spells[m
 
 manual:
-[1m $EDITOR /tmp/opt-spells[m
+[1m $EDITOR /tmp/spells[m
 
 You can of course use any editor you like, in case you haven't set $EDITOR.
 
-You can re-edit /tmp/opt-spells any time during the install session and it will
-remember your changes each time. Likewise, you may re-run [1malchemy[m.
+You can re-edit /tmp/spells any time during the install session and it will
+remember your changes each time. Likewise, you may re-run [1msmgl-spells[m.
 
 When you are finished selecting your spells, type [1mnext[m.
