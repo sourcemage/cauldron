@@ -72,7 +72,7 @@ then
   tar xjvf /system.tar.bz2 -C "$TARGET"
 fi
 
-. "$TARGET"/etc/sorcery/config ||
+. "$TARGET"/etc/sorcery/config &> /dev/null ||
   die "Couldn't source $TARGET/etc/sorcery/config"
 
 # generate a listing of all tablet directories if needed
