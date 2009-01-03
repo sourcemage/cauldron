@@ -26,10 +26,10 @@ shift $(($OPTIND - 1))
 TARGET="${TARGET:-/mnt/root}"
 
 # Copy the kernel config
-cp -f /boot/config-$(uname -r) "$TARGET"/boot/config-$(uname -r)-SMGL-iso
+cp -f /boot/config-$(uname -r) "$TARGET"/boot/config-$(uname -r)
 
 # Copy the kernel image
-cp -f /boot/linux-$(uname -r) "$TARGET"/boot/vmlinuz-$(uname -r)-SMGL-iso
+cp -f /boot/linux "$TARGET"/boot/vmlinuz-$(uname -r)
 
 # Copy all kernel modules
 [[ -d "$TARGET"/lib/modules ]] || mkdir -p "$TARGET"/lib/modules
