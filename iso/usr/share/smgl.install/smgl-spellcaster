@@ -153,18 +153,18 @@ function main {
 
 function message() {
   echo ""
-  cat <<-Message
+  cat <<-"Message"
     Spell selection menu.
-    You may select any number of the following spells to install. Some of them may
-    be necessary, depending on how you have set up your installation. For example,
-    if you formatted your disk with xfs, then you will need xfsprogs. Also, you
-    will need at least one bootloader installed (e.g. lilo, grub, etc.).
+    You may select any number of the following spells to install. Some of them
+    may be necessary, depending on how you have set up your installation. For
+    example, if you formatted your disk with xfs, then you will need xfsprogs.
+    Also, you will need at least one bootloader installed (e.g. lilo, grub,
+    etc.).
 
-    When you are satisfied with your selections, enter 0 (zero) and the list of
-    spells to cast will be compiled. Sorcery will then ask you if the list of
-    spells is correct and if you would like to cast them, as it normally does when
-    casting.
-
+    The output is piped through less, so if there are too many caches to
+    fit on one screen you will be able to scroll. When you are satisfied with
+    your selections, enter 0 (zero) and the list of spells to cast will be
+    installed.
 Message
 }
 
