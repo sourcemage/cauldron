@@ -102,7 +102,7 @@ function main {
   done
 
   # make sure we don't have duplicates
-  sort /tmp/spells | uniq > /tmp/spells
+  [[ -e /tmp/spells ]] && sort -u -o /tmp/spells /tmp/spells
 }
 
 function message() {
