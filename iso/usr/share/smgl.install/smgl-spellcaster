@@ -103,23 +103,6 @@ function main {
 
   # make sure we don't have duplicates
   sort /tmp/spells | uniq > /tmp/spells
-
-  # copy the selected list so that it's available inside the chroot
-  cp -f /tmp/spells "$TARGET"/spells
-
-  # mount bind to get to the caches from inside the chroot
-  # this is cheaper than copying, plus the user doesn't have a bunch of
-  # "useless" cache files on their system since presumably they will be
-  # changing both compile options (like arch) and spell version when they
-  # update their grimoires
-  mount --bind /var/cache/sorcery "$TARGET"/var/cache/sorcery
-
-  # cast inside the chroot using the selected list and ISO caches
-  chroot "$TARGET" /usr/sbin/cast $(< /spells)
-
-  # clean up
-  umount "$TARGET"/var/cache/sorcery
-  rm "$TARGET"/spells
 }
 
 function message() {
@@ -138,9 +121,6 @@ function message() {
 
 Message
 }
-
-[[ $# -lt 1 ]] && TARGET="/mnt/root"
-TARGET=$1
 
 message
 
