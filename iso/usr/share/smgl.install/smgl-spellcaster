@@ -71,7 +71,7 @@ function print_list {
   for ((i=0; i < $NUM_CACHES; i++))
   do
     printf "[%2d] %s %s\n" "$(($i + 1))" "${SELECTED[i]:- }" "${CACHES[i]}"
-  done | column | more
+  done | column | less -F -J
 }
 
 function main {
