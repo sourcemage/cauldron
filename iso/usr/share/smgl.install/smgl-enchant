@@ -7,7 +7,7 @@ Usage: $(basename $0) [-h] [-d /path/to/target] [CACHE1 [CACHE2..]]
 Installs caches to the target system (defined as /mnt/root if not
 specified). The caches installed can either be specified on the
 command-line as arguments, or they will be taken from information
-provided via /tmp/opt-spells. Note: if you are providing caches on the
+provided via /tmp/spells. Note: if you are providing caches on the
 command-line, you must give the full cache filename, and caches with
 an extension of .tar.bz2 are expected.
 
@@ -60,7 +60,7 @@ done
 shift $(($OPTIND - 1))
 
 CACHE_DIR="${CACHE_DIR:-/var/cache/sorcery}"
-CACHE_LIST="${CACHE_LIST:-/tmp/opt-spells}"
+CACHE_LIST="${CACHE_LIST:-/tmp/spells}"
 TABLETS="${TABLETS:-/tmp/tablets}"
 TARGET="${TARGET:-/mnt/root}"
 
@@ -90,7 +90,7 @@ then
     shift
   done
 else
-  # for each spell-version listed in /tmp/opt-spells, untar the corresponding
+  # for each spell-version listed in /tmp/spells, untar the corresponding
   # cache file from the ISO into the TARGET system and generate the necessary
   # sorcery state information afterwards so the TARGET sorcery can deal with
   # after the new system is booted

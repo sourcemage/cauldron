@@ -82,15 +82,15 @@ if ! [[ -e "$MYDIR"/base/etc/shadow ]] ;then
 fi >&2
 
 function blacklist_modules {
-  local SRC=$1
-  local DEST=$2
+  local SRC="${1%/}"
+  local DEST="${2%/}"
 
   [[ ! -d "$SRC" || ! -d "$DEST" ]] && exit 3
   mkdir -p "$DEST"/etc/modprobe.d
 
   find "$SRC" -name "*.ko" |
-    sed '#.*/##' |
-    sed '#^\(.*\)\.ko$#install \1 /bin/true#' |
+    sed 's#^.*/##' |
+    sed 's#^\(.*\)\.ko$#install \1 /bin/true#' |
     sort >> "$DEST"/etc/modprobe.d/blacklist
 }
 
@@ -112,7 +112,7 @@ fi
 # ISO Sauce
 if [[ $TYPE == "iso" ]] ;then
   # add the relevant modules to the blacklist
-  blacklist_modules "$CHROOTDIR/lib/modules/$KVER/kernel/drivers/video" "$TEMPDIR"/
+  blacklist_modules "$CHROOTDIR/lib/modules/$KVER/kernel/drivers/video" "$TEMPDIR"
 
   # copy everything from the cauldron repo iso dir
   # into the TEMPDIR staging area

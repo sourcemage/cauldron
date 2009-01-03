@@ -20,7 +20,7 @@ Required:
 
 	ISO_VERSION
 	    A string that specifies the filename of the iso output file.
-	    you must specify an absolute path or the command will not likely be
+	    You must specify an absolute path or the command will not likely be
 	    found (a way around this would be to either set the path as part of
 	    the command to execute, or to set the command to be /bin/bash -l
 	    some_command_without_abs_path). Defaults to "/bin/bash -l".
@@ -68,11 +68,11 @@ fi
 ISO_CHROOT=$1
 ISO_VERSION=$2
 
-$SUODOCMD mkisofs -R -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -V ${ISO_VERSION} -publisher "Source Mage GNU/Linux" -p "Cauldron" -o "${ISO_VERSION}.iso" "$ISO_CHROOT"
+mkisofs -R -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -V ${ISO_VERSION} -publisher "Source Mage GNU/Linux" -p "Cauldron" -o "${ISO_VERSION}.iso" "$ISO_CHROOT"
 
 if $COMPRESS || [[ -n $KEEP ]]
 then
-	$SUODOCMD bzip2 -f -v $KEEP "${ISO_VERSION}.iso"
+	bzip2 -f -v $KEEP "${ISO_VERSION}.iso"
 fi
 
 [[ $ISOCHOWN ]] &&  chown "$CHOWNSTR" "${ISO_VERSION}".iso*

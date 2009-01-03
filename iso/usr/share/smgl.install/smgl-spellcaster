@@ -8,10 +8,9 @@ NUM_CACHES=
 
 function usage() {
   cat <<USAGE
-$(basename $0) [/path/to/target]
-Generates a listing of cache files available to install, and then
-installs the selected caches to the target directory (defined as
-/mnt/root if not specified).
+$(basename $0)
+Generates a listing of cache files available to install.
+
 USAGE
 }
 
