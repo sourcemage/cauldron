@@ -35,5 +35,8 @@ cp -f /boot/linux "$TARGET"/boot/vmlinuz-$(uname -r)
 [[ -d "$TARGET"/lib/modules ]] || mkdir -p "$TARGET"/lib/modules
 cp -fr /lib/modules/$(uname -r) "$TARGET"/lib/modules/
 
+[[ ! -d "$TARGET"/etc/modprobe.d ]] && mkdir -p "$TARGET"/etc/modrobe.d
+cp -f /etc/modprobe.d/blacklist "$TARGET"/etc/modprobe.d/blacklist
+
 
 # vim:tabstop=2:softtabstop=2:shiftwidth=2:expandtab:ai
