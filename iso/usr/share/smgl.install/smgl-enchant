@@ -12,6 +12,8 @@ command-line, you must give the full cache filename, and caches with
 an extension of .tar.bz2 are expected.
 
 Options:
+  -c  If specified, system.tar.bz2 will not be installed (cache only).
+
   -d  Path to target directory. Defaults to /mnt/root.
 
 	-h  Shows this help information
@@ -49,9 +51,10 @@ function generate_state() {
   done
 }
 
-while getopts ":d:h" Option
+while getopts ":cd:h" Option
 do
   case $Option in
+    c ) NOSYS="yes" ;;
     d ) TARGET="$OPTARG" ;;
     h ) usage ;;
     * ) echo "Unrecognized option." >&2 && usage ;;
@@ -63,6 +66,11 @@ CACHE_DIR="${CACHE_DIR:-/var/cache/sorcery}"
 CACHE_LIST="${CACHE_LIST:-/tmp/spells}"
 TABLETS="${TABLETS:-/tmp/tablets}"
 TARGET="${TARGET:-/mnt/root}"
+
+if [[ ! $NOSYS == "yes" ]]
+then
+  tar xjvf /system.tar.bz2 -C "$TARGET"
+fi
 
 . "$TARGET"/etc/sorcery/config ||
   die "Couldn't source $TARGET/etc/sorcery/config"
