@@ -69,7 +69,7 @@ function prev() {
 function num_current() {
   local CURSTEP
   CURSTEP=$(cat $INSTALLER_STATUS)
-  grep -n "$CURSTEP" $INSTALLER_DATA/steps | cut -d: -f1
+  grep -n "^$CURSTEP" $INSTALLER_DATA/steps | cut -d: -f1
 }
 
 function num_steps() {
