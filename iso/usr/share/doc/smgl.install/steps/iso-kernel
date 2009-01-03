@@ -13,6 +13,9 @@ copy the kernel itself:
 [1m cp /boot/linux /mnt/root/boot/vmlinuz-$(uname -r)[m
 
 copy all the kernel modules:
-[1m cp -a /lib/modules/$(uname -r) /mnt/root/lib/modules[m
+[1m cp -a /lib/modules/$(uname -r) /mnt/root/lib/modules/[m
+
+you'll probably also want the modprobe blacklist:
+[1m cp /etc/modprobe.d/blacklist /mnt/root/etc/modprobe.d/blacklist[m
 
 Type [1mnext[m to go to the next step.
