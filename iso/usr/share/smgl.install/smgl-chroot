@@ -2,7 +2,7 @@
 
 # Check if called with optional argument,
 # If yes then R00T=$1, else ROOT=/mnt/root
-ROOT=${"$1":-/mnt/root}
+ROOT="${1:-/mnt/root}"
 
 # Note: don't use --rbind: It creates several mounts, and we wouldn't be able
 # to figure out easily what to umount.
@@ -14,13 +14,11 @@ mount --bind /proc "$ROOT"/proc       &&
 export PS1="[inside chroot, type [1mexit[m to return to installer]\n\u \w\$ " &&
 
 chroot "$ROOT" "$@"
-rc=$?
 
 # clean up the chroot mounts
 umount "$ROOT"/proc
 umount "$ROOT"/dev/pts
 umount "$ROOT"/dev
 
-exit $rc
 
 # vim:sw=2:ts=2:softtabstop=2:expandtab:ai
