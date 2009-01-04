@@ -123,10 +123,13 @@ find $tablet -maxdepth 1 -type d | sed 's#^.*/##' > $TABLETS
 for spell in $(</tmp/smgl.install/enchant)
 do
   spell=${spell##*/}
+  echo "Processing $spell tablet..."
   generate_state "$spell"
 done
-sort -u -o "$depends"
-sort -u -o "$packages"
+echo "Regenerating $depends"
+sort -u -o "$depends" "$depends"
+echo "Regenerating $packages"
+sort -u -o "$packages" "$packages"
 
 
 
