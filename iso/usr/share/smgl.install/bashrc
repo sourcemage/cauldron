@@ -8,10 +8,12 @@ INSTALLER_TMP=/tmp/smgl.install
 INSTALLER_STATUS=$INSTALLER_TMP/status
 INSTALLER_DATA=/usr/share/smgl.install
 INSTALLER_DOCS=/usr/share/doc/smgl.install
+OPT_SPELLS=/tmp/spells
 
 # This will race on startup, but it shouldn't harm anyone. I hope.
 mkdir -p $INSTALLER_TMP
 [[ -e $INSTALLER_STATUS ]] || echo 'init' >$INSTALLER_STATUS
+[[ -e $OPT_SPELLS ]] || cat $INSTALLER_DATA/spells > $OPT_SPELLS
 
 function header() {
   echo ""
@@ -69,7 +71,7 @@ function prev() {
 function num_current() {
   local CURSTEP
   CURSTEP=$(cat $INSTALLER_STATUS)
-  grep -n "$CURSTEP" $INSTALLER_DATA/steps | cut -d: -f1
+  grep -n "^$CURSTEP" $INSTALLER_DATA/steps | cut -d: -f1
 }
 
 function num_steps() {

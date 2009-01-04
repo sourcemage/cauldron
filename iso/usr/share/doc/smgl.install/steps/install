@@ -1,7 +1,7 @@
 [1minstall step[m
 It is time to install all of the spells to your system. There are two ways that
-you can do this: manually, and using the [1menchant[m script. Note that
-system.tar.bz2 is [1mrequired[m.
+you can do this: manually, and using the [1msmgl-enchant[m script. Note
+that system.tar.bz2 is [1mrequired[m.
 
 manual method:
 [1m tar xjvf /system.tar.bz2 -C /mnt/root[m
@@ -13,7 +13,7 @@ an example, to install lilo:
 [1m tar jxf lilo-22.8-i486-pc-linux-gnu.tar.bz2 -C /mnt/root[m
 
 enchant method (uses /tmp/opt-spells):
-[1m enchant[m
+[1m smgl-enchant[m
 
 Enchant can also take a command-line argument to a cache file with a specified
 path. This enables you to run enchant on any cache file you choose, from any

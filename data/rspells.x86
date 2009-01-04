@@ -5,6 +5,7 @@ coreutils
 cpio
 dialog
 diffutils
+e2fsprogs
 file
 findutils
 gawk

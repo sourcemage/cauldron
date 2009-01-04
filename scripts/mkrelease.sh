@@ -1,5 +1,7 @@
 #!/bin/bash
 
+MYDIR="$(dirname $0)"
+
 TARGET=$1
 VERSION=$2
 
@@ -72,8 +74,15 @@ do
 done
 
 # Replace the GRIMOIRE_VERSION placeholder (currently only in isolinux.msg).
-sed -i "s/@GRIMOIRE_VERSION@/$GRIMOIRE_VER/" "$TARGET"/isolinux/isolinux.msg
+half1=$(echo $GRIMOIRE_VER | cut -d- -f1)
+half2=$(echo $GRIMOIRE_VER | cut -d- -f2)
+sed -i "s/@GRIMOIRE_VERSION@/${half1}-${half2}/" "$TARGET"/isolinux/isolinux.msg
 
 # Generate the release ISO. Currently we force KEEP and COMPRESSION.
-$(dirname $0)/mkiso.sh "$ISOCHOWN $CHOWNSTR" -kz "$TARGET" "smgl-$VERSION"
+if [[ -n $ISOCHOWN ]]
+then
+	"$MYDIR"/mkiso.sh "$ISOCHOWN $CHOWNSTR" -kz "$TARGET" "smgl-$VERSION"
+else
+	"$MYDIR"/mkiso.sh -kz "$TARGET" "smgl-$VERSION"
+fi
 

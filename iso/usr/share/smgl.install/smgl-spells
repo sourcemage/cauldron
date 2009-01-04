@@ -1,0 +1,178 @@
+#!/bin/bash
+
+PREFIX=/var/cache/sorcery
+EXTENSION="*.tar.bz2"
+CACHES=
+SELECTED=
+NUM_CACHES=
+
+function usage() {
+  cat <<USAGE
+$(basename $0)
+Generates a listing of cache files available to install.
+
+USAGE
+}
+
+function make_list {
+  # get a list of all the caches available and get the spell names from them,
+  # sorted and uniq'ed
+  if [[ ! -e /tmp/caches ]]
+  then
+    find $PREFIX/ -maxdepth 1 -type f -name "$EXTENSION" |
+    sed 's#.*/##' |
+    sed 's#-[0-9].*$##' |
+    sort |
+    uniq > /tmp/caches
+  fi
+  CACHES=( $(</tmp/caches) )
+  NUM_CACHES=${#CACHES[*]}
+
+  # for each cache available, check to see if it was already selected before
+  # and mark it as selected if found
+  if [[ -e /tmp/spells ]]
+  then
+    for ((i=0; i < $NUM_CACHES; i++))
+    do
+      grep -s -q "^${CACHES[i]}$" /tmp/spells &&
+      SELECTED[i]="*"
+    done
+  fi
+}
+
+function print_list {
+  echo ""
+  for ((i=0; i < $NUM_CACHES; i++))
+  do
+    printf "[%2d] %s %s\n" "$(($i + 1))" "${SELECTED[i]:- }" "${CACHES[i]}"
+  done | column | less -F -J
+}
+
+function toggle_choice {
+  local choice="$1"
+  if [[ $choice -gt 0 ]]
+  then
+    choice=$((choice-1))
+    # if the choice was not previously selected, select it, otherwise
+    # deselect it (toggle)
+    if [[ SELECTED[choice] == '*' ]]
+    then
+      SELECTED[choice]=
+    else
+      SELECTED[choice]="*"
+    fi
+  fi
+}
+
+function prompt() {
+  local choice=
+  local input=
+
+  echo ""
+  echo -n "Please make a selection (a for all, n for none, 0 when finished):  "
+  read input
+  if $(echo "$input" | grep -q '\*')
+  then
+    echo "$input" >&2
+    input=$(echo "$input" | sed 's/\*//g')
+    echo "New:" >&2
+    echo "$input" >&2
+  fi
+  for choice in $input
+  do
+    # if the user entered 0, we're done here
+    [[ $choice == "0" ]] && break 2
+
+    # if 'a', we want everything
+    if [[ $choice == "a" ]]
+    then
+      for ((i=0; i < $NUM_CACHES; i++))
+      do
+        SELECTED[$i]="*"
+      done
+      continue
+    fi
+
+    # if 'n', we want none
+    if [[ $choice == "n" ]]
+    then
+      echo "none" >&2
+      for ((i=0; i < $NUM_CACHES; i++))
+      do
+        SELECTED[i]=
+      done
+      continue
+    fi
+
+    # ignore anything that doesn't consist of numbers or '-'
+    if $(echo $choice | grep -q -v '^\([0-9]\+-\?[0-9]*\)\|[*]$')
+    then
+      echo "Error: You must enter only numbers or ranges like 4-8, or "all"" >&2
+      continue
+    fi
+
+    # if the user passed something like 5-12, process the sequence
+    if $(echo $choice | grep -q '-')
+    then
+      for num in $(seq $(echo $choice | cut -d- -f1-2 --output-delimiter=' '))
+      do
+        toggle_choice $num
+      done
+    else
+      toggle_choice $choice
+    fi
+  done
+}
+
+function main {
+  # generate the list of spells to choose from by scanning the contents of
+  # /var/caches/sorcery on the ISO
+  echo "Populating internal cache list, please be patient..."
+  make_list
+
+  # present the menu and prompt for user input, until the user enters 0 to
+  # finish
+  while true
+  do
+    print_list
+    prompt
+  done
+
+  # for each selected spell, output it to the spell listing file
+  for (( i=0; i < $NUM_CACHES; i++ ))
+  do
+    if [[ ${SELECTED[i]} = "*" ]]
+    then
+      echo ${CACHES[i]} >> /tmp/spells
+    fi
+  done
+
+  # make sure we don't have duplicates
+  [[ -e /tmp/spells ]] && sort -u -o /tmp/spells /tmp/spells
+}
+
+function message() {
+  echo ""
+  cat <<-"Message"
+    Spell selection menu.
+    You may select any number of the following spells to install. Some of them
+    may be necessary, depending on how you have set up your installation. For
+    example, if you formatted your disk with xfs, then you will need xfsprogs.
+    Also, you will need at least one bootloader installed (e.g. lilo, grub,
+    etc.).
+
+    The output is piped through less, so if there are too many caches to
+    fit on one screen you will be able to scroll. When you are satisfied with
+    your selections, enter 0 (zero) and the list of spells to cast will be
+    installed.
+Message
+}
+
+message
+
+main
+#clear
+
+
+
+# vim:tabstop=2:softtabstop=2:shiftwidth=2:expandtab:ai

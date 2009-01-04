@@ -26,14 +26,17 @@ shift $(($OPTIND - 1))
 TARGET="${TARGET:-/mnt/root}"
 
 # Copy the kernel config
-cp -f /boot/config-$(uname -r) "$TARGET"/boot/config-$(uname -r)-SMGL-iso
+cp -f /boot/config-$(uname -r) "$TARGET"/boot/config-$(uname -r)
 
 # Copy the kernel image
-cp -f /boot/linux-$(uname -r) "$TARGET"/boot/vmlinuz-$(uname -r)-SMGL-iso
+cp -f /boot/linux "$TARGET"/boot/vmlinuz-$(uname -r)
 
 # Copy all kernel modules
 [[ -d "$TARGET"/lib/modules ]] || mkdir -p "$TARGET"/lib/modules
 cp -fr /lib/modules/$(uname -r) "$TARGET"/lib/modules/
+
+[[ ! -d "$TARGET"/etc/modprobe.d ]] && mkdir -p "$TARGET"/etc/modrobe.d
+cp -f /etc/modprobe.d/blacklist "$TARGET"/etc/modprobe.d/blacklist
 
 
 # vim:tabstop=2:softtabstop=2:shiftwidth=2:expandtab:ai

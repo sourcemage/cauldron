@@ -12,6 +12,8 @@ command-line, you must give the full cache filename, and caches with
 an extension of .tar.bz2 are expected.
 
 Options:
+  -c  If specified, system.tar.bz2 will not be installed (cache only).
+
   -d  Path to target directory. Defaults to /mnt/root.
 
 	-h  Shows this help information
@@ -26,8 +28,6 @@ function die() {
 
 function generate_state() {
   local spell="$1"
-	local packages="$TARGET/var/state/sorcery/packages"
-	local depends="$TARGET/var/state/sorcery/depends"
 
   spell=${spell%-*}
   while ! grep -q $spell $TABLETS
@@ -49,9 +49,10 @@ function generate_state() {
   done
 }
 
-while getopts ":d:h" Option
+while getopts ":cd:h" Option
 do
   case $Option in
+    c ) NOSYS="yes" ;;
     d ) TARGET="$OPTARG" ;;
     h ) usage ;;
     * ) echo "Unrecognized option." >&2 && usage ;;
@@ -64,16 +65,24 @@ CACHE_LIST="${CACHE_LIST:-/tmp/spells}"
 TABLETS="${TABLETS:-/tmp/tablets}"
 TARGET="${TARGET:-/mnt/root}"
 
-. "$TARGET"/etc/sorcery/config ||
+if [[ ! $NOSYS == "yes" ]]
+then
+  tar xjvf /system.tar.bz2 -C "$TARGET"
+fi
+
+. "$TARGET"/etc/sorcery/config &> /dev/null ||
   die "Couldn't source $TARGET/etc/sorcery/config"
 
-# generate a listing of all tablet directories if needed
-tablet="${tablet:-$TARGET/var/state/sorcery/tablet}"
-if [[ ! -f $TABLETS ]]
-then
-  echo "Gathering tablet information..."
-  find $tablet -maxdepth 1 -type d | sed 's#^.*/##' > $TABLETS
-fi
+. "$TARGET"/var/lib/sorcery/modules/libapi &> /dev/null ||
+  die "Couldn't source libapi"
+
+. "$TARGET"/var/lib/sorcery/modules/libmisc &> /dev/null ||
+  die "Couldn't source libmisc"
+
+. "$TARGET"/var/lib/sorcery/modules/libtablet &> /dev/null ||
+  die "Couldn't source libtablet"
+
+rm -f /tmp/smgl.install/enchant
 
 if [[ $# -ge 1 ]]
 then
@@ -85,8 +94,8 @@ then
     CACHE="$1"
     echo "Installing ${CACHE##*/} ..."
     tar jxf "$CACHE" -C "$TARGET"/ &&
-    generate_state "${CACHE##*/}" &&
     echo "${CACHE##*/} installed."
+    echo "${CACHE##*/}" >> /tmp/smgl.install/enchant
     shift
   done
 else
@@ -98,10 +107,26 @@ else
   do
     echo "Installing $cache ..."
     tar jxf $CACHE_DIR/$cache*.tar.bz2 -C "$TARGET"/ &&
-    generate_state $cache &&
     echo "$cache installed."
+    echo "${cache}" >> /tmp/smgl.install/enchant
   done
 fi
+
+sort -u -o /tmp/smgl.install/enchant /tmp/smgl.install/enchant
+
+# generate a listing of all tablet directories if needed
+tablet="${tablet:-$TARGET/var/state/sorcery/tablet}"
+packages="${packages:-$TARGET/var/state/sorcery/packages}"
+depends="${depends:-$TARGET/var/state/sorcery/depends}"
+echo "Gathering tablet information..."
+find $tablet -maxdepth 1 -type d | sed 's#^.*/##' > $TABLETS
+for spell in $(</tmp/smgl.install/enchant)
+do
+  spell=${spell##*/}
+  generate_state "$spell"
+done
+sort -u -o "$depends"
+sort -u -o "$packages"
 
 
 

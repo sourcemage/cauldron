@@ -111,12 +111,26 @@ main()  {
       continue
     fi
 
-    umount -n /dev
-    umount -n /sys
-    umount -n /proc
 
-    echo "Killing initrd udev..."
-    kill $(pidof udevd)
+    UDEVPID="$(pidof udevd)"
+    if [[ -n $UDEVPID ]]
+    then
+      echo "Killing initrd udev ..."
+      if ! kill $UDEVPID
+      then
+        echo "Error killing udevd!"
+	echo -n "[a]bort or [c]ontinue? [ac]"
+	read choice
+	if [[ $choice == "a" ]]
+	then
+          shell
+        fi
+      fi
+    fi
+
+    umount -n /sys
+    umount -n /dev
+    umount -n /proc
 
     cd $MOUNT
 

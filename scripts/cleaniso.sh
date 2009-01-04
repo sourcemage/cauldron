@@ -100,13 +100,25 @@ do
 			then
 				# chroot and clean a directory using rmdir
 				echo "Attempting to remove directory $ISOCHROOT/$DIRT"
-				chroot "$ISOCHROOT" rmdir --ignore-fail-on-non-empty "$DIRT"
+				chroot "$ISOCHROOT" /bin/rmdir --ignore-fail-on-non-empty "$DIRT"
 			else
 				# chroot and clean an individual file
 				echo "Attempting to delete $ISOCHROOT/$DIRT"
-				chroot "$ISOCHROOT" rm -f "$DIRT"
+				chroot "$ISOCHROOT" /bin/rm -f "$DIRT"
 			fi
 		fi
 	done
 done
+
+echo "Removing $ISOCHROOT/usr/include"
+chroot /bin/rm -fr "$ISOCHROOT/usr/include"
+
+echo "Removing $ISOCHROOT/usr/share/doc"
+chroot /bin/rm -fr "$ISOCHROOT/usr/share/doc"
+
+echo "Removing $ISOCHROOT/var/log/sorcery"
+chroot /bin/rm -fr "$ISOCHROOT/var/log/sorcery"
+
+echo "Removing $ISOCHROOT/var/state/sorcery"
+chroot /bin/rm -fr "$ISOCHROOT/var/state/sorcery"
 
