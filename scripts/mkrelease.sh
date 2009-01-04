@@ -74,7 +74,9 @@ do
 done
 
 # Replace the GRIMOIRE_VERSION placeholder (currently only in isolinux.msg).
-sed -i "s/@GRIMOIRE_VERSION@/$GRIMOIRE_VER/" "$TARGET"/isolinux/isolinux.msg
+half1=$(echo $GRIMOIRE_VER | cut -d- -f1)
+half2=$(echo $GRIMOIRE_VER | cut -d- -f2)
+sed -i "s/@GRIMOIRE_VERSION@/${half1}-${half2}/" "$TARGET"/isolinux/isolinux.msg
 
 # Generate the release ISO. Currently we force KEEP and COMPRESSION.
 if [[ -n $ISOCHOWN ]]
