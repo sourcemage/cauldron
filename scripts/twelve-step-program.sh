@@ -17,9 +17,8 @@ ROOT="/root"
   test -d "$ROOT"/build || 
   echo 'step 1 failed' >> /var/log/sorcery/activity
 
-  # step 1.5 (add resolv.conf and host sorcery url/compiler configuration)
+  # step 1.5 (add host sorcery url/compiler configuration)
   echo "step 1.5"
-  cp /etc/resolv.conf "$ROOT"/build/etc/resolv.conf
   cp /etc/sorcery/local/compile_config "$ROOT"/build/etc/sorcery/local/compile_config
   echo LEAPFORWARD_URL=http://10.0.0.11/smgl/spool/ > "$ROOT"/build/etc/sorcery/local/url
 
