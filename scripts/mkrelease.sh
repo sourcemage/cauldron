@@ -1,5 +1,7 @@
 #!/bin/bash
 
+MYDIR="$(dirname $0)"
+
 TARGET=$1
 VERSION=$2
 
