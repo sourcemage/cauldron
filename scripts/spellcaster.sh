@@ -276,9 +276,13 @@ function setup_sys() {
 	local SPOOL="$TARGET/tmp"
 	local SORCERY="sorcery-stable.tar.bz2"
 	local SORCERYDIR="$TARGET/usr/src/sorcery"
+
 	local gvers=$(head -n1 "$TARGET"/var/lib/sorcery/codex/stable/VERSION)
 	local stable="stable-${gvers%-*}.tar.bz2"
 	local syscodex="$SYSDIR/var/lib/sorcery/codex"
+	local grimoire='GRIMOIRE_DIR[0]=/var/lib/sorcery/codex/stable'
+	local index="$SYSDIR/etc/sorcery/local/grimoire"
+
 	local tablet="$SYSDIR/var/state/sorcery/tablet"
 	local packages="$SYSDIR/var/state/sorcery/packages"
 	local depends="$SYSDIR/var/state/sorcery/depends"
@@ -310,6 +314,8 @@ function setup_sys() {
 	[[ -d "$syscodex" ]] || mkdir -p $syscodex &&
 	tar jxf "$SPOOL"/$stable -C "$syscodex"/ &&
 	mv "$syscodex"/${stable%.tar.bz2} "$syscodex"/stable
+	echo "$grimoire" > "$index"
+	"$MYDIR"/cauldronchr.sh -d "$SYSDIR" /usr/sbin/scribe reindex
 
 	# generate the depends and packages info for sorcery to use
 	rm -f "$depends" "$packages"
@@ -324,6 +330,8 @@ function setup_sys() {
 			echo "${spell##*/}:${date##*/}:$stat:$ver" >> "$packages"
 			cat "$dep" >> "$depends"
 		done
+		sort -u -o "$depends" "$depends"
+		sort -u -o "$packages" "$packages"
 	done
 
 	# populate /dev with static device nodes
