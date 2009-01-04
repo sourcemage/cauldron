@@ -75,5 +75,10 @@ done
 sed -i "s/@GRIMOIRE_VERSION@/$GRIMOIRE_VER/" "$TARGET"/isolinux/isolinux.msg
 
 # Generate the release ISO. Currently we force KEEP and COMPRESSION.
-$(dirname $0)/mkiso.sh "$ISOCHOWN $CHOWNSTR" -kz "$TARGET" "smgl-$VERSION"
+if [[ -n $ISOCHOWN ]]
+then
+	"$MYDIR"/mkiso.sh "$ISOCHOWN $CHOWNSTR" -kz "$TARGET" "smgl-$VERSION"
+else
+	"$MYDIR"/mkiso.sh -kz "$TARGET" "smgl-$VERSION"
+fi
 
