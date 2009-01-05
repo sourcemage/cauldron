@@ -12,12 +12,13 @@ gawk
 gcc
 gettext
 glibc
+gmp
 gnupg
 grep
 gzip
 iana-etc
-init.d
 ifupdown
+init.d
 installwatch
 kbd
 libidn
@@ -25,6 +26,7 @@ libtool
 locale
 make
 module-init-tools
+mpfr
 nano
 ncurses
 net-tools
