@@ -1,6 +1,7 @@
 [1mcompile-kernel step[m
 You may now set up a custom kernel for your installation by casting the linux
-spell or compiling and installing manually.
+spell or compiling and installing manually. Remember to update your bootloader
+configuration to use your new kernel if you wish to boot it!
 
 chroot into your system:
 [1m smgl-chroot[m
@@ -8,10 +9,9 @@ chroot into your system:
 spell install:
 [1m cast -r linux[m
 
-manual install:
-[1m cd /usr/src[m
-[1m tar -jxvf linux-2.6.22.tar.bz2[m (leave out [1mv[m to silence tar output)
-[1m ln -sf /usr/src/linux-2.6.22 /usr/src/linux && cd /usr/src/linux[m
+manual install (change VERSION to what you have):
+[1m cd /usr/src && tar jxvf linux-VERSION[m
+[1m ln -sf /usr/src/linux-VERSION /usr/src/linux && cd /usr/src/linux[m
 [1m make menuconfig && make && make modules_install[m
 [1m cp -f arch/i386/boot/bzImage /boot/vmlinuz-2.6.22[m
 [1m cp -f .config /boot/config-2.6.22[m

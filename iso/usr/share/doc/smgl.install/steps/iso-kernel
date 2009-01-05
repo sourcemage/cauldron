@@ -2,7 +2,8 @@
 Installing the ISO kernel is easy, and it should work well (it's working on
 your computer right now). To install the ISO kernel, all you need to do is copy
 the kernel and kernel modules over to your new system. You can do this with a
-script we provide, or manually.
+script we provide, or manually. Remember to modify your bootloader
+configuration to use the kernel you install if you wish to boot it!
 
 using smgl-kernel:
 [1m smgl-kernel[m
