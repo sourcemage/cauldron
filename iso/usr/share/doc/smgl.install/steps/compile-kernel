@@ -13,9 +13,9 @@ manual install (change VERSION to what you have):
 [1m cd /usr/src && tar jxvf linux-VERSION[m
 [1m ln -sf /usr/src/linux-VERSION /usr/src/linux && cd /usr/src/linux[m
 [1m make menuconfig && make && make modules_install[m
-[1m cp -f arch/i386/boot/bzImage /boot/vmlinuz-2.6.22[m
-[1m cp -f .config /boot/config-2.6.22[m
-[1m cp -f System.map /boot/System.map-2.6.22[m
+[1m cp -f arch/i386/boot/bzImage /boot/vmlinuz-VERSION[m
+[1m cp -f .config /boot/config-VERSION[m
+[1m cp -f System.map /boot/System.map-VERSION[m
 
 Exit the chroot:
 [1mexit[m
