@@ -64,7 +64,7 @@ fi
 [[ $# -lt 2 ]] && usage
 
 # Get the grimoire version used to generate all the spells in the ISO.
-GRIMOIRE_VER=$(< "$TARGET"/etc/grimoire_version)
+GRIMOIRE_VER=$(head -n1 "$TARGET"/etc/grimoire_version)
 
 # Replace all ISO_VERSION placeholders with the ISO version passed on the
 # commandline.
@@ -74,9 +74,7 @@ do
 done
 
 # Replace the GRIMOIRE_VERSION placeholder (currently only in isolinux.msg).
-half1=$(echo $GRIMOIRE_VER | cut -d- -f1)
-half2=$(echo $GRIMOIRE_VER | cut -d- -f2)
-sed -i "s/@GRIMOIRE_VERSION@/${half1}-${half2}/" "$TARGET"/isolinux/isolinux.msg
+sed -i "s/@GRIMOIRE_VERSION@/$GRIMOIRE_VER/" "$TARGET"/isolinux/isolinux.msg
 
 # Generate the release ISO. Currently we force KEEP and COMPRESSION.
 if [[ -n $ISOCHOWN ]]
