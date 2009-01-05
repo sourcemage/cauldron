@@ -12,7 +12,7 @@ Remember to replace "SPELL" with the filename of the spell cache to install. As
 an example, to install lilo:
 [1m tar jxf lilo-22.8-i486-pc-linux-gnu.tar.bz2 -C /mnt/root[m
 
-enchant method (uses /tmp/opt-spells):
+enchant method (uses /tmp/spells):
 [1m smgl-enchant[m
 
 Enchant can also take a command-line argument to a cache file with a specified

@@ -1,22 +1,23 @@
 [1mgrub step[m:
-To run grub properly, it needs to be chroot'ed into the new system. This needs
-some directories (/dev, /proc), so we provide a wrapper to set those up for
-you and clean them up again when you're done.
+To run grub properly, it needs to be chroot'ed into the new system.
 
-Run the script to get a shell inside the installed system:
+chroot into the system:
 [1m smgl-chroot[m
 
-Then run grub so you can update the boot record (TODO: use grub-install here?):
-[1m /sbin/grub[m
+Copy all the necessary grub files to /boot:
+cp /usr/lib/grub/i386-pc/* /boot/grub
 
-You'll get a grub shell, where you need to enter the following commands,
-without the > in front (adjust for your disk layout):
+Then run grub and enter the following commands, without the > in front (adjust
+for your disk layout):
+[1m /sbin/grub[m
 > [1mroot (hd0,0)[m
 > [1msetup (hd0)[m
 > [1mquit[m
 
+Update menu.lst for your kernel:
+$EDITOR /boot/menu.list
+
 Exit the chroot:
 [1m exit[m
 
-Unless you got an error message when you were installing the boot loader,
-you should be done with this step. Type [1mnext[m to go to the next step.
+Type [1mnext[m to go to the next step.

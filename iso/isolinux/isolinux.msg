@@ -1,5 +1,5 @@
 SMGL-@ISO_VERSION@ by the Source Mage GNU/Linux team 0e<www.sourcemage.org>07
-This ISO made using @GRIMOIRE_VERSION@.
+This ISO made using grimoire @GRIMOIRE_VERSION@.
 
 09Welcome07 to 04Source Mage GNU/Linux07
 Copyright (C) 2000-2001 by Kyle Sallee

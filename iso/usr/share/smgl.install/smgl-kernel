@@ -26,16 +26,33 @@ shift $(($OPTIND - 1))
 TARGET="${TARGET:-/mnt/root}"
 
 # Copy the kernel config
+echo "Installing kernel config to $TARGET/boot/config-$(uname -r)"
 cp -f /boot/config-$(uname -r) "$TARGET"/boot/config-$(uname -r)
 
 # Copy the kernel image
+echo "Installing kernel to $TARGET/boot/vmlinuz-$(uname -r)"
 cp -f /boot/linux "$TARGET"/boot/vmlinuz-$(uname -r)
+while true
+do
+  echo -n "Create /boot/vmlinuz symlink? [yn] "
+  read -n1 input
+  echo ""
+  case $input in
+    "y" ) ln -sf "$TARGET"/boot/vmlinuz-$(uname -r) "$TARGET"/boot/vmlinuz
+          break
+          ;;
+    "n" ) break
+          ;;
+  esac
+done
 
 # Copy all kernel modules
 [[ -d "$TARGET"/lib/modules ]] || mkdir -p "$TARGET"/lib/modules
+echo "Installing kernel modules to $TARGET/lib/modules/$(uname -r)"
 cp -fr /lib/modules/$(uname -r) "$TARGET"/lib/modules/
 
 [[ ! -d "$TARGET"/etc/modprobe.d ]] && mkdir -p "$TARGET"/etc/modrobe.d
+echo "Installing modprobe blacklist to $TARGET/etc/modprobe.d/blacklist"
 cp -f /etc/modprobe.d/blacklist "$TARGET"/etc/modprobe.d/blacklist
 
 

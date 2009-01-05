@@ -96,7 +96,6 @@ function prompt() {
     # if 'n', we want none
     if [[ $choice == "n" ]]
     then
-      echo "none" >&2
       for ((i=0; i < $NUM_CACHES; i++))
       do
         SELECTED[i]=
@@ -139,16 +138,18 @@ function main {
   done
 
   # for each selected spell, output it to the spell listing file
+  rm /tmp/spells
   for (( i=0; i < $NUM_CACHES; i++ ))
   do
-    if [[ ${SELECTED[i]} = "*" ]]
+    if [[ ${SELECTED[i]} != "*" ]]
     then
-      echo ${CACHES[i]} >> /tmp/spells
+      CACHES[i]=
     fi
+    echo ${CACHES[i]} >> /tmp/spells
   done
 
   # make sure we don't have duplicates
-  [[ -e /tmp/spells ]] && sort -u -o /tmp/spells /tmp/spells
+  sort -u -o /tmp/spells /tmp/spells
 }
 
 function message() {
@@ -165,13 +166,13 @@ function message() {
     fit on one screen you will be able to scroll. When you are satisfied with
     your selections, enter 0 (zero) and the list of spells to cast will be
     installed.
+
 Message
 }
 
 message
 
 main
-#clear
 
 
 

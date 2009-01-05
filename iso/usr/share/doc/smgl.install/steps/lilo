@@ -1,7 +1,7 @@
 [1mlilo step[m:
 Edit [1m/mnt/root/etc/lilo.conf[m to your setup (especially, you'll want to change
 the boot= and root= entries to point to your partitions, and you'll need to
-set the kernel version correctly)
+set the kernel version correctly).
 
 To run lilo properly, it needs to be chroot'ed into the new system. This needs
 some directories (/dev, /proc), so we provide a wrapper to set those up for
