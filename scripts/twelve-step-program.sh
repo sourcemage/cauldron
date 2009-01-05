@@ -5,6 +5,10 @@
 #
 
 ROOT="/root"
+ROOTBUILD=$ROOT/build
+CAULDRON_SRC=$ROOT/cauldron
+SYSBUILD=/tmp/cauldron/sys
+ISOBUILD=/tmp/cauldron/iso
 
   # step 1 get basesystem
   echo step 1
@@ -12,15 +16,15 @@ ROOT="/root"
   #wget http://10.0.0.199/smgl-stable-0.27-basesystem-x86.tar.bz2 &&
   echo unpacking build environment
   tar xf smgl-stable-0.27-basesystem-x86.tar.bz2 &&
-  mv smgl-stable-0.27-basesystem-x86 "$ROOT"/build &&
+  mv smgl-stable-0.27-basesystem-x86 ""$ROOTBUILD" &&
   ls -l "$ROOT"
-  test -d "$ROOT"/build || 
+  test -d "$ROOTBUILD" || 
   echo 'step 1 failed' >> /var/log/sorcery/activity
 
   # step 1.5 (add host sorcery url/compiler configuration)
   echo "step 1.5"
-  cp /etc/sorcery/local/compile_config "$ROOT"/build/etc/sorcery/local/compile_config
-  echo LEAPFORWARD_URL=http://10.0.0.11/smgl/spool/ > "$ROOT"/build/etc/sorcery/local/url
+  cp /etc/sorcery/local/compile_config "$ROOTBUILD"/etc/sorcery/local/compile_config
+  echo LEAPFORWARD_URL=http://10.0.0.11/smgl/spool/ > "$ROOTBUILD"/etc/sorcery/local/url
 
   echo step 2 build kernel
   # may be handled by step 3 later on
@@ -28,64 +32,64 @@ ROOT="/root"
   wget http://10.0.0.11/smgl/spool/linux-2.6.24.tar.bz2 &&
   tar xf linux-2.6.24.tar.bz2 &&
   ln -s linux-2.6.24 linux &&
-  cp "$ROOT"/cauldron/data/config-2.6 /usr/src/linux/.config &&
+  cp "$CAULDRON_SRC"/data/config-2.6 /usr/src/linux/.config &&
   pushd linux &&
     yes ""|make oldconfig; make -j 4 &&
     make -j 4 && make modules -j 4 && make modules_install &&
   popd &&
   ls /lib/modules &&
-  cp -fav /lib/modules/2.6.24-SMGL-iso "$ROOT"/build/lib/modules &&
-  cp -fav /usr/src/linux-2.6.24 "$ROOT"/build/usr/src ||
+  cp -fav /lib/modules/2.6.24-SMGL-iso ""$ROOTBUILD"/lib/modules &&
+  cp -fav /usr/src/linux-2.6.24 ""$ROOTBUILD"/usr/src ||
   echo 'step 2 failed' >> /var/log/sorcery/activity
 
   echo step 3 build spells
-  bash "$ROOT"/cauldron/scripts/spellcaster.sh "$ROOT"/build x86 ||
+  bash "$CAULDRON_SRC"/scripts/spellcaster.sh ""$ROOTBUILD" x86 ||
   echo 'step 3 failed' >> /var/log/sorcery/activity
 
   echo step 3.5 copy kernel sources to iso and sys tree
   # may be handled by step 3 later on
-  cp -fav /lib/modules/2.6.24-SMGL-iso /tmp/cauldron/iso/lib/modules &&
-  cp -fav /usr/src/linux-2.6.24 /tmp/cauldron/iso/usr/src ||
+  cp -fav /lib/modules/2.6.24-SMGL-iso "$ISOBUILD"/lib/modules &&
+  cp -fav /usr/src/linux-2.6.24 "$ISOBUILD"/usr/src ||
   echo 'step 3.5 failed' >> /var/log/sorcery/activity
 
   echo step 4 sanity fixes
   # TODO check for ppp/resolv.conf borkage
-  if test -f "$ROOT"/build/etc/udev/rules.d/70-persistent-net.rules; then
+  if test -f ""$ROOTBUILD"/etc/udev/rules.d/70-persistent-net.rules; then
     echo "twelve step program failure (udev rules)" >>  /var/log/sorcery/activity &&
-    rm "$ROOT"/build/etc/udev/rules.d/70-persistent-net.rules
+    rm ""$ROOTBUILD"/etc/udev/rules.d/70-persistent-net.rules
   fi ||
   echo 'step 4 failed' >> /var/log/sorcery/activity
 
   echo step 5 adjust system tree
-  yes ""|bash "$ROOT"/cauldron/scripts/add-sauce.sh -s /tmp/cauldron/sys &&
+  yes ""|bash "$CAULDRON_SRC"/scripts/add-sauce.sh -s "$SYSBUILD" &&
   # TODO: cleanse --sweep &&
-  rm /tmp/cauldron/sys/var/spool/sorcery/* &&
-  rm /tmp/cauldron/sys/var/cache/sorcery/* &&
-  rm /tmp/cauldron/sys/usr/src/* &&
+  rm "$SYSBUILD"/var/spool/sorcery/* &&
+  rm "$SYSBUILD"/var/cache/sorcery/* &&
+  rm "$SYSBUILD"/usr/src/* &&
   # TODO symlink with /var/spool/sorcery &&
-  cp /usr/src/linux-2.6.24.tar.bz2 /tmp/cauldron/sys/usr/src ||
+  cp /usr/src/linux-2.6.24.tar.bz2 "$SYSBUILD"/usr/src ||
   echo 'step 5 failed' >> /var/log/sorcery/activity
 
   echo step 6 prune iso tree
-  bash "$ROOT"/cauldron/scripts/cleaniso.sh -a /tmp/cauldron/iso ||
+  bash "$CAULDRON_SRC"/scripts/cleaniso.sh -a "$ISOBUILD" ||
   echo 'step 6 failed' >> /var/log/sorcery/activity
 
   echo step 7 adjust iso tree
-  yes ""|bash "$ROOT"/cauldron/scripts/add-sauce.sh -i /tmp/cauldron/iso ||
+  yes ""|bash "$CAULDRON_SRC"/scripts/add-sauce.sh -i "$ISOBUILD" ||
   echo 'step 7 failed' >> /var/log/sorcery/activity
 
   echo step 8 create system.tar.bz2
-  bash "$ROOT"/cauldron/scripts/mksystem.sh /tmp/cauldron/sys /tmp/cauldron/iso/system.tar.bz2 ||
+  bash "$CAULDRON_SRC"/scripts/mksystem.sh "$SYSBUILD" "$ISOBUILD"/system.tar.bz2 ||
   echo 'step 8 failed' >> /var/log/sorcery/activity
 
   echo step 9 make initrd
-  bash "$ROOT"/cauldron/scripts/mkinitrd.sh /tmp/cauldron/iso 2.6.24-SMGL-iso &&
-  cp initrd.gz "$ROOT"/cauldron/iso/boot/initrd.gz ||
+  bash "$CAULDRON_SRC"/scripts/mkinitrd.sh "$ISOBUILD" 2.6.24-SMGL-iso &&
+  cp initrd.gz "$CAULDRON_SRC"/iso/boot/initrd.gz ||
   echo 'step 9 failed' >> /var/log/sorcery/activity
 
   echo step 10 make iso
   cast -c cdrtools &&
-  bash "$ROOT"/cauldron/scripts/mkrelease.sh /tmp/cauldron/iso omfga-test0 ||
+  bash "$CAULDRON_SRC"/scripts/mkrelease.sh "$ISOBUILD" omfga-test0 ||
   echo 'step 10 failed' >> /var/log/sorcery/activity
 
   # step 11
