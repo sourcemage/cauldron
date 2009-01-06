@@ -16,7 +16,7 @@ ISOBUILD=/tmp/cauldron/iso
   #wget http://10.0.0.199/smgl-stable-0.27-basesystem-x86.tar.bz2 &&
   echo unpacking build environment
   tar xf smgl-stable-0.27-basesystem-x86.tar.bz2 &&
-  mv smgl-stable-0.27-basesystem-x86 ""$ROOTBUILD" &&
+  mv smgl-stable-0.27-basesystem-x86 "$ROOTBUILD" &&
   ls -l "$ROOT"
   test -d "$ROOTBUILD" || 
   echo 'step 1 failed' >> /var/log/sorcery/activity
@@ -38,12 +38,12 @@ ISOBUILD=/tmp/cauldron/iso
     make -j 4 && make modules -j 4 && make modules_install &&
   popd &&
   ls /lib/modules &&
-  cp -fav /lib/modules/2.6.24-SMGL-iso ""$ROOTBUILD"/lib/modules &&
-  cp -fav /usr/src/linux-2.6.24 ""$ROOTBUILD"/usr/src ||
+  cp -fav /lib/modules/2.6.24-SMGL-iso "$ROOTBUILD"/lib/modules &&
+  cp -fav /usr/src/linux-2.6.24 "$ROOTBUILD"/usr/src ||
   echo 'step 2 failed' >> /var/log/sorcery/activity
 
   echo step 3 build spells
-  bash "$CAULDRON_SRC"/scripts/spellcaster.sh ""$ROOTBUILD" x86 ||
+  bash "$CAULDRON_SRC"/scripts/spellcaster.sh "$ROOTBUILD" x86 ||
   echo 'step 3 failed' >> /var/log/sorcery/activity
 
   echo step 3.5 copy kernel sources to iso and sys tree
@@ -54,9 +54,9 @@ ISOBUILD=/tmp/cauldron/iso
 
   echo step 4 sanity fixes
   # TODO check for ppp/resolv.conf borkage
-  if test -f ""$ROOTBUILD"/etc/udev/rules.d/70-persistent-net.rules; then
+  if test -f "$ROOTBUILD"/etc/udev/rules.d/70-persistent-net.rules; then
     echo "twelve step program failure (udev rules)" >>  /var/log/sorcery/activity &&
-    rm ""$ROOTBUILD"/etc/udev/rules.d/70-persistent-net.rules
+    rm "$ROOTBUILD"/etc/udev/rules.d/70-persistent-net.rules
   fi ||
   echo 'step 4 failed' >> /var/log/sorcery/activity
 
