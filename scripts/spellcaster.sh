@@ -330,9 +330,9 @@ function setup_sys() {
 			echo "${spell##*/}:${date##*/}:$stat:$ver" >> "$packages"
 			cat "$dep" >> "$depends"
 		done
-		sort -u -o "$depends" "$depends"
-		sort -u -o "$packages" "$packages"
 	done
+	sort -u -o "$depends" "$depends"
+	sort -u -o "$packages" "$packages"
 
 	# populate /dev with static device nodes
 	cat > "$SYSDIR/makedev" <<-"DEV"
