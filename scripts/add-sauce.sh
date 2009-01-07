@@ -97,7 +97,11 @@ function blacklist_modules {
 if [[ $TYPE == "iso" ]] ;then
   # ensure kernel presence/sanity
   KVER=${KVER:-$(find "$CHROOTDIR"/lib/modules -mindepth 1 -maxdepth 1 -print | head -n1 | sed 's#.*/##')}
-  [[ -z $KVER ]] && exit 3
+  if [[ -z $KVER || ! -d "$CHROOTDIR"/lib/modules/$KVER ]]
+  then
+	  echo "Kernel version not fount in chroot dir!"
+	  exit 3
+  fi
 fi
 
 # make sure we start with a clean TEMPDIR each run
@@ -107,15 +111,18 @@ fi
 # add the contents of base, which are files that
 # should go onto both iso and system chroots
 # this is mostly /etc content
+ echo "Copying base files to staging area"
  cp -a "$MYDIR"/base/* "$TEMPDIR"/
 
 # ISO Sauce
 if [[ $TYPE == "iso" ]] ;then
   # add the relevant modules to the blacklist
+  echo "Blacklisting kernel modules in staging area"
   blacklist_modules "$CHROOTDIR/lib/modules/$KVER/kernel/drivers/video" "$TEMPDIR"
 
   # copy everything from the cauldron repo iso dir
   # into the TEMPDIR staging area
+  echo "Copying ISO files to staging area"
   cp -a "$MYDIR"/iso/* "$TEMPDIR"/
 fi
 
@@ -129,12 +136,14 @@ then
 fi
 
 # ==== FIXUP starts here ====
+ echo "Setting permissions on staged files"
  chown -R 0:0 "$TEMPDIR"/
  chmod -R u=rwX,go=u-w "$TEMPDIR"/
  chmod 0600 "$TEMPDIR"/etc/shadow
 # ==== end fixup ====
 
 # Get a list of all files we want to install
+echo "Installing staged files to $CHROOTDIR"
 for i in $(find "$TEMPDIR" -mindepth 1 -print)
 do
   FILE="${i#$TEMPDIR/}"
@@ -170,7 +179,9 @@ do
 done
 
 # ensure that ld has an up-to-date cache
-"${0%/*}"/cauldronchr.sh -d "$CHROOTDIR" /sbin/ldconfig
+echo "Running ldconfig in $CHROOTDIR"
+"${0%/*}"/cauldronchr.sh -d "$CHROOTDIR" /sbin/ldconfig ||
+echo "error: ldconfig failed in $CHROOTDIR"
 
 # clean up
 rm -rf "$TEMPDIR"
