@@ -116,6 +116,7 @@ function sanity_check() {
 				. "$TARGET/var/lib/sorcery/modules/libstate"
 				modify_config $config ARCHIVE on
 			else
+				echo "Archiving required, bailing out!"
 				exit 2
 			fi
 		fi
@@ -220,7 +221,11 @@ function install_kernel() {
 			kconfig="$SRC/boot/config"
 		fi
 	fi
-	[[ -z $kconfig ]] && exit 13
+	if [[ -z $kconfig ]] 
+	then
+		echo "Could not find $SRC kernel config!"
+		exit 13
+	fi
 
 	# Try to autodetect the linux kernel version using kernel directory or
 	# kernel config
@@ -245,7 +250,11 @@ function install_kernel() {
 			version="${version##*version: }"
 		fi
 	fi
-	[[ -z $version ]] && exit 14
+	if [[ -z $version ]] 
+	then
+		echo "Could not determine $SRC kernel version!"
+		exit 14
+	fi
 
 	# Try to guess the location of the kernel itself
 	if [[ -z $kernel ]]
@@ -258,7 +267,11 @@ function install_kernel() {
 			kernel="$SRC/usr/src/linux/arch/i386/boot/bzImage"
 		fi
 	fi
-	[[ -z $kernel ]] && exit 15
+	if [[ -z $kernel ]] 
+	then
+		echo "Could not find $SRC kernel image!"
+		exit 15
+	fi
 
 	# Copy the kernel config and symlink
 	cp -f "$kconfig" "$DST"/boot/config-$version
@@ -440,5 +453,3 @@ touch "$SYSDIR"/etc/ld.so.conf
 
 # Keep a clean kitchen, wipes up the leftovers from the preparation step
 clean_target
-
-exit 0
