@@ -385,8 +385,6 @@ DEV
 }
 
 function clean_target() {
-	local config="etc/sorcery/local/kernel.config"
-
 	# Restore resolv.conf, the first rm is needed in case something
 	# installs a hardlink (like ppp)
 	rm -f "$TARGET/etc/resolv.conf" &&
@@ -394,11 +392,7 @@ function clean_target() {
 	rm -f "$TARGET/tmp/resolv.conf"
 
 	# Clean up the target
-	rm -f "$TARGET/rspells" \
-		"$TARGET/ispells" \
-		"$TARGET/ospells" \
-		"$TARGET/$config" \
-		"$TARGET/build_spell.sh"
+	rm -f "$TARGET/build_spells.sh"
 }
 
 # main()
