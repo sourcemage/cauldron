@@ -121,6 +121,25 @@ function sanity_check() {
 			fi
 		fi
 	fi
+
+	# make sure that either the linux spell is being used or that the
+	# kernel sources are available for building
+	if ! grep -q '^linux$' "$CAULDRONDIR/rspells.$TYPE"
+	then
+		if [[ -d "$TARGET"/usr/src/linux ]]
+		then
+			if [[ ! -s "$TARGET"/usr/src/linux ]]
+			then
+				echo "Couldn't find "$TARGET" kernel config!"
+				exit 2
+			fi
+		else
+			echo "Cannot find the $TARGET kernel!"
+			echo "Either place the kernel sources and kernel config in $TARGET"
+			echo "or add the linux spell to the list of rspells."
+			exit 2
+		fi
+	fi
 }
 
 function prepare_target() {
