@@ -25,17 +25,17 @@ help() {
 
   cat << EOF
 
-Alchemy is the menu interface for installing optional spells, on your
+Smgl-alchemy is the menu interface for installing optional spells, on your
 new system.
 
-Example:        alchemy
-Usage:          alchemy [parameters]
+Example:        smgl-alchemy
+Usage:          smgl-alchemy [parameters]
 
 Optional Parameters:
 
 -h  |  --help           Display this help screen
 
--v  |  --version        Print the alchemy version
+-v  |  --version        Print the smgl-alchemy version
 
 EOF
 
