@@ -325,10 +325,6 @@ function setup_sys() {
 	local grimoire='GRIMOIRE_DIR[0]=/var/lib/sorcery/codex/stable'
 	local index="$SYSDIR/etc/sorcery/local/grimoire"
 
-	local tablet="$SYSDIR/var/state/sorcery/tablet"
-	local packages="$SYSDIR/var/state/sorcery/packages"
-	local depends="$SYSDIR/var/state/sorcery/depends"
-
 	# unpack the sys caches into SYSDIR
 	msg "Installing caches into SYSDIR"
 	for cache in $(<"$TARGET"/sys-list)
@@ -365,21 +361,33 @@ function setup_sys() {
 	"$MYDIR"/cauldronchr.sh -d "$SYSDIR" /usr/sbin/scribe reindex
 
 	# generate the depends and packages info for sorcery to use
-	rm -f "$depends" "$packages"
-	. "$SYSDIR"/etc/sorcery/config
-	for spell in "$tablet"/*
-	do
-		for date in "$spell"/*
+	cat > "$SYSDIR"/tablets.sh <<-"TABLETS"
+		#!/bin/bash
+		tablet="/var/state/sorcery/tablet"
+		packages="/var/state/sorcery/packages"
+		depends="/var/state/sorcery/depends"
+
+		rm -f "$depends" "$packages"
+		. /etc/sorcery/config &&
+		for spell in "$tablet"/*
 		do
-			tablet_get_version $date ver
-			tablet_get_status $date stat
-			tablet_get_depends $date dep
-			echo "${spell##*/}:${date##*/}:$stat:$ver" >> "$packages"
-			cat "$dep" >> "$depends"
-		done
-	done
-	sort -u -o "$depends" "$depends"
-	sort -u -o "$packages" "$packages"
+			for date in "$spell"/*
+			do
+				tablet_get_version $date ver &&
+				tablet_get_status $date stat &&
+				tablet_get_depends $date dep &&
+				echo "${spell##*/}:${date##*/}:$stat:$ver" >> "$packages"
+				cat "$dep" >> "$depends"
+			done
+		done &&
+		sort -u -o "$depends" "$depends" &&
+		sort -u -o "$packages" "$packages"
+	TABLETS
+
+	msg "Generating SYSDIR tablet info"
+	chmod a+x "$SYSDIR"/tablets.sh &&
+	chroot "$SYSDIR" /tablets.sh &&
+	rm -f "$SYSDIR"/tablets.sh
 
 	# populate /dev with static device nodes
 	cat > "$SYSDIR/makedev" <<-"DEV"
