@@ -39,7 +39,8 @@ ISOBUILD=/tmp/cauldron/iso
   popd &&
   ls /lib/modules &&
   cp -fav /lib/modules/2.6.24-SMGL-iso "$ROOTBUILD"/lib/modules &&
-  cp -fav /usr/src/linux-2.6.24 "$ROOTBUILD"/usr/src ||
+  cp -fav /usr/src/linux-2.6.24 "$ROOTBUILD"/usr/src &&
+  cp -fv /usr/src/linux "$ROOTBUILD"/usr/src ||
   echo 'step 2 failed' >> /var/log/sorcery/activity
 
   echo step 3 build spells
@@ -48,51 +49,35 @@ ISOBUILD=/tmp/cauldron/iso
 
   echo step 3.5 copy kernel sources to iso and sys tree
   # may be handled by step 3 later on
-  cp -fav /lib/modules/2.6.24-SMGL-iso "$ISOBUILD"/lib/modules &&
   cp -fav /usr/src/linux-2.6.24 "$ISOBUILD"/usr/src ||
   echo 'step 3.5 failed' >> /var/log/sorcery/activity
 
-  echo step 4 sanity fixes
-  # TODO check for ppp/resolv.conf borkage
-  if test -f "$ROOTBUILD"/etc/udev/rules.d/70-persistent-net.rules; then
-    echo "twelve step program failure (udev rules)" >>  /var/log/sorcery/activity &&
-    rm "$ROOTBUILD"/etc/udev/rules.d/70-persistent-net.rules
-  fi ||
+  echo step 4 adjust system tree
+  bash "$CAULDRON_SRC"/scripts/add-sauce.sh -o -s "$SYSBUILD" &&
+  cp /usr/src/linux-2.6.24.tar.bz2 "$SYSBUILD"/var/spool/sorcery &&
+  ln -sf /var/spool/sorcery/linux-2.6.24.tar.bz2 "$SYSBUILD"/usr/src/linux-2.6.24.tar.bz2 ||
   echo 'step 4 failed' >> /var/log/sorcery/activity
 
-  echo step 5 adjust system tree
-  yes ""|bash "$CAULDRON_SRC"/scripts/add-sauce.sh -s "$SYSBUILD" &&
-  # TODO: cleanse --sweep &&
-  rm "$SYSBUILD"/var/spool/sorcery/* &&
-  rm "$SYSBUILD"/var/cache/sorcery/* &&
-  rm "$SYSBUILD"/usr/src/* &&
-  # TODO symlink with /var/spool/sorcery &&
-  cp /usr/src/linux-2.6.24.tar.bz2 "$SYSBUILD"/usr/src ||
+  echo step 5 prune iso tree
+  bash "$CAULDRON_SRC"/scripts/cleaniso.sh "$ISOBUILD" ||
   echo 'step 5 failed' >> /var/log/sorcery/activity
 
-  echo step 6 prune iso tree
-  bash "$CAULDRON_SRC"/scripts/cleaniso.sh -a "$ISOBUILD" ||
+  echo step 6 adjust iso tree
+  bash "$CAULDRON_SRC"/scripts/add-sauce.sh -o -i "$ISOBUILD" ||
   echo 'step 6 failed' >> /var/log/sorcery/activity
 
-  echo step 7 adjust iso tree
-  yes ""|bash "$CAULDRON_SRC"/scripts/add-sauce.sh -i "$ISOBUILD" ||
+  echo step 7 create system.tar.bz2
+  bash "$CAULDRON_SRC"/scripts/mksystem.sh -s "$SYSBUILD" -i "$ISOBUILD" ||
   echo 'step 7 failed' >> /var/log/sorcery/activity
 
-  echo step 8 create system.tar.bz2
-  bash "$CAULDRON_SRC"/scripts/mksystem.sh "$SYSBUILD" "$ISOBUILD"/system.tar.bz2 ||
+  echo step 8 make initrd
+  bash "$CAULDRON_SRC"/scripts/mkinitrd.sh -i "$ISOBUILD" 2.6.24-SMGL-iso ||
   echo 'step 8 failed' >> /var/log/sorcery/activity
 
-  echo step 9 make initrd
-  bash "$CAULDRON_SRC"/scripts/mkinitrd.sh "$ISOBUILD" 2.6.24-SMGL-iso &&
-  cp initrd.gz "$CAULDRON_SRC"/iso/boot/initrd.gz ||
+  echo step 9 make iso
+  cast -c cdrtools &&
+  bash "$CAULDRON_SRC"/scripts/mkrelease.sh -i "$ISOBUILD" omfga-test0 ||
   echo 'step 9 failed' >> /var/log/sorcery/activity
 
-  echo step 10 make iso
-  cast -c cdrtools &&
-  bash "$CAULDRON_SRC"/scripts/mkrelease.sh "$ISOBUILD" omfga-test0 ||
-  echo 'step 10 failed' >> /var/log/sorcery/activity
-
-  # step 11
-  # test in VM, cant get there from here
-  # step 12
-  # final QA, cant get there from here
+  # step 10
+  # test in VM and final QA, cant get there from here
