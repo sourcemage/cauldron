@@ -9,7 +9,7 @@ CAULDRONDIR="$MYDIR"/../data
 
 function usage() {
   cat << EndUsage
-Usage: $(basename $0) [-hq] [-i ISO] [-s SYS] /path/to/target ARCHITECTURE
+Usage: $(basename $0) [-hnq] [-i ISO] [-s SYS] /path/to/target ARCHITECTURE
 
 Casts the required and optional spells onto the ISO.
 This script requires superuser privileges.
@@ -33,17 +33,23 @@ Options:
 	-s  Path to system build directory (SYS). Defaults to
 	    /tmp/cauldron/system.
 
+	-n  Don't process the build tree. Instead, generate ISO and SYS using
+	    an already existing build tree. This is useful if you already have
+	    all the caches, but you need to regenerate your ISO and SYS trees
+	    if something went wrong during later processing.
+
 	-q  Suppress output messages. Defaults to off (output shown on STDERR).
 EndUsage
   exit 1
 } >&2
 
 function parse_options() {
-	while getopts ":i:s:qh" Option
+	while getopts ":i:s:nqh" Option
 	do
 		case $Option in
 			i ) ISODIR="${OPTARG%/}" ;;
 			s ) SYSDIR="${OPTARG%/}" ;;
+			n ) NOBUILD="yes" ;;
 			q ) QUIET="yes" ;;
 			h ) usage ;;
 			* ) echo "Unrecognized option." >&2 && usage ;;
@@ -508,10 +514,10 @@ fi
 
 sanity_check
 
-prepare_target
+[[ -z $NOBUILD ]] && prepare_target
 
 # chroot and build all of the spells inside the TARGET
-"$MYDIR/cauldronchr.sh" -d "$TARGET" /build_spells.sh
+[[ -z $NOBUILD ]] && "$MYDIR/cauldronchr.sh" -d "$TARGET" /build_spells.sh
 
 # unpack sys caches and set up sorcery into SYSDIR
 setup_sys
@@ -524,4 +530,4 @@ touch "$SYSDIR"/etc/ld.so.conf
 "$MYDIR/cauldronchr.sh" -d "$ISODIR" /sbin/ldconfig
 
 # Keep a clean kitchen, wipes up the leftovers from the preparation step
-clean_target
+[[ -z $NOBUILD ]] && clean_target
