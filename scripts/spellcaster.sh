@@ -333,6 +333,14 @@ function setup_sys() {
 		tar xjf "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 -C "$SYSDIR"/
 	done
 
+	# perform smgl-fhs hack on SYSDIR
+	msg "Performing smgl-fhs hack on SYSDIR"
+	"$MYDIR"/fhs-hack.sh "$SYSDIR"
+
+	# add the necessary and basic files to SYSDIR
+	msg "Running add-sauce.sh on SYSDIR"
+	"$MYDIR"/add-sauce.sh -o -s "$SYSDIR"
+
 	# download sorcery source
 	(
 		cd "$SPOOL"
@@ -426,9 +434,17 @@ function setup_iso() {
 		cp "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 "$ISODIR"/var/cache/sorcery/
 	done
 
+	# perform smgl-fhs hack on ISODIR
+	msg "Performing smgl-fhs hack on ISODIR"
+	"$MYDIR"/fhs-hack.sh "$ISODIR"
+
 	# install the kernel into ISODIR
 	msg "Installing kernel into ISODIR"
 	install_kernel "$TARGET" "$ISODIR"
+
+	# add the necessary and basic files to ISODIR
+	msg "Running add-sauce.sh on ISODIR"
+	"$MYDIR"/add-sauce.sh -o -i "$ISODIR"
 
 	# save the grimoire version used for building everything to ISODIR for reference
 	msg "Saving grimoire version to ISODIR"
