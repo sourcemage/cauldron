@@ -71,6 +71,20 @@ fi
 
 OUTPUT="${OUTPUT:-$ISODIR/boot/initrd.gz}"
 
+KERNEL_VERSION="$1"
+# try to get the kernel version if not specified
+if [[ -z $KERNEL_VERSION ]]
+then
+  modules="$ISODIR/lib/modules"
+  if [[ $(find $modules -mindepth 1 -maxdepth 1 -type d | wc -l) -eq 1 ]]
+  then
+    KERNEL_VERSION="$(find $modules -mindepth 1 -maxdepth 1 -type d)"
+    KERNEL_VERSION="${KERNEL_VERSION##*/}"
+  else
+    echo "Kernel version could not be determined, bailing out!"
+    exit 3
+  fi
+fi
 
 if ! [[ -d "$ISODIR"/lib/modules/$KERNEL_VERSION/kernel ]] ;then
   echo "Chroot failed sanity check:"
