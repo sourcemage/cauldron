@@ -250,7 +250,7 @@ function install_kernel() {
 			kconfig="$SRC/boot/config"
 		fi
 	fi
-	if [[ -z $kconfig ]] 
+	if [[ -z $kconfig ]]
 	then
 		echo "Could not find $SRC kernel config!"
 		exit 13
@@ -279,7 +279,7 @@ function install_kernel() {
 			version="${version##*version: }"
 		fi
 	fi
-	if [[ -z $version ]] 
+	if [[ -z $version ]]
 	then
 		echo "Could not determine $SRC kernel version!"
 		exit 14
@@ -296,7 +296,7 @@ function install_kernel() {
 			kernel="$SRC/usr/src/linux/arch/i386/boot/bzImage"
 		fi
 	fi
-	if [[ -z $kernel ]] 
+	if [[ -z $kernel ]]
 	then
 		echo "Could not find $SRC kernel image!"
 		exit 15
