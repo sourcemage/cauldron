@@ -124,6 +124,9 @@ if [[ $TYPE == "iso" ]] ;then
   # into the TEMPDIR staging area
   echo "Copying ISO files to staging area"
   cp -a "$MYDIR"/iso/* "$TEMPDIR"/
+
+  # strip boot/grub from the staging area, since the ISO doesn't need this file
+  rm -fr "$TEMPDIR"/boot/grub
 fi
 
 # System Sauce
