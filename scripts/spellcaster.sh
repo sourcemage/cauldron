@@ -9,7 +9,7 @@ CAULDRONDIR="$MYDIR"/../data
 
 function usage() {
   cat << EndUsage
-Usage: $(basename $0) [-h] [-i ISO] [-s SYS] /path/to/target ARCHITECTURE
+Usage: $(basename $0) [-hq] [-i ISO] [-s SYS] /path/to/target ARCHITECTURE
 
 Casts the required and optional spells onto the ISO.
 This script requires superuser privileges.
@@ -32,16 +32,19 @@ Options:
 
 	-s  Path to system build directory (SYS). Defaults to
 	    /tmp/cauldron/system.
+
+	-q  Suppress output messages. Defaults to off (output shown on STDERR).
 EndUsage
   exit 1
 } >&2
 
 function parse_options() {
-	while getopts ":i:s:h" Option
+	while getopts ":i:s:qh" Option
 	do
 		case $Option in
 			i ) ISODIR="${OPTARG%/}" ;;
 			s ) SYSDIR="${OPTARG%/}" ;;
+			q ) QUIET="yes" ;;
 			h ) usage ;;
 			* ) echo "Unrecognized option." >&2 && usage ;;
 		esac
@@ -61,6 +64,13 @@ function priv_check() {
 			echo "Please enter the root password."
 			exec su -c "$SELF $*" root
 		fi
+	fi
+}
+
+function msg() {
+	if [[ -z $QUIET ]]
+	then
+		echo $1 >&2
 	fi
 }
 
@@ -320,8 +330,10 @@ function setup_sys() {
 	local depends="$SYSDIR/var/state/sorcery/depends"
 
 	# unpack the sys caches into SYSDIR
+	msg "Installing caches into SYSDIR"
 	for cache in $(<"$TARGET"/sys-list)
 	do
+		msg "Unpacking $cache"
 		tar xjf "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 -C "$SYSDIR"/
 	done
 
@@ -332,6 +344,7 @@ function setup_sys() {
 	)
 
 	# unpack and install sorcery into SYSDIR
+	msg "Installing sorcery in SYSDIR"
 	tar jxf "$SPOOL"/$SORCERY -C "$TARGET/usr/src"
 	pushd "$SORCERYDIR" &> /dev/null
 	./install "$SYSDIR"
@@ -342,11 +355,13 @@ function setup_sys() {
 		cd "$SPOOL"
 		wget http://download.sourcemage.org/codex/$stable
 	)
-	echo "Installing grimoire ${stable%.tar.bz2} ..."
+	msg "Installing grimoire ${stable%.tar.bz2} into SYSDIR"
 	[[ -d "$syscodex" ]] || mkdir -p $syscodex &&
 	tar jxf "$SPOOL"/$stable -C "$syscodex"/ &&
 	mv "$syscodex"/${stable%.tar.bz2} "$syscodex"/stable
 	echo "$grimoire" > "$index"
+
+	msg "Reindexing SYSDIR codex"
 	"$MYDIR"/cauldronchr.sh -d "$SYSDIR" /usr/sbin/scribe reindex
 
 	# generate the depends and packages info for sorcery to use
@@ -371,12 +386,15 @@ function setup_sys() {
 		#!/bin/bash
 		cd /dev
 		/sbin/MAKEDEV generic
-DEV
+	DEV
+
+	msg "Making static device nodes in SYSDIR"
 	chmod a+x "$SYSDIR/makedev"
 	chroot "$SYSDIR" /makedev
 	rm -f "$SYSDIR/makedev"
 
 	# ensure the existence of /dev/initctl
+	msg "Ensuring /dev/initctl exists in SYSDIR"
 	chroot "$SYSDIR" mkfifo -m 0600 /dev/initctl
 }
 
@@ -384,22 +402,28 @@ function setup_iso() {
 	local GVERS="$TARGET/var/lib/sorcery/stable/VERSION"
 
 	# copy the iso caches over and unpack their contents
+	msg "Unpacking ISO caches in ISODIR"
 	for cache in $(<"$TARGET"/iso-list)
 	do
+		msg "Unpacking and copying $cache"
 		tar xjf "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 -C "$ISODIR"/
 		cp "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 "$ISODIR"/var/cache/sorcery/
 	done
 
 	# copy (only!) the optional caches over
+	msg "Copying optional caches to ISODIR"
 	for cache in $(<"$TARGET"/opt-list)
 	do
+		msg "Copying $cache"
 		cp "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 "$ISODIR"/var/cache/sorcery/
 	done
 
 	# install the kernel into ISODIR
+	msg "Installing kernel into ISODIR"
 	install_kernel "$TARGET" "$ISODIR"
 
 	# save the grimoire version used for building everything to ISODIR for reference
+	msg "Saving grimoire version to ISODIR"
 	cp -f $GVERS "$ISODIR"/etc/grimoire_version
 
 	# populate /dev with static device nodes
@@ -407,12 +431,15 @@ function setup_iso() {
 		#!/bin/bash
 		cd /dev
 		/sbin/MAKEDEV generic
-DEV
+	DEV
+
+	msg "Generating static device nodes in ISODIR"
 	chmod a+x "$ISODIR/makedev"
 	chroot "$ISODIR" /makedev
 	rm -f "$ISODIR/makedev"
 
 	# ensure the existence of /dev/initctl
+	msg "Ensuring /dev/initctl exists in ISODIR"
 	chroot "$ISODIR" mkfifo -m 0600 /dev/initctl
 }
 
