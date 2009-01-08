@@ -55,13 +55,22 @@ fi
 ISODIR="${ISODIR:-/tmp/cauldron/iso}"
 
 # ensure full pathnames
-if [[ $(dirname "$ISO_DIR") == "." ]]
+if [[ $(dirname "$ISODIR") != /* ]]
 then
-	ISO_DIR="$(pwd)/$ISO_DIR"
+	ISODIR="$(pwd)/$ISODIR"
 fi
-echo "Chroot dir: $ISO_DIR"
 
-OUTPUT="${OUTPUT:-./initrd.gz}"
+# make sure that ISODIR is a directory
+if [[ -d $ISODIR ]]
+then
+  echo "Chroot dir: $ISODIR"
+else
+  echo "error: $ISODIR is not a directory"
+  exit 2
+fi
+
+OUTPUT="${OUTPUT:-$ISODIR/boot/initrd.gz}"
+
 
 if ! [[ -d "$ISODIR"/lib/modules/$KERNEL_VERSION/kernel ]] ;then
   echo "Chroot failed sanity check:"
