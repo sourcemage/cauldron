@@ -3,17 +3,13 @@
 
 function usage() {
 	cat << EndUsage
-Usage: $(basename $0) [-o OUTPUT_FILE] /path/to/target ISO_KERNEL_VERSION
+Usage: $(basename $0) [-o OUTPUT_FILE] [-i ISO] [ISO_KERNEL_VERSION]
 
 Generates an initrd using /path/to/target. The output file is named initrd.gz
 and is placed in the current working directory by default, but can be
 overridden by the -o option. This script requires superuser privileges.
 
 Required:
-	/path/to/target
-	    The target directory you would like to chroot to. Defaults to
-	    current working directory.
-
 	ISO_KERNEL_VERSION
 	    A string that specifies the version of the kernel to use. Typically
 	    you will only have one kernel version in your iso build directory,
@@ -21,18 +17,21 @@ Required:
 	    so you need to specify the version the initrd will be built
 	    against.
 Options:
+	-i  Path to iso build directory (ISO). Defaults to /tmp/cauldron/iso.
+
 	-o FILENAME
 	    Specify the output file as FILENAME (can include a path prefix).
-	    Defaults to "initrd.gz" in the current working directory.
+	    Defaults to ISO/boot/initrd.gz.
 
 	-h  Shows this help information.
 EndUsage
 	exit 1
 } >&2
 
-while getopts ":o:h" Options
+while getopts ":i:o:h" Options
 do
 	case $Options in
+		i ) ISODIR="$OPTARG" ;;
 		o ) OUTPUT="$OPTARG" ;;
 		h ) usage ;;
 		* ) echo "Unrecognized option" >&2 && usage ;;
@@ -53,9 +52,7 @@ then
 	fi
 fi
 
-[[ $# -ne 2 ]] && usage
-ISO_DIR=$1
-KERNEL_VERSION=$2
+ISODIR="${ISODIR:-/tmp/cauldron/iso}"
 
 # ensure full pathnames
 if [[ $(dirname "$ISO_DIR") == "." ]]
@@ -66,13 +63,13 @@ echo "Chroot dir: $ISO_DIR"
 
 OUTPUT="${OUTPUT:-./initrd.gz}"
 
-if ! [[ -d "$ISO_DIR"/lib/modules/$KERNEL_VERSION/kernel ]] ;then
+if ! [[ -d "$ISODIR"/lib/modules/$KERNEL_VERSION/kernel ]] ;then
   echo "Chroot failed sanity check:"
-  echo "Unable to find $ISO_DIR/lib/modules/$KERNEL_VERSION/kernel"
+  echo "Unable to find $ISODIR/lib/modules/$KERNEL_VERSION/kernel"
   exit 2
 fi >&2
 
-if ! [[ -f "$ISO_DIR"/isolinux/isolinux.cfg ]]
+if ! [[ -f "$ISODIR"/isolinux/isolinux.cfg ]]
 then
   echo "Chroot failed sanity check:"
   echo "Chroot is missing isolinux.cfg!"
@@ -92,7 +89,7 @@ EXECDIRS=(bin sbin usr/bin usr/sbin)
 #---------------------------------------------------------------------
 # Used to implicitly install linked-against-libs to the initrd with a binary
 function libscan() {
-  chroot $ISO_DIR /usr/bin/ldd "$1" |
+  chroot $ISODIR /usr/bin/ldd "$1" |
   grep '/' |
   cut -f 2 |
   sed -e 's/.*=> //' |
@@ -104,7 +101,7 @@ function libscan() {
 # by running libscan (ldd returns symlinks if that's what the binary
 # links to). The leading '/' is removed for convenience.
 function reallib() {
-  chroot $ISO_DIR readlink -f $1 |
+  chroot $ISODIR readlink -f $1 |
   sed -e 's/^[/]//'
 }
 
@@ -130,7 +127,7 @@ function install_prog() {
   for prog in $* ;do
     # find executable
     progpath=$(my_which $prog) &&
-    # install executable (path will be relative to $ISO_DIR)
+    # install executable (path will be relative to $ISODIR)
     cp --parents -f $progpath $INITRDROOT &&
     # install needed libs
     for i in $(libscan $progpath) ; do
@@ -175,9 +172,9 @@ function mk_initrd_file() {
 
   rm -rf $tmp_file $tmp_mountdir
   echo "initrd is at $2, compressed $(du -ks $2 | cut -d$'\t' -f1)K, uncompressed ${initrd_size}K."
-  if grep -q '@INITRD_SIZE@' "$ISO_DIR"/isolinux/isolinux.cfg
+  if grep -q '@INITRD_SIZE@' "$ISODIR"/isolinux/isolinux.cfg
   then
-    sed -i "s/@INITRD_SIZE@/$initrd_size/" "$ISO_DIR"/isolinux/isolinux.cfg
+    sed -i "s/@INITRD_SIZE@/$initrd_size/" "$ISODIR"/isolinux/isolinux.cfg
   else
     echo "Don't forget to adjust isolinux.cfg for the new size."
   fi
@@ -197,7 +194,7 @@ rm -rf $INITRDROOT
 mkdir -p $INITRDROOT
 
 # Unless otherwise noted, this is our working directory.
-pushd $ISO_DIR >/dev/null
+pushd $ISODIR >/dev/null
 
 # Create all dirs we need on the initrd
 echo "Creating dirs..."
@@ -234,7 +231,7 @@ touch $INITRDROOT/var/log/dmesg
 # Add kernel modules that are supposed to be on the iso
 echo "adding kernel modules"
 mkdir -p ${INITRDROOT}/lib/modules/${KERNEL_VERSION}/kernel
-pushd $ISO_DIR/lib/modules/${KERNEL_VERSION}/kernel >/dev/null
+pushd $ISODIR/lib/modules/${KERNEL_VERSION}/kernel >/dev/null
  while read line ; do
    cp -pr --parents ./${line} ${INITRDROOT}/lib/modules/${KERNEL_VERSION}/kernel
  done <$MYDIR/data/initrd.kernel
