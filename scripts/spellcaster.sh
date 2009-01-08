@@ -407,7 +407,7 @@ function setup_sys() {
 }
 
 function setup_iso() {
-	local GVERS="$TARGET/var/lib/sorcery/stable/VERSION"
+	local GVERS="$TARGET/var/lib/sorcery/codex/stable/VERSION"
 
 	# copy the iso caches over and unpack their contents
 	msg "Unpacking ISO caches in ISODIR"
