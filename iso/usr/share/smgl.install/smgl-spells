@@ -55,7 +55,7 @@ function toggle_choice {
     choice=$((choice-1))
     # if the choice was not previously selected, select it, otherwise
     # deselect it (toggle)
-    if [[ SELECTED[choice] == '*' ]]
+    if [[ ${SELECTED[choice]} == '*' ]]
     then
       SELECTED[choice]=
     else

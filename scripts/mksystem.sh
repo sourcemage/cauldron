@@ -2,18 +2,16 @@
 
 function usage() {
 	cat << EndUsage
-Usage: $(basename $0) /path/to/target /path/to/output
+Usage: $(basename $0) [-hv] [-i ISO] [-s SYS]
 Generates a compressed tarball of the "system" directory specified in
 /path/to/target. This script requires superuser privileges.
 
-Required:
-	/path/to/target
-	    The path to the "system" directory.
-
-	/path/to/output
-	    The path to the desired output file.
-
 Options:
+	-i  Path to iso build directory (ISO). Defaults to /tmp/cauldron/iso.
+
+	-s  Path to system build directory (SYS). Defaults to
+	    /tmp/cauldron/system.
+
 	-v  if specified, tar progress is output to STDOUT
 
 	-h  Shows this help information
@@ -21,9 +19,11 @@ EndUsage
 	exit 1
 } >&2
 
-while getopts ":vh" Option
+while getopts ":i:s:vh" Option
 do
 	case $Option in
+		i ) ISODIR="$OPTARG" ;;
+		s ) SYSDIR="$OPTARG" ;;
 		v ) VERBOSE="-v" ;;
 		h ) usage ;;
 		* ) echo "Unrecognized option." >&2 && usage ;;
@@ -44,16 +44,22 @@ then
 	fi
 fi
 
-SYSDIR=${1:-system}
-SYSTAR="${2:-$(basename $SYSDIR).tar.bz2}"
+SYSDIR="${SYSDIR:-/tmp/cauldron/sys}"
+ISODIR="${ISODIR:-/tmp/cauldron/iso}"
 
-[[ -z $SYSDIR ]] && usage
+[[ -z $SYSDIR || ! -d $SYSDIR ]] && usage
+[[ -z $ISODIR || ! -d $ISODIR ]] && usage
 
-[[ $(dirname $SYSDIR) == '.' ]] && SYSDIR="$PWD/$SYSDIR"
-[[ $(dirname $SYSTAR) == '.' ]] && SYSTAR="$PWD/$SYSTAR"
+SYSTAR="$ISODIR/system.tar.bz2"
 
-cd $SYSDIR
- tar $VERBOSE -jcf "$SYSTAR" *
+[[ $(dirname $SYSDIR) != /* ]] && SYSDIR="$PWD/$SYSDIR"
+[[ $(dirname $SYSTAR) != /* ]] && SYSTAR="$PWD/$SYSTAR"
+
+echo "Entering $SYSDIR"
+cd $SYSDIR &&
+
+echo "Creating $SYSTAR, please be patient"
+tar $VERBOSE -jcf "$SYSTAR" *
 echo "Output written to: $SYSTAR"
 
 exit

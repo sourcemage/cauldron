@@ -9,7 +9,7 @@ CAULDRONDIR="$MYDIR"/../data
 
 function usage() {
   cat << EndUsage
-Usage: $(basename $0) [-h] [-i ISO] [-s SYS] /path/to/target ARCHITECTURE
+Usage: $(basename $0) [-hnq] [-i ISO] [-s SYS] /path/to/target ARCHITECTURE
 
 Casts the required and optional spells onto the ISO.
 This script requires superuser privileges.
@@ -32,16 +32,25 @@ Options:
 
 	-s  Path to system build directory (SYS). Defaults to
 	    /tmp/cauldron/system.
+
+	-n  Don't process the build tree. Instead, generate ISO and SYS using
+	    an already existing build tree. This is useful if you already have
+	    all the caches, but you need to regenerate your ISO and SYS trees
+	    if something went wrong during later processing.
+
+	-q  Suppress output messages. Defaults to off (output shown on STDERR).
 EndUsage
   exit 1
 } >&2
 
 function parse_options() {
-	while getopts ":i:s:h" Option
+	while getopts ":i:s:nqh" Option
 	do
 		case $Option in
 			i ) ISODIR="${OPTARG%/}" ;;
 			s ) SYSDIR="${OPTARG%/}" ;;
+			n ) NOBUILD="yes" ;;
+			q ) QUIET="yes" ;;
 			h ) usage ;;
 			* ) echo "Unrecognized option." >&2 && usage ;;
 		esac
@@ -61,6 +70,13 @@ function priv_check() {
 			echo "Please enter the root password."
 			exec su -c "$SELF $*" root
 		fi
+	fi
+}
+
+function msg() {
+	if [[ -z $QUIET ]]
+	then
+		echo $1 >&2
 	fi
 }
 
@@ -116,8 +132,28 @@ function sanity_check() {
 				. "$TARGET/var/lib/sorcery/modules/libstate"
 				modify_config $config ARCHIVE on
 			else
+				echo "Archiving required, bailing out!"
 				exit 2
 			fi
+		fi
+	fi
+
+	# make sure that either the linux spell is being used or that the
+	# kernel sources are available for building
+	if ! grep -q '^linux$' "$CAULDRONDIR/rspells.$TYPE"
+	then
+		if [[ -d "$TARGET"/usr/src/linux ]]
+		then
+			if [[ ! -s "$TARGET"/usr/src/linux ]]
+			then
+				echo "Couldn't find "$TARGET" kernel config!"
+				exit 2
+			fi
+		else
+			echo "Cannot find the $TARGET kernel!"
+			echo "Either place the kernel sources and kernel config in $TARGET"
+			echo "or add the linux spell to the list of rspells."
+			exit 2
 		fi
 	fi
 }
@@ -220,7 +256,11 @@ function install_kernel() {
 			kconfig="$SRC/boot/config"
 		fi
 	fi
-	[[ -z $kconfig ]] && exit 13
+	if [[ -z $kconfig ]]
+	then
+		echo "Could not find $SRC kernel config!"
+		exit 13
+	fi
 
 	# Try to autodetect the linux kernel version using kernel directory or
 	# kernel config
@@ -245,7 +285,11 @@ function install_kernel() {
 			version="${version##*version: }"
 		fi
 	fi
-	[[ -z $version ]] && exit 14
+	if [[ -z $version ]]
+	then
+		echo "Could not determine $SRC kernel version!"
+		exit 14
+	fi
 
 	# Try to guess the location of the kernel itself
 	if [[ -z $kernel ]]
@@ -258,7 +302,11 @@ function install_kernel() {
 			kernel="$SRC/usr/src/linux/arch/i386/boot/bzImage"
 		fi
 	fi
-	[[ -z $kernel ]] && exit 15
+	if [[ -z $kernel ]]
+	then
+		echo "Could not find $SRC kernel image!"
+		exit 15
+	fi
 
 	# Copy the kernel config and symlink
 	cp -f "$kconfig" "$DST"/boot/config-$version
@@ -283,15 +331,21 @@ function setup_sys() {
 	local grimoire='GRIMOIRE_DIR[0]=/var/lib/sorcery/codex/stable'
 	local index="$SYSDIR/etc/sorcery/local/grimoire"
 
-	local tablet="$SYSDIR/var/state/sorcery/tablet"
-	local packages="$SYSDIR/var/state/sorcery/packages"
-	local depends="$SYSDIR/var/state/sorcery/depends"
-
 	# unpack the sys caches into SYSDIR
+	msg "Installing caches into SYSDIR"
 	for cache in $(<"$TARGET"/sys-list)
 	do
+		msg "Unpacking $cache"
 		tar xjf "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 -C "$SYSDIR"/
 	done
+
+	# perform smgl-fhs hack on SYSDIR
+	msg "Performing smgl-fhs hack on SYSDIR"
+	"$MYDIR"/fhs-hack.sh "$SYSDIR"
+
+	# add the necessary and basic files to SYSDIR
+	msg "Running add-sauce.sh on SYSDIR"
+	"$MYDIR"/add-sauce.sh -o -s "$SYSDIR"
 
 	# download sorcery source
 	(
@@ -300,6 +354,7 @@ function setup_sys() {
 	)
 
 	# unpack and install sorcery into SYSDIR
+	msg "Installing sorcery in SYSDIR"
 	tar jxf "$SPOOL"/$SORCERY -C "$TARGET/usr/src"
 	pushd "$SORCERYDIR" &> /dev/null
 	./install "$SYSDIR"
@@ -310,64 +365,95 @@ function setup_sys() {
 		cd "$SPOOL"
 		wget http://download.sourcemage.org/codex/$stable
 	)
-	echo "Installing grimoire ${stable%.tar.bz2} ..."
+	msg "Installing grimoire ${stable%.tar.bz2} into SYSDIR"
 	[[ -d "$syscodex" ]] || mkdir -p $syscodex &&
 	tar jxf "$SPOOL"/$stable -C "$syscodex"/ &&
 	mv "$syscodex"/${stable%.tar.bz2} "$syscodex"/stable
 	echo "$grimoire" > "$index"
+
+	msg "Reindexing SYSDIR codex"
 	"$MYDIR"/cauldronchr.sh -d "$SYSDIR" /usr/sbin/scribe reindex
 
 	# generate the depends and packages info for sorcery to use
-	rm -f "$depends" "$packages"
-	. "$SYSDIR"/etc/sorcery/config
-	for spell in "$tablet"/*
-	do
-		for date in "$spell"/*
+	cat > "$SYSDIR"/tablets.sh <<-"TABLETS"
+		#!/bin/bash
+		tablet="/var/state/sorcery/tablet"
+		packages="/var/state/sorcery/packages"
+		depends="/var/state/sorcery/depends"
+
+		rm -f "$depends" "$packages"
+		. /etc/sorcery/config &&
+		for spell in "$tablet"/*
 		do
-			tablet_get_version $date ver
-			tablet_get_status $date stat
-			tablet_get_depends $date dep
-			echo "${spell##*/}:${date##*/}:$stat:$ver" >> "$packages"
-			cat "$dep" >> "$depends"
-		done
-		sort -u -o "$depends" "$depends"
+			for date in "$spell"/*
+			do
+				tablet_get_version $date ver &&
+				tablet_get_status $date stat &&
+				tablet_get_depends $date dep &&
+				echo "${spell##*/}:${date##*/}:$stat:$ver" >> "$packages"
+				cat "$dep" >> "$depends"
+			done
+		done &&
+		sort -u -o "$depends" "$depends" &&
 		sort -u -o "$packages" "$packages"
-	done
+	TABLETS
+
+	msg "Generating SYSDIR tablet info"
+	chmod a+x "$SYSDIR"/tablets.sh &&
+	chroot "$SYSDIR" /tablets.sh &&
+	rm -f "$SYSDIR"/tablets.sh
 
 	# populate /dev with static device nodes
 	cat > "$SYSDIR/makedev" <<-"DEV"
 		#!/bin/bash
 		cd /dev
 		/sbin/MAKEDEV generic
-DEV
+	DEV
+
+	msg "Making static device nodes in SYSDIR"
 	chmod a+x "$SYSDIR/makedev"
 	chroot "$SYSDIR" /makedev
 	rm -f "$SYSDIR/makedev"
 
 	# ensure the existence of /dev/initctl
+	msg "Ensuring /dev/initctl exists in SYSDIR"
 	chroot "$SYSDIR" mkfifo -m 0600 /dev/initctl
 }
 
 function setup_iso() {
-	local GVERS="$TARGET/var/lib/sorcery/stable/VERSION"
+	local GVERS="$TARGET/var/lib/sorcery/codex/stable/VERSION"
 
 	# copy the iso caches over and unpack their contents
+	msg "Unpacking ISO caches in ISODIR"
 	for cache in $(<"$TARGET"/iso-list)
 	do
+		msg "Unpacking and copying $cache"
 		tar xjf "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 -C "$ISODIR"/
 		cp "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 "$ISODIR"/var/cache/sorcery/
 	done
 
 	# copy (only!) the optional caches over
+	msg "Copying optional caches to ISODIR"
 	for cache in $(<"$TARGET"/opt-list)
 	do
+		msg "Copying $cache"
 		cp "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 "$ISODIR"/var/cache/sorcery/
 	done
 
+	# perform smgl-fhs hack on ISODIR
+	msg "Performing smgl-fhs hack on ISODIR"
+	"$MYDIR"/fhs-hack.sh "$ISODIR"
+
 	# install the kernel into ISODIR
+	msg "Installing kernel into ISODIR"
 	install_kernel "$TARGET" "$ISODIR"
 
+	# add the necessary and basic files to ISODIR
+	msg "Running add-sauce.sh on ISODIR"
+	"$MYDIR"/add-sauce.sh -o -i "$ISODIR"
+
 	# save the grimoire version used for building everything to ISODIR for reference
+	msg "Saving grimoire version to ISODIR"
 	cp -f $GVERS "$ISODIR"/etc/grimoire_version
 
 	# populate /dev with static device nodes
@@ -375,30 +461,29 @@ function setup_iso() {
 		#!/bin/bash
 		cd /dev
 		/sbin/MAKEDEV generic
-DEV
+	DEV
+
+	msg "Generating static device nodes in ISODIR"
 	chmod a+x "$ISODIR/makedev"
 	chroot "$ISODIR" /makedev
 	rm -f "$ISODIR/makedev"
 
 	# ensure the existence of /dev/initctl
+	msg "Ensuring /dev/initctl exists in ISODIR"
 	chroot "$ISODIR" mkfifo -m 0600 /dev/initctl
 }
 
 function clean_target() {
-	local config="etc/sorcery/local/kernel.config"
-
 	# Restore resolv.conf, the first rm is needed in case something
 	# installs a hardlink (like ppp)
-	rm -f "$TARGET/etc/resolv.conf" &&
-	cp -f "$TARGET/tmp/resolv.conf" "$TARGET/etc/resolv.conf" &&
-	rm -f "$TARGET/tmp/resolv.conf"
+	if [[ -f "$TARGET/tmp/resolv.conf" ]]
+	then
+		cp -f "$TARGET/tmp/resolv.conf" "$TARGET/etc/resolv.conf" &&
+		rm -f "$TARGET/tmp/resolv.conf"
+	fi
 
 	# Clean up the target
-	rm -f "$TARGET/rspells" \
-		"$TARGET/ispells" \
-		"$TARGET/ospells" \
-		"$TARGET/$config" \
-		"$TARGET/build_spell.sh"
+	rm -f "$TARGET/build_spells.sh"
 }
 
 # main()
@@ -429,10 +514,10 @@ fi
 
 sanity_check
 
-prepare_target
+[[ -z $NOBUILD ]] && prepare_target
 
 # chroot and build all of the spells inside the TARGET
-"$MYDIR/cauldronchr.sh" -d "$TARGET" /build_spells.sh
+[[ -z $NOBUILD ]] && "$MYDIR/cauldronchr.sh" -d "$TARGET" /build_spells.sh
 
 # unpack sys caches and set up sorcery into SYSDIR
 setup_sys
@@ -445,6 +530,4 @@ touch "$SYSDIR"/etc/ld.so.conf
 "$MYDIR/cauldronchr.sh" -d "$ISODIR" /sbin/ldconfig
 
 # Keep a clean kitchen, wipes up the leftovers from the preparation step
-clean_target
-
-exit 0
+[[ -z $NOBUILD ]] && clean_target

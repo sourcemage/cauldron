@@ -38,7 +38,7 @@ do
   read -n1 input
   echo ""
   case $input in
-    "y" ) ln -sf "$TARGET"/boot/vmlinuz-$(uname -r) "$TARGET"/boot/vmlinuz
+    "y" ) ln -sf /boot/vmlinuz-$(uname -r) "$TARGET"/boot/vmlinuz
           break
           ;;
     "n" ) break

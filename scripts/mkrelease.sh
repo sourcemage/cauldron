@@ -2,24 +2,16 @@
 
 MYDIR="$(dirname $0)"
 
-TARGET=$1
-VERSION=$2
-
 ISOCHOWN=""
 
 function usage() {
 	cat << EndUsage
-Usage: $(basename $0) [-h] /path/to/target VERSION
+Usage: $(basename $0) [-h] [-i ISO] VERSION
 
-Creates an official release ISO from /path/to/target for the ISO
-version specified as VERSION. This script requires superuser
-privileges.
+Creates an official release ISO for the ISO version specified as VERSION. This
+script requires superuser privileges.
 
 Required:
-	/path/to/target
-	    The target directory you would like to make a releasable
-	    ISO from.
-
 	VERSION
 	    A string which describes the version of the ISO to
 	    release. Since this script is for making official
@@ -27,6 +19,8 @@ Required:
 	    resulting in smgl-VERSION.iso for the final ISO output.
 
 Options:
+	-i  Path to iso build directory (ISO). Defaults to /tmp/cauldron/iso.
+
 	-u  Change ownership of output files to $UID:$GID. You must specify the
 	    $UID:$GID pair as a string such as root:root or 0:0 or the script
 	    will fail.
@@ -36,9 +30,10 @@ EndUsage
 	exit 1
 } >&2
 
-while getopts ":u:h" Option
+while getopts ":i:u:h" Option
 do
 	case $Option in
+		i ) TARGET="$OPTARG" ;;
 		u ) ISOCHOWN="-u"
 			CHOWNSTR="$OPTARG"
 			;;
@@ -61,7 +56,10 @@ then
 	fi
 fi
 
-[[ $# -lt 2 ]] && usage
+TARGET="${TARGET:-/tmp/cauldron/iso}"
+
+[[ $# -ne 1 ]] && usage
+VERSION=$1
 
 # Get the grimoire version used to generate all the spells in the ISO.
 GRIMOIRE_VER=$(head -n1 "$TARGET"/etc/grimoire_version)
