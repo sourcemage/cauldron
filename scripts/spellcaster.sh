@@ -454,9 +454,11 @@ function setup_iso() {
 function clean_target() {
 	# Restore resolv.conf, the first rm is needed in case something
 	# installs a hardlink (like ppp)
-	rm -f "$TARGET/etc/resolv.conf" &&
-	cp -f "$TARGET/tmp/resolv.conf" "$TARGET/etc/resolv.conf" &&
-	rm -f "$TARGET/tmp/resolv.conf"
+	if [[ -f "$TARGET/tmp/resolv.conf" ]]
+	then
+		cp -f "$TARGET/tmp/resolv.conf" "$TARGET/etc/resolv.conf" &&
+		rm -f "$TARGET/tmp/resolv.conf"
+	fi
 
 	# Clean up the target
 	rm -f "$TARGET/build_spells.sh"
