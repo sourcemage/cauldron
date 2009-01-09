@@ -1,6 +1,4 @@
-12 (Easy) Steps to Generate an ISO
-
-Hi. My name is Hank, and I'm an addict. :-P
+10 (Easy) Steps to Generate an ISO
 
 The following are the general steps that need to be taken in order to create an
 ISO from scratch. These are not necessarily the steps that have to be followed,
@@ -11,80 +9,77 @@ yourself a cauldron to brew in (and check out the test branch):
 
 
 git clone git://scm.sourcemage.org/smgl/cauldron.git
-
 cd cauldron
-
 git checkout -b test origin/test
 
 All cauldron ISO scripts (for the test ISOs) are located in the cauldron/scripts dir.
 
-1.  Get a fresh basesystem tarball, unpack it into a directory, and rename that
-    directory "build".
+1. Get a fresh basesystem tarball, unpack it into a directory, and rename that
+directory "build".
 
-2.  Build a linux kernel and modules, however you choose to do so (manually or
-    by casting the linux spell). We have a kernel config that you can use in
-    our git repo. (cauldron/data/config-2.6)
+2. Build a linux kernel and modules, however you choose to do so (manually or
+by casting the linux spell). We have a kernel config that you can use in our
+git repo (cauldron/data/config-2.6). The kernel config in the cauldron repo is
+for 2.6.27.10.
 
-3.  Cast all the spells that will go on the ISO (required and optional) via
-    cauldron/scripts/spellcaster.sh build x86. The list of standard x86 spells
-    to cast for the official x86 isos can be found in the repo in
-    cauldron/data/rspells.x86 (required), cauldron/data/ispells.x86 (iso), and
-    cauldron/data/ospells.x86 (optional). Note: the terms "required" and
-    "optional" here refer to what is required vs. optional for the user to
-    install onto the target system. All spells are required to be on official
-    ISOs. Also, only the required spells should be in the final system.tar.bz2,
-    and optional spells should only be present on the ISO itself.
+3. Cast all the spells that will go on the ISO (required and optional) via
+cauldron/scripts/spellcaster.sh build x86. This will default to creating
+/tmp/cauldron/iso and /tmp/cauldron/sys to put the respective iso and sys
+content into (i.e., the iso and system dirs referred to later). You can change
+what directories it uses with the -i and -s option flags. The list of standard
+x86 spells to cast for the official x86 isos can be found in the repo in
+cauldron/data/rspells.x86 (for sys), cauldron/data/ispells.x86 (iso), and
+cauldron/data/ospells.x86 (optional). Note: the terms "required" and "optional"
+here refer to what is required vs. optional for the user to install onto the
+target system. All of these spells (or their caches) are required to be present
+on official ISOs. Also, only the required spells should be in the final
+system.tar.bz2, and optional spells should only be present on the ISO itself.
 
-4.  Check the iso and sys trees for sanity. Especially make sure that all
-    the requisite directories are present (smgl-fhs) and there is nothing
-    astray in their etc/ directories. Some of this will be taken care of in
-    steps #5 and #7 via the use of the cauldron/scripts/add-sauce.sh script.
+4. Make any necessary adjustments to the system tree (/tmp/cauldron/sys). This
+includes running cauldron/scripts/add-sauce.sh -o -s /tmp/cauldron/sys, copying
+linux source tarball used to build the ISO (the one from step 2) to
+/tmp/cauldron/sys/var/spool/sorcery, and creating a symlink from the tarball in
+the spool dir to usr/src/linux e.g., ln -sf
+/var/spool/sorcery/linux-VERSION.tar.bz2 /tmp/cauldron/sys/usr/src/ for easy
+access. Remember that all paths just mentioned are relative to the sys dir
+(except for the first argument to ln, which is not a typo).
 
-5.  Make any necessary adjustments to the system tree (/tmp/cauldron/sys). This
-    includes running cauldron/scripts/ add-sauce.sh -s /tmp/cauldron/sys and
-    cleaning up var/cache/sorcery and var/spool/sorcery (e.g. via cleanse),
-    removing linux source trees in /usr/src, and creating a symlink to the
-    latest linux source under /var/spool/sorcery e.g., ln -sf /
-    var/spool/sorcery/linux-VERSION.tar.bz2 /usr/src/ for easy access.
+5. Prune the iso tree (/tmp/cauldron/iso). This can be done by running
+cauldron/scripts/cleaniso.sh. This uses /tmp/cauldron/iso by default. This will
+remove unnecessary things like sorcery tablet files and logs, and unnecessary
+documentation in usr/share/doc for example.
 
-6.  Prune the iso tree (/tmp/cauldron/iso). The iso does not need a build
-    environment, so (most of) the build tools can be completely wiped from the
-    ISO. This can be done by running cauldron/scripts/cleaniso.sh -a
-    /path/to/iso/tree.
+6. Make adjustments to the iso tree (/tmp/cauldron/iso) by running
+cauldron/scripts/add-sauce.sh -o -i /tmp/cauldron/iso.
 
-7.  Make adjustments to the iso tree (/tmp/cauldron/iso) by running
-    cauldron/scripts/add-sauce.sh -i /tmp/cauldron/iso.
+7. Make a compressed tarball of the system tree, and copy it to
+/tmp/cauldron/iso/system.tar.bz2. Creation of the tarball can be done easily by
+running cauldron/scripts/mksystem.sh, which will use /tmp/cauldron/sys and
+/tmp/cauldron/iso by default, and will also by default drop the finished
+tarball into the iso dir. Don't forget to copy the tarball to the iso tree
+after creating it if you save it to a path other than the root of the iso tree!
 
-8.  Make a compressed tarball of the system tree, and copy it to
-    /tmp/cauldron/iso/system.tar.bz2. Creation of the tarball can be done
-    easily by running cauldron/scripts/mksystem.sh /tmp/cauldron/sys
-    /tmp/cauldron/iso/system.tar.bz2. Don't forget to copy the tarball to the
-    iso tree after creating it if you save it to a path other than the root of
-    the iso tree!
+8. Make an initrd, and copy it to /tmp/cauldron/iso/boot/initrd.gz. This can be
+done via cauldron/scripts/mkinitrd.sh. This uses /tmp/cauldron/iso by default
+for the iso dir, and if you don't specify the kernel version as the optional
+first argument, it will try to get it automatically from the iso dir's
+lib/modules/VERSION directory (assuming it exists, and that there is only one).
+It will also by default drop the finished initrd into boot/initrd.gz in the iso
+dir (however that's defined: the default, or something you specify).
 
-9.  Make an initrd, and copy it to cauldron/iso/boot/initrd.gz. This can be
-    done via cauldron/scripts/mkinitrd.sh /path/to/iso/tree iso_kernel_version
-    (where iso_kernel_version is, for example, 2.6.22; just make sure it
-    matches the /path/to/iso/tree/lib/modules/iso_kernel_version name).
+9. Generate the iso (i.e. mkisofs) and compress. If you are making a custom
+ISO, then you may find cauldron/scripts/mkiso.sh useful. However, for official
+releases, you can do cauldron/scripts/mkrelease.sh VERSION (e.g.,
+cauldron/scripts/mkrelease.sh 0.10.0-test5). This uses /tmp/cauldron/iso by
+default. This will give you both a compressed and uncompressed finished product
+in the current working directory. You can use the uncompressed ISO for
+immediate testing, and if it works, you can go ahead and ship the compressed
+version.
 
-10. Generate the iso (i.e. mkisofs) and compress. If you are making a custom
-    ISO, then you may find cauldron/scripts/mkiso.sh useful. However, for
-    official releases, you can do cauldron/scripts/mkrelease.sh
-    /path/to/iso/tree VERSION (e.g., cauldron/scripts/mkrelease.sh iso
-    0.10.0-test5). This will give you both a compressed and uncompressed
-    finished product. You can use the uncompressed ISO for immediate testing,
-    and if it works, you can go ahead and ship the compressed version.
-
-11. TEST the ISO (minimally in a VM). Go through a full install, following all
-    of the steps, and try to catch anything out of the ordinary. Make sure the
-    directions for the steps make sense and produce something that works, to
-    the best of your ability.
-
-12. Assuming everything worked, it's time for a release. Go through and make
-    sure (again) that all the files are as they should be (especially in /etc
-    and /var). You can run cauldron/scripts/add-sauce.sh again (it will ask
-    before overwriting any files, for all files that already exist which it
-    wants to write). There will eventually be another script that will go
-    through and sanity-check an iso (i.e. the script is in progress). If
-    everything is as it should be and the iso worked as expected during
-    testing, release it. Congratulations.
+10. TEST the ISO (minimally in a VM). Go through a full install, following all
+of the steps, and try to catch anything out of the ordinary. Make sure the
+directions for the steps make sense and produce something that works, to the
+best of your ability. Assuming everything worked, it's time for a release. Go
+through and make sure (again) that all the files are as they should be
+(especially in /etc and /var). If everything is as it should be and the iso
+worked as expected during testing, release it. Congratulations.

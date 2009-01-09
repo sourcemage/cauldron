@@ -1,0 +1,196 @@
+#!/bin/bash
+#---------------------------------------------------------------------
+##
+##=head1 SYNOPSIS
+##
+##  Alchemy is a an optional spell management utility
+##
+##=head1 DESCRIPTION
+##
+## ...
+##
+##=head1 COPYRIGHT
+##
+## Sourced from sorcery Copyright 2001 by Kyle Sallee
+## Original version Copyright 2008 Q. Rameau
+## Additions/corrections Copyright 2008 by the Source Mage Team
+##
+##=head1 FUNCTIONS
+##
+##=over 4
+##
+#---------------------------------------------------------------------
+
+help() {
+
+  cat << EOF
+
+Smgl-alchemy is the menu interface for installing optional spells, on your
+new system.
+
+Example:        smgl-alchemy
+Usage:          smgl-alchemy [parameters]
+
+Optional Parameters:
+
+-h  |  --help           Display this help screen
+
+-v  |  --version        Print the smgl-alchemy version
+
+EOF
+
+  exit 1
+#' <-- fix for syntax highlighting in nedit
+}
+
+function process_selection()  {
+
+	if [ -n "$1" ]; then
+
+		echo "$1" | tr " " "\n" > $ALCHEMY_SPELL_LIST
+
+	fi
+
+}
+
+function make_checklist()  {
+
+	if [ ! -s "$ALCHEMY_CACHE_LIST" ]; then
+
+		echo $(ls $ALCHEMY_CACHE_DIR | sed "s/-${ARCH}.*$//") > $ALCHEMY_CACHE_LIST
+
+	fi
+
+	local SPELL_LIST=$(cat $ALCHEMY_CACHE_LIST)
+
+	local SELECTED_SPELLS=$ALCHEMY_SPELL_LIST
+
+	for SPELL in $SPELL_LIST;  do
+
+		local STATUS="off"
+
+		if [ -s $SELECTED_SPELLS ] &&  $(grep -e "^${SPELL}$" $SELECTED_SPELLS &> /dev/null); then
+
+				STATUS="on"
+
+		fi
+
+		echo -en   '"'${SPELL:="Unknown"}'"'
+		echo -en '\t""'
+		echo -en '\t"'${STATUS:="off"}'"'
+		echo -e  '\t""'
+
+	done
+
+}
+
+function select_pkgs()  {
+
+	local SELECT_TITLE="Toggle optional spells to cast from ISO cache"
+	local SELECT_HELP="[*]=install"
+
+	CHECKLIST=$(make_checklist)
+
+	CHECKLIST_SIZE=$(($(dialog --stdout --print-maxsize | cut -d',' -f1 | cut -d' ' -f2) - 15))
+
+	OUTLIST=$(eval $DIALOG ' --title "$SELECT_TITLE" \
+	                    --ok-label  "Commit"         \
+	                    --item-help                  \
+	                    --separate-output            \
+	                    --checklist                  \
+	                    "$SELECT_HELP"               \
+	                    0 0 '$CHECKLIST_SIZE'        \
+	                    '$CHECKLIST)
+
+	process_selection "$OUTLIST"
+
+}
+
+function main() {
+
+	if [ -z $1 ]; then
+
+		select_pkgs
+
+	else
+
+		case $1 in
+
+		     -h|--help) help                  ;;
+		  -v|--version) echo $ALCHEMY_VERSION ;;
+		             *) help                  ;;
+		esac
+
+	fi
+
+}
+
+function priv_check() {
+
+	local SELF="$0"
+
+	if [[ $UID -ne 0 ]]
+	then
+		if [[ -x $(which sudo > /dev/null 2>&1) ]]
+		then
+			exec sudo "$SELF $*"
+		else
+			echo "Please enter the root password."
+			exec su -c "$SELF $*" root
+		fi
+	fi
+}
+
+if  [  "$UID"  ==  0  ];  then
+
+	ARCH="i486"
+	DIALOG='dialog --backtitle "Cauldron Optional Spell Management Utility" --stdout'
+	ALCHEMY_VERSION="0.2"
+	ALCHEMY_CACHE_DIR="/var/cache/sorcery"
+	ALCHEMY_SPELL_LIST="/tmp/optional_spells"
+	ALCHEMY_CACHE_LIST="/tmp/spells_cache"
+
+	main  "$@"
+
+	rc=$?
+	exit $rc
+
+else
+
+	if [[ $1 == -h ]] || [[ $1 == --help ]]; then
+
+		help
+
+	elif [[ $1 == -v ]] || [[ $1 == --version ]]; then
+
+		echo $ALCHEMY_VERSION
+
+	else
+
+		priv_check
+
+	fi
+fi
+
+
+
+#---------------------------------------------------------------------
+##=back
+##
+##=head1 LICENSE
+##
+## This software is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2 of the License, or
+## (at your option) any later version.
+##
+## This software is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this software; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+##
+#---------------------------------------------------------------------
