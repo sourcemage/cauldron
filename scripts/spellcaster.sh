@@ -187,6 +187,9 @@ function prepare_target() {
 	if [[ -n $CAULDRON_CHROOT && $# -eq 0 ]]
 	then
 
+		# Perform a scribe update so we have the latest stable grimoire
+		/usr/sbin/scribe update
+
 		# If console-tools is found in TARGET, get rid of it to make
 		# way for kbd
 		[[ $(gaze -q installed console-tools) != "not installed" ]] &&
