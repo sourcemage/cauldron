@@ -1,4 +1,4 @@
-#!/bin/bash
+#!/bin/bash -x
 
 # this script handles automatically casting all required spells into the ISO
 # chroot, and also the casting and subsequent dispelling (with caches enabled)
@@ -313,9 +313,15 @@ function install_kernel() {
 		if [[ -e "$SRC"/boot/vmlinuz ]]
 		then
 			kernel="$SRC/boot/vmlinuz"
-		elif [[ -e "$SRC"/usr/src/linux/arch/i386/boot/bzImage ]]
-		then
-			kernel="$SRC/usr/src/linux/arch/i386/boot/bzImage"
+		else
+			# Getting kernel architecture from ISO architecture
+			. $CAULDRONDIR/kernel_archs
+			kernel_arch=karch_$TYPE
+
+			if [[ -e "$SRC"/usr/src/linux/arch/"${!kernel_arch:-${TYPE}}"/boot/bzImage ]]
+			then
+				kernel="$SRC/usr/src/linux/arch/${!kernel_arch:-${TYPE}}/boot/bzImage"
+			fi
 		fi
 	fi
 	if [[ -z $kernel ]]
