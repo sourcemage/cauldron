@@ -187,8 +187,21 @@ function prepare_target() {
 	if [[ -n $CAULDRON_CHROOT && $# -eq 0 ]]
 	then
 
-		# Perform a scribe update so we have the latest stable grimoire
-		/usr/sbin/scribe update
+		SPOOL=/tmp
+		stable="stable.tar.bz2"
+		codex="$SYSDIR/var/lib/sorcery/codex"
+		grimoire='GRIMOIRE_DIR[0]=/var/lib/sorcery/codex/stable'
+		index="$SYSDIR/etc/sorcery/local/grimoire"
+		
+		# update to latest stable grimoire
+		(
+			cd "$SPOOL"
+			wget http://download.sourcemage.org/codex/$stable
+		)
+		msg "Updating build grimoire"
+		[[ -d "$codex" ]] || mkdir -p $codex &&
+		tar jxf "$SPOOL"/$stable -C "$codex"/ &&
+		echo "$grimoire" > "$index"
 
 		# If console-tools is found in TARGET, get rid of it to make
 		# way for kbd
