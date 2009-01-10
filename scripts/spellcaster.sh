@@ -1,4 +1,4 @@
-#!/bin/bash -x
+#!/bin/bash
 
 # this script handles automatically casting all required spells into the ISO
 # chroot, and also the casting and subsequent dispelling (with caches enabled)
