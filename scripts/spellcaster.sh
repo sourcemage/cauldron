@@ -422,7 +422,7 @@ function setup_sys() {
 
 	msg "Generating SYSDIR tablet info"
 	chmod a+x "$SYSDIR"/tablets.sh &&
-	chroot "$SYSDIR" /tablets.sh &&
+	"$MYDIR"/cauldronchr.sh -d "$SYSDIR" /tablets.sh &&
 	rm -f "$SYSDIR"/tablets.sh
 
 	# populate /dev with static device nodes
