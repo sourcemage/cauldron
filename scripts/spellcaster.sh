@@ -163,6 +163,9 @@ function prepare_target() {
 	export ispells="ispells.$TYPE"
 	export ospells="ospells.$TYPE"
 
+	# make sure the TARGET has a clean /tmp
+	rm -fr "$TARGET"/tmp/*
+
 	# Copy resolv.conf so spell sources can be downloaded inside the TARGET
 	cp -f "$TARGET"/etc/resolv.conf "$TARGET"/tmp/resolv.conf &&
 		cp -f /etc/resolv.conf "$TARGET"/etc/resolv.conf
