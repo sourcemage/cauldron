@@ -32,7 +32,7 @@ KERNEL_VERSION=2.6.27.10
   pushd /usr/src &&
   #wget http://10.0.0.11/smgl/spool/linux-$KERNEL_VERSION.tar.bz2 &&
   #tar xf linux-$KERNEL_VERSION.tar.bz2 &&
-  wget http://kernel.org/pub/linux/kernel/v2.6/linux-$KERNEL_VERSION.tar.gz &&
+  wget --progress=dot http://kernel.org/pub/linux/kernel/v2.6/linux-$KERNEL_VERSION.tar.gz &&
   tar xf linux-$KERNEL_VERSION.tar.gz &&
   ln -s linux-$KERNEL_VERSION linux &&
   cp "$CAULDRON_SRC"/data/config-2.6 /usr/src/linux/.config &&
@@ -43,12 +43,14 @@ KERNEL_VERSION=2.6.27.10
   ls /lib/modules &&
   cp -fav /lib/modules/$KERNEL_VERSION-SMGL-iso "$ROOTBUILD"/lib/modules &&
   cp -fav /usr/src/linux-$KERNEL_VERSION "$ROOTBUILD"/usr/src &&
-  cp -fv /usr/src/linux "$ROOTBUILD"/usr/src ||
+  ln -s linux-$KERNEL_VERSION "$ROOTBUILD"/usr/src/linux ||
   echo 'step 2 failed' >> /var/log/sorcery/activity
 
   echo step 3 build spells
-  bash "$CAULDRON_SRC"/scripts/spellcaster.sh "$ROOTBUILD" x86 ||
-  echo 'step 3 failed' >> /var/log/sorcery/activity
+  bash "$CAULDRON_SRC"/scripts/spellcaster.sh "$ROOTBUILD" x86 || {
+    echo 'step 3 failed' >> /var/log/sorcery/activity
+    exit
+  }
 
   echo step 3.5 copy kernel sources to iso and sys tree
   # may be handled by step 3 later on
