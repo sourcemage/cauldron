@@ -31,8 +31,9 @@ KERNEL_VERSION=2.6.27.10
   # may be handled by step 3 later on
   pushd /usr/src &&
   #wget http://10.0.0.11/smgl/spool/linux-$KERNEL_VERSION.tar.bz2 &&
+  #tar xf linux-$KERNEL_VERSION.tar.bz2 &&
   wget http://kernel.org/pub/linux/kernel/v2.6/linux-$KERNEL_VERSION.tar.gz &&
-  tar xf linux-$KERNEL_VERSION.tar.bz2 &&
+  tar xf linux-$KERNEL_VERSION.tar.gz &&
   ln -s linux-$KERNEL_VERSION linux &&
   cp "$CAULDRON_SRC"/data/config-2.6 /usr/src/linux/.config &&
   pushd linux &&
