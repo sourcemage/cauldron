@@ -378,11 +378,17 @@ function setup_sys() {
 		wget http://download.sourcemage.org/sorcery/$SORCERY
 	)
 
-	# unpack and install sorcery into SYSDIR
+	# unpack sorcery into TARGET
 	msg "Installing sorcery in SYSDIR"
 	tar jxf "$SPOOL"/$SORCERY -C "$TARGET/usr/src"
+
+	# ensure absolute path for install diR
+	local installdir="$SYSDIR"
+	[[ $installdir != /* ]] && installdir="$PWD/$SYSDIR"
+
+	# install sorcery into SYSDIR
 	pushd "$SORCERYDIR" &> /dev/null
-	./install "$SYSDIR"
+	./install "$installdir"
 	popd &> /dev/null
 
 	# install the stable grimoire used for build into SYSDIR
