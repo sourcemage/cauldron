@@ -163,6 +163,9 @@ function prepare_target() {
 	export ispells="ispells.$TYPE"
 	export ospells="ospells.$TYPE"
 
+	# make sure the TARGET has a clean /tmp
+	rm -fr "$TARGET"/tmp/*
+
 	# Copy resolv.conf so spell sources can be downloaded inside the TARGET
 	cp -f "$TARGET"/etc/resolv.conf "$TARGET"/tmp/resolv.conf &&
 		cp -f /etc/resolv.conf "$TARGET"/etc/resolv.conf
@@ -186,6 +189,22 @@ function prepare_target() {
 
 	if [[ -n $CAULDRON_CHROOT && $# -eq 0 ]]
 	then
+
+		SPOOL=/tmp
+		stable="stable.tar.bz2"
+		codex="$SYSDIR/var/lib/sorcery/codex"
+		grimoire='GRIMOIRE_DIR[0]=/var/lib/sorcery/codex/stable'
+		index="$SYSDIR/etc/sorcery/local/grimoire"
+		
+		# update to latest stable grimoire
+		(
+			cd "$SPOOL"
+			wget http://download.sourcemage.org/codex/$stable
+		)
+		msg "Updating build grimoire"
+		[[ -d "$codex" ]] || mkdir -p $codex &&
+		tar jxf "$SPOOL"/$stable -C "$codex"/ &&
+		echo "$grimoire" > "$index"
 
 		# If console-tools is found in TARGET, get rid of it to make
 		# way for kbd
@@ -297,9 +316,15 @@ function install_kernel() {
 		if [[ -e "$SRC"/boot/vmlinuz ]]
 		then
 			kernel="$SRC/boot/vmlinuz"
-		elif [[ -e "$SRC"/usr/src/linux/arch/i386/boot/bzImage ]]
-		then
-			kernel="$SRC/usr/src/linux/arch/i386/boot/bzImage"
+		else
+			# Getting kernel architecture from ISO architecture
+			. $CAULDRONDIR/kernel_archs
+			kernel_arch=karch_$TYPE
+
+			if [[ -e "$SRC"/usr/src/linux/arch/"${!kernel_arch:-${TYPE}}"/boot/bzImage ]]
+			then
+				kernel="$SRC/usr/src/linux/arch/${!kernel_arch:-${TYPE}}/boot/bzImage"
+			fi
 		fi
 	fi
 	if [[ -z $kernel ]]
@@ -353,11 +378,17 @@ function setup_sys() {
 		wget http://download.sourcemage.org/sorcery/$SORCERY
 	)
 
-	# unpack and install sorcery into SYSDIR
+	# unpack sorcery into TARGET
 	msg "Installing sorcery in SYSDIR"
 	tar jxf "$SPOOL"/$SORCERY -C "$TARGET/usr/src"
+
+	# ensure absolute path for install diR
+	local installdir="$SYSDIR"
+	[[ $installdir != /* ]] && installdir="$PWD/$SYSDIR"
+
+	# install sorcery into SYSDIR
 	pushd "$SORCERYDIR" &> /dev/null
-	./install "$SYSDIR"
+	./install "$installdir"
 	popd &> /dev/null
 
 	# install the stable grimoire used for build into SYSDIR
@@ -400,7 +431,7 @@ function setup_sys() {
 
 	msg "Generating SYSDIR tablet info"
 	chmod a+x "$SYSDIR"/tablets.sh &&
-	chroot "$SYSDIR" /tablets.sh &&
+	"$MYDIR"/cauldronchr.sh -d "$SYSDIR" /tablets.sh &&
 	rm -f "$SYSDIR"/tablets.sh
 
 	# populate /dev with static device nodes

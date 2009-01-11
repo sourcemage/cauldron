@@ -1,11 +1,11 @@
 10 (Easy) Steps to Generate an ISO
 
-The following are the general steps that need to be taken in order to create an
-ISO from scratch. These are not necessarily the steps that have to be followed,
-but this is how I generate ISOs. Steps 11 and 12 are more necessary if you are
-building an official ISO, but at least step 11 is recommended even for home
-use. Before doing anything in the recipe, you will need a working kitchen. Get
-yourself a cauldron to brew in (and check out the test branch):
+The following are the general steps that need to be taken in order to create
+an ISO from scratch. These are not necessarily the steps that have to be
+followed, but this is how I generate ISOs. Step 10 is more necessary if you
+are building an official ISO, but is recommended even for home use. Before
+doing anything in the recipe, you will need a working kitchen. Get yourself a
+cauldron to brew in (and check out the test branch):
 
 
 git clone git://scm.sourcemage.org/smgl/cauldron.git
@@ -45,9 +45,9 @@ access. Remember that all paths just mentioned are relative to the sys dir
 (except for the first argument to ln, which is not a typo).
 
 5. Prune the iso tree (/tmp/cauldron/iso). This can be done by running
-cauldron/scripts/cleaniso.sh. This uses /tmp/cauldron/iso by default. This will
-remove unnecessary things like sorcery tablet files and logs, and unnecessary
-documentation in usr/share/doc for example.
+cauldron/scripts/cleaniso.sh /tmp/cauldron/iso. This will remove unnecessary
+things like sorcery tablet files and logs, and unnecessary documentation in
+usr/share/doc for example.
 
 6. Make adjustments to the iso tree (/tmp/cauldron/iso) by running
 cauldron/scripts/add-sauce.sh -o -i /tmp/cauldron/iso.

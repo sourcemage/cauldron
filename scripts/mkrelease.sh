@@ -79,6 +79,6 @@ if [[ -n $ISOCHOWN ]]
 then
 	"$MYDIR"/mkiso.sh "$ISOCHOWN $CHOWNSTR" -kz "$TARGET" "smgl-$VERSION"
 else
-	"$MYDIR"/mkiso.sh -kz "$TARGET" "smgl-$VERSION"
+	"$MYDIR"/mkiso.sh -kz -i "$TARGET" "smgl-$VERSION"
 fi
 
