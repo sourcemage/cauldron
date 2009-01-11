@@ -38,7 +38,9 @@ KERNEL_VERSION=2.6.27.10
   cp "$CAULDRON_SRC"/data/config-2.6 /usr/src/linux/.config &&
   pushd linux &&
     yes ""|make oldconfig; make -j 4 &&
-    make -j 4 && make modules -j 4 && make modules_install &&
+    make -j 4 &> /dev/null &&
+    make modules -j 4 &> /dev/null &&
+    make modules_install &> /dev/null &&
   popd &&
   ls /lib/modules &&
   cp -fav /lib/modules/$KERNEL_VERSION-SMGL-iso "$ROOTBUILD"/lib/modules &&
