@@ -43,8 +43,8 @@ KERNEL_VERSION=2.6.27.10
     make modules_install &> /dev/null &&
   popd &&
   ls /lib/modules &&
-  cp -fav /lib/modules/$KERNEL_VERSION-SMGL-iso "$ROOTBUILD"/lib/modules &&
-  cp -fav /usr/src/linux-$KERNEL_VERSION "$ROOTBUILD"/usr/src &&
+  cp -fa /lib/modules/$KERNEL_VERSION-SMGL-iso "$ROOTBUILD"/lib/modules &&
+  cp -fa /usr/src/linux-$KERNEL_VERSION "$ROOTBUILD"/usr/src &&
   ln -s linux-$KERNEL_VERSION "$ROOTBUILD"/usr/src/linux ||
   echo 'step 2 failed' >> /var/log/sorcery/activity
 
@@ -56,7 +56,7 @@ KERNEL_VERSION=2.6.27.10
 
   echo step 3.5 copy kernel sources to iso and sys tree
   # may be handled by step 3 later on
-  cp -fav /usr/src/linux-$KERNEL_VERSION "$ISOBUILD"/usr/src ||
+  cp -fa /usr/src/linux-$KERNEL_VERSION "$ISOBUILD"/usr/src ||
   echo 'step 3.5 failed' >> /var/log/sorcery/activity
 
   echo step 4 adjust system tree
