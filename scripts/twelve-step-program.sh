@@ -59,8 +59,8 @@ KERNEL_VERSION=2.6.27.10
 
   echo step 4 adjust system tree
   bash "$CAULDRON_SRC"/scripts/add-sauce.sh -o -s "$SYSBUILD" &&
-  cp /usr/src/linux-$KERNEL_VERSION.tar.bz2 "$SYSBUILD"/var/spool/sorcery &&
-  ln -sf /var/spool/sorcery/linux-$KERNEL_VERSION.tar.bz2 "$SYSBUILD"/usr/src/linux-$KERNEL_VERSION.tar.bz2 ||
+  cp /usr/src/linux-$KERNEL_VERSION.tar.gz "$SYSBUILD"/var/spool/sorcery &&
+  ln -sf /var/spool/sorcery/linux-$KERNEL_VERSION.tar.gz "$SYSBUILD"/usr/src/linux-$KERNEL_VERSION.tar.gz ||
   echo 'step 4 failed' >> /var/log/sorcery/activity
 
   echo step 5 prune iso tree
