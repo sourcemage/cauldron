@@ -56,10 +56,10 @@ KERNEL_VERSION=2.6.27.10
 
   echo "LISTING TREES (depth 3)"
   echo "listing $ISOBUILD tree"
-  find -maxdepth 3 $ISOBUILD
+  find "$ISOBUILD" -maxdepth 3
 
   echo "listing $SYSBUILD tree"
-  find -maxdepth 3 $SYSBUILD
+  find "$SYSBUILD" -maxdepth 3
 
   echo step 3.5 copy kernel sources to iso and sys tree
   # may be handled by step 3 later on
@@ -75,10 +75,10 @@ KERNEL_VERSION=2.6.27.10
 
   echo "LISTING TREES (depth 3)"
   echo "listing $ISOBUILD tree"
-  find -maxdepth 3 $ISOBUILD
+  find "$ISOBUILD" -maxdepth 3
 
   echo "listing $SYSBUILD tree"
-  find -maxdepth 3 $SYSBUILD
+  find "$SYSBUILD" -maxdepth 3
 
   echo step 5 prune iso tree
   bash "$CAULDRON_SRC"/scripts/cleaniso.sh "$ISOBUILD" ||
