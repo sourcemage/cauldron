@@ -37,7 +37,7 @@ KERNEL_VERSION=2.6.27.10
   ln -s linux-$KERNEL_VERSION linux &&
   cp "$CAULDRON_SRC"/data/config-2.6 /usr/src/linux/.config &&
   pushd linux &&
-    yes ""|make oldconfig; make -j 4 &&
+    yes ""|make oldconfig; make -j 4 &>/dev/null &&
     make -j 4 &> /dev/null &&
     make modules -j 4 &> /dev/null &&
     make modules_install &> /dev/null &&
@@ -54,6 +54,13 @@ KERNEL_VERSION=2.6.27.10
     exit
   }
 
+  echo "LISTING TREES (depth 3)"
+  echo "listing $ISOBUILD tree"
+  find -maxdepth 3 $ISOBUILD
+
+  echo "listing $SYSBUILD tree"
+  find -maxdepth 3 $SYSBUILD
+
   echo step 3.5 copy kernel sources to iso and sys tree
   # may be handled by step 3 later on
   cp -fa /usr/src/linux-$KERNEL_VERSION "$ISOBUILD"/usr/src ||
@@ -64,6 +71,14 @@ KERNEL_VERSION=2.6.27.10
   cp /usr/src/linux-$KERNEL_VERSION.tar.gz "$SYSBUILD"/var/spool/sorcery &&
   ln -sf /var/spool/sorcery/linux-$KERNEL_VERSION.tar.gz "$SYSBUILD"/usr/src/linux-$KERNEL_VERSION.tar.gz ||
   echo 'step 4 failed' >> /var/log/sorcery/activity
+
+
+  echo "LISTING TREES (depth 3)"
+  echo "listing $ISOBUILD tree"
+  find -maxdepth 3 $ISOBUILD
+
+  echo "listing $SYSBUILD tree"
+  find -maxdepth 3 $SYSBUILD
 
   echo step 5 prune iso tree
   bash "$CAULDRON_SRC"/scripts/cleaniso.sh "$ISOBUILD" ||
@@ -78,6 +93,7 @@ KERNEL_VERSION=2.6.27.10
   echo 'step 7 failed' >> /var/log/sorcery/activity
 
   echo step 8 make initrd
+  modprobe loop
   bash "$CAULDRON_SRC"/scripts/mkinitrd.sh -i "$ISOBUILD" $KERNEL_VERSION-SMGL-iso ||
   echo 'step 8 failed' >> /var/log/sorcery/activity
 
