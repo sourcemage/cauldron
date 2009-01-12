@@ -53,6 +53,10 @@ KERNEL_VERSION=2.6.27.10
     echo 'step 3 failed' >> /var/log/sorcery/activity
     exit
   }
+  grep -q failure "$ROOTBUILD"/var/log/sorcery/activity && {
+    echo 'step 3 failed: NO EXIT STATUS' >> /var/log/sorcery/activity
+    exit
+  }
 
   echo "LISTING TREES (depth 3)"
   echo "listing $ISOBUILD tree"
