@@ -99,6 +99,13 @@ then
   exit 2
 fi >&2
 
+if [[ ! -f "$ISODIR"/var/cache/sorcery/udev* ]]
+then
+  echo "Chroot failed sanity check:"
+  echo "Chroot is missing the udev cache file!"
+  exit 2
+fi >&2
+
 # The temporary dir I'll use to put the initrd files
 INITRDROOT=/tmp/initrd-dir
 
@@ -203,6 +210,16 @@ function mk_initrd_file() {
   fi
 }
 
+function install_udev() {
+  local udev="$ISODIR/var/cache/udev*"
+  local exclude=(init.d doc man var)
+
+  if ! tar xf $udev "${exclude[@]/#/--exclude=}" -C "$INITRDROOT"
+  then
+    echo "error: could not extract $udev to $INITRDROOT"
+    exit 2
+  fi
+}
 
 # Find my stuff
 MYDIR=$(readlink -f ${0%/*}/..)
@@ -279,6 +296,10 @@ echo "create module dependencies"
 cp sbin/depmod ${INITRDROOT}
 chroot ${INITRDROOT} /depmod ${KERNEL_VERSION}
 rm -f ${INITRDROOT}/depmod
+
+# install udev
+echo "installing udev into the initrd"
+install_udev
 
 # The initrd is complete now.
 echo "Make the initrd"
