@@ -65,11 +65,6 @@ KERNEL_VERSION=2.6.27.10
   echo "listing $SYSBUILD tree"
   find "$SYSBUILD" -maxdepth 3
 
-  echo step 3.5 copy kernel sources to iso and sys tree
-  # may be handled by step 3 later on
-  cp -fa /usr/src/linux-$KERNEL_VERSION "$ISOBUILD"/usr/src ||
-  echo 'step 3.5 failed' >> /var/log/sorcery/activity
-
   echo step 4 adjust system tree
   bash "$CAULDRON_SRC"/scripts/add-sauce.sh -o -s "$SYSBUILD" &&
   cp /usr/src/linux-$KERNEL_VERSION.tar.gz "$SYSBUILD"/var/spool/sorcery &&
