@@ -187,6 +187,13 @@ function prepare_target() {
 	# generate basesystem casting script inside of TARGET
 	cat > "$TARGET"/build_spells.sh <<-'SPELLS'
 
+	function msg() {
+		if [[ -z $QUIET ]]
+		then
+			echo $1 >&2
+		fi
+	}
+
 	if [[ -n $CAULDRON_CHROOT && $# -eq 0 ]]
 	then
 
@@ -243,6 +250,9 @@ function prepare_target() {
 SPELLS
 
 	chmod a+x "$TARGET"/build_spells.sh
+	# export the QUIET variable so subshells (like build_spells) can make
+	# use of it
+	export QUIET
 }
 
 function install_kernel() {
