@@ -99,7 +99,8 @@ then
   exit 2
 fi >&2
 
-if [[ ! -f "$ISODIR"/var/cache/sorcery/udev* ]]
+udev="$(find "$ISODIR"/var/cache/sorcery -name udev-*)"
+if [[ ! -f "$udev" ]]
 then
   echo "Chroot failed sanity check:"
   echo "Chroot is missing the udev cache file!"
@@ -211,10 +212,9 @@ function mk_initrd_file() {
 }
 
 function install_udev() {
-  local udev="$ISODIR/var/cache/udev*"
   local exclude=(init.d doc man var)
 
-  if ! tar xf $udev "${exclude[@]/#/--exclude=}" -C "$INITRDROOT"
+  if ! tar xf "$udev" "${exclude[@]/#/--exclude=}" -C "$INITRDROOT"
   then
     echo "error: could not extract $udev to $INITRDROOT"
     exit 2

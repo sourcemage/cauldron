@@ -187,6 +187,13 @@ function prepare_target() {
 	# generate basesystem casting script inside of TARGET
 	cat > "$TARGET"/build_spells.sh <<-'SPELLS'
 
+	function msg() {
+		if [[ -z $QUIET ]]
+		then
+			echo $1 >&2
+		fi
+	}
+
 	if [[ -n $CAULDRON_CHROOT && $# -eq 0 ]]
 	then
 
@@ -243,6 +250,9 @@ function prepare_target() {
 SPELLS
 
 	chmod a+x "$TARGET"/build_spells.sh
+	# export the QUIET variable so subshells (like build_spells) can make
+	# use of it
+	export QUIET
 }
 
 function install_kernel() {
@@ -372,11 +382,14 @@ function setup_sys() {
 	msg "Running add-sauce.sh on SYSDIR"
 	"$MYDIR"/add-sauce.sh -o -s "$SYSDIR"
 
-	# download sorcery source
-	(
-		cd "$SPOOL"
-		wget http://download.sourcemage.org/sorcery/$SORCERY
-	)
+	# download sorcery source if we don't already have it
+	if [[ ! -f "$SPOOL"/$SORCERY ]]
+	then
+		(
+			cd "$SPOOL"
+			wget http://download.sourcemage.org/sorcery/$SORCERY
+		)
+	fi
 
 	# unpack sorcery into TARGET
 	msg "Installing sorcery in SYSDIR"
@@ -391,11 +404,16 @@ function setup_sys() {
 	./install "$installdir"
 	popd &> /dev/null
 
+	# download grimoire source if we don't already have it
+	if [[ ! -f "$SPOOL"/$stable ]]
+	then
+		(
+			cd "$SPOOL"
+			wget http://download.sourcemage.org/codex/$stable
+		)
+	fi
+
 	# install the stable grimoire used for build into SYSDIR
-	(
-		cd "$SPOOL"
-		wget http://download.sourcemage.org/codex/$stable
-	)
 	msg "Installing grimoire ${stable%.tar.bz2} into SYSDIR"
 	[[ -d "$syscodex" ]] || mkdir -p $syscodex &&
 	tar jxf "$SPOOL"/$stable -C "$syscodex"/ &&
