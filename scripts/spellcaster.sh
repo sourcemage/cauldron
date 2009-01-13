@@ -197,14 +197,14 @@ function prepare_target() {
 		index="$SYSDIR/etc/sorcery/local/grimoire"
 		
 		# update to latest stable grimoire
-		(
-			cd "$SPOOL"
-			wget http://download.sourcemage.org/codex/$stable
-		)
-		msg "Updating build grimoire"
-		[[ -d "$codex" ]] || mkdir -p $codex &&
-		tar jxf "$SPOOL"/$stable -C "$codex"/ &&
-		echo "$grimoire" > "$index"
+		#(
+		#	cd "$SPOOL"
+		#	wget http://download.sourcemage.org/codex/$stable
+		#)
+		#msg "Updating build grimoire"
+		#[[ -d "$codex" ]] || mkdir -p $codex &&
+		#tar jxf "$SPOOL"/$stable -C "$codex"/ &&
+		#echo "$grimoire" > "$index"
 
 		# If console-tools is found in TARGET, get rid of it to make
 		# way for kbd
