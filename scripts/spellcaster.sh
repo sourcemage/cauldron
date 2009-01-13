@@ -372,11 +372,14 @@ function setup_sys() {
 	msg "Running add-sauce.sh on SYSDIR"
 	"$MYDIR"/add-sauce.sh -o -s "$SYSDIR"
 
-	# download sorcery source
-	(
-		cd "$SPOOL"
-		wget http://download.sourcemage.org/sorcery/$SORCERY
-	)
+	# download sorcery source if we don't already have it
+	if [[ ! -f "$SPOOL"/$SORCERY ]]
+	then
+		(
+			cd "$SPOOL"
+			wget http://download.sourcemage.org/sorcery/$SORCERY
+		)
+	fi
 
 	# unpack sorcery into TARGET
 	msg "Installing sorcery in SYSDIR"
@@ -391,11 +394,16 @@ function setup_sys() {
 	./install "$installdir"
 	popd &> /dev/null
 
+	# download grimoire source if we don't already have it
+	if [[ ! -f "$SPOOL"/$stable ]]
+	then
+		(
+			cd "$SPOOL"
+			wget http://download.sourcemage.org/codex/$stable
+		)
+	fi
+
 	# install the stable grimoire used for build into SYSDIR
-	(
-		cd "$SPOOL"
-		wget http://download.sourcemage.org/codex/$stable
-	)
 	msg "Installing grimoire ${stable%.tar.bz2} into SYSDIR"
 	[[ -d "$syscodex" ]] || mkdir -p $syscodex &&
 	tar jxf "$SPOOL"/$stable -C "$syscodex"/ &&
