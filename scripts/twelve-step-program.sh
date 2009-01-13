@@ -49,6 +49,7 @@ KERNEL_VERSION=2.6.27.10
   echo 'step 2 failed' >> /var/log/sorcery/activity
 
   echo step 3 build spells
+  echo > "$ROOTBUILD"/var/log/sorcery/activity &&
   bash "$CAULDRON_SRC"/scripts/spellcaster.sh "$ROOTBUILD" x86 || {
     echo 'step 3 failed' >> /var/log/sorcery/activity
     exit
