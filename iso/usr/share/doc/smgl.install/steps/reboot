@@ -1,22 +1,12 @@
 [1mreboot step[m
 You should be all done with the installation! Congratulations! Time to reboot
-into your installed system!
+into your installed system! Just type:
 
-The paranoid way: umount all of your partitions and then reboot. For all
-partitions you mounted under /mnt/root, unmount them, starting with the deepest
-mount first and working back up to /mnt/root. Example - assume that there are
-separate partitions for /, /var, /var/spool, and /var/cache:
+[1m reboot[m.
 
-[1m umount /mnt/root/var/cache[m
-[1m umount /mnt/root/var/spool[m
-[1m umount /mnt/root/var[m
-[1m umount /mnt/root[m
-[1m swapoff /dev/hda2[m (change hda2 to your swap partition)
-
-Now, reboot via something like:
-[1m shutdown -r now "install finished"[m
-
-The less-paranoid and easier way: just type [1mreboot[m.
+If you installed [1msmgl-setup[m (installed by default unless changed), be sure to
+run [1mman smgl-setup[m when first logging in. It will provide you with
+information on what you can do with your newly installed system.
 
 We don't (yet) eject the CD during shutdown, so be sure to take it out during
 reboot or configure your BIOS not to try and boot from it.
