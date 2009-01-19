@@ -1,7 +1,8 @@
 [1mdisk-partition step[m
 First, we'll need to create some partitions on your disk that we can install
-SMGL to. You'll need to know the device of your hard disk to do this
-(TODO: describe how to find that out).
+SMGL to. You'll need to know the device of your hard disk to do this. One good
+way to find your disks is by ls /sys/block, running cat /proc/partitions, or by
+dmesg | grep -i disk. You probably want something that is either hd or sd.
 
 This image ships with several popular programs for partitioning:
 
