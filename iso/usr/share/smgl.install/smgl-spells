@@ -9,7 +9,10 @@ NUM_CACHES=
 function usage() {
   cat <<USAGE
 $(basename $0)
-Generates a listing of cache files available to install.
+Generates a listing of cache files available to install. The list of caches to
+choose from that is presented is a listing of *all* cache files present on this
+ISO. As a result, there may be some overlap with system.tar.bz2. Check the
+release notes for a list of which spells system.tar.bz2 installs.
 
 USAGE
 }
@@ -160,7 +163,13 @@ function message() {
     may be necessary, depending on how you have set up your installation. For
     example, if you formatted your disk with xfs, then you will need xfsprogs.
     Also, you will need at least one bootloader installed (e.g. lilo, grub,
-    etc.).
+    etc.). Selected spells are marked with '*'. The list begins with some
+    default selections.
+
+    Note that some all caches present on the ISO are included in the list for
+    selection, including caches that may also be installed by system.tar.bz2.
+    This is intentional. To see what spells are in system.tar.bz2, please see
+    the release notes for this ISO.
 
     The output is piped through less, so if there are too many caches to
     fit on one screen you will be able to scroll. When you are satisfied with
