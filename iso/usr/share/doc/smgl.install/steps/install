@@ -18,6 +18,6 @@ enchant method (uses /tmp/spells):
 Enchant can also take a command-line argument to a cache file with a specified
 path. This enables you to run enchant on any cache file you choose, from any
 directory, without the tedium of typing in the tar line as given in the "manual
-method" section. See [1m enchant [-h|--help][m for more information.
+method" section. See [1m smgl-enchant [-h|--help][m for more information.
 
 When the step finishes type [1mnext[m.
