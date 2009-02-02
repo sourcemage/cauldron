@@ -170,6 +170,12 @@ function prepare_target() {
 	cp -f "$TARGET"/etc/resolv.conf "$TARGET"/tmp/resolv.conf &&
 		cp -f /etc/resolv.conf "$TARGET"/etc/resolv.conf
 
+	# clean out any old sorcery logs in TARGET
+	for logfile in $(find "$TARGET"/var/log/sorcery -type f)
+	do
+		rm -f $logfile
+	done
+
 	# If using the linux spell copy the kernel config to TARGET sorcery
 	grep -q '^linux$' "$CAULDRONDIR/$rspells" "$CAULDRONDIR/$ospells" &&
 	cp "$CAULDRONDIR/config-2.6" "$TARGET/etc/sorcery/local/kernel.config"
