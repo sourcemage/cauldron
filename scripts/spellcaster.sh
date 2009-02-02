@@ -215,9 +215,12 @@ function prepare_target() {
 			wget http://download.sourcemage.org/codex/$stable
 		)
 		msg "Updating build grimoire"
-		[[ -d "$codex" ]] || mkdir -p $codex &&
-		tar jxf "$SPOOL"/$stable -C "$codex"/ &&
-		echo "$grimoire" > "$index"
+		[[ -d "$codex" ]] && mv "$codex" "${codex}.old"
+		mkdir -p "$codex" &&
+		tar xf "$SPOOL"/$stable -C "$codex"/ &&
+		[[ -d "${codex}.old" ]] && rm -fr "${codex}.old"
+		echo "$grimoire" > "$index" &&
+		scribe reindex
 
 		# If console-tools is found in TARGET, get rid of it to make
 		# way for kbd
@@ -421,10 +424,11 @@ function setup_sys() {
 
 	# install the stable grimoire used for build into SYSDIR
 	msg "Installing grimoire ${stable%.tar.bz2} into SYSDIR"
-	[[ -d "$syscodex" ]] || mkdir -p $syscodex &&
-	tar jxf "$SPOOL"/$stable -C "$syscodex"/ &&
-	mv "$syscodex"/${stable%.tar.bz2} "$syscodex"/stable
-	echo "$grimoire" > "$index"
+	[[ -d "$syscodex" ]] && rm -fr "$syscodex"
+	mkdir -p $syscodex &&
+	tar xf "$SPOOL"/$stable -C "$syscodex"/ &&
+	mv "$syscodex"/${stable%.tar.bz2} "$syscodex"/stable &&
+	echo "$grimoire" > "$index" &&
 
 	msg "Reindexing SYSDIR codex"
 	"$MYDIR"/cauldronchr.sh -d "$SYSDIR" /usr/sbin/scribe reindex
