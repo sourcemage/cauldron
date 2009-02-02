@@ -9,7 +9,7 @@ CAULDRONDIR="$MYDIR"/../data
 
 function usage() {
   cat << EndUsage
-Usage: $(basename $0) [-hnq] [-i ISO] [-s SYS] /path/to/target ARCHITECTURE
+Usage: $(basename $0) [-hbcnq] [-i ISO] [-s SYS] /path/to/target ARCHITECTURE
 
 Casts the required and optional spells onto the ISO.
 This script requires superuser privileges.
@@ -26,6 +26,12 @@ Required:
 	    specified.
 
 Options:
+	-b  Build only (don't generate the ISO and SYS trees). Ignores the -i
+	    and -s flags. Conflicts with -n.
+
+	-c  Generate a basesystem chroot (causes -i to be ignored, only SYS is
+	    used).
+
 	-h  Shows this help information
 
 	-i  Path to iso build directory (ISO). Defaults to /tmp/cauldron/iso.
@@ -33,10 +39,11 @@ Options:
 	-s  Path to system build directory (SYS). Defaults to
 	    /tmp/cauldron/system.
 
-	-n  Don't process the build tree. Instead, generate ISO and SYS using
+	-n  Don't process the build tree. Instead, generate target trees using
 	    an already existing build tree. This is useful if you already have
 	    all the caches, but you need to regenerate your ISO and SYS trees
-	    if something went wrong during later processing.
+	    (or a basesystem chroot tree) if something went wrong during later
+	    processing. Conflicts with -b.
 
 	-q  Suppress output messages. Defaults to off (output shown on STDERR).
 EndUsage
@@ -44,9 +51,11 @@ EndUsage
 } >&2
 
 function parse_options() {
-	while getopts ":i:s:nqh" Option
+	while getopts ":bci:s:nqh" Option
 	do
 		case $Option in
+			b ) BUILDONLY="yes" ;;
+			c ) CHROOT="yes" ;;
 			i ) ISODIR="${OPTARG%/}" ;;
 			s ) SYSDIR="${OPTARG%/}" ;;
 			n ) NOBUILD="yes" ;;
@@ -99,23 +108,26 @@ function sanity_check() {
 		exit 3
 	}
 
-	# If ISODIR is not a directory, create it.
-	directory_check "$ISODIR"
+	if [[ -z $BUILDONLY ]]
+	then
+		# If ISODIR is not a directory, create it.
+		directory_check "$ISODIR"
 
-	# If ISODIR/var/cache/sorcery is not a directory, create it.
-	directory_check "$ISODIR/var/cache/sorcery"
+		# If ISODIR/var/cache/sorcery is not a directory, create it.
+		directory_check "$ISODIR/var/cache/sorcery"
 
-	# If ISODIR/var/spool/sorcery is not a directory, create it.
-	directory_check "$ISODIR/var/spool/sorcery"
+		# If ISODIR/var/spool/sorcery is not a directory, create it.
+		directory_check "$ISODIR/var/spool/sorcery"
 
-	# If SYSDIR is not a directory, create it.
-	directory_check "$SYSDIR"
+		# If SYSDIR is not a directory, create it.
+		directory_check "$SYSDIR"
 
-	# If SYSDIR/var/cache/sorcery is not a directory, create it.
-	directory_check "$SYSDIR/var/cache/sorcery"
+		# If SYSDIR/var/cache/sorcery is not a directory, create it.
+		directory_check "$SYSDIR/var/cache/sorcery"
 
-	# If SYSDIR/var/spool/sorcery is not a directory, create it.
-	directory_check "$SYSDIR/var/spool/sorcery"
+		# If SYSDIR/var/spool/sorcery is not a directory, create it.
+		directory_check "$SYSDIR/var/spool/sorcery"
+	fi
 
 	if [[ -e "$config" ]]
 	then
@@ -578,15 +590,21 @@ sanity_check
 # chroot and build all of the spells inside the TARGET
 [[ -z $NOBUILD ]] && "$MYDIR/cauldronchr.sh" -d "$TARGET" /build_spells.sh
 
-# unpack sys caches and set up sorcery into SYSDIR
-setup_sys
-touch "$SYSDIR"/etc/ld.so.conf
-"$MYDIR/cauldronchr.sh" -d "$SYSDIR" /sbin/ldconfig
+if [[ -z $BUILDONLY ]]
+then
+	# unpack sys caches and set up sorcery into SYSDIR
+	setup_sys
+	touch "$SYSDIR"/etc/ld.so.conf
+	"$MYDIR/cauldronchr.sh" -d "$SYSDIR" /sbin/ldconfig
 
-# unpack iso caches and copy iso and optional caches into ISODIR
-setup_iso
-touch "$SYSDIR"/etc/ld.so.conf
-"$MYDIR/cauldronchr.sh" -d "$ISODIR" /sbin/ldconfig
+	if [[ -z $CHROOT ]]
+	then
+		# unpack iso caches and copy iso and optional caches into ISODIR
+		setup_iso
+		touch "$SYSDIR"/etc/ld.so.conf
+		"$MYDIR/cauldronchr.sh" -d "$ISODIR" /sbin/ldconfig
+	fi
+fi
 
 # Keep a clean kitchen, wipes up the leftovers from the preparation step
 [[ -z $NOBUILD ]] && clean_target
