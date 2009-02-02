@@ -416,7 +416,7 @@ function setup_sys() {
 	msg "Installing sorcery in SYSDIR"
 	tar jxf "$SPOOL"/$SORCERY -C "$TARGET/usr/src"
 
-	# ensure absolute path for install diR
+	# ensure absolute path for install dir
 	local installdir="$SYSDIR"
 	[[ $installdir != /* ]] && installdir="$PWD/$SYSDIR"
 
