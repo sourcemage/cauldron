@@ -159,9 +159,58 @@ function prepare_target() {
 	export rspells="rspells.$TYPE"
 	export ispells="ispells.$TYPE"
 	export ospells="ospells.$TYPE"
+	local SPOOL="$TARGET/tmp"
+	local SORCERY="sorcery-stable.tar.bz2"
+	local SORCERYDIR="$TARGET/usr/src/sorcery"
 
 	# make sure the TARGET has a clean /tmp
 	rm -fr "$TARGET"/tmp/*
+
+	# download sorcery source if we don't already have it
+	if [[ ! -f "$SPOOL"/$SORCERY ]]
+	then
+		(
+			cd "$SPOOL"
+			wget http://download.sourcemage.org/sorcery/$SORCERY
+		)
+	fi
+
+	# unpack sorcery into TARGET
+	msg "Installing sorcery in build directory..."
+	tar jxf "$SPOOL"/$SORCERY -C "$TARGET/usr/src"
+
+	# ensure absolute path for install dir
+	local installdir="$TARGET"
+	[[ $installdir != /* ]] && installdir="$PWD/$TARGET"
+
+	# install sorcery into TARGET
+	pushd "$SORCERYDIR" &> /dev/null
+	./install "$installdir"
+	popd &> /dev/null
+
+	# set up the build sorcery for the correct values
+	# this includes arch, archive=on, preserve=off, and setting the prompt
+	# delay to 0 so that there is no prompting (automated build)
+	case $TYPE in
+		"x86"	) arch="i486"
+			;;
+		"x86_64") arch="x86_64"
+			;;
+		"ppc"	) arch="g3"
+			;;
+	esac
+	cat > "$TARGET"/set_sorcery.sh <<-"CONFIGURE"
+		#!/bin/bash
+		source /etc/sorcery/config
+		modify_config /etc/sorcery/local/config ARCHITECTURE $arch
+		modify_config /etc/sorcery/local/config ARCHIVE on
+		modify_config /etc/sorcery/local/config PRESERVE off
+		modify_config /etc/sorcery/local/config PROMPT_DELAY 0
+	CONFIGURE
+	chmod a+x "$TARGET"/set_sorcery.sh &&
+	msg "Configuring build sorcery"
+	"$MYDIR"/cauldronchr.sh -d "$TARGET" /set_sorcery.sh &&
+	rm -f "$TARGET"/set_sorcery.sh
 
 	# Copy resolv.conf so spell sources can be downloaded inside the TARGET
 	cp -f "$TARGET"/etc/resolv.conf "$TARGET"/tmp/resolv.conf &&
