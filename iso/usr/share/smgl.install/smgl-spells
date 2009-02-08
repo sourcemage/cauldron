@@ -131,6 +131,8 @@ function main {
   # /var/caches/sorcery on the ISO
   echo "Populating internal cache list, please be patient..."
   make_list
+  echo "Internal cache populated. Press a key to continue..."
+  read -n1 DUMMY_VARIABLE
 
   # present the menu and prompt for user input, until the user enters 0 to
   # finish
