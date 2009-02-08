@@ -8,6 +8,7 @@ rm
 ls
 find
 grep
+insmod
 lsmod
 mknod
 mkdir
@@ -20,3 +21,4 @@ rmmod
 /bin/sh
 pidof
 killall5
+/lib/libncurses.so.*
