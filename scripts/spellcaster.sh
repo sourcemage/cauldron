@@ -584,6 +584,8 @@ function clean_target() {
 	# installs a hardlink (like ppp)
 	if [[ -f "$TARGET/tmp/resolv.conf" ]]
 	then
+		# rm the real resolv.conf first, needed because ppp makes a symlink
+		rm -f "$TARGET/etc/resolv.conf"
 		cp -f "$TARGET/tmp/resolv.conf" "$TARGET/etc/resolv.conf" &&
 		rm -f "$TARGET/tmp/resolv.conf"
 	fi
