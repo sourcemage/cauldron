@@ -171,7 +171,7 @@ function message() {
     Note that some all caches present on the ISO are included in the list for
     selection, including caches that may also be installed by system.tar.bz2.
     This is intentional. To see what spells are in system.tar.bz2, please see
-    the release notes for this ISO.
+    /tmp/rspells.
 
     The output is piped through less, so if there are too many caches to
     fit on one screen you will be able to scroll. When you are satisfied with
