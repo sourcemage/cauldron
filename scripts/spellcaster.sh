@@ -200,7 +200,7 @@ function prepare_target() {
 		"ppc"	) arch="g3"
 			;;
 	esac
-	cat > "$TARGET"/set_sorcery.sh <<-"CONFIGURE"
+	cat > "$TARGET"/set_sorcery.sh <<-CONFIGURE
 		#!/bin/bash
 		source /etc/sorcery/config
 		modify_config /etc/sorcery/local/config ARCHITECTURE $arch
