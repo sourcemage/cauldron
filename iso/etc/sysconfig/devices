@@ -1,2 +1,0 @@
-# type of device management, "static", "devfs" or "udev"
-DEVICES=udev
