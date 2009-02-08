@@ -10,10 +10,11 @@ start of this install, you'll need to edit the file called [1mkeymap[m
 in that directory (do [1m cat /tmp/selected-keymap[m to see which you chose)
 
 You may also wish to create [1m/mnt/root/etc/hostname[m with a hostname for your
-system, and you can set up networking by creating the
+system, and you can set up networking by editing the
 [1m/mnt/root/etc/network/interfaces[m file.
 
 Finally, you can choose to set your timezone by doing the following:
+[1m smgl-chroot[m
 [1m ln -sf /usr/share/zoneinfo/SOME/TIMEZONE /etc/localtime[m
 
 Just remember to replace "SOME/TIMEZONE" with your actual timezone.
