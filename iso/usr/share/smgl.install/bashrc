@@ -14,6 +14,7 @@ OPT_SPELLS=/tmp/spells
 mkdir -p $INSTALLER_TMP
 [[ -e $INSTALLER_STATUS ]] || echo 'init' >$INSTALLER_STATUS
 [[ -e $OPT_SPELLS ]] || cat $INSTALLER_DATA/spells > $OPT_SPELLS
+[[ -f $INSTALLER_DATA/rspells ]] && cp -f $INSTALLER_DATA/rspells /tmp/rspells
 
 function header() {
   echo ""
