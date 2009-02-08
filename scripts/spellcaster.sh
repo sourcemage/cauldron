@@ -98,8 +98,6 @@ function directory_check() {
 
 # check to make sure that the chroot has sorcery set to do caches
 function sanity_check() {
-	local config="$TARGET/etc/sorcery/local/config"
-	local arch=
 	local choice=
 
 	# Ensure that TARGET is a directory
@@ -107,6 +105,33 @@ function sanity_check() {
 		echo "$TARGET does not exist!"
 		exit 3
 	}
+
+	if [[ -z $NOBUILD ]]
+	then
+		# nuke the TARGET /etc and install a clean /etc
+		rm -fr "$TARGET"/etc/*
+		"$MYDIR"/add-sauce.sh -o -s "$TARGET"
+
+		# make sure that either the linux spell is being used or that the
+		# kernel sources are available for building
+		if ! grep -q '^linux$' "$CAULDRONDIR/rspells.$TYPE"
+		then
+			if [[ -d "$TARGET"/usr/src/linux ]]
+			then
+				if [[ ! -s "$TARGET"/usr/src/linux ]]
+				then
+					echo "Couldn't find "$TARGET" kernel config!"
+					exit 2
+				fi
+			else
+				echo "Cannot find the $TARGET kernel!"
+				echo "Either place the kernel sources and kernel config in $TARGET"
+				echo "or add the linux spell to the list of rspells."
+				exit 2
+			fi
+		fi
+
+	fi
 
 	if [[ -z $BUILDONLY ]]
 	then
@@ -127,46 +152,6 @@ function sanity_check() {
 
 		# If SYSDIR/var/spool/sorcery is not a directory, create it.
 		directory_check "$SYSDIR/var/spool/sorcery"
-	fi
-
-	if [[ -e "$config" ]]
-	then
-		arch="$(source "$config" &> /dev/null && echo $ARCHIVE)"
-		if [[ -n $arch && $arch != "on" ]]
-		then
-			echo "Error! TARGET sorcery does not archive!" >&2
-			echo -n "Set TARGET sorcery to archive? [yn]" >&2
-			read -n1 choice
-			echo ""
-
-			if [[ $choice == 'y' ]]
-			then
-				. "$TARGET/var/lib/sorcery/modules/libstate"
-				modify_config $config ARCHIVE on
-			else
-				echo "Archiving required, bailing out!"
-				exit 2
-			fi
-		fi
-	fi
-
-	# make sure that either the linux spell is being used or that the
-	# kernel sources are available for building
-	if ! grep -q '^linux$' "$CAULDRONDIR/rspells.$TYPE"
-	then
-		if [[ -d "$TARGET"/usr/src/linux ]]
-		then
-			if [[ ! -s "$TARGET"/usr/src/linux ]]
-			then
-				echo "Couldn't find "$TARGET" kernel config!"
-				exit 2
-			fi
-		else
-			echo "Cannot find the $TARGET kernel!"
-			echo "Either place the kernel sources and kernel config in $TARGET"
-			echo "or add the linux spell to the list of rspells."
-			exit 2
-		fi
 	fi
 }
 
