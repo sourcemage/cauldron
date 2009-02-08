@@ -559,7 +559,7 @@ function setup_iso() {
 	"$MYDIR"/add-sauce.sh -o -i "$ISODIR"
 
 	# add the rspells list to the ISO for later reference
-	cp -f "$CAULDRONDIR/rspells.$TYPE" "$ISODIR"/tmp/rspells
+	cp -f "$CAULDRONDIR/rspells.$TYPE" "$ISODIR"/usr/share/smgl.install/rspells
 
 	# save the grimoire version used for building everything to ISODIR for reference
 	msg "Saving grimoire version to ISODIR"
