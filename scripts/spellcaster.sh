@@ -162,6 +162,7 @@ function prepare_target() {
 	local SPOOL="$TARGET/tmp"
 	local SORCERY="sorcery-stable.tar.bz2"
 	local SORCERYDIR="$TARGET/usr/src/sorcery"
+	local LOGS="$TARGET/var/log/sorcery"
 
 	# make sure the TARGET has a clean /tmp
 	rm -fr "$TARGET"/tmp/*
@@ -217,7 +218,7 @@ function prepare_target() {
 		cp -f /etc/resolv.conf "$TARGET"/etc/resolv.conf
 
 	# clean out any old sorcery logs in TARGET
-	for logfile in $(find "$TARGET"/var/log/sorcery -type f)
+	for logfile in "$LOGS"/activity "$LOGS"/queue/install
 	do
 		rm -f $logfile
 	done
