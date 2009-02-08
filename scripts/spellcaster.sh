@@ -558,6 +558,9 @@ function setup_iso() {
 	msg "Running add-sauce.sh on ISODIR"
 	"$MYDIR"/add-sauce.sh -o -i "$ISODIR"
 
+	# add the rspells list to the ISO for later reference
+	cp -f "$CAULDRONDIR/rspells.$TYPE" "$ISODIR"/tmp/rspells
+
 	# save the grimoire version used for building everything to ISODIR for reference
 	msg "Saving grimoire version to ISODIR"
 	cp -f $GVERS "$ISODIR"/etc/grimoire_version
