@@ -426,7 +426,7 @@ function setup_sys() {
 	msg "Installing caches into SYSDIR"
 	for cache in $(<"$TARGET"/sys-list)
 	do
-		msg "Unpacking $cache"
+		msg ".. unpacking $cache"
 		tar xjf "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 -C "$SYSDIR"/
 	done
 
@@ -533,7 +533,7 @@ function setup_iso() {
 	msg "Unpacking ISO caches in ISODIR"
 	for cache in $(<"$TARGET"/iso-list)
 	do
-		msg "Unpacking and copying $cache"
+		msg ".. unpacking and copying $cache"
 		tar xjf "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 -C "$ISODIR"/
 		cp "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 "$ISODIR"/var/cache/sorcery/
 	done
@@ -542,7 +542,7 @@ function setup_iso() {
 	msg "Copying optional caches to ISODIR"
 	for cache in $(<"$TARGET"/opt-list)
 	do
-		msg "Copying $cache"
+		msg ".. copying $cache"
 		cp "$TARGET"/var/cache/sorcery/$cache*.tar.bz2 "$ISODIR"/var/cache/sorcery/
 	done
 
