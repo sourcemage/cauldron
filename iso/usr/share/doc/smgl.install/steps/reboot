@@ -2,7 +2,7 @@
 You should be all done with the installation! Congratulations! Time to reboot
 into your installed system! Just type:
 
-[1m reboot[m.
+[1m reboot[m
 
 If you installed [1msmgl-setup[m (installed by default unless changed), be sure to
 run [1mman smgl-setup[m when first logging in. It will provide you with
