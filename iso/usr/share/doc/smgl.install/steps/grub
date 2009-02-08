@@ -15,7 +15,7 @@ for your disk layout):
 > [1mquit[m
 
 Update menu.lst for your kernel:
-$EDITOR /boot/menu.lst
+$EDITOR /boot/grub/menu.lst
 
 Exit the chroot:
 [1m exit[m
