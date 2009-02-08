@@ -7,11 +7,11 @@ and bear in mind that it can be bypassed with a screwdriver):
 [1m passwd root[m
 
 [1mRecommended[m: add at least one regular user for daily use:
-[1m useradd -m [m-g users[1m mbolton[m
+[1m useradd -m -d /home/mbolton [m-g users[1m mbolton[m
 [1m passwd mbolton[m
 
-Replace mbolton with whatever login you want.
-You may also change the group (-g users).
+Replace mbolton with whatever login you want. Don't forget to change
+/home/mbolton accordingly. You may also change the group (-g users).
 
 Finally, exit the chroot to return to the installer:
 [1m exit[m
