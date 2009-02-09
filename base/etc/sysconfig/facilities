@@ -1,7 +1,7 @@
 
 root_fs=mountroot.sh
 
-modules=modutils.sh
+modules=modutils
 
 network=network
 
