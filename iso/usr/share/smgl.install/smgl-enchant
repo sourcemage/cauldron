@@ -130,7 +130,10 @@ sort -u -o "$depends" "$depends"
 echo "Regenerating $packages"
 sort -u -o "$packages" "$packages"
 
-echo "Overwriting $TARGET/etc/sysconfig/facilities with ISO copy"
-cp -f /etc/sysconfig/facilities "$TARGET"/etc/sysconfig/facilities
+if [[ ! $NOSYS == "yes" ]]
+then
+  echo "Overwriting $TARGET/etc/sysconfig/facilities with ISO copy"
+  cp -f /etc/sysconfig/facilities "$TARGET"/etc/sysconfig/facilities
+fi
 
 # vim:tabstop=2:softtabstop=2:shiftwidth=2:expandtab:ai
