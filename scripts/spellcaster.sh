@@ -493,11 +493,11 @@ function setup_sys() {
 		do
 			for date in "$spell"/*
 			do
-				tablet_get_version $date ver &&
-				tablet_get_status $date stat &&
-				tablet_get_depends $date dep &&
+				tablet_get_version "$date" ver &&
+				tablet_get_status "$date" stat &&
 				echo "${spell##*/}:${date##*/}:$stat:$ver" >> "$packages"
-				cat "$dep" >> "$depends"
+				tablet_get_depends "$date" dep &&
+				[[ -f "$dep" ]] && cat "$dep" >> "$depends"
 			done
 		done &&
 		sort -u -o "$depends" "$depends" &&
