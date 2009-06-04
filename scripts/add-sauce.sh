@@ -85,7 +85,7 @@ function blacklist_modules {
   local SRC="${1%/}"
   local DEST="${2%/}"
 
-  [[ ! -d "$SRC" || ! -d "$DEST" ]] && exit 3
+  [[ ! -d "$SRC" || ! -d "$DEST" ]] && return 3
   mkdir -p "$DEST"/etc/modprobe.d
 
   find "$SRC" -name "*.ko" |
