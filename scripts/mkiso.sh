@@ -70,7 +70,13 @@ ISODIR="${ISODIR:-/tmp/cauldron/iso}"
 [[ $# -ne 1 ]] && usage
 ISO_VERSION=$1
 
-mkisofs -R -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -V ${ISO_VERSION} -publisher "Source Mage GNU/Linux" -p "Cauldron" -o "${ISO_VERSION}.iso" "$ISODIR"
+if MKISOUTIL=$(which mkisofs) || MKISOUTIL=$(which genisoimage)
+then
+	$MKISOUTIL -R -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot -boot-load-size 4 -boot-info-table -V ${ISO_VERSION} -publisher "Source Mage GNU/Linux" -p "Cauldron" -o "${ISO_VERSION}.iso" "$ISODIR"
+else
+	echo "$(basename $0) needs either mkisofs or genisoimage."
+	exit 1;
+fi
 
 if $COMPRESS || [[ -n $KEEP ]]
 then
