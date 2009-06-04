@@ -326,7 +326,7 @@ function install_kernel() {
 		version=$(grep '^linux:' "$SRC"/var/state/sorcery/packages)
 		version=${version##*:}
 		kernel="$SRC"/boot/vmlinuz
-		${kconfig:="$SRC"/etc/sorcery/local/kernel.config}
+		kconfig=${kconfig:-"$SRC"/etc/sorcery/local/kernel.config}
 	fi
 
 	# Try to autodetect the location of the kernel config based on whether
