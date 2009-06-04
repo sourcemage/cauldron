@@ -1,0 +1,10 @@
+autoconf
+automake
+bison
+flex
+lilo
+m4
+perl
+smgl-setup
+wireless_tools
+wpa_supplicant
