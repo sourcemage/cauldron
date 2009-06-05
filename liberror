@@ -85,10 +85,11 @@ LIBERROR_CONTEXT=${LIBERROR_CONTEXT:-C}
 # Function definitions
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-## @param type
+## @param error name (string)
 ##
 ## Checks for an error condition (via $?), and if found it will return an error
-## of the specified type (arg1).
+## of the specified type (arg1) if given, or of the matching type if no arg was
+## given.
 ##
 #-------------------------------------------------------------------------------
 function liberror_checkerror() {
