@@ -18,15 +18,38 @@
 #-------------------------------------------------------------------------------
 # Cauldron includes
 #-------------------------------------------------------------------------------
-. ${CAULDRON_LIBS}/libinit
-. ${CAULDRON_LIBS}/liberror
+. ${CAULDRON_LIBS}/libinit ||
+  cauldron_fatal_error "error: cannot load cauldron libraries!"
+. ${CAULDRON_LIBS}/liberror ||
+  cauldron_fatal_error "error: cannot load cauldron libraries!"
 
 #-------------------------------------------------------------------------------
 # Sorcery includes
 #-------------------------------------------------------------------------------
 # Needed for modifying config files
-. ${SORCERY_LIBS}/libstate
-. ${SORCERY_LIBS}/libtrack
+if [[ -e "${SORCERY_LIBS}"/libstate ]]
+then
+  . "${SORCERY_LIBS}"/libstate
+else
+  CAULDRON_HOSTSORCERY=0
+fi
+if [[ -e "${SORCERY_LIBS}"/libtrack ]]
+then
+  . "${SORCERY_LIBS}"/libtrack
+else
+  CAULDRON_HOSTSORCERY=0
+fi
+
+#-------------------------------------------------------------------------------
+##
+## Used only when checking initialization of the library and a fatal error
+## occurs. Afterwards, functions from liberror should be used instead.
+##
+#-------------------------------------------------------------------------------
+function cauldron_fatal_error() {
+  echo $1
+  exit $CERR_FATAL
+}
 
 #-------------------------------------------------------------------------------
 ##
@@ -37,9 +60,11 @@
 function cauldron_source_sorcery() {
   local target=$1
 
-  source "$target/etc/sorcery/config"
-  [[ -e "$target/etc/sorcery/local/config" ]] &&
-  source "$target/etc/sorcery/local/config"
+  source "$target/etc/sorcery/config" || return $CERR_TARGETSORCERY
+  if [[ -e "$target/etc/sorcery/local/config" ]]
+  then
+    source "$target/etc/sorcery/local/config"
+  fi || return $CERR_TARGETSORCERY
 }
 
 #-------------------------------------------------------------------------------
@@ -52,10 +77,10 @@ function cauldron_chroot_init() {
 
   if [[ "$CAULDRON_CHROOTINIT" -ne 1 ]]
   then
-    mount --bind "$HOSTPATH"/dev "$TARGET"/dev
-    mount --bind "$HOSTPATH"/dev/pts "$TARGET"/dev/pts
-    mount --bind "$HOSTPATH"/proc "$TARGET"/proc
-    cauldron_source_sorcery "$TARGET"
+    mount --bind "$HOSTPATH"/dev "$TARGET"/dev || ret=$CERR_CHROOTINIT
+    mount --bind "$HOSTPATH"/dev/pts "$TARGET"/dev/pts || ret=$CERR_CHROOTINIT
+    mount --bind "$HOSTPATH"/proc "$TARGET"/proc || ret=$CERR_CHROOTINIT
+    cauldron_source_sorcery "$TARGET" || return $CERR_TARGETSORCERY
     export CAULDRON_CHROOTINIT=1
     export CAULDRON_CHROOT="chroot \"$TARGET\""
   fi
