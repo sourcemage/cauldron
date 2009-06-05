@@ -94,16 +94,20 @@ LIBERROR_CONTEXT=${LIBERROR_CONTEXT:-C}
 function liberror_checkerror() {
   # store the return value to preserve it
   local rc="$?"
-  local type=$1
-  local error=
+  local error="$1"
 
   if [[ $rc -gt 0 ]]
   then
-    error=$type
+    if [[ -z $error || $rc -ne ${!error} ]]
+    then
+      error="$(liberror_geterror $rc)"
+    fi
   else
-    error="${${type:0:1}ERR_OK}"
+    error="${LIBERROR_CONTEXT}ERR_OK"
   fi
-  return $error
+  [[ -z $error ]] && return 1
+  echo $error
+  return 0
 }
 
 #-------------------------------------------------------------------------------
