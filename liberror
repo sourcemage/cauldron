@@ -77,6 +77,10 @@ EERR_MSG=(
           "step error"                          # EERR_STEP
           )
 
+# liberror context - should be either C for cauldron or E for enchant, defaults
+# to cauldron context ("C").
+LIBERROR_CONTEXT=${LIBERROR_CONTEXT:-C}
+
 #-------------------------------------------------------------------------------
 # Function definitions
 #-------------------------------------------------------------------------------
