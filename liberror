@@ -92,10 +92,12 @@ LIBERROR_CONTEXT=${LIBERROR_CONTEXT:-C}
 ##
 #-------------------------------------------------------------------------------
 function cauldron_checkerror() {
+  # store the return value to preserve it
+  local rc="$?"
   local type=$1
   local error=
 
-  if [[ $? -gt 0 ]]
+  if [[ $rc -gt 0 ]]
   then
     error=$type
   else
