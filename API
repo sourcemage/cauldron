@@ -12,9 +12,9 @@ might be defined by the user, thus preventing naming collisions. Additionally,
 it can help reduce errors in programming due to confusion of one variable with
 another. If the subcomponents are all appropriately named, then it will be
 clear whether you are calling the correct function (if you are programming
-something for enchant, you probably shouldn't be calling any function prefixed
-with "cauldron_" for example). If you are contributing to any part of the
-Cauldron codebase, you are asked to adhere to the following guidelines when
+something for enchantment, you probably shouldn't be calling any function
+prefixed with "cauldron_" for example). If you are contributing to any part of
+the Cauldron codebase, you are asked to adhere to the following guidelines when
 naming functions and variables.
 
 Where it makes sense, I have loosely modeled the Cauldron API after the OpenGL
@@ -23,13 +23,17 @@ efficient API. Familiarity with the OpenGL API is however not required to code
 or understand the Cauldron API.
 
 In the context of the API, "cauldron" refers to the cauldron suite itself.
-Anything pertaining to installers is referred to collectively as "enchant" (the
-enchant suite).
+Anything pertaining to installers is referred to collectively as "enchantment"
+(the enchantment suite).
 
  * All cauldron API functions are to be prefixed with cauldron_
  * All cauldron API variables are to be prefixed with CAULDRON_
- * All enchant API functions are to be prefixed with enchant_
- * All enchant API variables are to be prefixed with ENCHANT_
+ * All enchantment API functions are to be prefixed with enchant_
+ * All enchantment API variables are to be prefixed with ENCHANT_
+ * Other API variables and functions are to be prefixed in accordance with what
+   makes sense for where those functions and variables are defined. For
+   example, in the common library liberror, functions are prefixed with
+   liberror_.
  * Functions should be preceded by verbose comments to describe the use of the
    function, formatted for use with bashdoc
 
