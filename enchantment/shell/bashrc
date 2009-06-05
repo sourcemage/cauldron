@@ -4,8 +4,9 @@
 # Take care not to pollute the user's namespace too much,
 # And make sure your functions don't collide with existing commands.
 
-. /etc/cauldron/local/config
-. ${ISO}/${ENCHANT_DATA}/libenchant
+. /etc/cauldron/enchant.config
+. /etc/cauldron/local/enchant.config
+. ${ISOPATH}/${ENCHANT_DATA}/libenchant
 
 # Ensure installer sanity
 enchant_prepare

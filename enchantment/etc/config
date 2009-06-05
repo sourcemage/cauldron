@@ -1,0 +1,30 @@
+        SORCERY_CONFIG="/etc/sorcery/config"
+          SORCERY_LIBS="/var/lib/sorcery/modules"
+        HOST_ARCH_PATH=$(grep "ARCH_SPEC=" ${SORCERY_CONFIG} | \
+                         cut -d = -f 2)
+             HOST_ARCH=$(grep "ARCHITECTURE=" ${HOST_SORCERY_CONFIG} | \
+                         cut -d = -f 2)
+       CACHE_EXTENSION=$(grep "EXTENSION=" ${HOST_SORCERY_CONFIG} | \
+                         cut -d = -f 2)
+
+# path to the ISO system (this should usually be null, unless
+# you are doing some tricky hacking)
+               ISOPATH=""
+# path to the base library modules
+             BASE_LIBS="${ISOPATH}/var/lib/cauldron"
+# branch of sorcery to use in the ISO
+    ISO_SORCERY_BRANCH="stable"
+
+# path to the cauldron library modules
+          ENCHANT_LIBS="${ISOPATH}/var/lib/cauldron/enchantment"
+           ENCHANT_TMP="${ISOPATH}/tmp/enchantment"
+        ENCHANT_STATUS="${ENCHANT_TMP}/status"
+          ENCHANT_BACK="${ENCHANT_TMP}/history/back"
+       ENCHANT_FORWARD="${ENCHANT_TMP}/history/forward"
+        ENCHANT_TARGET="${ISOPATH}/mnt/root"
+          ENCHANT_DATA="usr/share/enchantment"
+          ENCHANT_MSGS="${ENCHANT_DATA}/messages"
+          ENCHANT_DOCS="usr/share/doc/enchantment"
+# specifies the max. size of the history buffers
+# total history size = $ENCHANT_HISTORY * 2 = back + forward
+       ENCHANT_HISTORY=20

@@ -45,18 +45,3 @@
       CAULDRON_KEEPISO="yes"
 # branch of sorcery to use in the ISO
     ISO_SORCERY_BRANCH="stable"
-
-# The following variables are for Enchant
-# path to the cauldron library modules
-          ENCHANT_LIBS="${HOSTPATH}/var/lib/cauldron/enchant"
-           ENCHANT_TMP="${ISO}/tmp/enchant"
-        ENCHANT_STATUS="${ENCHANT_TMP}/status"
-          ENCHANT_BACK="${ENCHANT_TMP}/history/back"
-       ENCHANT_FORWARD="${ENCHANT_TMP}/history/forward"
-        ENCHANT_TARGET="${ISO}/mnt/root"
-          ENCHANT_DATA="usr/share/enchant"
-          ENCHANT_MSGS="${ENCHANT_DATA}/messages"
-          ENCHANT_DOCS="usr/share/doc/enchant"
-# specifies the max. size of the history buffers
-# total history size = $ENCHANT_HISTORY * 2 = back + forward
-       ENCHANT_HISTORY=20
