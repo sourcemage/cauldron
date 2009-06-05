@@ -119,9 +119,11 @@ function liberror_checkerror() {
 ##
 #-------------------------------------------------------------------------------
 function liberror_geterror() {
-  local error=$1
+  local error=$(set | grep "${LIBERROR_CONTEXT}ERR_[A-Z]*=$1" | cut -d = -f 1)
 
-  echo $(set | grep "${LIBERROR_CONTEXT}ERR_[A-Z]*=$error" | cut -d = -f 1)
+  [[ -z $error ]] && return 1
+  echo "$error"
+  return 0
 }
 
 #-------------------------------------------------------------------------------
