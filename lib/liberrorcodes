@@ -1,0 +1,80 @@
+#!/bin/bash
+#-------------------------------------------------------------------------------
+##
+##=head1 SYNOPSIS
+##
+##  liberrorcodes provides a set of variables which define default error codes.
+##  Most likely, code that links to liberror should provide its own custom
+##  definitions, but it is possible to load these first and then load custom
+##  defines afterwards to overwrite the defaults (or simply add to them).
+##
+##=head1 COPYRIGHT
+##
+##  Copyright 2009 by the Cauldron Team
+##
+##=head1 FUNCTIONS
+##
+##=over 4
+##
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+# Local global variables
+#-------------------------------------------------------------------------------
+DEFAULT_COLOR="\e[0m"
+BOLD="\e[1m"
+BLACK="\e[30m"
+RED="\e[31m"
+GREEN="\e[32m"
+YELLOW="\e[33m"
+BLUE="\e[34m"
+VIOLET="\e[35m"
+CYAN="\e[36m"
+WHITE="\e[37m"
+
+ERR_COLOR="${RED}${BOLD}"
+
+SPELL_COLOR="${WHITE}${BOLD}\e[40m"
+VERSION_COLOR="${WHITE}${BOLD}\e[40m"
+QUERY_COLOR="${YELLOW}${BOLD}"
+DISPEL_COLOR="${YELLOW}${BOLD}"
+CHECK_COLOR="${CYAN}"
+RESURRECT_COLOR="${GREEN}${BOLD}"
+FILE_COLOR="${GREEN}${BOLD}"
+SYMLINK_COLOR="${CYAN}${BOLD}"
+PROBLEM_COLOR="${RED}${BOLD}"
+MESSAGE_COLOR="${CYAN}"
+
+#-------------------------------------------------------------------------------
+# ERROR definitions
+#-------------------------------------------------------------------------------
+# error codes
+ERR_OK=0                  # everything is good
+ERR_FATAL=1               # fatal error (missing cauldron libs, etc.)
+
+# error messages
+ERR_MSGS=(
+          "operation succeeded"                 # ERR_OK
+          "fatal error"                         # ERR_FATAL
+          )
+
+#-------------------------------------------------------------------------------
+##
+## This software is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2 of the License, or
+## (at your option) any later version.
+##
+## This software is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this software; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+##
+#-------------------------------------------------------------------------------
+
+# vim:ai:tw=80:tabstop=2:softtabstop=2:shiftwidth=2:expandtab
+

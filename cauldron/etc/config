@@ -19,8 +19,10 @@
 # path to the ISO system (this should usually be null, unless
 # you are doing some tricky hacking)
                ISOPATH=""
+# path to the base library modules
+             BASE_LIBS="${HOSTPATH}/var/lib/cauldron"
 # path to the cauldron library modules
-         CAULDRON_LIBS="${HOSTPATH}/var/lib/cauldron"
+         CAULDRON_LIBS="${HOSTPATH}/var/lib/cauldron/cauldron"
 # path to the cauldron configs
          CAULDRON_DATA="/etc/cauldron"
 # path to where the ISO build chroot is/will go
@@ -45,6 +47,8 @@
     ISO_SORCERY_BRANCH="stable"
 
 # The following variables are for Enchant
+# path to the cauldron library modules
+          ENCHANT_LIBS="${HOSTPATH}/var/lib/cauldron/enchant"
            ENCHANT_TMP="${ISO}/tmp/enchant"
         ENCHANT_STATUS="${ENCHANT_TMP}/status"
           ENCHANT_BACK="${ENCHANT_TMP}/history/back"

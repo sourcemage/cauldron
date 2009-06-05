@@ -24,8 +24,19 @@
 ##
 #-------------------------------------------------------------------------------
 
-# source liberror
-. ${CAULDRON_LIBS}/liberror
+#-------------------------------------------------------------------------------
+# enchantment includes
+#-------------------------------------------------------------------------------
+. ${BASE_LIBS}/libinit ||
+  cauldron_fatal_error "error: cannot load base libraries!"
+. ${BASE_LIBS}/liberror ||
+  cauldron_fatal_error "error: cannot load base libraries!"
+. ${BASE_LIBS}/liberrorcodes ||
+  cauldron_fatal_error "error: cannot load base libraries!"
+
+# load cauldron error code and message defines
+. ${ENCHANT_LIBS}/errorcodes ||
+  enchant_fatal_error "error: cannot load enchantment libraries!"
 
 #-------------------------------------------------------------------------------
 ##

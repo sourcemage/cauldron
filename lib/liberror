@@ -17,71 +17,6 @@
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
-# Local global variables
-#-------------------------------------------------------------------------------
-CDEFAULT_COLOR="\e[0m"
-CBOLD="\e[1m"
-CBLACK="\e[30m"
-CRED="\e[31m"
-CGREEN="\e[32m"
-CYELLOW="\e[33m"
-CBLUE="\e[34m"
-CVIOLET="\e[35m"
-CCYAN="\e[36m"
-CWHITE="\e[37m"
-
-CERR_COLOR="${RED}${BOLD}"
-EERR_COLOR="${RED}${BOLD}"
-
-CSPELL_COLOR="${WHITE}${BOLD}\e[40m"
-CVERSION_COLOR="${WHITE}${BOLD}\e[40m"
-CQUERY_COLOR="${YELLOW}${BOLD}"
-CDISPEL_COLOR="${YELLOW}${BOLD}"
-CCHECK_COLOR="${CYAN}"
-CRESURRECT_COLOR="${GREEN}${BOLD}"
-CFILE_COLOR="${GREEN}${BOLD}"
-CSYMLINK_COLOR="${CYAN}${BOLD}"
-CPROBLEM_COLOR="${RED}${BOLD}"
-CMESSAGE_COLOR="${CYAN}"
-
-#-------------------------------------------------------------------------------
-# ERROR definitions
-#-------------------------------------------------------------------------------
-# cauldron errors
-CERR_OK=0                 # everything is good
-CERR_FATAL=1              # fatal error (missing cauldron libs, etc.)
-CERR_ARCHIVE=2            # problem creating archives
-CERR_CHROOT=3             # problem with a chroot
-CERR_CLEANFILE=4          # missing cleaner files
-CERR_TARGETSORCERY=5      # missing target sorcery files
-CERR_HOSTSORCERY=6        # sorcery not installed on host
-
-# cauldron error messages
-CERR_MSG=(
-          "operation succeeded"                 # CERR_OK
-          "fatal error"                         # CERR_FATAL
-          "sorcery not set to archive"          # CERR_ARCHIVE
-          "not in chroot"                       # CERR_CHROOT
-          "cleanfile not found"                 # CERR_CLEANFILE
-          "could not load target sorcery"       # CERR_TARGETSORCERY
-          "could not load host sorcery"         # CERR_HOSTSORCERY
-          )
-
-# enchant errors
-EERR_OK=0
-EERR_STEP=1
-
-# enchant error messages
-EERR_MSG=(
-          "operation succeeded"                 # EERR_OK
-          "step error"                          # EERR_STEP
-          )
-
-# liberror context - should be either C for cauldron or E for enchant, defaults
-# to cauldron context ("C").
-LIBERROR_CONTEXT=${LIBERROR_CONTEXT:-C}
-
-#-------------------------------------------------------------------------------
 # Function definitions
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -104,7 +39,7 @@ function liberror_checkerror() {
       error="$(liberror_geterror $rc)"
     fi
   else
-    error="${LIBERROR_CONTEXT}ERR_OK"
+    error="ERR_OK"
   fi
   [[ -z $error ]] && return 1
   echo $error
@@ -119,7 +54,7 @@ function liberror_checkerror() {
 ##
 #-------------------------------------------------------------------------------
 function liberror_geterror() {
-  local error=$(set | grep "${LIBERROR_CONTEXT}ERR_[A-Z]*=$1" | cut -d = -f 1)
+  local error=$(set | grep "ERR_[A-Z]*=$1" | cut -d = -f 1)
 
   [[ -z $error ]] && return 1
   echo "$error"
@@ -136,37 +71,20 @@ function liberror_geterror() {
 #-------------------------------------------------------------------------------
 function liberror_printerror() {
   local error=$1
-  local errmsg=
+  local errmsg="${ERR_MSGS[${!error}]}"
 
-  # check if we are in cauldron or enchant
-  if [[ $LIBERROR_CONTEXT == C ]]
+  # exit if $errmsg not defined
+  [[ -z $errmsg ]] && return 1
+
+  if [[ ${!error} -eq 0 ]]
   then
-    errmsg="${CERR_MSG[${!error}]}"
-    # exit if $errmsg not defined
-    [[ -z $errmsg ]] && return 1
-
-    if [[ ${!error} -eq 0 ]]
-    then
-      # print a cauldron OK message
-      echo "$CMESSAGE_COLOR" "$errmsg" "$CDEFAULT_COLOR"
-    else
-      # print a cauldron error message
-      echo "$CERR_COLOR" "error: ${errmsg}!" "$CDEFAULT_COLOR"
-    fi
+    # print a cauldron OK message
+    echo "$MESSAGE_COLOR" "$errmsg" "$DEFAULT_COLOR"
   else
-    errmsg="${EERR_MSG[${!error}]}"
-    # exit if $errmsg not defined
-    [[ -z $errmsg ]] && return 1
-
-    if [[ ${!error} -eq 0 ]]
-    then
-      # print an enchant OK message
-      echo "$EMESSAGE_COLOR" "$errmsg" "$EDEFAULT_COLOR"
-    else
-      # print an enchant error message
-      echo "$EERR_COLOR" "error: ${errmsg}!" "$EDEFAULT_COLOR"
-    fi
+    # print a cauldron error message
+    echo "$ERR_COLOR" "error: ${errmsg}!" "$DEFAULT_COLOR"
   fi || return 1
+
   return 0
 }
 

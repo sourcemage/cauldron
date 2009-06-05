@@ -16,11 +16,17 @@
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
-# Cauldron includes
+# cauldron includes
 #-------------------------------------------------------------------------------
-. ${CAULDRON_LIBS}/libinit ||
-  cauldron_fatal_error "error: cannot load cauldron libraries!"
-. ${CAULDRON_LIBS}/liberror ||
+. ${BASE_LIBS}/libinit ||
+  cauldron_fatal_error "error: cannot load base libraries!"
+. ${BASE_LIBS}/liberror ||
+  cauldron_fatal_error "error: cannot load base libraries!"
+. ${BASE_LIBS}/liberrorcodes ||
+  cauldron_fatal_error "error: cannot load base libraries!"
+
+# load cauldron error code and message defines
+. ${CAULDRON_LIBS}/errorcodes ||
   cauldron_fatal_error "error: cannot load cauldron libraries!"
 
 #-------------------------------------------------------------------------------
