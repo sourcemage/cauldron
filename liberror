@@ -56,9 +56,26 @@ CERR_CLEANFILE=4          # missing cleaner files
 CERR_TARGETSORCERY=5      # missing target sorcery files
 CERR_HOSTSORCERY=6        # sorcery not installed on host
 
+# cauldron error messages
+CERR_MSG=(
+          "operation succeeded"                 # CERR_OK
+          "fatal error"                         # CERR_FATAL
+          "sorcery not set to archive"          # CERR_ARCHIVE
+          "not in chroot"                       # CERR_CHROOT
+          "cleanfile not found"                 # CERR_CLEANFILE
+          "could not load target sorcery"       # CERR_TARGETSORCERY
+          "could not load host sorcery"         # CERR_HOSTSORCERY
+          )
+
 # enchant errors
 EERR_OK=0
 EERR_STEP=1
+
+# enchant error messages
+EERR_MSG=(
+          "operation succeeded"                 # EERR_OK
+          "step error"                          # EERR_STEP
+          )
 
 #-------------------------------------------------------------------------------
 # Function definitions
