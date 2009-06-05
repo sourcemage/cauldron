@@ -8,19 +8,19 @@ Things to do in order to achieve 0.1
 	- clean the chroot out (cleaners)
 	- add installer(s)
 	- extra sanity checks on boot and etc in chroot (add_sauce stuff)
-* set up how to do the chroots in libcauldron (${CAULDRON_CHROOT})
+* set up how to do chroots in libcauldron (${CAULDRON_CHROOT}) (mostly done)
 * write code to install sorcery into the CAULDRON_BUILD chroot
 * write a cauldron spell so that cauldron can install itself
 * write code to set up the init process on the ISO
 	- this needs to be sensitive to what installers are present
 * still need the installers themselves to be written
-	- for the shell installer, this is trivial
+	- for the shell installer, this is trivial (mostly done)
 	- the menu installer needs to be written
 		~ Not sure if this should really be for 0.1, but a lot of
 		  people have asked for it already.
 * LOTS AND LOTS OF TESTING!
 * More sanity checks and error testing (use liberror!)
-	- liberror should get a function cauldron_chkerror or something, which
+	- liberror should get a function liberror_chkerror or something, which
 	  will take an error code and do different things depending on the
 	  debug level, etc.
 
