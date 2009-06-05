@@ -48,10 +48,13 @@ CMESSAGE_COLOR="${CYAN}"
 # ERROR definitions
 #-------------------------------------------------------------------------------
 # cauldron errors
-CERR_OK=0
-CERR_ARCHIVE=1
-CERR_CHROOT=2
-CERR_CLEANFILE=3
+CERR_OK=0                 # everything is good
+CERR_FATAL=1              # fatal error (missing cauldron libs, etc.)
+CERR_ARCHIVE=2            # problem creating archives
+CERR_CHROOT=3             # problem with a chroot
+CERR_CLEANFILE=4          # missing cleaner files
+CERR_TARGETSORCERY=5      # missing target sorcery files
+CERR_HOSTSORCERY=6        # sorcery not installed on host
 
 # enchant errors
 EERR_OK=0
