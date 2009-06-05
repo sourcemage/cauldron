@@ -117,11 +117,48 @@ function liberror_geterror() {
   echo $(set | grep "${LIBERROR_CONTEXT}ERR_[A-Z]*=$error" | cut -d = -f 1)
 }
 
-function cauldron_printerror() {
+#-------------------------------------------------------------------------------
+## @param error name (string)
+##
+## Prints the corresponding error message for the given error type (string,
+## defined in this file, e.g. CERR_ARCHIVE) to STDOUT in the configured error
+## message color.
+##
+#-------------------------------------------------------------------------------
+function liberror_printerror() {
   local error=$1
   local errmsg=
 
-  echo "$CERR_COLOR" "$errmsg" "$CDEFAULT_COLOR"
+  # check if we are in cauldron or enchant
+  if [[ $LIBERROR_CONTEXT == C ]]
+  then
+    errmsg="${CERR_MSG[${!error}]}"
+    # exit if $errmsg not defined
+    [[ -z $errmsg ]] && return 1
+
+    if [[ ${!error} -eq 0 ]]
+    then
+      # print a cauldron OK message
+      echo "$CMESSAGE_COLOR" "$errmsg" "$CDEFAULT_COLOR"
+    else
+      # print a cauldron error message
+      echo "$CERR_COLOR" "error: ${errmsg}!" "$CDEFAULT_COLOR"
+    fi
+  else
+    errmsg="${EERR_MSG[${!error}]}"
+    # exit if $errmsg not defined
+    [[ -z $errmsg ]] && return 1
+
+    if [[ ${!error} -eq 0 ]]
+    then
+      # print an enchant OK message
+      echo "$EMESSAGE_COLOR" "$errmsg" "$EDEFAULT_COLOR"
+    else
+      # print an enchant error message
+      echo "$EERR_COLOR" "error: ${errmsg}!" "$EDEFAULT_COLOR"
+    fi
+  fi || return 1
+  return 0
 }
 
 #-------------------------------------------------------------------------------
