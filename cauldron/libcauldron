@@ -54,7 +54,7 @@ fi
 #-------------------------------------------------------------------------------
 function cauldron_fatal_error() {
   echo $1
-  exit $CERR_FATAL
+  exit $ERR_FATAL
 }
 
 #-------------------------------------------------------------------------------
@@ -66,11 +66,11 @@ function cauldron_fatal_error() {
 function cauldron_source_sorcery() {
   local target=$1
 
-  source "$target/etc/sorcery/config" || return $CERR_TARGETSORCERY
+  source "$target/etc/sorcery/config" || return $ERR_TARGETSORCERY
   if [[ -e "$target/etc/sorcery/local/config" ]]
   then
     source "$target/etc/sorcery/local/config"
-  fi || return $CERR_TARGETSORCERY
+  fi || return $ERR_TARGETSORCERY
 }
 
 #-------------------------------------------------------------------------------
@@ -83,10 +83,10 @@ function cauldron_chroot_init() {
 
   if [[ "$CAULDRON_CHROOTINIT" -ne 1 ]]
   then
-    mount --bind "$HOSTPATH"/dev "$TARGET"/dev || ret=$CERR_CHROOTINIT
-    mount --bind "$HOSTPATH"/dev/pts "$TARGET"/dev/pts || ret=$CERR_CHROOTINIT
-    mount --bind "$HOSTPATH"/proc "$TARGET"/proc || ret=$CERR_CHROOTINIT
-    cauldron_source_sorcery "$TARGET" || return $CERR_TARGETSORCERY
+    mount --bind "$HOSTPATH"/dev "$TARGET"/dev || ret=$ERR_CHROOTINIT
+    mount --bind "$HOSTPATH"/dev/pts "$TARGET"/dev/pts || ret=$ERR_CHROOTINIT
+    mount --bind "$HOSTPATH"/proc "$TARGET"/proc || ret=$ERR_CHROOTINIT
+    cauldron_source_sorcery "$TARGET" || return $ERR_TARGETSORCERY
     export CAULDRON_CHROOTINIT=1
     export CAULDRON_CHROOT="chroot \"$TARGET\""
   fi
@@ -160,7 +160,7 @@ function cauldron_base_toolchain() {
   local HOST_TRIPLE
 
   # exit with error if chroot not defined
-  [[ -n "$CAULDRON_CHROOT" ]] || exit $CERR_CHROOT
+  [[ -n "$CAULDRON_CHROOT" ]] || exit $ERR_CHROOT
 
   # set the value for HOST_TRIPLE
   HOST_TRIPLE=$(cauldron_get_host_triple)
@@ -322,7 +322,7 @@ function cauldron_configure_toolchain() {
 #-------------------------------------------------------------------------------
 function cauldron_cross_toolchain() {
   # exit with error if chroot not defined
-  [[ -n "$CAULDRON_CHROOT" ]] || exit $CERR_CHROOT
+  [[ -n "$CAULDRON_CHROOT" ]] || exit $ERR_CHROOT
 
   # build the stage 1 tools
   cauldron_configure_toolchain 1
@@ -365,14 +365,14 @@ function cauldron_build_target_system() {
   local spell
 
   # exit with error if chroot not defined
-  [[ -n "$CAULDRON_CHROOT" ]] || exit $CERR_CHROOT
+  [[ -n "$CAULDRON_CHROOT" ]] || exit $ERR_CHROOT
 
   # Since we will be installing from the running ISO system instead of a giant
   # tarball, for each spell we only need to make sure that the cache file is
   # available. This will require that the ISO sorcery has caching enabled. The
   # caching should really be turned on from the very beginning though...
   cauldron_chroot_init
-  [[ "$ARCHIVE" == "off" ]] && return $CERR_ARCHIVE
+  [[ "$ARCHIVE" == "off" ]] && return $ERR_ARCHIVE
   for spell in $target_spells
   do
     # Cheap cop-out to get the cache generated - cast the spell to generate the
@@ -384,7 +384,7 @@ function cauldron_build_target_system() {
     ${CAULDRON_CHROOT} ${CAULDRON_DISPEL} $spell
   done
   cauldron_chroot_done
-  return $CERR_OK
+  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
@@ -399,7 +399,7 @@ function cauldron_build_target_system() {
 function cauldron_clean_iso_system() {
   local CLEANFILE=$1
 
-  [[ -z "$CLEANFILE" ]] && return $CERR_CLEANFILE
+  [[ -z "$CLEANFILE" ]] && return $ERR_CLEANFILE
 
   for i in $(sort -r $CLEANFILE)
   do
@@ -412,7 +412,7 @@ function cauldron_clean_iso_system() {
       rm $i
     fi
   done
-  return $CERR_OK
+  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
@@ -464,7 +464,7 @@ function cauldron_add_installer() {
 #-------------------------------------------------------------------------------
 function cauldron_prepare() {
   # exit with error if chroot not defined
-  [[ -n "$CAULDRON_CHROOT" ]] || exit $CERR_CHROOT
+  [[ -n "$CAULDRON_CHROOT" ]] || exit $ERR_CHROOT
 
   # first, ensure that the build dir exists
   mkdir -p "$CAULDRON_BUILD"

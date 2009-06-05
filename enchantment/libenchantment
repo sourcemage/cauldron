@@ -163,7 +163,7 @@ function enchant_setprev() {
 #-------------------------------------------------------------------------------
 function enchant_back() {
   # if the forward history is empty, then we can't go forward
-  [[ $(wc -l < ${ENCHANT_BACK}) -eq 0 ]] && return $EERR_BACK
+  [[ $(wc -l < ${ENCHANT_BACK}) -eq 0 ]] && return $ERR_BACK
 
   # if the max history size has been reached, then we drop the oldest item
   [[ $(wc -l < ${ENCHANT_FORWARD}) -ge $ENCHANT_HISTORY ]] &&
@@ -186,7 +186,7 @@ function enchant_back() {
 #-------------------------------------------------------------------------------
 function enchant_forward() {
   # if the forward history is empty, then we can't go forward
-  [[ $(wc -l < ${ENCHANT_FORWARD}) -eq 0 ]] && return $EERR_FORWARD
+  [[ $(wc -l < ${ENCHANT_FORWARD}) -eq 0 ]] && return $ERR_FORWARD
 
   # if the max history size has been reached, then we drop the oldest item
   [[ $(wc -l < ${ENCHANT_BACK}) -ge $ENCHANT_HISTORY ]] &&
@@ -257,10 +257,10 @@ function enchant_setstep() {
       # copy the current status to the back history, so we can go back to where we
       # are after we jump forward
       cat < ${ENCHANT_STATUS} >> ${ENCHANT_BACK}
-      return $EERR_OK
+      return $ERR_OK
     fi
   done
-  return $EERR_STEP
+  return $ERR_STEP
 }
 
 

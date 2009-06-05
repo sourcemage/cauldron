@@ -49,7 +49,7 @@ function cauldron_brew () {
   # set up chroot for building inside $CAULDRON_BUILD
   cauldron_chroot_init
   # exit with error if chroot not defined
-  [[ -n "$CAULDRON_CHROOT" ]] || exit $CERR_CHROOT
+  [[ -n "$CAULDRON_CHROOT" ]] || exit $ERR_CHROOT
 
   # build the cross-compile tool-chain targeted for the target sys
   if [ -n $TARGET ]
