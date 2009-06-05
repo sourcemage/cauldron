@@ -91,7 +91,7 @@ LIBERROR_CONTEXT=${LIBERROR_CONTEXT:-C}
 ## of the specified type (arg1).
 ##
 #-------------------------------------------------------------------------------
-function cauldron_checkerror() {
+function liberror_checkerror() {
   # store the return value to preserve it
   local rc="$?"
   local type=$1
