@@ -1,4 +1,8 @@
-This file describes the layout of the project, and how the different components interconnect with each other.
+This file describes the layout of the project, and how the different components
+interconnect with each other.
+
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+cauldron/
 
 ************
 * cauldron *
@@ -20,14 +24,16 @@ script) and libinit library (for handling the ISO init boot stuff). The libinit
 sourcing will possibly be moved out into the cauldron script later, but for now
 it is in libcauldron.
 
-************
-* liberror *
-************
-	This library defines all the error codes recognized by the cauldron
-scripts, and (when implemented) functions to handle the printing of error
-messages using these codes. This is used by cauldron, libcauldron, and
-libenchant. It is sourced by libcauldron (and should be sourced by cauldron and
-libenchant?).
+*************
+* cleaners/ *
+*************
+	This directory contains text files with lists of files, one per line
+(note: files, not spells!). The files that are listed are ones that can/should
+be removed from the ISO before packaging it. For example, the build toolchain
+is removed from the ISO via the cleaners, since some of the toolchain libraries
+are needed for runtime binaries, even though the build tools themselves are
+not. No build tools should be on the ISO! Their spell caches are provided
+instead. The cleaners are used by libcauldron.
 
 ***********
 * libinit *
@@ -63,27 +69,46 @@ by libcauldron.
 onto the ISO. It includes things like gcc, and for x86 bin86. This will likely
 get split into arch-specific tool-chain lists later. The tool-chain list is
 used by libcauldron.
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-**********************
-* enchant/libenchant *
-**********************
+
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+lib/
+
+************
+* liberror *
+************
+	This library defines all the error codes recognized by the cauldron
+scripts, and (when implemented) functions to handle the printing of error
+messages using these codes. This is used by cauldron, libcauldron, and
+libenchant. It is sourced by libcauldron (and should be sourced by cauldron and
+libenchant?).
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+echantment/
+
+******************
+* libenchantment *
+******************
 	This library provides common functions to be used across the different
 ISO installers. Currently sourced by libcauldron, but likely will be sourced by
 cauldron instead of libcauldron soon. It is also sourced by the different
 installers, as it provides common functionality for them.
 
 
-****************
-* enchant/menu *
-****************
+********************
+* enchantment/menu *
+********************
 	The menu installer (look at older ISOs (0.9.6.3 or earlier) for an idea
 of what this is). Everything relevant to the menu installer goes under this
 directory, to be copied onto the ISO later if the ISO is intended to make use
 of this module.
 
-*****************
-* enchant/shell *
-*****************
+*********************
+* enchantment/shell *
+*********************
 	The shell installer (as seen on the 0.10.0 devel ISOs). Everything
 relevant to the shell installer goes under this directory, to be copied over to
 the ISO later if the ISO is intended to use this installer. (Note: The ISO
@@ -92,14 +117,5 @@ one is highly stable and robust, and requires very little in the way of system
 resources. It's a good backup if something goes wrong with another installer,
 and has proven capable of being the only installer on the ISO as well. Other
 installers are just eye-candy on top of this one.)
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-*************
-* cleaners/ *
-*************
-	This directory contains text files with lists of files, one per line
-(note: files, not spells!). The files that are listed are ones that can/should
-be removed from the ISO before packaging it. For example, the build toolchain
-is removed from the ISO via the cleaners, since some of the toolchain libraries
-are needed for runtime binaries, even though the build tools themselves are
-not. No build tools should be on the ISO! Their spell caches are provided
-instead. The cleaners are used by libcauldron.
