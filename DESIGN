@@ -17,7 +17,7 @@ Cauldron, that basesystem will then be considered the host system, so the same
 discussion as above still applies.
 
 Once the basic tool-chain tarball is generated/found/copied, it can be unpacked
-inside of the iso build directory. This, along with a copy of sorcery, should
+inside of the build directory. This, along with a copy of sorcery, should
 provide everything needed to generate the iso (aside from the spell packages
 themselves, which should be gotten over the net or copied in manually from
 pre-downloaded files. For grabbing over the net, a proper resolv.conf will be
@@ -33,17 +33,20 @@ be used without causing any problems for the booting of the iso on the target
 systems, -Os should be used in addition to --strip in order to reduce the size
 of the iso.
 
-Afterwards, a basic system can be built inside the iso build chroot using
+Afterwards, a basic system can be built inside the build chroot using
 sorcery and the configured tool-chain. This basic system should be absolutely
-minimal, as it will be what is installed onto the target system. After the
-base system is generated/built, the chroot should be exited, and a copy should
-be made into a bzipped tarball. Don't forget to clean out unnecessary files
-from the COPY, _not_ the original, before making the bzipped tarball.
+minimal, as it will be what is installed onto the target system. After the base
+system is generated/built, the chroot should be exited, and the cache files for
+all the spells that are to be included in the target install (non-optional
+spells) should be unpacked into a separate directory. That directory will then
+be archived and compressed as system.tar.bz2 to be placed on the ISO. Don't
+forget to clean out unnecessary files from the new separate directory, _not_
+the original build directory, before making the bzipped tarball.
 [system.tar.bz2] (unnecessary files will include the host (cross-compile)
 tool-chain used to build the base system, as well as [possibly] sorcery files
 in /var, anything in /usr/src, etc.)
 
-Chroot back into the main iso build dir (i.e. not the system install copy).
+Chroot back into the main build dir (i.e. not the system install copy).
 Build the iso system by casting additional spells on top of the base system
 generated in the previous step. This includes a kernel (config for the kernel
 SHOULD be something downloaded from a repository), filesystem tools
@@ -54,15 +57,19 @@ the spells cast in this step or the previous step (though very little should
 come from the previous step, as the previous step should really only provide an
 absolute minimal tool-chain generated for the target system).
 
-Configure the boot/init process for the iso. This includes modifying
+Exit the iso build chroot. Unpack the necessary spell caches to a separate
+directory for the iso system. Remove any unnecessary files/packages/etc. from
+the iso (i.e., run the cleaners on it). Copy in the bzipped tarball of the
+system install (system.tar.bz2).
+
+Generate an initrd/initramfs to be used to boot the ISO, and place it boot/ in
+the iso system directory just created and populated from the build spell
+caches. Configure the boot/init process for the iso. This includes modifying
 isolinux/isolinux.cfg, as well as various scripts/configs in /etc, as well as
 generating an initrd/initramfs for the ISO. Pay particular attention to the
 init system (including what will happen "before init"). (Whether or not other
 bootloaders, such as grub, can be used as viable alternatives to isolinux will
 be researched later.)
 
-Exit the iso build chroot. Make a new copy of the iso build dir. This new copy
-will become the iso itself. Remove any unnecessary files/packages/etc. from
-the iso. Copy in the bzipped tarball of the system install (system.tar.bz2) and
-the initrd/initramfs. Generate a bootable iso using mkisofs. Compress the iso
-using bzip2. [e.g. smgl-devel.iso.bz2]
+Generate a bootable iso using mkisofs. Compress the iso using bzip2. [e.g.
+smgl-devel.iso.bz2]
