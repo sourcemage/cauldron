@@ -104,6 +104,19 @@ function cauldron_checkerror() {
   return $error
 }
 
+#-------------------------------------------------------------------------------
+## @param error (int)
+##
+## Finds a matching error type for the given error number. This is used to get
+## an error name from a raw return code, for example.
+##
+#-------------------------------------------------------------------------------
+function liberror_geterror() {
+  local error=$1
+
+  echo $(set | grep "${LIBERROR_CONTEXT}ERR_[A-Z]*=$error" | cut -d = -f 1)
+}
+
 function cauldron_printerror() {
   local error=$1
   local errmsg=
