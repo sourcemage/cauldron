@@ -91,7 +91,7 @@ function blacklist_modules {
   [[ ! -d "$SRC" || ! -d "$DEST" ]] && return 3
 
   # ensure that the destination modprobe.d directory hierarchy exists
-  mkdir -p "${BLACKLISTi%/*}"
+  mkdir -p "${BLACKLIST%/*}"
 
   find "$SRC" -name "*.ko" |
     sed 's#^.*/##' |
