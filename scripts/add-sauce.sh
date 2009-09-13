@@ -84,14 +84,19 @@ fi >&2
 function blacklist_modules {
   local SRC="${1%/}"
   local DEST="${2%/}"
+  local BLACKLIST="$DEST/etc/modprobe.d/blacklist.conf"
 
+
+  # ensure that both the source and destination variables are directories
   [[ ! -d "$SRC" || ! -d "$DEST" ]] && return 3
-  mkdir -p "$DEST"/etc/modprobe.d
+
+  # ensure that the destination modprobe.d directory hierarchy exists
+  mkdir -p "${BLACKLISTi%/*}"
 
   find "$SRC" -name "*.ko" |
     sed 's#^.*/##' |
     sed 's#^\(.*\)\.ko$#install \1 /bin/true#' |
-    sort >> "$DEST"/etc/modprobe.d/blacklist
+    sort >> "$BLACKLIST"
 }
 
 if [[ $TYPE == "iso" ]] ;then
