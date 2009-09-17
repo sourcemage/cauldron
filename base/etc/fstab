@@ -10,10 +10,10 @@ sysfs   /sys            sysfs   defaults        0 0
 # Add your file systems here.
 
 # Examples:
-#/dev/hda1	/boot	ext2		defaults		0 2
-#/dev/hda2	/	reiserfs	defaults,noatime	0 1
+#/dev/sda1	/	reiserfs	defaults,noatime	0 1
+#/dev/sda3	/boot	ext2		defaults		0 2
 #LABEL=home	/home	ext3		defaults		0 2
-#/dev/hda3	swap	swap		defaults		0 0
+#/dev/sda2	swap	swap		defaults		0 0
 #
 # The schema is
 # <device> <mountpoint> <type> <options> <dump> <pass>
