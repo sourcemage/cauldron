@@ -7,13 +7,13 @@ dmesg | grep -i disk. You probably want something that is either hd or sd.
 This image ships with several popular programs for partitioning:
 
 cfdisk is probably the most popular, a curses-based menu system:
-[1m cfdisk /dev/hda[m
+[1m cfdisk /dev/sda[m
 
 parted can resize partitions, but may be a tad confusing:
-[1m parted /dev/hda[m
+[1m parted /dev/sda[m
 
 Then for the purists there's plain line-based fdisk. Can be a bit hard to use:
-[1m fdisk /dev/hda[m
+[1m fdisk /dev/sda[m
 
 The iso also ships with [1msfdisk[m, if you're insane enough to want to use
 it.

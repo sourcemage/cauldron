@@ -4,14 +4,14 @@ of example commands for the different types of filesystems supported on this
 ISO. The partitions given are examples. Be sure to format all the partitions
 you need.
 
-[1m mke2fs /dev/hda1[m
-[1m mkfs.ext3 /dev/hda1[m
-[1m mkreiserfs /dev/hda1[m
-[1m mkfs.jfs /dev/hda1[m
-[1m mkfs.xfs /dev/hda1[m
+[1m mke2fs /dev/sda1[m
+[1m mkfs.ext3 /dev/sda1[m
+[1m mkreiserfs /dev/sda1[m
+[1m mkfs.jfs /dev/sda1[m
+[1m mkfs.xfs /dev/sda1[m
 
 You probably want a swap partition:
-[1m mkswap /dev/hda2[m
+[1m mkswap /dev/sda2[m
 
 The reiser4 tools are provided on the ISO. However, the ISO kernel does not
 yet support reiser4, so although you can create reiser4 filesystems and
