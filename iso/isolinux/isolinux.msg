@@ -3,7 +3,7 @@ This ISO made using grimoire @GRIMOIRE_VERSION@.
 
 09Welcome07 to 04Source Mage GNU/Linux07
 Copyright (C) 2000-2001 by Kyle Sallee
-Copyright (C) 2002-2009 by Source Magers <www.sourcemage.org>
+Copyright (C) 2002-@ISO_YEAR@ by Source Magers <www.sourcemage.org>
 All Rights Reserved
 
 Source Mage is distributed under the terms of the GNU General Public License

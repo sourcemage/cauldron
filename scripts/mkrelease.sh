@@ -74,6 +74,10 @@ done
 # Replace the GRIMOIRE_VERSION placeholder (currently only in isolinux.msg).
 sed -i "s/@GRIMOIRE_VERSION@/$GRIMOIRE_VER/" "$TARGET"/isolinux/isolinux.msg
 
+# Replace the ISO_YEAR placeholder with the current year in which the ISO is generated
+# This makes keeping the copyright up-to-date trivial for the person building the ISO
+sed -i "s/@ISO_YEAR@/$(date +%Y)/" "$TARGET"/isolinux/isolinux.msg
+
 # Generate the release ISO. Currently we force KEEP and COMPRESSION.
 if [[ -n $ISOCHOWN ]]
 then
