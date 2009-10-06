@@ -6,7 +6,7 @@ or your system may not function, so some of these have been included as
 defaults in /tmp/spells. [1mNOTE:[m the ISO caches represent ALL spells installed
 for the ISO runtime, and are selectable for install, regardless of whether they
 are also included in system.tar.bz2 as well - gcc, glibc, bash, etc. are
-avaialble both in system.tar.bz2 AND in the ISO's /var/cache/sorcery/
+available both in system.tar.bz2 AND in the ISO's /var/cache/sorcery/
 directory. For a list of the spells in system.tar.bz2, see /tmp/rspells.
 
 text menu:
