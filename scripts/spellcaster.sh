@@ -355,7 +355,7 @@ function install_kernel() {
 		kmodules="$(find "$kmodules" -mindepth 1 -maxdepth 1 -type d)"
 		kmodules="$(echo "$kmodules" | sed 's#.*/##')"
 
-		if [[ -n $kmodules && $(echo -n "$kmodules" | wc -l) -eq 1 ]]
+		if [[ -n $kmodules && $(echo "$kmodules" | wc -l) -eq 1 ]]
 		then
 			version="$kmodules"
 		elif [[ -h "$SRC"/usr/src/linux ]]
