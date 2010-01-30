@@ -112,22 +112,24 @@ function sanity_check() {
 		rm -fr "$TARGET"/etc/*
 		"$MYDIR"/add-sauce.sh -o -s "$TARGET"
 
-		# make sure that either the linux spell is being used or that the
-		# kernel sources are available for building
-		if ! grep -q '^linux$' "$CAULDRONDIR/rspells.$TYPE"
-		then
-			if [[ -d "$TARGET"/usr/src/linux ]]
+		if [[ -z $CHROOT ]]
+			# make sure that either the linux spell is being used or that the
+			# kernel sources are available for building
+			if ! grep -q '^linux$' "$CAULDRONDIR/rspells.$TYPE"
 			then
-				if [[ ! -s "$TARGET"/usr/src/linux ]]
+				if [[ -d "$TARGET"/usr/src/linux ]]
 				then
-					echo "Couldn't find "$TARGET" kernel config!"
+					if [[ ! -s "$TARGET"/usr/src/linux ]]
+					then
+						echo "Couldn't find "$TARGET" kernel config!"
+						exit 2
+					fi
+				else
+					echo "Cannot find the $TARGET kernel!"
+					echo "Either place the kernel sources and kernel config in $TARGET"
+					echo "or add the linux spell to the list of rspells."
 					exit 2
 				fi
-			else
-				echo "Cannot find the $TARGET kernel!"
-				echo "Either place the kernel sources and kernel config in $TARGET"
-				echo "or add the linux spell to the list of rspells."
-				exit 2
 			fi
 		fi
 
@@ -223,14 +225,20 @@ function prepare_target() {
 		rm -f $logfile
 	done
 
-	# If using the linux spell copy the kernel config to TARGET sorcery
-	grep -q '^linux$' "$CAULDRONDIR/$rspells" "$CAULDRONDIR/$ospells" &&
-	cp "$CAULDRONDIR/config-2.6" "$TARGET/etc/sorcery/local/kernel.config"
+	if [[ -z $CHROOT ]]
+	then
+		# If using the linux spell copy the kernel config to TARGET sorcery
+		grep -q '^linux$' "$CAULDRONDIR/$rspells" "$CAULDRONDIR/$ospells" &&
+		cp "$CAULDRONDIR/config-2.6" "$TARGET/etc/sorcery/local/kernel.config"
+	fi
 
 	# Copy the list of spells needed for casting into the TARGET if casting
 	cp "$CAULDRONDIR/rspells.$TYPE" "$TARGET"/rspells
-	cp "$CAULDRONDIR/ispells.$TYPE" "$TARGET"/ispells
-	cp "$CAULDRONDIR/ospells.$TYPE" "$TARGET"/ospells
+	if [[ -z $CHROOT ]]
+	then
+		cp "$CAULDRONDIR/ispells.$TYPE" "$TARGET"/ispells
+		cp "$CAULDRONDIR/ospells.$TYPE" "$TARGET"/ospells
+	fi
 
 	# Copy any spell-specific required options into the TARGET
 	[[ -d "$TARGET"/etc/sorcery/local/depends/ ]] ||
@@ -288,6 +296,12 @@ function prepare_target() {
 			gaze installed $spell &> /dev/null &&
 			echo $spell-$(gaze -q installed $spell)
 		done > /sys-list || exit 42
+SPELLS
+	if [[ -z $CHROOT ]]
+	then
+		# add iso and optional spells to casting script inside TARGET
+		cat >> "$TARGET"/build_spells.sh <<-'SPELLS'
+
 
 		# make a list of the caches to unpack for iso
 		for spell in $(</ispells)
@@ -302,8 +316,10 @@ function prepare_target() {
 			gaze installed $spell &> /dev/null &&
 			echo $spell-$(gaze -q installed $spell)
 		done > /opt-list || exit 42
-	fi
 SPELLS
+	fi
+	# close off the basesystem casting script
+	echo "fi" >> "$TARGET"/build_spells.sh
 
 	chmod a+x "$TARGET"/build_spells.sh
 	# export the QUIET variable so subshells (like build_spells) can make
