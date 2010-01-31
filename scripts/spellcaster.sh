@@ -113,6 +113,7 @@ function sanity_check() {
 		"$MYDIR"/add-sauce.sh -o -s "$TARGET"
 
 		if [[ -z $CHROOT ]]
+		then
 			# make sure that either the linux spell is being used or that the
 			# kernel sources are available for building
 			if ! grep -q '^linux$' "$CAULDRONDIR/rspells.$TYPE"
