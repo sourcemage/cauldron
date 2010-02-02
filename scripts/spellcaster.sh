@@ -46,6 +46,10 @@ Options:
 	    processing. Conflicts with -b.
 
 	-q  Suppress output messages. Defaults to off (output shown on STDERR).
+
+	-v  Enable VOYEUR in the build sorcery. By default build compilation is
+	    silent (VOYEUR=off). This option allows you to see the compilations
+	    as they happen in the build chroot.
 EndUsage
   exit 1
 } >&2
@@ -60,6 +64,7 @@ function parse_options() {
 			s ) SYSDIR="${OPTARG%/}" ;;
 			n ) NOBUILD="yes" ;;
 			q ) QUIET="yes" ;;
+			v ) VOYEUR="yes" ;;
 			h ) usage ;;
 			* ) echo "Unrecognized option." >&2 && usage ;;
 		esac
@@ -203,6 +208,7 @@ function prepare_target() {
 		"ppc"	) arch="g3"
 			;;
 	esac
+
 	cat > "$TARGET"/set_sorcery.sh <<-CONFIGURE
 		#!/bin/bash
 		source /etc/sorcery/config
@@ -211,6 +217,16 @@ function prepare_target() {
 		modify_config /etc/sorcery/local/config PRESERVE off
 		modify_config /etc/sorcery/local/config PROMPT_DELAY 0
 	CONFIGURE
+
+	# silent compiles by default
+	# but if -v passed as option then turn VOYEUR on
+	if [[ $VOYEUR != "yes" ]]
+	then
+		echo "modify_config /etc/sorcyer/local/config VOYEUR off" >> "$TARGET"/set_sorcery.sh
+	else
+		echo "modify_config /etc/sorcyer/local/config VOYEUR on" >> "$TARGET"/set_sorcery.sh
+	fi
+
 	chmod a+x "$TARGET"/set_sorcery.sh &&
 	msg "Configuring build sorcery"
 	"$MYDIR"/cauldronchr.sh -d "$TARGET" /set_sorcery.sh &&
