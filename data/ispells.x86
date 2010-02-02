@@ -78,5 +78,6 @@ uudeview
 wget
 which
 wireless_tools
+wpa_supplicant
 xfsprogs
 zlib
