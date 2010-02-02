@@ -304,7 +304,7 @@ function prepare_target() {
 
 		# cast all the spells using the install queue and save the
 		# return value to a log file
-		/usr/sbin/cast --queue 2> /build_spells.log
+		/usr/sbin/cast --compile --queue 2> /build_spells.log
 		echo $? >> /build_spells.log
 
 		# make a list of the caches to unpack for system
