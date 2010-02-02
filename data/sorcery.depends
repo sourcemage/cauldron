@@ -1,0 +1,2 @@
+coreutils:gmp:off
+openssl:gmp:off

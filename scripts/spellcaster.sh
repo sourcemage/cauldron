@@ -242,9 +242,13 @@ function prepare_target() {
 		rm -f $logfile
 	done
 
+	# nuke any existing sorcery state information in the build dir
+	rm -fr "$installdir/var/state/sorcery/*"
+
+	# If building for an ISO (instead of a basesystem chroot) and using the
+	# linux spell, copy the kernel config to TARGET sorcery
 	if [[ -z $CHROOT ]]
 	then
-		# If using the linux spell copy the kernel config to TARGET sorcery
 		grep -q '^linux$' "$CAULDRONDIR/$rspells" "$CAULDRONDIR/$ospells" &&
 		cp "$CAULDRONDIR/config-2.6" "$TARGET/etc/sorcery/local/kernel.config"
 	fi
@@ -261,6 +265,7 @@ function prepare_target() {
 	[[ -d "$TARGET"/etc/sorcery/local/depends/ ]] ||
 		mkdir -p "$TARGET"/etc/sorcery/local/depends/
 	cp "$CAULDRONDIR"/depends/* "$TARGET"/etc/sorcery/local/depends/
+	cat "$CAULDRONDIR"/sorcery.depends > "$TARGET"/var/state/sorcery/depends
 
 	# generate basesystem casting script inside of TARGET
 	cat > "$TARGET"/build_spells.sh <<-'SPELLS'
