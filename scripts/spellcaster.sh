@@ -222,9 +222,9 @@ function prepare_target() {
 	# but if -v passed as option then turn VOYEUR on
 	if [[ $VOYEUR != "yes" ]]
 	then
-		echo "modify_config /etc/sorcyer/local/config VOYEUR off" >> "$TARGET"/set_sorcery.sh
+		echo "modify_config /etc/sorcery/local/config VOYEUR off" >> "$TARGET"/set_sorcery.sh
 	else
-		echo "modify_config /etc/sorcyer/local/config VOYEUR on" >> "$TARGET"/set_sorcery.sh
+		echo "modify_config /etc/sorcery/local/config VOYEUR on" >> "$TARGET"/set_sorcery.sh
 	fi
 
 	chmod a+x "$TARGET"/set_sorcery.sh &&
