@@ -55,7 +55,7 @@ EndUsage
 } >&2
 
 function parse_options() {
-	while getopts ":bci:s:nqh" Option
+	while getopts ":bci:s:nqvh" Option
 	do
 		case $Option in
 			b ) BUILDONLY="yes" ;;
