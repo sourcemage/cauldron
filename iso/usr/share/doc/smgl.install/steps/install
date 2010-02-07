@@ -1,7 +1,7 @@
 [1minstall step[m
 It is time to install all of the spells to your system. There are two ways that
 you can do this: manually, and using the [1msmgl-enchant[m script. Note
-that system.tar.bz2 is [1mrequired[m.
+that system.tar.bz2 is [1mrequired[m for a new install.
 
 manual method:
 [1m tar xjvf /system.tar.bz2 -C /mnt/root[m
@@ -10,7 +10,7 @@ manual method:
 
 Remember to replace "SPELL" with the filename of the spell cache to install. As
 an example, to install lilo:
-[1m tar jxf lilo-22.8-i486-pc-linux-gnu.tar.bz2 -C /mnt/root[m
+[1m tar jxf /var/cache/sorcery/lilo-22.8-i486-pc-linux-gnu.tar.bz2 -C /mnt/root[m
 
 enchant method (uses /tmp/spells):
 [1m smgl-enchant[m
