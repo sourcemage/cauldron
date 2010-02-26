@@ -52,18 +52,15 @@ function cauldron_brew () {
   liberror_check_fatal_error
 
   # build the cross-compile tool-chain targeted for the target sys
-  if [ -n $TARGET ]
+  if [ "$CAULDRON_ARCH" != "$HOST_ARCH" ]
   then
-    if [ "$TARGET" != "$HOST" ]
-    then
-      cauldron_chroot cauldron_cross_toolchain
-      liberror_check_fatal_error
-    fi
+    cauldron_chroot cauldron_cross_toolchain
+    liberror_check_fatal_error
   fi
 
   # use the cross-compile tool-chain to cast all spells needed for
   # the iso system
-  cauldron_chroot cauldron_build_iso_system "$TARGET_SPELLS"
+  cauldron_chroot cauldron_build_iso_system "$CAULDRON_SPELLS"
   liberror_check_fatal_error
 
   # configure the iso init system, initrd/initramfs, etc.
@@ -71,7 +68,7 @@ function cauldron_brew () {
   liberror_check_fatal_error
 
   # build/create/copy/whatever installer system/data into the iso
-  for installer in $(cat "$TARGET_SPELLS")
+  for installer in $(cat "$CAULDRON_SPELLS")
   do
     cauldron_chroot cauldron_add_installer "${installer##*/}"
   done

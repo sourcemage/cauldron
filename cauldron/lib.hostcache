@@ -32,7 +32,7 @@ function cauldron_create_host_cache() {
 
   if [[ -z create_cache_archive ]]
   then
-    . "${SORCERY_LIBS}"/libstate 2> $NULL || liberror_die $ERR_HOST_SORCERY
+    . "${HOST_SORCERY_LIBS}"/libstate 2> $NULL || liberror_die $ERR_HOST_SORCERY
   fi
 
   create_cache_archive "$install_log" "${cache}" "${cache}${EXTENSION}" ||

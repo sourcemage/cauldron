@@ -132,11 +132,11 @@ function cauldron_base_toolchain() {
 
   # grab the list of spells needed as the base tool-chain which will be
   # used to create the cross-compile tool-chain
-  for spell in "$HOST_TOOLCHAIN"
+  for spell in "$CAULDRON_TOOLCHAIN"
   do
     # grab the version for the spell from sorcery's state info
     # on what's installed
-    version=$(grep "^$spell" "$HOST_PACKAGES" | cut -d : -f 4)
+    version=$(grep "^$spell" "$HOST_SORCERY_PACKAGES" | cut -d : -f 4)
 
     # check if spell found on the system
     if [[ -n $version ]]
@@ -201,22 +201,25 @@ function cauldron_configure_toolchain() {
 
   if [[ -z modify_config ]]
   then
-    . "${SORCERY_LIBS}"/libtrack 2> $CAULDRON_NULL ||
+    . "${HOST_SORCERY_LIBS}"/libtrack 2> $CAULDRON_NULL ||
       liberror_die $ERR_HOST_SORCERY
   fi
 
+  # make sure the sorcery local config dir exists on the ISO
+  mkdir -p "$ISO_SORCERY_CONFIG" || return $ERR_ISO_SORCERY_CONFIG
+
   case ${stage} in
     1)
-      modify_config ${TARGET_LOCAL_CFG} CUSTOM_CFLAGS \
-        "--host=${HOST} --target=${TARGET}"
+      modify_config "$ISO_SORCERY_CONFIG" CUSTOM_CFLAGS \
+        "--host=${HOST_ARCH} --target=${CAULDRON_ARCH}"
     ;;
     2)
-      modify_config ${TARGET_LOCAL_CFG} CUSTOM_CFLAGS \
-        "--build=${HOST} --host=${TARGET}"
+      modify_config "$ISO_SORCERY_CONFIG" CUSTOM_CFLAGS \
+        "--build=${HOST_ARCH} --host=${CAULDRON_ARCH}"
     ;;
     3)
-      modify_config ${TARGET_LOCAL_CFG} CUSTOM_CFLAGS \
-        "--build=${HOST} --host=${TARGET} --target=${TARGET}"
+      modify_config "$ISO_SORCERY_CONFIG" CUSTOM_CFLAGS \
+        "--build=${HOST_ARCH} --host=${CAULDRON_ARCH} --target=${CAULDRON_ARCH}"
     ;;
   esac
 }
@@ -340,6 +343,9 @@ function cauldron_mkisofs() {
 function cauldron_add_installer() {
   local installer=$1
 
+  # make sure CAULDRON_BUILD/ENCHANT_DATA exists
+  mkdir -p "$CAULDRON_BUILD/$ENCHANT_DATA/" || return $ERR_INSTALLER_DIR
+
   cp -r "$CAULDRON_LIBS/$installer" "$CAULDRON_BUILD/$ENCHANT_DATA/" ||
     return $ERR_COPY_INSTALLER
 
@@ -387,7 +393,7 @@ function cauldron_prepare() {
 #-------------------------------------------------------------------------------
 function cauldron_cleanup() {
   # if the user wants everything cleaned, kill the build directory
-  if [[ ${CAULDRON_CLEAN} == "yes" ]]
+  if [[ "$CAULDRON_CLEAN" == "yes" ]]
   then
     rm -fr "$CAULDRON_BUILD" || return $ERR_CLEANUP
   fi

@@ -38,29 +38,33 @@ ERR_BUILD_CACHE=15        # problem building cache file from spell install info
 ERR_UNPACK_CACHE=16       # couldn't unpack spell cache inside build dir
 ERR_RM_CACHE=17           # couldn't remove spell cache after unpacking in build
 ERR_HOST_TRIPLE=18        # couldn't get host triple for builds
+ERR_ISO_SORCERY_CONFIG=19 # couldn't create the ISO local sorcery config dir
+ERR_INSTALLER_DIR=20      # couldn't create the ISO installer dir
 
 # error messages
 ERR_MSGS=(
-          "operation succeeded"                             # ERR_OK
-          "fatal error"                                     # ERR_FATAL
-          "sorcery not set to archive"                      # ERR_ARCHIVE
-          "could not perform chroot command"                # ERR_CHROOT
-          "cleanfile not found"                             # ERR_CLEANFILE
-          "could not load target sorcery"                   # ERR_TARGETSORCERY
-          "could not load host sorcery"                     # ERR_HOSTSORCERY
-          "could not load cauldron library"                 # ERR_LOAD_LIBRARY
-          "target chroot dir undefined"                     # ERR_CHROOT_UNDEF
-          "could not init chroot"                           # ERR_CHROOT_INIT
-          "could not clean up chroot"                       # ERR_CHROOT_DONE
-          "cauldron chroot not initialized"                 # ERR_CHROOT_NOT_INIT
-          "could not create spell cache"                    # ERR_CREATE_CACHE
-          "libcolor requested but couldn't load libcolor"   # ERR_LIBCOLOR
-          "could not copy spell cache file to build dir"    # ERR_CP_CACHE
-          "could not build spell cache file"                # ERR_BUILD_CACHE
-          "could not unpack spell cache in build dir"       # ERR_UNPACK_CACHE
-          "could not remove temporary spell cache file"     # ERR_RM_CACHE
-          "could not get host triple needed for builds"     # ERR_HOST_TRIPLE
-          )
+  "operation succeeded"                               # ERR_OK
+  "fatal error"                                       # ERR_FATAL
+  "sorcery not set to archive"                        # ERR_ARCHIVE
+  "could not perform chroot command"                  # ERR_CHROOT
+  "cleanfile not found"                               # ERR_CLEANFILE
+  "could not load target sorcery"                     # ERR_TARGETSORCERY
+  "could not load host sorcery"                       # ERR_HOSTSORCERY
+  "could not load cauldron library"                   # ERR_LOAD_LIBRARY
+  "target chroot dir undefined"                       # ERR_CHROOT_UNDEF
+  "could not init chroot"                             # ERR_CHROOT_INIT
+  "could not clean up chroot"                         # ERR_CHROOT_DONE
+  "cauldron chroot not initialized"                   # ERR_CHROOT_NOT_INIT
+  "could not create spell cache"                      # ERR_CREATE_CACHE
+  "libcolor requested but couldn't load libcolor"     # ERR_LIBCOLOR
+  "could not copy spell cache file to build dir"      # ERR_CP_CACHE
+  "could not build spell cache file"                  # ERR_BUILD_CACHE
+  "could not unpack spell cache in build dir"         # ERR_UNPACK_CACHE
+  "could not remove temporary spell cache file"       # ERR_RM_CACHE
+  "could not get host triple needed for builds"       # ERR_HOST_TRIPLE
+  "couldn't create the ISO local sorcery config dir"  # ERR_ISO_SORCERY_CONFIG
+  "couldn't create the installer dir"                 # ERR_INSTALLER_DIR
+  )
 
 #-------------------------------------------------------------------------------
 ##

@@ -30,15 +30,15 @@
 ##
 #-------------------------------------------------------------------------------
 function cauldron_source_sorcery() {
-  local target=$1
+  local target="${1:-$ISO_SORCERY_CONFIG}"
 
   # source the main config file
-  source "$target/etc/sorcery/config" || return $ERR_TARGET_SORCERY
+  source "$target" || return $ERR_TARGET_SORCERY
 
   # if the local config exists, source it
-  if [[ -e "$target/etc/sorcery/local/config" ]]
+  if [[ -e "$target" ]]
   then
-    source "$target/etc/sorcery/local/config" || return $ERR_TARGET_SORCERY
+    source "$target" || return $ERR_TARGET_SORCERY
   fi
 
   return $ERR_OK

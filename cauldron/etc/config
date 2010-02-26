@@ -1,24 +1,30 @@
 # path to the host system (null for normal use)
-              HOST_PATH="${HOST_PATH:-}"
+             HOST_PATH="${HOST_PATH:-}"
 # path to the ISO system (this should usually be null, unless
 # you are doing some tricky hacking)
-               ISO_PATH="${ISO_PATH:-}"
+              ISO_PATH="${ISO_PATH:-}"
 # path to the base library modules
          CAULDRON_BASE="${CAULDRON_BASE:-$HOST_PATH/var/lib/cauldron}"
 # path to the cauldron library modules
          CAULDRON_LIBS="${CAULDRON_LIBS:-$CAULDRON_BASE/cauldron}"
 # path to the cauldron configs
-         CAULDRON_DATA="{$CAULDRON_DATA:-/etc/cauldron}"
+         CAULDRON_DATA="{$CAULDRON_DATA:-$HOST_PATH/etc/cauldron}"
 # path to where the ISO build chroot is/will go
         CAULDRON_BUILD="${CAULDRON_BUILD:-$HOST_PATH/tmp/cauldron}"
 # temporary files generated while cauldron does its work
           CAULDRON_TMP="${CAULDRON_TMP:-$CAULDRON_BUILD/tmp}"
 # should point to a file listing all the spells needed for the toolchain
-        HOST_TOOLCHAIN="${HOST_TOOLCHAIN:-$HOST_PATH/etc/cauldron/toolchain.x86}"
-# should point to a file listing all the spells needed for the toolchain
-         TARGET_SPELLS="${TARGET_SPELLS:-$HOST_PATH/etc/cauldron/isospells.x86}"
+    CAULDRON_TOOLCHAIN="${CAULDRON_TOOLCHAIN:-$CAULDRON_DATA/$CAULDRON_ARCH/toolchain}"
+# should point to a file listing all the spells needed for the ISO runtime
+       CAULDRON_SPELLS="${CAULDRON_SPELLS:-$CAULDRON_DATA/$CAULDRON_ARCH/spells}"
+# should point to a file listing all the spells needed for the ISO runtime
+      CAULDRON_SOURCES="${CAULDRON_SPELLS:-$CAULDRON_DATA/$CAULDRON_ARCH/sources}"
+# should point to a file listing all the spells needed for the ISO runtime
+       CAULDRON_CACHES="${CAULDRON_SPELLS:-$CAULDRON_DATA/$CAULDRON_ARCH/caches}"
+# the arch to generate the ISO for
+         CAULDRON_ARCH="${CAULDRON_ARCH:-x86}"
 # what the ISO will be called (should follow the ISO naming conventions)
-              SMGL_ISO="${SMGL_ISO:-smgl-devel-$(date +%Y%m%d)}"
+              SMGL_ISO="${SMGL_ISO:-smgl-devel-$(date +%Y%m%d).$CAULDRON_ARCH}"
 # the name of the kernel to be used in the ISO
         CAULDRON_KVERS="${CAULDRON_KVERS:-}"
 # contains the arch info for the HOST
@@ -29,8 +35,10 @@
       CAULDRON_KEEPISO="${CAULDRON_KEEPISO:-yes}"
 # branch of sorcery to use in the ISO
     ISO_SORCERY_BRANCH="${ISO_SORCERY_BRANCH:-stable}"
+# sorcery local config location in the ISO
+    ISO_SORCERY_CONFIG="${ISO_SORCERY_CONFIG:-$CAULDRON_BUILD/etc/sorcer/local/config}"
 
- CAULDRON_SORCERY_PATH="${CAULDRON_SORCERY_PATH:-/usr/sbin}"
+ CAULDRON_SORCERY_PATH="${CAULDRON_SORCERY_PATH:-$HOST_PATH/usr/sbin}"
          CAULDRON_CAST="${CAULDRON_CAST:-$CAULDRON_SORCERY_PATH/cast}"
        CAULDRON_DISPEL="${CAULDRON_DISPEL:-$CAULDRON_SORCERY_PATH/dispel}"
       CAULDRON_REBUILD="${CAULDRON_REBUILD:-$CAULDRON_SORCERY_PATH/sorcery rebuild}"
@@ -40,11 +48,13 @@
 # whether to use color for displaying messages
         CAULDRON_COLOR="${CAULDRON_COLOR:-yes}"
 
-        SORCERY_CONFIG="${SORCERY_CONFIG:-/etc/sorcery/config}"
-          SORCERY_LIBS="${SORCERY_LIBS:-/var/lib/sorcery/modules}"
-   HOST_SORCERY_CONFIG="${HOST_SORCERY_CONFIG:-/etc/sorcery/local/config}"
- HOST_SORCERY_PACKAGES="${HOST_SORCERY_PACKAGES:-/var/state/sorcery/packages}"
-    HOST_SORCERY_SPOOL="${HOST_SORCERY_SPOOL:-/var/spool/sorcery}"
+ CAULDRON_SORCERY_LIBS="${CAULDRON_SORCERY_LIBS:-$CAULDRON_BUILD/var/lib/sorcery/modules}"
+        SORCERY_CONFIG="${SORCERY_CONFIG:-$HOST_PATH/etc/sorcery/config}"
+   HOST_SORCERY_CONFIG="${HOST_SORCERY_CONFIG:-$HOST_PATH/etc/sorcery/config}"
+  HOST_SORCERY_LCONFIG="${HOST_SORCERY_LCONFIG:-$HOST_PATH/etc/sorcery/local/config}"
+     HOST_SORCERY_LIBS="${SORCERY_LIBS:-$HOST_PATH/var/lib/sorcery/modules}"
+ HOST_SORCERY_PACKAGES="${HOST_SORCERY_PACKAGES:-$HOST_PATH/var/state/sorcery/packages}"
+    HOST_SORCERY_SPOOL="${HOST_SORCERY_SPOOL:-$HOST_PATH/var/spool/sorcery}"
 
         HOST_ARCH_PATH=$(grep "ARCH_SPEC=" ${SORCERY_CONFIG} | \
                          cut -d = -f 2)
