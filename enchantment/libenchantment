@@ -24,19 +24,51 @@
 ##
 #-------------------------------------------------------------------------------
 
-#-------------------------------------------------------------------------------
-# enchantment includes
-#-------------------------------------------------------------------------------
-. ${BASE_LIBS}/libinit ||
-  cauldron_fatal_error "error: cannot load base libraries!"
-. ${BASE_LIBS}/liberror ||
-  cauldron_fatal_error "error: cannot load base libraries!"
-. ${BASE_LIBS}/liberrorcodes ||
-  cauldron_fatal_error "error: cannot load base libraries!"
+ENCHANT_NULL="/dev/null"
 
-# load cauldron error code and message defines
-. ${ENCHANT_LIBS}/errorcodes ||
+#-------------------------------------------------------------------------------
+##
+## Used only when checking initialization of the library and a fatal error
+## occurs. Afterwards, functions from liberror are used instead.
+##
+#-------------------------------------------------------------------------------
+function cauldron_fatal_error() {
+  echo $1
+  exit 1
+}
+
+#-------------------------------------------------------------------------------
+# liberror includes
+#-------------------------------------------------------------------------------
+. "$ENCHANT_BASE/liberror" ||
+  enchant_fatal_error "error: cannot load base libraries!"
+
+# load enchantment error code and message defines
+. "$ENCHANT_LIBS/errorcodes" ||
   enchant_fatal_error "error: cannot load enchantment libraries!"
+
+# drop enchant_fatal_error if liberror was successfully loaded
+unset enchant_fatal_error
+
+#-------------------------------------------------------------------------------
+## @param library name to load (no path, just basename)
+##
+## Loads the library given as the first argument. liberror_check_fatal_error is
+## called to check if there was a problem loading the library, and if there was
+## it will print a corresponding error message and then exit with the error
+## $ERR_LOAD_LIBRARY.
+##
+#-------------------------------------------------------------------------------
+function enchant_load_library() {
+  local lib=$1
+
+  . "$ENCHANT_LIBS/$lib" 2>$ENCHANT_NULL ||
+  liberror_check_fatal_error
+}
+
+#-------------------------------------------------------------------------------
+# enchant includes
+#-------------------------------------------------------------------------------
 
 
 #-------------------------------------------------------------------------------
