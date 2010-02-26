@@ -1,0 +1,173 @@
+#!/bin/bash
+#-------------------------------------------------------------------------------
+##
+##=head1 SYNOPSIS
+##
+##  libcauldron is a set of functions used internally by the cauldron script
+##
+##=head1 COPYRIGHT
+##
+##  Copyright 2009 by the Cauldron Team
+##
+##=head1 FUNCTIONS
+##
+##=over 4
+##
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+##
+## Sources the sorcery config files. Should only be called by
+## cauldron_chroot_init.
+##
+## TODO:
+## this needs to be fixed, since sorcery uses some absolute paths and has some
+## hard-coded into itself, therefore it will source parts from the target but
+## other parts will actually be sourced from the HOST
+##
+## the solution may involve having a modified sorcery config for the build
+## chroot, which will need a lot of modified paths
+##
+#-------------------------------------------------------------------------------
+function cauldron_source_sorcery() {
+  local target=$1
+
+  # source the main config file
+  source "$target/etc/sorcery/config" || return $ERR_TARGET_SORCERY
+
+  # if the local config exists, source it
+  if [[ -e "$target/etc/sorcery/local/config" ]]
+  then
+    source "$target/etc/sorcery/local/config" || return $ERR_TARGET_SORCERY
+  fi
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+## @param stage
+##
+## Configures the toolchain for building on the TARGET system. In other
+## words, this sets the options/variables necessary to build a
+## cross-compiler system to generate binaries for the target system. The
+## parameter "stage" is an int and sets the variables for stage1 and stage2 of
+## the cross-compile. Stage1 is the building of the initial tools. Stage2 is for
+## the building of glibc, because it's a little bit special. Stage3 is
+## the cross-compilation of the basesystem via sorcery rebuild using the
+## cross-compiler.
+##
+#-------------------------------------------------------------------------------
+function cauldron_configure_toolchain() {
+  local stage=$1
+
+  # if the local config exists, source it
+  if [[ -e "$TARGET_SORCERY/libtrack" ]]
+  then
+    source "$TARGET_SORCERY/libtrack" 2>$NULL || return $ERR_TARGET_SORCERY
+  fi
+
+  case ${stage} in
+    1)
+      modify_config ${TARGET_LOCAL_CFG} CUSTOM_CFLAGS \
+        "--host=${HOST} --target=${TARGET}"
+    ;;
+    2)
+      modify_config ${TARGET_LOCAL_CFG} CUSTOM_CFLAGS \
+        "--build=${HOST} --host=${TARGET}"
+    ;;
+    3)
+      modify_config ${TARGET_LOCAL_CFG} CUSTOM_CFLAGS \
+        "--build=${HOST} --host=${TARGET} --target=${TARGET}"
+    ;;
+  esac
+}
+
+#-------------------------------------------------------------------------------
+## @param sorcery_branch
+## @param download_path
+##
+## Downloads a fresh sorcery source tarball from the net, and places it in
+## download_path.
+##
+#-------------------------------------------------------------------------------
+function cauldron_download_sorcery() {
+  local branch=$1
+  local spool=$2
+  local sorcery="sorcery-$branch.tar.bz2"
+
+  # run in a subshell as an easy way of not messing with the working directory
+  (
+    cd ${spool}
+    wget http://download.sourcemage.org/sorcery/$sorcery ||
+      return $ERR_DOWNLOAD_SORCERY
+  )
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+## @param force_download
+##
+## Installs sorcery into the ISO system. If force_download is "yes", it will
+## download a fresh copy from the net. Otherwise, it will check to see if the
+## sorcery sources are present in the host system, and copy those first, but if
+## they cannot be found it will resort to downloading them. It shouldn't matter
+## if the version of sorcery is a little old, since a system update can be
+## performed inside $CAULDRON_BUILD after the base toolchain is set up. The
+## branch should be one of {stable, test, devel}, and is set in the cauldron
+## config file.
+##
+#-------------------------------------------------------------------------------
+function cauldron_sorcery_install() {
+  local force_download=$1
+  local branch="$ISO_SORCERY_BRANCH"
+  local spool="$CAULDRON_BUILD/var/spool/sorcery"
+
+  # ensure the spool dir exists for getting spell sources
+  mkdir -p "$spool" || return $ERR_BUILD_SPOOL
+
+  # check to see if we will copy or download the sorcery source tarball
+  # then get the source tarball and place it in CAULDRON_BUILD
+  if [[ -e "$HOST_SORCERY_SPOOL"/sorcery-${branch}.tar.bz2 ]]
+  then
+    if [[ "$force_download" == "yes" ]]
+    then
+      cauldron_download_sorcery $branch "$spool"
+    else
+      cp "$HOST_SORCERY_SPOOL"/sorcery-${branch}.tar.bz2 "$spool"
+    fi
+  else
+    cauldron_download_sorcery ${branch} "$spool"
+  fi
+
+  # unpack the source tarball
+  tar -C "$CAULDRON_BUILD"/usr/src -jxf "$spool"/sorcery-${branch}.tar.bz2
+
+  # make sure the chroot library is loaded so cauldron_chroot is available
+  if [[ -z cauldron_chroot ]]
+  then
+    cauldron_load_library lib.chroot
+  fi
+  # install the source tarball, relative to CAULDRON_BUILD
+  "$CAULDRON_BUILD"/usr/src/sorcery/install "$CAULDRON_BUILD"
+}
+
+#-------------------------------------------------------------------------------
+##
+## This software is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2 of the License, or
+## (at your option) any later version.
+##
+## This software is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this software; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+##
+#-------------------------------------------------------------------------------
+
+# vim:ai:tw=80:tabstop=2:softtabstop=2:shiftwidth=2:expandtab

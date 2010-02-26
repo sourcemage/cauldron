@@ -1,0 +1,128 @@
+#!/bin/bash
+#-------------------------------------------------------------------------------
+##
+##=head1 SYNOPSIS
+##
+##  lib.hostcache provides functions for generating spell caches from what's
+##                available on the HOST system - only to be used for the initial
+##                build toolchain
+##
+##=head1 COPYRIGHT
+##
+##  Copyright 2009 by the Cauldron Team
+##
+##=head1 FUNCTIONS
+##
+##=over 4
+##
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+## @param spell
+##
+## Builds a cache file from the information provided by the install log for the
+## spell passed as an argument. It expects the provided spell to include the
+## version as a suffix (i.e. bash-3.2).
+##
+#-------------------------------------------------------------------------------
+function cauldron_create_host_cache() {
+  local spell=$1
+  local install_log="${HOST_PATH}/var/log/sorcery/install/${spell}"
+  local cache=${CAULDRON_CACHE}/${spell}.tar
+
+  if [[ -z create_cache_archive ]]
+  then
+    . "${SORCERY_LIBS}"/libstate 2> $NULL || liberror_die $ERR_HOST_SORCERY
+  fi
+
+  create_cache_archive "$install_log" "${cache}" "${cache}${EXTENSION}" ||
+    return $ERR_CREATE_CACHE
+}
+
+#-------------------------------------------------------------------------------
+## @param spell
+## @param aggressive
+##
+## Generates a cache file for the given spell. It will try to use information
+## from an already installed/cast spell (in the case of the host system having
+## sorcery configured to not generate the caches), and, failing that, will cast the
+## spell and then dispel it (the second step only being performed if aggressive
+## is true).
+##
+#-------------------------------------------------------------------------------
+function cauldron_build_host_cache_file() {
+  local spell=$1
+  local aggressive=$2
+  local version=
+
+  # First check to see if the spell was installed, but no cache exists.
+  if gaze -q installed $spell
+  then
+    # Spell is installed, generate a cache file using the install log?
+    version=$(grep "^${spell}" ${HOST_PACKAGES} | cut -d : -f 4)
+    cauldron_create_host_cache ${spell}-${version}
+  else
+    # Only do this part if the caller wants us to be aggressive in building the
+    # cache.
+    if $aggressive
+    then
+      # Do some trickery to get a cache file. Make sure that sorcery is set to
+      # generate a cache file, and if not then either set sorcery to do so or
+      # build the cache file afterwards by being recursive? This should be done
+      # in a build chroot so that the user's host filesystem is not polluted.
+      local aggr_build="$CAULDRON_BUILD/tmp/cauldron_aggressive_cache"
+
+      if [[ -e "$HOST_PATH/var/log/sorcery/install/${spell}-${version}" ]]
+      then
+        # make sure the $AGGR_BUILD path is clean
+        # completely wipe it out and recreate it
+        rm -fr "$aggr_build"
+        mkdir -p "$aggr_build"
+
+        # find all the files installed by the given spell
+        for file in "$HOST_PATH/var/log/sorcery/install/${spell}-${version}/"*
+        do
+          # copy all files from the sorcery install log into $AGGR_BUILD
+          cp -a --parents "$file" "$aggr_build"/
+        done
+
+        # package the collection of files from the install log as a cache file
+        tar jcf "${spell}-${version}.tar.bz2" \
+          --transform "s#$aggr_build/##" $aggr_build/*
+
+        # if the packaging was successful, wipe out the $AGGR_BUILD dir
+        [[ $? -eq 0 ]] && rm -fr "$aggr_build"
+      else
+        if [[ -e "$CAULDRON_BUILD/etc/sorcery/local/config" ]]
+        then
+          local config="$CAULDRON_BUILD/etc/sorcery/local/config"
+          local archive=$(grep "ARCHIVE=" "$config" | cut -d= -f2)
+          [[ $archive != "on" ]] &&
+          sed -i 's/ARCHIVE=.*/ARCHIVE="on"/' "$config"
+        fi
+        cauldron_chroot $CAULDRON_CAST $spell
+        cauldron_chroot $CAULDRON_DISPEL $spell
+      fi
+    fi
+  fi
+}
+
+#-------------------------------------------------------------------------------
+##
+## This software is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2 of the License, or
+## (at your option) any later version.
+##
+## This software is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this software; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+##
+#-------------------------------------------------------------------------------
+
+# vim:ai:tw=80:tabstop=2:softtabstop=2:shiftwidth=2:expandtab
