@@ -17,6 +17,12 @@
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
+# Output Stream Definitions
+#-------------------------------------------------------------------------------
+LIBERR_STDOUT=1
+LIBERR_STDERR=2
+
+#-------------------------------------------------------------------------------
 # ERROR definitions
 #-------------------------------------------------------------------------------
 # error codes
@@ -33,72 +39,73 @@ ERR_MSGS=(
 # Function definitions
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
-## @param error name (string)
+## @param error number
+## @param output stream (default is 1 [stdout], 2 for stderr)
 ##
-## Checks for an error condition (via $?), and if found it will return an error
-## of the specified type (arg1) if given, or of the matching type if no arg was
-## given.
+## Prints the corresponding error message for the given error type (number,
+## defined as a variable in an errorcodes file, e.g. $ERR_FATAL) to the given
+## output stream (defaults to STDOUT) in the configured error message color.
 ##
-#-------------------------------------------------------------------------------
-function liberror_checkerror() {
-  # store the return value to preserve it
-  local rc="$?"
-  local error="$1"
-
-  if [[ $rc -gt 0 ]]
-  then
-    if [[ -z $error || $rc -ne ${!error} ]]
-    then
-      error="$(liberror_geterror $rc)"
-    fi
-  else
-    error="ERR_OK"
-  fi
-  [[ -z $error ]] && return 1
-  echo $error
-  return 0
-}
-
-#-------------------------------------------------------------------------------
-## @param error (int)
-##
-## Finds a matching error type for the given error number. This is used to get
-## an error name from a raw return code, for example.
+## If libcolor is sourced and the $LIBCOLOR_ variables are defined then the
+## error message will be output in color.
 ##
 #-------------------------------------------------------------------------------
-function liberror_geterror() {
-  local error=$(set | grep "ERR_[A-Z]*=$1" | cut -d = -f 1)
-
-  [[ -z $error ]] && return 1
-  echo "$error"
-  return 0
-}
-
-#-------------------------------------------------------------------------------
-## @param error name (string)
-##
-## Prints the corresponding error message for the given error type (string,
-## defined in this file, e.g. CERR_ARCHIVE) to STDOUT in the configured error
-## message color.
-##
-#-------------------------------------------------------------------------------
-function liberror_printerror() {
+function liberror_print_error() {
   local error=$1
-  local errmsg="${ERR_MSGS[${!error}]}"
+  local errmsg="${ERR_MSGS[${error}]}"
+  local output=$2
+
+  # if no 2nd argument, use STDOUT as default
+  output=${output:=$LIBERR_STDOUT}
 
   # exit if $errmsg not defined
   [[ -z $errmsg ]] && return 1
 
-  if [[ ${!error} -eq 0 ]]
+  if [[ ${error} -eq 0 ]]
   then
-    # print a cauldron OK message
-    echo "$MESSAGE_COLOR" "$errmsg" "$DEFAULT_COLOR"
+    # print an OK message
+    echo $(libcolor_message "$errmsg") >$output
   else
-    # print a cauldron error message
-    echo "$ERR_COLOR" "error: ${errmsg}!" "$DEFAULT_COLOR"
+    # print the error message
+    echo $(libcolor_error "$errmsg") >$output
   fi || return 1
 
   return 0
+}
+
+#-------------------------------------------------------------------------------
+## @param error number
+##
+## Calls liberror_print_error with the error number passed as the first
+## argument, then exits with the same error number. If no error number was
+## passed in then the function returns with error rather than exiting.
+##
+#-------------------------------------------------------------------------------
+function liberror_die() {
+  local error=$1
+
+  # exit if $errmsg not defined
+  [[ -z $errmsg ]] && return 1
+
+  # print the corresponding error message on STDERR
+  liberror_print_error $error $LIBERR_STDERR
+
+  # die is used for fatal errors, so exit to the parent process rather than
+  # returning to the caller
+  exit $error
+}
+
+#-------------------------------------------------------------------------------
+##
+## Calls liberror_die if current exit status (from a previous command) holds an
+## error. If there's an error, the error is passed to liberror_die. Otherwise,
+## it returns $ERR_OK.
+##
+#-------------------------------------------------------------------------------
+function liberror_check_fatal_error() {
+  [[ $? ]] && liberror_die $?
+
+  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
@@ -120,4 +127,3 @@ function liberror_printerror() {
 #-------------------------------------------------------------------------------
 
 # vim:ai:tw=80:tabstop=2:softtabstop=2:shiftwidth=2:expandtab
-
