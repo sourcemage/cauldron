@@ -8,6 +8,8 @@ Things to do in order to achieve 0.1
 	- clean the chroot out (cleaners)
 	- add installer(s)
 	- extra sanity checks on boot and etc in chroot (add_sauce stuff)
+	- switch initramfs/initrd to use busybox
+		o will need a scrubbed busybox config for this
 * set up how to do chroots in libcauldron (${CAULDRON_CHROOT}) (mostly done)
 * write code to install sorcery into the CAULDRON_BUILD chroot
 * write a cauldron spell so that cauldron can install itself
@@ -18,6 +20,9 @@ Things to do in order to achieve 0.1
 	- the menu installer needs to be written
 		~ Not sure if this should really be for 0.1, but a lot of
 		  people have asked for it already.
+	- i18n
+		o fbterm + fontconfig + freetype2 for font displaying
+		o uim (uim-fep) for input
 * LOTS AND LOTS OF TESTING!
 * More sanity checks and error testing (use liberror!)
 	- liberror should get a function liberror_chkerror or something, which
