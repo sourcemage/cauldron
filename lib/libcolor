@@ -44,7 +44,7 @@ LIBCOLOR_SYMLINK_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_CYAN}"
 #-------------------------------------------------------------------------------
 function libcolor_message() {
   echo -n "$LIBCOLOR_MESSAGE_COLOR"
-  echo $1
+  echo -n $1
   echo -n "$LIBCOLOR_NORMAL_COLOR"
 }
 
@@ -56,7 +56,7 @@ function libcolor_message() {
 #-------------------------------------------------------------------------------
 function libcolor_error() {
   echo -n "$LIBCOLOR_MESSAGE_COLOR"
-  echo $1
+  echo -n $1
   echo -n "$LIBCOLOR_NORMAL_COLOR"
 }
 
@@ -68,7 +68,7 @@ function libcolor_error() {
 #-------------------------------------------------------------------------------
 function libcolor_query() {
   echo -n "$LIBCOLOR_MESSAGE_COLOR"
-  echo $1
+  echo -n $1
   echo -n "$LIBCOLOR_NORMAL_COLOR"
 }
 
@@ -80,7 +80,7 @@ function libcolor_query() {
 #-------------------------------------------------------------------------------
 function libcolor_file() {
   echo -n "$LIBCOLOR_MESSAGE_COLOR"
-  echo $1
+  echo -n $1
   echo -n "$LIBCOLOR_NORMAL_COLOR"
 }
 
@@ -92,7 +92,7 @@ function libcolor_file() {
 #-------------------------------------------------------------------------------
 function libcolor_symlink() {
   echo -n "$LIBCOLOR_MESSAGE_COLOR"
-  echo $1
+  echo -n $1
   echo -n "$LIBCOLOR_NORMAL_COLOR"
 }
 
