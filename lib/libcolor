@@ -1,0 +1,117 @@
+#!/bin/bash
+#-------------------------------------------------------------------------------
+##
+##=head1 SYNOPSIS
+##
+##  libcolor defines various colors to be used and functions to manipulate them
+##
+##=head1 COPYRIGHT
+##
+##  Copyright 2010 by the Cauldron Team
+##
+##=head1 FUNCTIONS
+##
+##=over 4
+##
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+# Message Color Definitions
+#-------------------------------------------------------------------------------
+LIBCOLOR_NORMAL="\e[0m"
+LIBCOLOR_BOLD="\e[1m"
+LIBCOLOR_BLACK="\e[30m"
+LIBCOLOR_RED="\e[31m"
+LIBCOLOR_GREEN="\e[32m"
+LIBCOLOR_YELLOW="\e[33m"
+LIBCOLOR_BLUE="\e[34m"
+LIBCOLOR_VIOLET="\e[35m"
+LIBCOLOR_CYAN="\e[36m"
+LIBCOLOR_WHITE="\e[37m"
+
+LIBCOLOR_NORMAL_COLOR="${LIBCOLOR_NORMAL}${LIBCOLOR_WHITE}"
+LIBCOLOR_MESSAGE_COLOR="${LIBCOLOR_NORMAL}${LIBCOLOR_CYAN}"
+LIBCOLOR_ERROR_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_RED}"
+LIBCOLOR_QUERY_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_YELLOW}"
+LIBCOLOR_FILE_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_GREEN}"
+LIBCOLOR_SYMLINK_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_CYAN}"
+
+#-------------------------------------------------------------------------------
+## @param message
+##
+## Prints the given message in "message" color.
+##
+#-------------------------------------------------------------------------------
+function libcolor_message() {
+  echo -n "$LIBCOLOR_MESSAGE_COLOR"
+  echo $1
+  echo -n "$LIBCOLOR_NORMAL_COLOR"
+}
+
+#-------------------------------------------------------------------------------
+## @param error message
+##
+## Prints the given error message in "error" color.
+##
+#-------------------------------------------------------------------------------
+function libcolor_error() {
+  echo -n "$LIBCOLOR_MESSAGE_COLOR"
+  echo $1
+  echo -n "$LIBCOLOR_NORMAL_COLOR"
+}
+
+#-------------------------------------------------------------------------------
+## @param query message
+##
+## Prints the given query message in "query" color.
+##
+#-------------------------------------------------------------------------------
+function libcolor_query() {
+  echo -n "$LIBCOLOR_MESSAGE_COLOR"
+  echo $1
+  echo -n "$LIBCOLOR_NORMAL_COLOR"
+}
+
+#-------------------------------------------------------------------------------
+## @param file name
+##
+## Prints the given file name in "file" color.
+##
+#-------------------------------------------------------------------------------
+function libcolor_file() {
+  echo -n "$LIBCOLOR_MESSAGE_COLOR"
+  echo $1
+  echo -n "$LIBCOLOR_NORMAL_COLOR"
+}
+
+#-------------------------------------------------------------------------------
+## @param symlink name
+##
+## Prints the given symlink name in "symlink" color.
+##
+#-------------------------------------------------------------------------------
+function libcolor_symlink() {
+  echo -n "$LIBCOLOR_MESSAGE_COLOR"
+  echo $1
+  echo -n "$LIBCOLOR_NORMAL_COLOR"
+}
+
+#-------------------------------------------------------------------------------
+##
+## This software is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2 of the License, or
+## (at your option) any later version.
+##
+## This software is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this software; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+##
+#-------------------------------------------------------------------------------
+
+# vim:ai:tw=80:tabstop=2:softtabstop=2:shiftwidth=2:expandtab
