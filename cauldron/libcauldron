@@ -184,47 +184,6 @@ function cauldron_base_toolchain() {
 }
 
 #-------------------------------------------------------------------------------
-## @param stage
-##
-## Configures the toolchain for building on the TARGET system. In other
-## words, this sets the options/variables necessary to build a
-## cross-compiler system to generate binaries for the target system. The
-## parameter "stage" is an int and sets the variables for stage1 and stage2 of
-## the cross-compile. Stage1 is the building of the initial tools. Stage2 is for
-## the building of glibc, because it's a little bit special. Stage3 is
-## the cross-compilation of the basesystem via sorcery rebuild using the
-## cross-compiler.
-##
-#-------------------------------------------------------------------------------
-function cauldron_configure_toolchain() {
-  local stage=$1
-
-  if [[ -z modify_config ]]
-  then
-    . "${HOST_SORCERY_LIBS}"/libtrack 2> $CAULDRON_NULL ||
-      liberror_die $ERR_HOST_SORCERY
-  fi
-
-  # make sure the sorcery local config dir exists on the ISO
-  mkdir -p "$ISO_SORCERY_CONFIG" || return $ERR_ISO_SORCERY_CONFIG
-
-  case ${stage} in
-    1)
-      modify_config "$ISO_SORCERY_CONFIG" CUSTOM_CFLAGS \
-        "--host=${HOST_ARCH} --target=${CAULDRON_ARCH}"
-    ;;
-    2)
-      modify_config "$ISO_SORCERY_CONFIG" CUSTOM_CFLAGS \
-        "--build=${HOST_ARCH} --host=${CAULDRON_ARCH}"
-    ;;
-    3)
-      modify_config "$ISO_SORCERY_CONFIG" CUSTOM_CFLAGS \
-        "--build=${HOST_ARCH} --host=${CAULDRON_ARCH} --target=${CAULDRON_ARCH}"
-    ;;
-  esac
-}
-
-#-------------------------------------------------------------------------------
 ##
 ## This builds the cross-compiler to produce the TARGET binaries.
 ##
