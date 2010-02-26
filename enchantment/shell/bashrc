@@ -1,12 +1,31 @@
 #!/bin/bash
+#-------------------------------------------------------------------------------
+##
+##=head1 SYNOPSIS
+##
+##  This file is the SMGL shell installer.
+##  Take care not to pollute the user's namespace too much,
+##  And make sure your functions don't collide with existing commands.
+##
+##=head1 COPYRIGHT
+##
+##  Copyright 2009 by the Cauldron Team
+##
+##=head1 FUNCTIONS
+##
+##=over 4
+##
+#-------------------------------------------------------------------------------
 
-# This file is the SMGL shell installer.
-# Take care not to pollute the user's namespace too much,
-# And make sure your functions don't collide with existing commands.
+. "/etc/cauldron/enchant.config"
+. "/etc/cauldron/local/enchant.config" 2> /dev/null
+. "${ENCHANT_DATA}/libenchantment"
 
-. /etc/cauldron/enchant.config
-. /etc/cauldron/local/enchant.config
-. ${ISOPATH}/${ENCHANT_DATA}/libenchant
+if enchant_color
+then
+  . "${ENCHANT_BASE}/libcolor" ||
+    liberror_print_error $ERR_LIBCOLOR $LIBERR_STDERR
+fi
 
 # Ensure installer sanity
 enchant_prepare
@@ -89,3 +108,23 @@ function help() {
 }
 
 PS1="[current:\$(cur_step) next:\$(next_step) \$(num_current)/\$(num_steps)] For a list of commands, type [1mhelp[m\n\u \w\$ "
+
+#-------------------------------------------------------------------------------
+##
+## This software is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2 of the License, or
+## (at your option) any later version.
+##
+## This software is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this software; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+##
+#-------------------------------------------------------------------------------
+
+# vim:ai:tw=80:tabstop=2:softtabstop=2:shiftwidth=2:expandtab
