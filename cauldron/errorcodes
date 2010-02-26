@@ -24,18 +24,42 @@ ERR_FATAL=1               # fatal error (missing cauldron libs, etc.)
 ERR_ARCHIVE=2             # problem creating archives
 ERR_CHROOT=3              # problem with a chroot
 ERR_CLEANFILE=4           # missing cleaner files
-ERR_TARGETSORCERY=5       # missing target sorcery files
-ERR_HOSTSORCERY=6         # sorcery not installed on host
+ERR_TARGET_SORCERY=5      # missing target sorcery files
+ERR_HOST_SORCERY=6        # sorcery not installed on host
+ERR_LOAD_LIBRARY=7        # problem loading a library/include
+ERR_CHROOT_UNDEF=8        # chroot TARGET is undefined
+ERR_CHROOT_INIT=9         # couldn't init chroot
+ERR_CHROOT_DONE=10        # couldn't close chroot
+ERR_CHROOT_NOT_INIT=11    # chroot isn't initialized
+ERR_CREATE_CACHE=12       # error creating spell cache
+ERR_LIBCOLOR=13           # problem loading libcolor when it was requested
+ERR_CP_CACHE=14           # problem copying spell cache from HOST to build dir
+ERR_BUILD_CACHE=15        # problem building cache file from spell install info
+ERR_UNPACK_CACHE=16       # couldn't unpack spell cache inside build dir
+ERR_RM_CACHE=17           # couldn't remove spell cache after unpacking in build
+ERR_HOST_TRIPLE=18        # couldn't get host triple for builds
 
 # error messages
 ERR_MSGS=(
-          "operation succeeded"                 # ERR_OK
-          "fatal error"                         # ERR_FATAL
-          "sorcery not set to archive"          # ERR_ARCHIVE
-          "not in chroot"                       # ERR_CHROOT
-          "cleanfile not found"                 # ERR_CLEANFILE
-          "could not load target sorcery"       # ERR_TARGETSORCERY
-          "could not load host sorcery"         # ERR_HOSTSORCERY
+          "operation succeeded"                             # ERR_OK
+          "fatal error"                                     # ERR_FATAL
+          "sorcery not set to archive"                      # ERR_ARCHIVE
+          "could not perform chroot command"                # ERR_CHROOT
+          "cleanfile not found"                             # ERR_CLEANFILE
+          "could not load target sorcery"                   # ERR_TARGETSORCERY
+          "could not load host sorcery"                     # ERR_HOSTSORCERY
+          "could not load cauldron library"                 # ERR_LOAD_LIBRARY
+          "target chroot dir undefined"                     # ERR_CHROOT_UNDEF
+          "could not init chroot"                           # ERR_CHROOT_INIT
+          "could not clean up chroot"                       # ERR_CHROOT_DONE
+          "cauldron chroot not initialized"                 # ERR_CHROOT_NOT_INIT
+          "could not create spell cache"                    # ERR_CREATE_CACHE
+          "libcolor requested but couldn't load libcolor"   # ERR_LIBCOLOR
+          "could not copy spell cache file to build dir"    # ERR_CP_CACHE
+          "could not build spell cache file"                # ERR_BUILD_CACHE
+          "could not unpack spell cache in build dir"       # ERR_UNPACK_CACHE
+          "could not remove temporary spell cache file"     # ERR_RM_CACHE
+          "could not get host triple needed for builds"     # ERR_HOST_TRIPLE
           )
 
 #-------------------------------------------------------------------------------
@@ -57,4 +81,3 @@ ERR_MSGS=(
 #-------------------------------------------------------------------------------
 
 # vim:ai:tw=80:tabstop=2:softtabstop=2:shiftwidth=2:expandtab
-

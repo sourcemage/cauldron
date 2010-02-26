@@ -15,16 +15,18 @@
 ##
 #-------------------------------------------------------------------------------
 
+# shorthand and non-hardcoded /dev/null for output dumping
+CAULDRON_NULL="/dev/null"
 
 #-------------------------------------------------------------------------------
 ##
 ## Used only when checking initialization of the library and a fatal error
-## occurs. Afterwards, functions from liberror should be used instead.
+## occurs. Afterwards, functions from liberror are used instead.
 ##
 #-------------------------------------------------------------------------------
 function cauldron_fatal_error() {
   echo $1
-  exit $ERR_FATAL
+  exit 1
 }
 
 #-------------------------------------------------------------------------------
@@ -85,27 +87,26 @@ fi
 ##
 #-------------------------------------------------------------------------------
 function cauldron_get_host_triple() {
-  local HOST_ARCH
-  local ARCH_SPEC
-  local HOST_TRIPLE
-  local SPEC_FILE
+  local arch_spec
+  local host_triple
+  local spec
 
   # get the value for the HOST triplet from sorcery archspecs
   for spec in ${HOST_ARCH_PATH[@]}
   do
     if [[ $(find --version|grep -q 'version 4\.1\(\.\|$\)') == 1 ]]
     then
-      ARCH_SPEC=$(find ${spec} -perm 400 -type f -name ${HOST_ARCH} \
-        -print 2>/dev/null)
+      arch_spec="$(find $spec -perm 400 -type f -name $HOST_ARCH \
+        -print 2>$CAULDRON_NULL)"
     else
-      ARCH_SPEC=$(find -L ${spec} -perm 400 -type f -name ${HOST_ARCH} \
-        -print 2>/dev/null)
+      arch_spec="$(find -L $spec -perm 400 -type f -name $HOST_ARCH \
+        -print 2>$CAULDRON_NULL)"
     fi
-    [[ ARCH_SPEC ]] && break
+    [[ -n $arch_spec ]] && break
   done
-  HOST_TRIPLE=$(grep "HOST=" ${ARCH_SPEC} | cut -d = -f 2)
+  host_triple="$(grep 'HOST=' $arch_spec | cut -d = -f 2)"
 
-  echo ${HOST_TRIPLE}
+  echo "$host_triple"
 }
 
 #-------------------------------------------------------------------------------
@@ -119,56 +120,67 @@ function cauldron_get_host_triple() {
 ##
 #-------------------------------------------------------------------------------
 function cauldron_base_toolchain() {
-  local SPELL
-  local VERSION
-  local SPELL_CACHE
-  local HOST_TRIPLE
+  local spell
+  local version
+  local spell_cache
+  local host_triple
 
-  # set the value for HOST_TRIPLE
-  HOST_TRIPLE=$(cauldron_get_host_triple)
+  # get the value for HOST_TRIPLE
+  host_triple=$(cauldron_get_host_triple)
+
+  [[ -z host_triple ]] && return $ERR_HOST_TRIPLE
 
   # grab the list of spells needed as the base tool-chain which will be
   # used to create the cross-compile tool-chain
-  for SPELL in ${HOST_TOOLCHAIN}
+  for spell in "$HOST_TOOLCHAIN"
   do
     # grab the version for the spell from sorcery's state info
     # on what's installed
-    VERSION=$(grep "^${SPELL}" ${HOST_PACKAGES} | cut -d : -f 4)
+    version=$(grep "^$spell" "$HOST_PACKAGES" | cut -d : -f 4)
 
-    if [[ ${VERSION} ]]
+    # check if spell found on the system
+    if [[ -n $version ]]
     then
       # set SPELL_CACHE as shorthand for SPELL-VERSION-HOST_TRIPLE.tar.bz2
-      SPELL_CACHE="${SPELL}-${VERSION}-${HOST_TRIPLE}.tar${CACHE_EXTENSION}"
+      spell_cache="${spell}-${version}-${host_triple}.tar${CACHE_EXTENSION}"
 
       # check to see if there is already a cache file from sorcery
       # this check could be based on spell-{names,versions} reported by
       # gaze/sorcery/dispel. Mirroring code in dispel might be the best bet,
       # since that has to find the version currently installed anyway.
-      if [[ -f "${HOST_SORCERY_SPOOL}/${SPELL_CACHE}" ]]
+      if [[ -f "$HOST_SORCERY_SPOOL/$spell_cache" ]]
       then
         # found a cache file, copy it to the BUILD dir
-        cp "${HOST_SORCERY_SPOOL}/${SPELL_CACHE}" "${CAULDRON_BUILD}"
+        cp "$HOST_SORCERY_SPOOL/$spell_cache" "$CAULDRON_BUILD" ||
+          return $ERR_CP_CACHE
       else
         # couldn't find a cache file, so we'll need to build one
         if [[ -z cauldron_build_host_cache_file ]]
         then
           cauldron_load_library lib.hostcache
         fi
-        cauldron_build_host_cache_file ${SPELL}
+        cauldron_build_host_cache_file "$spell" ||
+          return $ERR_BUILD_CACHE
       fi
 
       # unpack the cache file, effectively installing
       # the spell into the BUILD dir
       # the unpacking is done against the BUILD dir as the root dir, so
       # this should not touch the HOST filesystem at all
-      tar xjf "${CAULDRON_BUILD}/${SPELL_CACHE}" -C "${CAULDRON_BUILD}"/
-      [[ $? -eq 0 ]] && rm "${CAULDRON_BUILD}/${SPELL_CACHE}"
+      tar xjf "$CAULDRON_BUILD/$spell_cache" -C "$CAULDRON_BUILD/" ||
+        return $ERR_UNPACK_CACHE
+
+      # if the tar was successful, then remove the temporary file
+      rm "$CAULDRON_BUILD/$spell_cache" ||
+        return $ERR_RM_CACHE
+    # the spell is not present on the HOST system
     else
-      # the spell is not present on the HOST system, so it must be cast
-      # inside a chroot
-      cauldron_chroot ${CAULDRON_CAST} ${SPELL} || return $ERR_CHROOT
+      # cast the spell inside a chroot to get the cache
+      cauldron_chroot "$CAULDRON_CAST" "$spell" || return $ERR_CHROOT
     fi
   done
+
+  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
@@ -268,36 +280,35 @@ function cauldron_build_target_system() {
 }
 
 #-------------------------------------------------------------------------------
-## @param CLEANFILE
+## @param cleanfile
 ##
 ## Cleans out unneeded files that were used to generate the ISO, but should
-## not be present on the final ISO system. CLEANFILE is a file that lists paths
+## not be present on the final ISO system. cleanfile is a file that lists paths
 ## to remove (absolute paths, relative to a chroot of the iso), one file/path
 ## per line.
 ##
 #-------------------------------------------------------------------------------
 function cauldron_clean_iso_system() {
-  local CLEANFILE=$1
+  local cleanfile=$1
 
-  [[ -z "$CLEANFILE" ]] && return $ERR_CLEANFILE
+  [[ -z "$cleanfile" ]] && return $ERR_CLEANFILE
 
-  for i in $(sort -r $CLEANFILE)
+  for i in $(sort -r $cleanfile)
   do
     if [[ -d $i ]]
     then
       echo "Attempting to remove directory $i..."
-      rmdir $i
+      rmdir $i || return $ERR_CLEAN_DIR
     else
       echo "Deleting $i"
-      rm $i
+      rm $i || return $ERR_CLEAN_FILE
     fi
   done
+
   return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
-## @param KEEP - whether or not to keep the original .iso file in addition to
-## the compressed .iso.bz2
 ##
 ## Builds the ISO filesystem using the generated ISO data and the filename
 ## set in the cauldron config file.
@@ -327,11 +338,16 @@ function cauldron_mkisofs() {
 ##
 #-------------------------------------------------------------------------------
 function cauldron_add_installer() {
-  local MODULE=$1
+  local installer=$1
 
-  cp -r "$CAULDRON_LIBS/$MODULE" "$CAULDRON_BUILD/$ENCHANT_DATA/"
-  ln -sf "$CAULDRON_BUILD/$ENCHANT_DATA/$MODULE"/bin/* \
-          "$CAULDRON_BUILD"/usr/sbin/
+  cp -r "$CAULDRON_LIBS/$installer" "$CAULDRON_BUILD/$ENCHANT_DATA/" ||
+    return $ERR_COPY_INSTALLER
+
+  ln -sf "$CAULDRON_BUILD/$ENCHANT_DATA/$installer"/bin/* \
+    "$CAULDRON_BUILD"/usr/sbin/ ||
+    return $ERR_LINK_INSTALLER
+
+  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
@@ -346,8 +362,9 @@ function cauldron_prepare() {
   # ensure that the build dir exists
   mkdir -p "$CAULDRON_BUILD"
 
-  # copy the host's resolv.conf in order to dl packages from net
-  cp -L /etc/resolv.conf "$CAULDRON_BUILD"/etc/resolv.conf
+  # copy the host's resolv.conf in order to dl sources from the net
+  cp -L /etc/resolv.conf "$CAULDRON_BUILD"/etc/resolv.conf ||
+    return $ERR_RESOLV
 
   # install sorcery into the build dir
   if [[ -z cauldron_sorcery_install ]]
