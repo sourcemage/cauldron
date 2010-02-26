@@ -154,14 +154,17 @@ function cauldron_main() {
   fi
 }
 
+# load main config file - required
+. /etc/cauldron/config || exit 1
+
+# load secondary (custom config file) - required if present
 if [[ -e /etc/cauldron/local/config ]]
 then
-  . /etc/cauldron/local/config
-else
-  . /etc/cauldron/config
+  . /etc/cauldron/local/config || exit 1
 fi
 
-. /var/lib/cauldron/libcauldron
+# load the main cauldron library
+. "$CAULDRON_LIBS"/libcauldron || exit 1
 
 if [[ $UID == 0 ]]
 then
