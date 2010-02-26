@@ -117,14 +117,19 @@ function enchant_copy_kernel() {
   local KERNEL=$1
   local LINUX_VER=$2
 
-  # copy the kernel itself over
-  cp ${ENCHANT_ISO}/boot/${KERNEL} ${ENCHANT_TARGET}/boot/;
+  # copy the kernel over
+  cp "$ENCHANT_ISO/boot/$KERNEL" "$ENCHANT_TARGET/boot/" ||
+    return $ERR_KERNEL
 
   # copy the modules over
-  cp --parents -r ${ENCHANT_ISO}/lib/modules/${LINUX_VER}/* ${ENCHANT_TARGET};
+  cp --parents -r "$ENCHANT_ISO/lib/modules/$LINUX_VER"/* "$ENCHANT_TARGET/" ||
+    return $ERR_KERNEL_MODULES
 
   # make sure that the proper dep info is generated on the target system
-  depmod -a -b ${ENCHANT_TARGET}/lib/modules/${LINUX_VER} ${LINUX_VER};
+  depmod -a -b "$ENCHANT_TARGET/lib/modules/$LINUX_VER" "$LINUX_VER" ||
+    return $ERR_KERNEL_DEPMOD
+
+  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
@@ -135,13 +140,15 @@ function enchant_copy_kernel() {
 #-------------------------------------------------------------------------------
 function enchant_prepare() {
   # this initializes the file which holds the current step
-  mkdir -p "${ENCHANT_TMP}"
-  echo 'init' >$ENCHANT_STATUS
+  mkdir -p "$ENCHANT_TMP" || return $ERR_PREPARE
+  echo 'init' > "$ENCHANT_STATUS" || return $ERR_PREPARE
 
   # the next lines are to init the history files
-  mkdir -p "${ENCHANT_TMP}/history"
-  cat < /dev/null > "${ENCHANT_BACK}"
-  cat < /dev/null > "${ENCHANT_FORWARD}"
+  mkdir -p "$ENCHANT_TMP/history" || return $ERR_PREPARE
+  cat < $ENCHANT_NULL > "$ENCHANT_BACK" || return $ERR_PREPARE
+  cat < $ENCHANT_NULL > "$ENCHANT_FORWARD" || return $ERR_PREPARE
+
+  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
@@ -150,7 +157,9 @@ function enchant_prepare() {
 ##
 #-------------------------------------------------------------------------------
 function enchant_cleanup() {
-  rm -fr ${ENCHANT_TMP}
+  rm -fr "$ENCHANT_TMP" || return $ERR_CLEANUP
+
+  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
@@ -307,22 +316,31 @@ function enchant_set_prev() {
 ## Moves the installer backward in its history (like the back button on a
 ## web browser.
 ##
+## when you go back, you store/save the forward pages
+##
 #-------------------------------------------------------------------------------
 function enchant_back() {
-  # if the forward history is empty, then we can't go forward
-  [[ $(wc -l < ${ENCHANT_BACK}) -eq 0 ]] && return $ERR_BACK
+  # if the back history is empty, then we can't go back
+  [[ "$(wc -l < $ENCHANT_BACK)" -eq 0 ]] && return $ERR_BACK
 
-  # if the max history size has been reached, then we drop the oldest item
-  [[ $(wc -l < ${ENCHANT_FORWARD}) -ge $ENCHANT_HISTORY ]] &&
-    sed -i "" 1d ${ENCHANT_FORWARD}
+  # if the max forward history size has been reached
+  if [[ "$(wc -l < $ENCHANT_FORWARD)" -ge $ENCHANT_HISTORY ]]
+  then
+    # then we drop the oldest item from the forward history
+    sed -i '1d' "$ENCHANT_FORWARD" || return $ERR_BACK
+  fi
 
   # copy the current status to the forward history, so we can go forward to
   # where we are after we jump back
-  cat < ${ENCHANT_STATUS} >> ${ENCHANT_FORWARD}
+  enchant_get_current >> "$ENCHANT_FORWARD" || return $ERR_BACK
+
   # set the current step to be the one we are jumping to
-  tail -n 1 ${ENCHANT_BACK} > ${ENCHANT_STATUS}
+  tail -n 1 "$ENCHANT_BACK" > "$ENCHANT_STATUS" || return $ERR_BACK
+
   # remove the step we jumped to from the back history
-  sed -i "" $d ${ENCHANT_BACK}
+  sed -i '$d' "$ENCHANT_BACK" || return $ERR_BACK
+
+  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
@@ -330,22 +348,31 @@ function enchant_back() {
 ## Moves the installer forward in its history (like the forward button on a
 ## web browser.
 ##
+## when you go forward, you store/save the back pages
+##
 #-------------------------------------------------------------------------------
 function enchant_forward() {
   # if the forward history is empty, then we can't go forward
-  [[ $(wc -l < ${ENCHANT_FORWARD}) -eq 0 ]] && return $ERR_FORWARD
+  [[ "$(wc -l < $ENCHANT_FORWARD)" -eq 0 ]] && return $ERR_FORWARD
 
-  # if the max history size has been reached, then we drop the oldest item
-  [[ $(wc -l < ${ENCHANT_BACK}) -ge $ENCHANT_HISTORY ]] &&
-    sed -i "" 1d ${ENCHANT_BACK}
+  # if the max back history size has been reached
+  if [[ "$(wc -l < $ENCHANT_BACK)" -ge "$ENCHANT_HISTORY" ]]
+  then
+    # then we drop the oldest item from the back history
+    sed -i '1d' "$ENCHANT_BACK" || return $ERR_FORWARD
+  fi
 
   # copy the current status to the back history, so we can go back to where we
   # are after we jump forward
-  cat < ${ENCHANT_STATUS} >> ${ENCHANT_BACK}
+  enchant_get_current >> "$ENCHANT_BACK" || return $ERR_FORWARD
+
   # set the current step to be the one we are jumping to
-  tail -n 1 ${ENCHANT_FORWARD} > ${ENCHANT_STATUS}
+  tail -n 1 "$ENCHANT_FORWARD" > "$ENCHANT_STATUS" || return $ERR_FORWARD
+
   # remove the step we jumped to from the forward history
-  sed -i "" $d ${ENCHANT_FORWARD}
+  sed -i '$d' "$ENCHANT_FORWARD" || return $ERR_FORWARD
+
+  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
