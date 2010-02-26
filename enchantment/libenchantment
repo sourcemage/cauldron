@@ -177,25 +177,47 @@ function enchant_get_modules() {
   echo ${output[@]}
 }
 
+#-------------------------------------------------------------------------------
+##
+## Determines and returns the current step in the installation procedure
+##
+#-------------------------------------------------------------------------------
+function enchant_get_current() {
+  [[ -z $ENCHANT_STATUS ]] && return $ERR_GET_CURRENT
+
+  cat "$ENCHANT_STATUS" || return $ERR_GET_CURRENT
+
+  return $ERR_OK
+}
 
 #-------------------------------------------------------------------------------
 ##
-## Determines and returns the next step in the installation procedure
+## @param step
+##
+## Sets the current step of the installer to be the step passed as an argument
 ##
 #-------------------------------------------------------------------------------
-function enchant_getnext() {
-  local step
+function enchant_set_current() {
+  local module=$1
 
-  # get current step
-  step=$(cat $ENCHANT_STATUS)
-  # find next step
-  step=$(grep "^${step}:" $ENCHANT_DATA/order | head -n 1 | cut -d: -f2)
-  # check if next step is a branch
-  [[ ${step} == *'|'* ]] && step=""
-  # if we couldn't find a next step, jump to 'error'
-  step=${step:-error}
-  # print out new status
-  echo "$step"
+  if ! $(enchant_get_modules | grep -q $module)
+  then
+    return $ERR_SET_CURRENT
+  fi
+
+  # if the max history size has been reached, then we drop the oldest item
+  if [[ "$(wc -l < $ENCHANT_BACK)" -ge "$ENCHANT_HISTORY" ]]
+  then
+    sed -i '1d' "$ENCHANT_BACK" || return $ERR_SET_CURRENT
+  fi
+
+  # copy the current module to the back history
+  echo "$module" >> "$ENCHANT_BACK" || return $ERR_SET_CURRENT
+
+  # set the current module
+  echo "$module" > "$ENCHANT_STATUS" || return $ERR_SET_CURRENT
+
+  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
@@ -203,17 +225,39 @@ function enchant_getnext() {
 ## Determines and returns the next step in the installation procedure
 ##
 #-------------------------------------------------------------------------------
-function enchant_setnext() {
+function enchant_get_next() {
+  local step
+  step="$(grep -m1 \"^$(enchant_get_current):\" $ENCHANT_DATA/modules)" ||
+    return $ERR_GET_NEXT
+
+  step="$(echo $step | cut -d: -f2)" || return $ERR_GET_NEXT
+
+  if [[ -z $step ]]
+  then
+    echo "error"
+    return $ERR_GET_NEXT
+  fi
+
+  echo $step
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##
+## Determines and returns the next step in the installation procedure
+##
+#-------------------------------------------------------------------------------
+function enchant_set_next() {
   local step
 
-  # get old status
-  step=$(cat $ENCHANT_STATUS)
-  # find next status
-  step=$(grep "^$step:" $ENCHANT_DATA/order | head -n 1 | cut -d: -f2)
-  # if we couldn't find a next status, jump to 'error'
-  step=${step:-error}
+  # get next step
+  step="$(enchant_get_next)" || return $ERR_SET_NEXT
+
   # save new status
-  enchant_setstep $step
+  enchant_set_step "$step" || return $ERR_SET_NEXT
+
+  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
@@ -221,13 +265,25 @@ function enchant_setnext() {
 ## Determines and returns the previous step in the installation procedure
 ##
 #-------------------------------------------------------------------------------
-function enchant_getprev() {
+function enchant_get_prev() {
   local step
 
-  step=$(cat $ENCHANT_STATUS)
-  step=$(grep ":${step}$" $ENCHANT_DATA/order | tail -n 1 | cut -d: -f1)
-  step=${step:-error}
+  # get the current step
+  step="$(enchant_get_current)" || return $ERR_GET_PREV
+
+  step="$(grep -m1 \":$step$\" $ENCHANT_DATA/order)" || return $ERR_GET_PREV
+
+  step="$(echo $step | cut -d: -f1)" || return $ERR_GET_PREV
+
+  if [[ -z $step ]]
+  then
+    echo "error"
+    return $ERR_GET_PREV
+  fi
+
   echo "$step"
+
+  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
@@ -235,13 +291,15 @@ function enchant_getprev() {
 ## Determines and returns the previous step in the installation procedure
 ##
 #-------------------------------------------------------------------------------
-function enchant_setprev() {
+function enchant_set_prev() {
   local step
 
-  step=$(cat $ENCHANT_STATUS)
-  step=$(grep ":$CURSTEP$" $ENCHANT_DATA/order | tail -n 1 | cut -d: -f1)
-  step=${CURSTEP:-error}
-  enchant_setstep $step
+  # get the current step
+  step="$(enchant_get_prev)" || return $ERR_SET_PREV
+
+  enchant_set_current "$step" || return $ERR_SET_PREV
+
+  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
@@ -295,11 +353,17 @@ function enchant_forward() {
 ## Returns the number of the current step to perform during the installation
 ##
 #-------------------------------------------------------------------------------
-function enchant_getnum() {
-  local step
+function enchant_get_num() {
+  local num="$(grep -n -m1 \"^$(enchant_get_current):\" $ENCHANT_DATA/modules)"
 
-  step=$(cat $ENCHANT_STATUS)
-  grep -n "$step" $ENCHANT_DATA/steps | cut -d: -f1
+  if [[ -z $num ]]
+  then
+    return $ERR_GET_NUM
+  fi
+
+  echo "$num" | cut -d: -f1 || return $ERR_GET_NUM
+
+  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
@@ -307,49 +371,17 @@ function enchant_getnum() {
 ## Returns the total number of steps to perform during the installation
 ##
 #-------------------------------------------------------------------------------
-function enchant_gettotal() {
-  wc -l < $ENCHANT_DATA/steps
-}
+function enchant_get_total() {
+  local total="$(enchant_get_modules | wc -l)"
 
-#-------------------------------------------------------------------------------
-##
-## Determines and returns the current step in the installation procedure
-##
-#-------------------------------------------------------------------------------
-function enchant_getstep() {
-  cat $ENCHANT_STATUS
-}
+  if [[ "$total" -eq 0 || -z $total ]]
+  then
+    return $ERR_TOTAL_ZERO
+  fi
 
-#-------------------------------------------------------------------------------
-##
-## @param step
-##
-## Sets the current step of the installer to be the step passed as an argument
-##
-#-------------------------------------------------------------------------------
-function enchant_setstep() {
-  local step=$1
-  local good=0
-  local listed=
+  echo "$total"
 
-  cat $ENCHANT_DATA/steps | cut -d" " -f1 |
-  while read listed
-  do
-    if [[ "$step" = "$listed" ]]
-    then
-      good=1
-      echo "$step" >$ENCHANT_STATUS
-      # Now we do some work for the back history
-      # if the max history size has been reached, then we drop the oldest item
-      [[ $(wc -l < ${ENCHANT_BACK}) -ge $ENCHANT_HISTORY ]] &&
-        sed -i "" 1d ${ENCHANT_BACK}
-      # copy the current status to the back history, so we can go back to where we
-      # are after we jump forward
-      cat < ${ENCHANT_STATUS} >> ${ENCHANT_BACK}
-      return $ERR_OK
-    fi
-  done
-  return $ERR_STEP
+  return $ERR_OK
 }
 
 
