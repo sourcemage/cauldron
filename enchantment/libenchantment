@@ -155,6 +155,31 @@ function enchant_cleanup() {
 
 #-------------------------------------------------------------------------------
 ##
+## Returns a list of all steps recognized for the current installation, pruned
+## of duplicates and the special "error" step
+##
+#-------------------------------------------------------------------------------
+function enchant_get_modules() {
+  local output=( )
+  local module
+
+  for module in $(cut -d: -f1 "$ENCHANT_DATA/modules")
+  do
+    if [[ "$module" != "error" ]]
+    then
+      if ! $(echo ${output[*]} | grep -q $module)
+      then
+        output=( ${output[*]} "$module" )
+      fi
+    fi
+  done
+
+  echo ${output[@]}
+}
+
+
+#-------------------------------------------------------------------------------
+##
 ## Determines and returns the next step in the installation procedure
 ##
 #-------------------------------------------------------------------------------
