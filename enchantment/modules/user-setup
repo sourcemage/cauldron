@@ -1,0 +1,17 @@
+@[user-setup step]
+To set up users, chroot into the target system as for the bootloader step:
+@[ smgl-chroot]
+
+Set a password for the root user (pick a secure one, but not one you'll forget,
+and bear in mind that it can be bypassed with a screwdriver):
+@[ passwd root]
+
+@[Recommended]: add at least one regular user for daily use:
+@[ useradd -m -d /home/mbolton ]-g users@[ mbolton]
+@[ passwd mbolton]
+
+Replace mbolton with whatever login you want. Don't forget to change
+/home/mbolton accordingly. You may also change the group (-g users).
+
+Finally, exit the chroot to return to the installer:
+@[ exit]

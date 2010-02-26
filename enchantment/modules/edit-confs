@@ -1,0 +1,23 @@
+@[edit-confs step]
+Now, we need to set up our partitions so the system will find them again on
+bootup. For this, edit @[/mnt/root/etc/fstab] and add your partitions.
+
+(For editors available on this iso, do @[help editors])
+
+Also, take a look at the files in @[/mnt/root/etc/sysconfig/] and edit any you
+feel should be different. Especially, you should make sure the @[facilities] file
+looks correct, and if you selected a custom keymap at the start of this
+install, you'll need to edit the file called @[keymap] in that directory
+(do @[ cat /tmp/selected-keymap] to see which you chose).
+
+You may also wish to create @[/mnt/root/etc/hostname] with a hostname for your
+system, and you can set up networking by editing the
+@[/mnt/root/etc/network/interfaces] file.
+
+Finally, you can choose to set your timezone by doing the following:
+@[ smgl-chroot]
+@[ ln -sf /usr/share/zoneinfo/SOME/TIMEZONE /etc/localtime]
+
+Just remember to replace "SOME/TIMEZONE" with your actual timezone.
+
+Type @[next] to go to the next step.

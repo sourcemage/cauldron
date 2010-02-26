@@ -1,0 +1,23 @@
+@[disk-mount step]
+You need to mount the filesystems. We'll be installing to /mnt/root,
+so mount the filesystem that will be / onto /mnt/root. The partitions given are
+only examples. Replace them with the partitions you used in @[disk-format].
+
+Examples:
+@[ mount -t ext2 /dev/sda1 /mnt/root]
+@[ mount -t reiserfs /dev/sda1 /mnt/root]
+@[ mount -t xfs /dev/sda1 /mnt/root]
+
+Then mount any other partitions you made at the proper subdirectories.
+You'll probably need to make directories for the other mount points first
+(assuming you formatted the / partition). Make sure you mount / first.
+
+For example, if you created /dev/sda2 for /usr:
+@[ mkdir /mnt/root/usr]
+@[ mount -t ext2 /dev/sda2 /mnt/root/usr]
+(or, for example, if it's a jfs partition)
+@[ mount -t jfs /dev/sda1 /mnt/root]
+
+Don't forget to mount @[all] the (system) partitions you plan to use.
+Also, you may want to turn on swap via e.g.
+@[ swapon /dev/sda2]

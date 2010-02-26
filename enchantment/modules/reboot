@@ -1,0 +1,12 @@
+@[reboot step]
+You should be all done with the installation! Congratulations! Time to reboot
+into your installed system! Just type:
+
+@[ reboot]
+
+If you installed @[smgl-setup] (installed by default unless changed), be sure to
+run @[man smgl-setup] when first logging in. It will provide you with
+information on what you can do with your newly installed system.
+
+We don't (yet) eject the CD during shutdown, so be sure to take it out during
+reboot or configure your BIOS not to try and boot from it.

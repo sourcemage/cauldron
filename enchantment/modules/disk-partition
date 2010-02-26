@@ -1,0 +1,23 @@
+@[disk-partition step]
+First, we'll need to create some partitions on your disk that we can install
+SMGL to. You'll need to know the device of your hard disk to do this. One good
+way to find your disks is by ls /sys/block, running cat /proc/partitions, or by
+dmesg | grep -i disk. You probably want something that is either hd or sd.
+
+This image ships with several popular programs for partitioning:
+
+cfdisk is probably the most popular, a curses-based menu system:
+@[ cfdisk /dev/sda]
+
+parted can resize partitions, but may be a tad confusing:
+@[ parted /dev/sda]
+
+Then for the purists there's plain line-based fdisk. Can be a bit hard to use:
+@[ fdisk /dev/sda]
+
+The iso also ships with @[sfdisk], if you're insane enough to want to use
+it.
+
+Remember to save your new partitioning scheme before quitting the program,
+create a swap partition, and remember you can always see this screen again
+by typing @[todo]. Type @[next] when you're done.

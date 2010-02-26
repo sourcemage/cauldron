@@ -1,0 +1,22 @@
+Welcome to the SMGL @ISO_VERSION@ install CD!
+
+The install process is currently a guided shell prompt. Type @[next] to start.
+Everytime you finish a step, enter @[next] to advance to the next one.
+If you want to re-read the documentation for a step, type @[todo].
+You can enter @[prev] at any time to jump to the previous step.
+
+If you ever get lost, type @[steps] to get a list of installer steps,
+and e.g. @[jump copy-base] to jump to a specific step.
+Don't worry, there's no magic attached to the steps, you can jump between
+them as you please without breaking anything.
+
+If at any time you need help, type @[help].
+To see this message again, type @[welcome].
+
+If you need to set a different keymap, type @[539].
+
+If you have any feedback you'd like us to hear, please drop by
+#sourcemage-cauldron on irc.freenode.net, file a bug on bugs.sourcemage.org,
+or just send an email to the mailing lists or to iso@sourcemage.org.
+
+Enter @[next] to begin the installation. Have fun!

@@ -1,0 +1,20 @@
+@[lilo step]:
+Edit @[/mnt/root/etc/lilo.conf] to your setup (especially, you'll want to change
+the boot= and root= entries to point to your partitions, and you'll need to
+set the kernel version correctly).
+
+To run lilo properly, it needs to be chroot'ed into the new system. This needs
+some directories (/dev, /proc), so we provide a wrapper to set those up for
+you and clean them up again when you're done.
+
+Run the script to get a shell inside the installed system:
+@[ smgl-chroot]
+
+Then run lilo so it updates the boot record:
+@[ /sbin/lilo]
+
+Exit the chroot:
+@[ exit]
+
+Unless you got an error message when you were installing the boot loader,
+you should be done with this step. Type @[next] to go to the next step.

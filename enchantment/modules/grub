@@ -1,0 +1,23 @@
+@[grub step]:
+To run grub properly, it needs to be chroot'ed into the new system.
+
+chroot into the system:
+@[ smgl-chroot]
+
+Copy all the necessary grub files to /boot:
+cp /usr/lib/grub/i386-pc/* /boot/grub
+
+Then run grub and enter the following commands, without the > in front (adjust
+for your disk layout):
+@[ /sbin/grub]
+> @[root (hd0,0)]
+> @[setup (hd0)]
+> @[quit]
+
+Update menu.lst for your kernel:
+$EDITOR /boot/grub/menu.lst
+
+Exit the chroot:
+@[ exit]
+
+Type @[next] to go to the next step.

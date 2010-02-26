@@ -1,0 +1,12 @@
+@[kernel]
+You can install the ISO kernel (fast and easy), set up a custom kernel
+(recommended), or both (best of both worlds). Whatever you choose, you must
+install at least one kernel.
+
+For instructions on how to install the ISO kernel, type @[todo iso-kernel].
+
+For instructions on how to install a custom kernel, type @[todo compile-kernel].
+
+To see the instructions for this step again, just type @[todo].
+
+When you are finished, type @[next].

@@ -1,0 +1,22 @@
+@[iso-kernel step]
+Installing the ISO kernel is easy, and it should work well (it's working on
+your computer right now). To install the ISO kernel, all you need to do is copy
+the kernel and kernel modules over to your new system. You can do this with a
+script we provide, or manually. Remember to modify your bootloader
+configuration to use the kernel you install if you wish to boot it!
+
+using smgl-kernel:
+@[ smgl-kernel]
+
+manually:
+copy the kernel itself:
+@[ cp /boot/config-$(uname -r) /mnt/root/boot/]
+@[ cp /boot/linux /mnt/root/boot/vmlinuz-$(uname -r)]
+
+copy all the kernel modules:
+@[ cp -a /lib/modules/$(uname -r) /mnt/root/lib/modules/]
+
+you'll probably also want the modprobe blacklist:
+@[ cp /etc/modprobe.d/blacklist /mnt/root/etc/modprobe.d/blacklist]
+
+Type @[next] to go to the next step.
