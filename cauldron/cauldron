@@ -45,11 +45,11 @@ EOF
 function cauldron_brew () {
   # set up basic tool-chain needed for building everything else.
   cauldron_base_toolchain
+  liberror_check_fatal_error
 
   # set up chroot for building inside $CAULDRON_BUILD
   cauldron_chroot_init
-  # exit with error if chroot not defined
-  [[ -n "$CAULDRON_CHROOT" ]] || exit $ERR_CHROOT
+  liberror_check_fatal_error
 
   # build the cross-compile tool-chain targeted for the target sys
   if [ -n $TARGET ]
@@ -64,15 +64,18 @@ function cauldron_brew () {
   # use the cross-compile tool-chain to cast all spells needed for
   # the iso system
   cauldron_chroot cauldron_build_iso_system "$TARGET_SPELLS"
+  liberror_check_fatal_error
 
   # configure the iso init system, initrd/initramfs, etc.
   cauldron_chroot cauldron_iso_init
+  liberror_check_fatal_error
 
   # build/create/copy/whatever installer system/data into the iso
   for installer in $(cat "$TARGET_SPELLS")
   do
     cauldron_chroot cauldron_add_installer "${installer##*/}"
   done
+  liberror_check_fatal_error
 
   # remove unnecessary files from iso and free up space
   # this needs to have error-checking added in later
@@ -82,12 +85,15 @@ function cauldron_brew () {
     cauldron_chroot cauldron_clean_iso_system "/${cleaner##*/}"
     cauldron_chroot rm "/${cleaner##*/}"
   done
+  liberror_check_fatal_error
 
   # finished with iso building, clean up from chroot setup
   cauldron_chroot_done
+  liberror_check_fatal_error
 
   # create the iso fs from the build dir
   cauldron_mkisofs
+  liberror_check_fatal_error
 }
 
 function cauldron_modify_local_config() {
