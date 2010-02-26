@@ -30,23 +30,55 @@ fi
 # Ensure installer sanity
 enchant_prepare
 
-function header() {
-  local doc
-  doc=$1
+# print a standardized header
+# if given a filename for an argument, it will print the contents of the file
+# after the header
+function shell_header() {
   echo ""
   echo ""
   echo ""
-  cat $1
+
+  # if arg1 supplied, cat it
+  [[ -n $1 ]] && cat $1
 }
 
-function todo() {
-  local CURSTEP=$(enchant_getstep)
+# output the step instructions
+# use color if libcolor loaded, else just plain bold
+function shell_instructions() {
+  local file=$1
+  local hilight="${LIBCOLOR_MESSAGE_COLOR:-[1m}"
+  local normal="${LIBCOLOR_NORMAL_COLOR:-[0m}"
 
-  header ${ENCHANT_MSGS}/steps/$CURSTEP
+  sed 's/@\[\([^]]*\)\]/'$hilight'\1'$normal'/g' "$file"
 }
 
-function next_step() {
-  enchant_getnext
+# display module names with short descriptions in columns
+function shell_modules() {
+  local list
+  local module
+  local col_width=0
+
+  # get the list of modules
+  list=( $(enchant_get_modules) )
+
+  # get the width of the widest column
+  for col in ${list[*]}
+  do
+    [[ ${#col} -gt $col_width ]] && col_width=${#col}
+  done
+
+  header
+  for module in ${list[*]}
+  do
+    # pad the output to align the columns
+    while [[ ${#module} -lt $col_width ]]
+    do
+      module="$module "
+    done
+
+    # output name and info in columns
+    echo "$module" | paste - "$ENCHANT_MODULES/${module}.info"
+  done
 }
 
 function cur_step() {
@@ -58,21 +90,25 @@ function next() {
   todo
 }
 
-function prev() {
-  enchant_setprev
+function todo() {
+  local curstep="$1"
+  curstep="${curstep:-$(enchant_getstep)}"
+
+  # output the header
+  header
+
+  # output the current module's instructions
+  instructions "$ENCHANT_MODULES/$curstep"
+}
+
+function next() {
+  enchant_set_next
   todo
 }
 
-function num_current() {
-  enchant_getnum
-}
-
-function num_steps() {
-  enchant_gettotal
-}
-
-function steps() {
-  header $ENCHANT_DATA/shell/steps
+function prev() {
+  enchant_set_prev
+  todo
 }
 
 function back() {
@@ -84,23 +120,32 @@ function forward() {
 }
 
 function jump() {
-  enchant_setstep $*
-  if [[ $? = $ERR_STEP ]]
+  local hilight="${LIBCOLOR_MESSAGE_COLOR:-[1m}"
+  local normal="${LIBCOLOR_NORMAL_COLOR:-[0m}"
+
+  if ! enchant_set_current $*
   then
     echo ""
-    echo "Error: '$*' is not a recognized step."
-    echo "Type [1msteps[m to see a list of steps."
+    echo -n "'$*': error: "
+    liberror_print_error $?
+
+    if [[ $? = $ERR_STEP ]]
+    then
+      echo "Type ${hilight}steps${normal} to see a list of steps."
+    fi
   fi
 }
 
 function welcome() {
-  header ${ENCHANT_MSGS}/welcome
+  header
+  instructions "$ENCHANT_MODULES/welcome/welcome"
 }
 
 function help() {
-  helpfile=${ENCHANT_MSGS}/help/${1:-index}
+  helpfile="$ENCHANT_MODULES/help/${1:-index}"
   if [[ -e $helpfile ]] ;then
-    header $helpfile
+    header
+    instructions $helpfile
   else
     echo "No installer help for '$1', falling back to bash's builtin help"
     builtin help $1
