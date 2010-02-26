@@ -81,13 +81,17 @@ function shell_modules() {
   done
 }
 
-function cur_step() {
-  enchant_getstep
-}
+function shell_set_ps() {
+  local hilight="${LIBCOLOR_MESSAGE_COLOR:-[1m}"
+  local normal="${LIBCOLOR_NORMAL_COLOR:-[0m}"
 
-function next() {
-  enchant_setnext
-  todo
+  PS1=""
+  PS1="$PS1 ["
+  PS1="$PS1 current:\$(enchant_get_current)"
+  PS1="$PS1 next:\$(enchant_get_next)"
+  PS1="$PS1 \$(enchant_get_num)/\$(enchant_get_total)"
+  PS1="$PS1 ]"
+  PS1="$PS1 For a list of commands, type ${hilight}help${normal}\n\u \w\$ "
 }
 
 function todo() {
@@ -152,7 +156,7 @@ function help() {
   fi
 }
 
-PS1="[current:\$(cur_step) next:\$(next_step) \$(num_current)/\$(num_steps)] For a list of commands, type [1mhelp[m\n\u \w\$ "
+shell_set_ps
 
 #-------------------------------------------------------------------------------
 ##
