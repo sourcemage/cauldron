@@ -4,6 +4,8 @@ interconnect with each other.
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 cauldron/
 
+	Code for cauldron, the ISO generation script(s).
+
 ************
 * cauldron *
 ************
@@ -15,79 +17,131 @@ menu-driven interface (via dialog), much like sorcery.
 ***************
 * libcauldron *
 ***************
-	This is the real work-horse. It handles the building of packages
-(including setting up cross-compiler toolchains), the installation of both
-sorcery and cauldron scripts into the chroot build directory, etc. This is
+	This is the real work-horse. It directly handles the building of
+packages (including setting up cross-compiler toolchains), , etc. This is
 sourced by the cauldron script. It itself sources the liberror library (for
 returning error codes back to the calling script, in this case the cauldron
-script) and libinit library (for handling the ISO init boot stuff). The libinit
-sourcing will possibly be moved out into the cauldron script later, but for now
-it is in libcauldron.
+script) and the cauldron sublibraries (e.g., lib.chroot, lib.init, etc.).
+
+**************
+* lib.chroot *
+**************
+	The lib.chroot module is responsible for setting up, tearing down, and
+calling into chroots. The code in this module gets used many times both in the
+other modules (in particular libcauldron) and in cauldron itself (particularly
+for the brew command).
+
+*****************
+* lib.hostcache *
+*****************
+	The lib.hostcache module provides functions for generating spell caches
+using the host system. If the host sorcery doesn't have ARCHIVE turned on, or
+if the cache file for a needed spell was deleted from the host system, then it
+will need to be generated before it can be used in the build chroot. Note that
+caches from the host system are only used to set up an initial build toolchain,
+which will then be used to produce a build toolchain specific to the target
+system the ISO is to be built for.
+
+***********
+* lib.init *
+***********
+	The lib.init module handles the init system for the ISO. It provides
+functions for creating an initramfs/initrd and for setting up the ISO inittab
+for booting into the correct enchant setup (i.e. putting the menu installer on
+tty1 and the shell installer on all the remaining tty's). It will also set up
+other necessary init scripts (and possibly the init system itself, if this is
+needed), though these should really be taken care of via sorcery and casting
+spells with their init scripts enabled.
+
+*****************
+* lib.sorcerous *
+*****************
+	The lib.sorcerous module provides an interface to sorcery components
+and functions as they are needed within cauldron. This includes functions which
+source sorcery files in the target, as well as functions to download and
+install sorcery into the target.
+
+**************
+* errorcodes *
+**************
+	Defines the cauldron-specific error codes and corresponding messages to
+be used for error-checking via liberror functions.
 
 *************
 * cleaners/ *
 *************
-	This directory contains text files with lists of files, one per line
-(note: files, not spells!). The files that are listed are ones that can/should
-be removed from the ISO before packaging it. For example, the build toolchain
-is removed from the ISO via the cleaners, since some of the toolchain libraries
-are needed for runtime binaries, even though the build tools themselves are
-not. No build tools should be on the ISO! Their spell caches are provided
-instead. The cleaners are used by libcauldron.
-
-***********
-* libinit *
-***********
-	The libinit module handles the init system for the ISO. It sets up
-inittab for booting into the correct enchant setup (i.e. putting the menu
-installer on tty1 and the shell installer on all the remaining tty's). It will
-also set up other necessary init scripts (and possibly the init system itself,
-if this is needed), though these should really be taken care of via sorcery and
-casting spells with their init scripts enabled. Sourced by libcauldron (perhaps
-later to be sourced by the cauldron script instead?).
+	This directory contains text files that list files to be removed from
+the final ISO, one file per line (note: files, not spells!). For example, the
+build toolchain is removed from the ISO before it is packaged, but it is not
+simply dispelled. Instead, it is removed via the cleaners, since some of the
+toolchain libraries are needed for runtime binaries (such as libstdc++), even
+though the build tools themselves are not. No build tools should be on the ISO!
+Their spell caches are provided instead, and they are to be accessed from the
+installed platform.
 
 ***********************
 * etc/cauldron/config *
 ***********************
 	The config file contains all the global variables used by the cauldron
-scripts that can be user-configured. This includes both cauldron variables and
-enchant variables. This is used by everything.
+scripts used to build an ISO that can be user-configured. Like the sorcery
+config file(s), etc/cauldron/config is the main (default) config file, and
+etc/cauldron/local/config is meant to contain modified or custom values.  For
+any setting found in both config files, the etc/cauldron/local/config file
+overrides what is in etc/cauldron/config.
 
-*******************************
-* etc/cauldron/iso-spells.lst *
-*******************************
-	A list of all the spells necessary for the ISO to function. These are
-all basic spells, like bash for example. Later we will likely also have
-arch-specific spell lists, since different archs will need, for example,
+*****************************
+* etc/cauldron/$ARCH/spells *
+*****************************
+	A list of all the spells necessary for the ISO runtime to function.
+These are all basic spells, like bash for example. Later we will likely also
+have arch-specific spell lists, since different archs will need, for example,
 different boot loaders (grub and lilo are only for x86). The spell list is used
 by libcauldron.
 
-*******************************
-* etc/cauldron/tool-chain.lst *
-*******************************
+*****************************
+* etc/cauldron/$ARCH/caches *
+*****************************
+	A list of the spells which are necessary for a basic installed target
+system. This should be as close to a minimal basesystem as possible. Anything
+which is truly optional should be provided as spell sources rather than built
+caches. All spells whose caches are provided on the ISO must also have their
+sources provided on the ISO.
+
+******************************
+* etc/cauldron/$ARCH/sources *
+******************************
+	A list of the spells which are not necessary for a basic installed
+target system. These sources are provided for additional functionality, like
+networking. Exclusion of a spell from this list does not imply exclusion of the
+spell's sources from the ISO (cf. iso-caches.$ARCH, mentioned above).
+
+********************************
+* etc/cauldron/$ARCH/toolchain *
+********************************
 	This is a list of all the spells needed for building the binaries to go
-onto the ISO. It includes things like gcc, and for x86 bin86. This will likely
-get split into arch-specific tool-chain lists later. The tool-chain list is
-used by libcauldron.
+onto the ISO. It includes things like gcc, as well as arch-specific spells such
+as bin86 for x86.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 lib/
 
+	Code common to both cauldron and enchantment.
+
 ************
 * liberror *
 ************
 	This library defines all the error codes recognized by the cauldron
-scripts, and (when implemented) functions to handle the printing of error
-messages using these codes. This is used by cauldron, libcauldron, and
-libenchant. It is sourced by libcauldron (and should be sourced by cauldron and
-libenchant?).
+scripts, and functions to handle the printing of error messages using these
+codes. This is used by all the other scripts in the project.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-echantment/
+enchantment/
+
+	Code for enchantment, the installer interface(s) used on the ISOs.
 
 ******************
 * libenchantment *
@@ -97,6 +151,12 @@ ISO installers. Currently sourced by libcauldron, but likely will be sourced by
 cauldron instead of libcauldron soon. It is also sourced by the different
 installers, as it provides common functionality for them.
 
+
+**************
+* errorcodes *
+**************
+	Defines the enchantment-specific error codes and corresponding messages to
+be used for error-checking via liberror functions.
 
 ********************
 * enchantment/menu *
@@ -109,13 +169,24 @@ of this module.
 *********************
 * enchantment/shell *
 *********************
-	The shell installer (as seen on the 0.10.0 devel ISOs). Everything
-relevant to the shell installer goes under this directory, to be copied over to
-the ISO later if the ISO is intended to use this installer. (Note: The ISO
-really should have this installer! Whatever other installer is being used, this
-one is highly stable and robust, and requires very little in the way of system
+	The shell installer (as seen on the 0.10.0 ISOs). Everything relevant
+to the shell installer goes under this directory, to be copied over to the ISO
+later if the ISO is intended to use this installer. (Note: The ISO really
+should have this installer! Whatever other installer is being used, this one is
+highly stable and robust, and requires very little in the way of system
 resources. It's a good backup if something goes wrong with another installer,
 and has proven capable of being the only installer on the ISO as well. Other
 installers are just eye-candy on top of this one.)
+
+**************************
+* etc/enchantment/config *
+**************************
+	The config file contains all the global variables used by the enchantment
+scripts used during the ISO runtime that can be user-configured. Like the
+sorcery config file(s), etc/cauldron/config is the main (default) config file,
+and etc/cauldron/local/config is meant to contain modified or custom values.
+For any setting found in both config files, the etc/cauldron/local/config file
+overrides what is in etc/cauldron/config.
+
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
