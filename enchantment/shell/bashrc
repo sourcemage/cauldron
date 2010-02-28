@@ -17,10 +17,13 @@
 ##
 #-------------------------------------------------------------------------------
 
+
+# source configs and libenchantment
 . "/etc/cauldron/enchant.config"
 . "/etc/cauldron/local/enchant.config" 2> /dev/null
 . "${ENCHANT_DATA}/libenchantment"
 
+# source libcolor if possible
 if enchant_color
 then
   . "${ENCHANT_BASE}/libcolor" ||
@@ -99,10 +102,10 @@ function todo() {
   curstep="${curstep:-$(enchant_getstep)}"
 
   # output the header
-  header
+  shell_header
 
   # output the current module's instructions
-  instructions "$ENCHANT_MODULES/$curstep"
+  shell_instructions "$ENCHANT_MODULES/$curstep"
 }
 
 function next() {
@@ -123,6 +126,10 @@ function forward() {
   enchant_forward
 }
 
+function steps() {
+  shell_modules
+}
+
 function jump() {
   local hilight="${LIBCOLOR_MESSAGE_COLOR:-[1m}"
   local normal="${LIBCOLOR_NORMAL_COLOR:-[0m}"
@@ -141,15 +148,15 @@ function jump() {
 }
 
 function welcome() {
-  header
-  instructions "$ENCHANT_MODULES/welcome/welcome"
+  shell_header
+  shell_instructions "$ENCHANT_MODULES/welcome/welcome"
 }
 
 function help() {
   helpfile="$ENCHANT_MODULES/help/${1:-index}"
   if [[ -e $helpfile ]] ;then
-    header
-    instructions $helpfile
+    shell_header
+    shell_instructions $helpfile
   else
     echo "No installer help for '$1', falling back to bash's builtin help"
     builtin help $1

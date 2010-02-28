@@ -164,8 +164,8 @@ function enchant_cleanup() {
 
 #-------------------------------------------------------------------------------
 ##
-## Returns a list of all steps recognized for the current installation, pruned
-## of duplicates and the special "error" step
+## Returns a list of all modules recognized for the current installation, pruned
+## of duplicates and the special "error" module.
 ##
 #-------------------------------------------------------------------------------
 function enchant_get_modules() {
@@ -188,7 +188,7 @@ function enchant_get_modules() {
 
 #-------------------------------------------------------------------------------
 ##
-## Determines and returns the current step in the installation procedure
+## Determines and returns the current module in the installation procedure.
 ##
 #-------------------------------------------------------------------------------
 function enchant_get_current() {
@@ -203,7 +203,9 @@ function enchant_get_current() {
 ##
 ## @param step
 ##
-## Sets the current step of the installer to be the step passed as an argument
+## Sets the current module of the installer to be the step passed as an
+## argument. Stores the current module to the back history before setting it to
+## the new module.
 ##
 #-------------------------------------------------------------------------------
 function enchant_set_current() {
@@ -231,7 +233,7 @@ function enchant_set_current() {
 
 #-------------------------------------------------------------------------------
 ##
-## Determines and returns the next step in the installation procedure
+## Determines and returns the next module in the installation procedure.
 ##
 #-------------------------------------------------------------------------------
 function enchant_get_next() {
@@ -254,24 +256,24 @@ function enchant_get_next() {
 
 #-------------------------------------------------------------------------------
 ##
-## Determines and returns the next step in the installation procedure
+## Sets the current module to the next module in the installation procedure.
 ##
 #-------------------------------------------------------------------------------
 function enchant_set_next() {
-  local step
+  local module
 
   # get next step
-  step="$(enchant_get_next)" || return $ERR_SET_NEXT
+  module="$(enchant_get_next)" || return $ERR_SET_NEXT
 
   # save new status
-  enchant_set_step "$step" || return $ERR_SET_NEXT
+  enchant_set_step "$module" || return $ERR_SET_NEXT
 
   return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
 ##
-## Determines and returns the previous step in the installation procedure
+## Determines and returns the previous module in the installation procedure.
 ##
 #-------------------------------------------------------------------------------
 function enchant_get_prev() {
@@ -297,16 +299,16 @@ function enchant_get_prev() {
 
 #-------------------------------------------------------------------------------
 ##
-## Determines and returns the previous step in the installation procedure
+## Sets the current module to the previous module in the installation procedure.
 ##
 #-------------------------------------------------------------------------------
 function enchant_set_prev() {
-  local step
+  local module
 
   # get the current step
-  step="$(enchant_get_prev)" || return $ERR_SET_PREV
+  module="$(enchant_get_prev)" || return $ERR_SET_PREV
 
-  enchant_set_current "$step" || return $ERR_SET_PREV
+  enchant_set_current "$module" || return $ERR_SET_PREV
 
   return $ERR_OK
 }
@@ -377,7 +379,7 @@ function enchant_forward() {
 
 #-------------------------------------------------------------------------------
 ##
-## Returns the number of the current step to perform during the installation
+## Returns the number of the current module to perform during the installation.
 ##
 #-------------------------------------------------------------------------------
 function enchant_get_num() {
@@ -395,7 +397,7 @@ function enchant_get_num() {
 
 #-------------------------------------------------------------------------------
 ##
-## Returns the total number of steps to perform during the installation
+## Returns the total number of modules to perform during the installation
 ##
 #-------------------------------------------------------------------------------
 function enchant_get_total() {
