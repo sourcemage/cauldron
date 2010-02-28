@@ -30,6 +30,9 @@ then
     liberror_print_error $ERR_LIBCOLOR $LIBERR_STDERR
 fi
 
+# let libenchantment know which installer this is
+ENCHANT_INSTALLER="shell"
+
 # Ensure installer sanity
 enchant_prepare
 

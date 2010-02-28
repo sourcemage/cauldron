@@ -380,10 +380,13 @@ function enchant_forward() {
 #-------------------------------------------------------------------------------
 ##
 ## Returns the number of the current module to perform during the installation.
+## Expects $ENCHANT_INSTALLER to be set by the installer which is calling this
+## function, and for that installer to have a 'modules' file (see the
+## implementation of the shell installer for an example).
 ##
 #-------------------------------------------------------------------------------
 function enchant_get_num() {
-  local num="$(grep -n -m1 \"^$(enchant_get_current):\" $ENCHANT_DATA/modules)"
+  local num="$(grep -n -m1 \"^$(enchant_get_current):\" $ENCHANT_INSTALLER/modules)"
 
   if [[ -z $num ]]
   then
