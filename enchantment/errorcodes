@@ -23,6 +23,26 @@ ERR_OK=0                  # everything is good
 ERR_FATAL=1               # fatal error (missing cauldron libs, etc.)
 ERR_STEP=2                # error in processing a step
 ERR_LIBCOLOR=3            # problem loading libcolor when it was requested
+ERR_MK_DIR=4              # couldn't make directory
+ERR_DIR_EXISTS=5          # directory already exists
+ERR_POTION_DIR=6          # potion directory is missing
+ERR_GET_HASH_FILE=7       # problem generating file checksum
+ERR_MK_HASH_FILE=8        # problem generating file checksum
+ERR_GET_PARTITIONS=9      # couldn't read partitions
+ERR_CHK_PARTITIONS=10     # couldn't store partitions
+ERR_GET_FILESYSTEMS=11    # couldn't read filesystems
+ERR_CHK_FILESYSTEMS=12    # couldn't store filesystems
+ERR_GET_MOUNT_POINTS=13   # couldn't read mount points
+ERR_CHK_MOUNT_POINTS=14   # couldn't store mount points
+ERR_FILE_NOT_FOUND=15     # requested file not found
+ERR_DIR_NOT_FOUND=16      # requested dir not found
+ERR_CACHE_FILE=17         # couldn't copy file into potion dir
+ERR_ARCHIVE_FORMAT=18     # unknown archive format
+ERR_ARCHIVE=19            # could not build archive of potion
+ERR_COMPRESS=20           # could not compress potion archive
+ERR_MODULE_SCRIPT=21      # could not process module script
+ERR_MODULE_ENTER=22       # could not process module entry
+ERR_MODULE_EXIT=23        # could not process module exit
 
 # error messages
 ERR_MSGS=(
@@ -30,6 +50,25 @@ ERR_MSGS=(
           "fatal error"                                     # ERR_FATAL
           "not a recognized step"                           # ERR_STEP
           "libcolor requested but couldn't load libcolor"   # ERR_LIBCOLOR
+          "could not make directory"                        # ERR_MK_DIR
+          "directory already exists"                        # ERR_DIR_EXISTS
+          "potion directory is missing"                     # ERR_POTION_DIR
+          "could not generate hashsum of file"              # ERR_MK_HASH_FILE
+          "could not read partitions"                       # ERR_GET_PARTITIONS
+          "could not store partitions"                      # ERR_CHK_PARTITIONS
+          "could not read filesystems"                      # ERR_GET_FILESYSTEMS
+          "could not store filesystems"                     # ERR_CHK_FILESYSTEMS
+          "could not read mount points"                     # ERR_GET_MOUNT_POINTS
+          "could not store mount points"                    # ERR_CHK_MOUNT_POINTS
+          "file not found"                                  # ERR_FILE_NOT_FOUND
+          "directory not found"                             # ERR_DIR_NOT_FOUND
+          "could not cache file"                            # ERR_CACHE_FILE
+          "unknown archive format"                          # ERR_ARCHIVE_FORMAT
+          "could not create potion archive"                 # ERR_ARCHIVE
+          "could not compress potion archive"               # ERR_COMPRESS
+          "could not process module script"                 # ERR_MODULE_SCRIPT
+          "could not process module entry"                  # ERR_MODULE_ENTER
+          "could not process module exit"                   # ERR_MODULE_EXIT
           )
 
 #-------------------------------------------------------------------------------
