@@ -62,8 +62,8 @@ unset enchant_fatal_error
 function enchant_load_library() {
   local lib="$1"
 
-  . "$ENCHANT_LIBS/$lib" 2>$ENCHANT_NULL ||
-    liberror_check_fatal_error
+  . "$ENCHANT_LIBS/$lib" 2>$ENCHANT_NULL
+  liberror_check_fatal_error
 }
 
 #-------------------------------------------------------------------------------

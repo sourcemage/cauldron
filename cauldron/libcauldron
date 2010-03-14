@@ -56,7 +56,7 @@ unset cauldron_fatal_error
 function cauldron_load_library() {
   local lib=$1
 
-  . "$CAULDRON_LIBS/$lib" 2>$CAULDRON_NULL ||
+  . "$CAULDRON_LIBS/$lib" 2>$CAULDRON_NULL
   liberror_check_fatal_error
 }
 
