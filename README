@@ -3,7 +3,8 @@ general cauldron tools.
 
 If you would like to contribute to Cauldron development, please read HACKING
 and API first. DESIGN will explain the general principles motivating how
-Cauldron is set up and what needs to be done to build an ISO.
+Cauldron is set up and the general processes involved in building an ISO and
+installing from one.
 
 If you are looking for an area that you can contribute to, feel free to read
 TODO, or ask around in #sourcemage-cauldron on irc.freenode.net.

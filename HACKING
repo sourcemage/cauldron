@@ -42,9 +42,9 @@ caches from the host system are only used to set up an initial build toolchain,
 which will then be used to produce a build toolchain specific to the target
 system the ISO is to be built for.
 
-***********
+************
 * lib.init *
-***********
+************
 	The lib.init module handles the init system for the ISO. It provides
 functions for creating an initramfs/initrd and for setting up the ISO inittab
 for booting into the correct enchant setup (i.e. putting the menu installer on
@@ -61,11 +61,13 @@ and functions as they are needed within cauldron. This includes functions which
 source sorcery files in the target, as well as functions to download and
 install sorcery into the target.
 
+
 **************
 * errorcodes *
 **************
 	Defines the cauldron-specific error codes and corresponding messages to
 be used for error-checking via liberror functions.
+
 
 *************
 * cleaners/ *
@@ -79,9 +81,10 @@ though the build tools themselves are not. No build tools should be on the ISO!
 Their spell caches are provided instead, and they are to be accessed from the
 installed platform.
 
-***********************
-* etc/cauldron/config *
-***********************
+
+**************
+* etc/config *
+**************
 	The config file contains all the global variables used by the cauldron
 scripts used to build an ISO that can be user-configured. Like the sorcery
 config file(s), etc/cauldron/config is the main (default) config file, and
@@ -89,35 +92,35 @@ etc/cauldron/local/config is meant to contain modified or custom values.  For
 any setting found in both config files, the etc/cauldron/local/config file
 overrides what is in etc/cauldron/config.
 
-*****************************
-* etc/cauldron/$ARCH/spells *
-*****************************
+********************
+* etc/$ARCH/spells *
+********************
 	A list of all the spells necessary for the ISO runtime to function.
 These are all basic spells, like bash for example. Later we will likely also
 have arch-specific spell lists, since different archs will need, for example,
 different boot loaders (grub and lilo are only for x86). The spell list is used
 by libcauldron.
 
-*****************************
-* etc/cauldron/$ARCH/caches *
-*****************************
+********************
+* etc/$ARCH/caches *
+********************
 	A list of the spells which are necessary for a basic installed target
 system. This should be as close to a minimal basesystem as possible. Anything
 which is truly optional should be provided as spell sources rather than built
 caches. All spells whose caches are provided on the ISO must also have their
 sources provided on the ISO.
 
-******************************
-* etc/cauldron/$ARCH/sources *
-******************************
+*********************
+* etc/$ARCH/sources *
+*********************
 	A list of the spells which are not necessary for a basic installed
 target system. These sources are provided for additional functionality, like
 networking. Exclusion of a spell from this list does not imply exclusion of the
 spell's sources from the ISO (cf. iso-caches.$ARCH, mentioned above).
 
-********************************
-* etc/cauldron/$ARCH/toolchain *
-********************************
+***********************
+* etc/$ARCH/toolchain *
+***********************
 	This is a list of all the spells needed for building the binaries to go
 onto the ISO. It includes things like gcc, as well as arch-specific spells such
 as bin86 for x86.
@@ -130,11 +133,18 @@ lib/
 	Code common to both cauldron and enchantment.
 
 ************
+* libcolor *
+************
+	This library defines all the color codes and message type definitions
+to be used by the cauldron and enchantment scripts, and functions to handle
+setting the colors for the needed message types.
+
+************
 * liberror *
 ************
 	This library defines all the error codes recognized by the cauldron
-scripts, and functions to handle the printing of error messages using these
-codes. This is used by all the other scripts in the project.
+and enchantment scripts, and functions to handle the printing of error messages
+using these codes. This is used by all the other scripts in the project.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -151,6 +161,16 @@ ISO installers. Currently sourced by libcauldron, but likely will be sourced by
 cauldron instead of libcauldron soon. It is also sourced by the different
 installers, as it provides common functionality for them.
 
+**************
+* lib.potion *
+**************
+	This library provides state tracking functionality for enchantment. The
+state tracking can be used for error-proofing installation procedures,
+automating installs (or even portions of them, as it can function over ranges
+of modules), and undo functionality if the functions are linked with the
+history functionality provided by libenchantment. This library is sourced by
+libenchantment.
+
 
 **************
 * errorcodes *
@@ -158,17 +178,18 @@ installers, as it provides common functionality for them.
 	Defines the enchantment-specific error codes and corresponding messages to
 be used for error-checking via liberror functions.
 
-********************
-* enchantment/menu *
-********************
+
+*********
+* menu/ *
+*********
 	The menu installer (look at older ISOs (0.9.6.3 or earlier) for an idea
 of what this is). Everything relevant to the menu installer goes under this
 directory, to be copied onto the ISO later if the ISO is intended to make use
 of this module.
 
-*********************
-* enchantment/shell *
-*********************
+**********
+* shell/ *
+**********
 	The shell installer (as seen on the 0.10.0 ISOs). Everything relevant
 to the shell installer goes under this directory, to be copied over to the ISO
 later if the ISO is intended to use this installer. (Note: The ISO really
@@ -178,9 +199,86 @@ resources. It's a good backup if something goes wrong with another installer,
 and has proven capable of being the only installer on the ISO as well. Other
 installers are just eye-candy on top of this one.)
 
+**********************
+* $installer/modules *
+**********************
+	Each installer is required to have this file, which lists which modules
+it will make use of, and the ordering of them.
+
+
+**********************
+* modules/help/index *
+**********************
+	When the user calls for help, the contents of this file should be
+displayed, which show what commands are available to the user and what they do.
+This should probably be moved into installer-specific files.
+
+************************
+* modules/help/editors *
+************************
+	This is a list of all the editors that are available on the ISO.
+Different folks, different editing preferences. Never force your users to use
+one editor.
+
+***************************
+* modules/welcome/welcome *
+***************************
+	This is the welcome message displayed directly after the ISO finishes
+booting. It mentions how to proceed to the next steps, and also how to access
+different keymaps. This should probably be moved to installer-specific files.
+
+
+********************
+* modules/$module/ *
+********************
+	Each module directory houses all the files needed for that given
+module. Each of the files/directories associated with a module are dealt with
+in turn below.
+
+***************************
+* modules/$module/$module *
+***************************
+	These are the actual instructions that would be presented to the user.
+The file includes a very simplistic markup to designate text which should be
+highlighted (commands, headings, etc.). The markup is replaced at runtime to
+display in the desired state (for the shell, escape codes either representing
+bold or a color if libcolor is loaded).
+
+********************************
+* modules/$module/$module.info *
+********************************
+	This is the short summary info for the module displayed when the list
+of modules is given (i.e., the shell installer's "steps" command).
+
 **************************
-* etc/enchantment/config *
+* modules/$module/enter/ *
 **************************
+	This is a collection of scripts to run when the user enters the module.
+Typically these scripts are used for preparatory work, such as ensuring that
+module-specific temporary files exist and have needed start values, but could
+do anything that needs to be executed at the start of a module. These scripts
+are not passed any arguments, so they must be fully autonomous.
+
+*************************
+* modules/$module/exit/ *
+*************************
+	This is a collection of scripts to run when the user exits the module.
+Typically these scripts are used for cleanup work, such as writing out final
+values to the module-specific temporary files, but could do anything that needs
+to be executed at the end of a module. These scripts are not passed any
+arguments, so they must be fully autonomous.
+
+***************************
+* modules/$module/potion/ *
+***************************
+	This is the collection of scripts responsible for automating the
+process of the module. Each script in this directory must take one argument,
+which is the path to the potion to use for automating the module.
+
+
+**************
+* etc/config *
+**************
 	The config file contains all the global variables used by the enchantment
 scripts used during the ISO runtime that can be user-configured. Like the
 sorcery config file(s), etc/cauldron/config is the main (default) config file,

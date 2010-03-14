@@ -7,11 +7,10 @@ Things to do in order to achieve 0.1
 	- perform the build
 	- clean the chroot out (cleaners)
 	- add installer(s)
-	- extra sanity checks on boot and etc in chroot (add_sauce stuff)
-	- switch initramfs/initrd to use busybox
+	- extra sanity checks on boot and etc in chroot (add_sauce stuff for
+	  those familiar with the 0.10 series)
+	- switch initramfs to use busybox
 		o will need a scrubbed busybox config for this
-* set up how to do chroots in libcauldron (${CAULDRON_CHROOT}) (mostly done)
-* write code to install sorcery into the CAULDRON_BUILD chroot
 * write a cauldron spell so that cauldron can install itself
 * write code to set up the init process on the ISO
 	- this needs to be sensitive to what installers are present
@@ -21,13 +20,26 @@ Things to do in order to achieve 0.1
 		~ Not sure if this should really be for 0.1, but a lot of
 		  people have asked for it already.
 	- i18n
-		o fbterm + fontconfig + freetype2 for font displaying
-		o uim (uim-fep) for input
+		o translate error messages, instructions, etc. and implement an
+		  easy way of calling them based on what language is selected
+		  ($ENCHAN_LANGUAGE in the config file, plus either a file
+		  suffix (errorcodes.en) or a separate dir (en/errorcodes) for
+		  each language supported) - the framework is mostly in place,
+		  now we need translators
+		o display (fonts): fbterm + fontconfig + freetype2
+		o input: uim (uim-fep) + m17n-lib + m17n-db
 * LOTS AND LOTS OF TESTING!
 * More sanity checks and error testing (use liberror!)
-	- liberror should get a function liberror_chkerror or something, which
-	  will take an error code and do different things depending on the
-	  debug level, etc.
+	- this is done, but could be more complete
+	- currently errors are emitted, but they aren't yet really handled - we
+	  want them handled at higher levels, because how an error is displayed
+	  to the user will partly depend on what installer they are currently
+	  using, but we shouldn't really "ignore" the errors at the lower
+	  levels either
+	- we need to determine at what levels which errors are really fatal,
+	  which errors are warnings, and which errors are more informational
+	  debug messages - once we determine all this we can start properly
+	  handling, passing, or ignoring errors
 
 ====================
 Things to do for 1.0

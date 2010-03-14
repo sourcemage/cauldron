@@ -28,12 +28,22 @@ Anything pertaining to installers is referred to collectively as "enchantment"
 
  * All cauldron API functions are to be prefixed with cauldron_
  * All cauldron API variables are to be prefixed with CAULDRON_
+
  * All enchantment API functions are to be prefixed with enchant_
  * All enchantment API variables are to be prefixed with ENCHANT_
+
+ * All potion API functions are to be prefixed with enchant_potion_
+ * All potion API variables are to be prefixed with ENCHANT_POTION_
+
  * Other API variables and functions are to be prefixed in accordance with what
    makes sense for where those functions and variables are defined. For
    example, in the common library liberror, functions are prefixed with
    liberror_.
+
+ * Functions which logically group together (i.e., functions that operate
+   specifically on modules themselves) should share a common prefix (i.e.,
+   enchant_module_enter and enchant_module_exit)
+
  * Functions should be preceded by verbose comments to describe the use of the
    function, formatted for use with bashdoc
 
@@ -86,5 +96,5 @@ prefixed by "cauldron_" since this is a cauldron function (incidentally, this
 function is defined in libcauldron). Local variable copies of the API-named
 parameters are made as shorthand notations for the full API names.
 
-Though it is not required, all contributing developers are strongly urged to
+** Though it is not required, all contributing developers are strongly urged to
 document functions internally as well, as shown in the example.
