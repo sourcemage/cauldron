@@ -83,7 +83,7 @@ function shell_modules() {
     done
 
     # output name and info in columns
-    echo "$module" | paste - "$ENCHANT_MODULES/${module}.info"
+    echo "$module" | paste - "$ENCHANT_MODULES/$module/${module}.info"
   done
 }
 
@@ -108,7 +108,7 @@ function todo() {
   shell_header
 
   # output the current module's instructions
-  shell_instructions "$ENCHANT_MODULES/$curstep"
+  shell_instructions "$ENCHANT_MODULES/$curstep/$curstep"
 }
 
 function next() {

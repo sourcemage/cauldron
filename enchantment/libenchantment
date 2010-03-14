@@ -216,6 +216,8 @@ function enchant_set_current() {
     return $ERR_SET_CURRENT
   fi
 
+  enchant_module_exit || return $ERR_MODULE_EXIT
+
   # if the max history size has been reached, then we drop the oldest item
   if [[ "$(wc -l < $ENCHANT_BACK)" -ge "$ENCHANT_HISTORY" ]]
   then
@@ -227,6 +229,8 @@ function enchant_set_current() {
 
   # set the current module
   echo "$module" > "$ENCHANT_STATUS" || return $ERR_SET_CURRENT
+
+  enchant_module_enter || return $ERR_MODULE_ENTER
 
   return $ERR_OK
 }
@@ -412,6 +416,50 @@ function enchant_get_total() {
   fi
 
   echo "$total"
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##
+## Processes the module entry functions. This is used to provide extra
+## functionality upon entering a module (usually preparatory work, like creating
+## module-specific temp files, etc.)
+##
+#-------------------------------------------------------------------------------
+function enchant_module_enter() {
+  local module="$(cat $ENCHANT_STATUS)"
+  local script=""
+
+  for script in "$ENCHANT_MODULES/$module/enter"/*
+  do
+    if [[ -f "$script" ]]
+    then
+      /bin/bash "$script" || return $ERR_MODULE_SCRIPT
+    fi
+  done
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##
+## Processes the module exit functions. This is used to provide extra
+## functionality upon exiting a module, usually things like writing data to the
+## module's temp files, etc.
+##
+#-------------------------------------------------------------------------------
+function enchant_module_exit() {
+  local module="$(cat $ENCHANT_STATUS)"
+  local script=""
+
+  for script in "$ENCHANT_MODULES/$module/exit"/*
+  do
+    if [[ -f "$script" ]]
+    then
+      /bin/bash "$script" || return $ERR_MODULE_SCRIPT
+    fi
+  done
 
   return $ERR_OK
 }
