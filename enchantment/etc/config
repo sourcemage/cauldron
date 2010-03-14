@@ -3,17 +3,11 @@
       # path to the ISO system (this should usually be null, unless
       # you are doing some tricky hacking)
       ENCHANT_ISO_PATH="${ENCHANT_ISO_PATH:-}"
+
           # path to the enchant library modules
           ENCHANT_BASE="${ENCHANT_BASE:-$ENCHANT_ISO_PATH/var/lib/cauldron/}"
           ENCHANT_LIBS="${ENCHANT_LIBS:-$ENCHANT_BASE/enchantment}"
-           # temp directory used during the install
-           ENCHANT_TMP="${ENCHANT_TMP:-$ENCHANT_ISO_PATH/tmp/enchantment}"
-        # install module (step) info
-        ENCHANT_STATUS="${ENCHANT_STATUS:-$ENCHANT_TMP/current_module}"
-          ENCHANT_BACK="${ENCHANT_BACK:-$ENCHANT_TMP/history/back}"
-       ENCHANT_FORWARD="${ENCHANT_FORWARD:-$ENCHANT_TMP/history/forward}"
-        # where the target system is mounted
-        ENCHANT_TARGET="${ENCHANT_TARGET:-$ENCHANT_ISO_PATH/mnt/root}"
+
           # where the installer files are located
           ENCHANT_DATA="${ENCHANT_DATA:-$ENCHANT_ISO_PATH/usr/share/enchantment}"
        # location of the install modules (steps)
@@ -21,11 +15,24 @@
           # location of installer documentation
           ENCHANT_DOCS="${ENCHANT_DOCS:-$ENCHANT_ISO_PATH/usr/share/doc/enchantment}"
 
-         # whether to use color for displaying messages
-         ENCHANT_COLOR="${ENCHANT_COLOR:-yes}"
+           # temp directory used during the install
+           ENCHANT_TMP="${ENCHANT_TMP:-$ENCHANT_ISO_PATH/tmp/enchantment}"
+
+        # where the target system is mounted
+        ENCHANT_TARGET="${ENCHANT_TARGET:-$ENCHANT_ISO_PATH/mnt/root}"
+
+        # install module (step) info
+        ENCHANT_STATUS="${ENCHANT_STATUS:-$ENCHANT_TMP/current_module}"
+	  # install module history
+          ENCHANT_BACK="${ENCHANT_BACK:-$ENCHANT_TMP/history/back}"
+       ENCHANT_FORWARD="${ENCHANT_FORWARD:-$ENCHANT_TMP/history/forward}"
 
        # size of history buffers, total size = $ENCHANT_HISTORY * 2 = (back + forward)
        ENCHANT_HISTORY=${ENCHANT_HISTORY:-20}
+
+         # whether to use color for displaying messages
+         ENCHANT_COLOR="${ENCHANT_COLOR:-yes}"
+
 
 ENCHANT_SORCERY_CONFIG="${ENCHANT_SORCERY_CONFIG:-/etc/sorcery/config}"
   ENCHANT_SORCERY_LIBS="${ENCHANT_SORCERY_LIBS:-/var/lib/sorcery/modules}"
