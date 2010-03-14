@@ -69,7 +69,7 @@ function enchant_load_library() {
 #-------------------------------------------------------------------------------
 # enchant includes
 #-------------------------------------------------------------------------------
-
+enchant_load_library "lib.potion"
 
 #-------------------------------------------------------------------------------
 # function definitions
@@ -226,6 +226,9 @@ function enchant_set_current() {
 
   # copy the current module to the back history
   echo "$module" >> "$ENCHANT_BACK" || return $ERR_SET_CURRENT
+
+  # check the installation state
+  enchant_check_state || return $ERR_CHECK_STATE
 
   # set the current module
   echo "$module" > "$ENCHANT_STATUS" || return $ERR_SET_CURRENT
@@ -458,6 +461,33 @@ function enchant_module_exit() {
     if [[ -f "$script" ]]
     then
       /bin/bash "$script" || return $ERR_MODULE_SCRIPT
+    fi
+  done
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+## @param potion to process for
+##
+## Processes the module potion functions. This is used to do automated installs
+## using pre-made potions (from previous installs or composed ahead of time). It
+## runs scripted versions of what the user would have done manually in each
+## module.
+##
+#-------------------------------------------------------------------------------
+function enchant_module_potion() {
+  local module="$(cat $ENCHANT_STATUS)"
+  local potion="$1"
+  local script=""
+
+  [[ -d "$potion" ]] || $ERR_DIR_NOT_FOUND
+
+  for script in "$ENCHANT_MODULES/$module/potion"/*
+  do
+    if [[ -f "$script" ]]
+    then
+      /bin/bash "$script" "$potion" || return $ERR_MODULE_SCRIPT
     fi
   done
 

@@ -18,6 +18,9 @@
            # temp directory used during the install
            ENCHANT_TMP="${ENCHANT_TMP:-$ENCHANT_ISO_PATH/tmp/enchantment}"
 
+        # path where potion state data is stored
+        ENCHANT_POTION="${ENCHANT_POTION:-$ENCHANT_TMP/potion}"
+
         # where the target system is mounted
         ENCHANT_TARGET="${ENCHANT_TARGET:-$ENCHANT_ISO_PATH/mnt/root}"
 
@@ -29,6 +32,14 @@
 
        # size of history buffers, total size = $ENCHANT_HISTORY * 2 = (back + forward)
        ENCHANT_HISTORY=${ENCHANT_HISTORY:-20}
+
+      # path where potion state data is stored
+      ENCHANT_HASHFUNC="${ENCHANT_HASHFUNC:-/bin/sha1sum}"
+
+       # path where potion state data is stored
+       ENCHANT_ARCHIVE="${ENCHANT_ARCHIVE:-/bin/tar}"
+      # path where potion state data is stored
+      ENCHANT_COMPRESS="${ENCHANT_COMPRESS:-/bin/gzip}"
 
          # whether to use color for displaying messages
          ENCHANT_COLOR="${ENCHANT_COLOR:-yes}"
