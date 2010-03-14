@@ -33,7 +33,7 @@ ENCHANT_NULL="/dev/null"
 ##
 #-------------------------------------------------------------------------------
 function enchant_fatal_error() {
-  echo $1
+  echo "$1"
   exit 1
 }
 
@@ -60,10 +60,10 @@ unset enchant_fatal_error
 ##
 #-------------------------------------------------------------------------------
 function enchant_load_library() {
-  local lib=$1
+  local lib="$1"
 
   . "$ENCHANT_LIBS/$lib" 2>$ENCHANT_NULL ||
-  liberror_check_fatal_error
+    liberror_check_fatal_error
 }
 
 #-------------------------------------------------------------------------------
@@ -91,7 +91,7 @@ function enchant_color() {
     fi
   else
     # if ENCHANT_COLOR specifically set to yes
-    if [[ $ENCHANT_COLOR == "yes" ]]
+    if [[ "$ENCHANT_COLOR" == "yes" ]]
     then
       # we want color
       return 0
@@ -114,8 +114,8 @@ function enchant_color() {
 ##
 #-------------------------------------------------------------------------------
 function enchant_copy_kernel() {
-  local KERNEL=$1
-  local LINUX_VER=$2
+  local KERNEL="$1"
+  local LINUX_VER="$2"
 
   # copy the kernel over
   cp "$ENCHANT_ISO/boot/$KERNEL" "$ENCHANT_TARGET/boot/" ||
@@ -176,7 +176,7 @@ function enchant_get_modules() {
   do
     if [[ "$module" != "error" ]]
     then
-      if ! $(echo ${output[*]} | grep -q $module)
+      if ! $(echo ${output[*]} | grep -q "$module")
       then
         output=( ${output[*]} "$module" )
       fi
