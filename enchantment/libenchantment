@@ -32,7 +32,7 @@ ENCHANT_NULL="/dev/null"
 ## occurs. Afterwards, functions from liberror are used instead.
 ##
 #-------------------------------------------------------------------------------
-function cauldron_fatal_error() {
+function enchant_fatal_error() {
   echo $1
   exit 1
 }
