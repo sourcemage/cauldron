@@ -26,16 +26,16 @@
 ##
 #-------------------------------------------------------------------------------
 function cauldron_create_host_cache() {
-  local spell=$1
+  local spell="$1"
   local install_log="${HOST_PATH}/var/log/sorcery/install/${spell}"
-  local cache=${CAULDRON_CACHE}/${spell}.tar
+  local cache="$CAULDRON_CACHE/$spell.tar"
 
   if [[ -z create_cache_archive ]]
   then
     . "${HOST_SORCERY_LIBS}"/libstate 2> $NULL || liberror_die $ERR_HOST_SORCERY
   fi
 
-  create_cache_archive "$install_log" "${cache}" "${cache}${EXTENSION}" ||
+  create_cache_archive "$install_log" "$cache" "${cache}${EXTENSION}" ||
     return $ERR_CREATE_CACHE
 }
 
@@ -51,20 +51,20 @@ function cauldron_create_host_cache() {
 ##
 #-------------------------------------------------------------------------------
 function cauldron_build_host_cache_file() {
-  local spell=$1
-  local aggressive=$2
-  local version=
+  local spell="$1"
+  local aggressive="$2"
+  local version=""
 
   # First check to see if the spell was installed, but no cache exists.
-  if gaze -q installed $spell
+  if gaze -q installed "$spell"
   then
     # Spell is installed, generate a cache file using the install log?
     version=$(grep "^${spell}" ${HOST_PACKAGES} | cut -d : -f 4)
-    cauldron_create_host_cache ${spell}-${version}
+    cauldron_create_host_cache "${spell}-${version}"
   else
     # Only do this part if the caller wants us to be aggressive in building the
     # cache.
-    if $aggressive
+    if [[ "$aggressive" == yes || "$aggressive" == 1 ]]
     then
       # Do some trickery to get a cache file. Make sure that sorcery is set to
       # generate a cache file, and if not then either set sorcery to do so or
@@ -83,12 +83,12 @@ function cauldron_build_host_cache_file() {
         for file in "$HOST_PATH/var/log/sorcery/install/${spell}-${version}/"*
         do
           # copy all files from the sorcery install log into $AGGR_BUILD
-          cp -a --parents "$file" "$aggr_build"/
+          cp -a --parents "$file" "$aggr_build/"
         done
 
         # package the collection of files from the install log as a cache file
         tar jcf "${spell}-${version}.tar.bz2" \
-          --transform "s#$aggr_build/##" $aggr_build/*
+          --transform "s#$aggr_build/##" "$aggr_build"/*
 
         # if the packaging was successful, wipe out the $AGGR_BUILD dir
         [[ $? -eq 0 ]] && rm -fr "$aggr_build"
@@ -100,8 +100,8 @@ function cauldron_build_host_cache_file() {
           [[ $archive != "on" ]] &&
           sed -i 's/ARCHIVE=.*/ARCHIVE="on"/' "$config"
         fi
-        cauldron_chroot $CAULDRON_CAST $spell
-        cauldron_chroot $CAULDRON_DISPEL $spell
+        cauldron_chroot "$CAULDRON_CAST" "$spell"
+        cauldron_chroot "$CAULDRON_DISPEL" "$spell"
       fi
     fi
   fi

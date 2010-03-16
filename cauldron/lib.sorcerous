@@ -58,7 +58,7 @@ function cauldron_source_sorcery() {
 ##
 #-------------------------------------------------------------------------------
 function cauldron_configure_toolchain() {
-  local stage=$1
+  local stage="$1"
 
   if [[ -z modify_config ]]
   then
@@ -69,7 +69,7 @@ function cauldron_configure_toolchain() {
   # make sure the sorcery local config dir exists on the ISO
   mkdir -p "$ISO_SORCERY_CONFIG" || return $ERR_ISO_SORCERY_CONFIG
 
-  case ${stage} in
+  case "$stage" in
     1)
       modify_config "$ISO_SORCERY_CONFIG" CUSTOM_CFLAGS \
         "--host=${HOST_ARCH} --target=${CAULDRON_ARCH}"

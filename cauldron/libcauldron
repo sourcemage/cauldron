@@ -25,7 +25,7 @@ CAULDRON_NULL="/dev/null"
 ##
 #-------------------------------------------------------------------------------
 function cauldron_fatal_error() {
-  echo $1
+  echo "$1"
   exit 1
 }
 
@@ -34,11 +34,11 @@ function cauldron_fatal_error() {
 ## liberror includes - load these first!
 ##
 #-------------------------------------------------------------------------------
-. ${CAULDRON_BASE}/liberror 2>$CAULDRON_NULL ||
+. "$CAULDRON_BASE/liberror" 2>$CAULDRON_NULL ||
   cauldron_fatal_error "error: cannot load base libraries!"
 
 # load cauldron error code and message defines
-. ${CAULDRON_LIBS}/errorcodes 2>$CAULDRON_NULL ||
+. "$CAULDRON_LIBS/errorcodes" 2>$CAULDRON_NULL ||
   cauldron_fatal_error "error: cannot load cauldron libraries!"
 
 # drop cauldron_fatal_error if liberror was successfully loaded
@@ -54,7 +54,7 @@ unset cauldron_fatal_error
 ##
 #-------------------------------------------------------------------------------
 function cauldron_load_library() {
-  local lib=$1
+  local lib="$1"
 
   . "$CAULDRON_LIBS/$lib" 2>$CAULDRON_NULL
   liberror_check_fatal_error
@@ -63,13 +63,13 @@ function cauldron_load_library() {
 #-------------------------------------------------------------------------------
 # cauldron includes
 #-------------------------------------------------------------------------------
-#cauldron_load_library lib.sorcerous
+#cauldron_load_library "lib.sorcerous"
 
-cauldron_load_library lib.chroot
+cauldron_load_library "lib.chroot"
 
-cauldron_load_library lib.init
+cauldron_load_library "lib.init"
 
-#cauldron_load_library lib.hostcache
+#cauldron_load_library "lib.hostcache"
 
 if [[ $CAULDRON_COLOR == "yes" ]]
 then
@@ -87,9 +87,9 @@ fi
 ##
 #-------------------------------------------------------------------------------
 function cauldron_get_host_triple() {
-  local arch_spec
-  local host_triple
-  local spec
+  local arch_spec=""
+  local host_triple=""
+  local spec=""
 
   # get the value for the HOST triplet from sorcery archspecs
   for spec in ${HOST_ARCH_PATH[@]}
@@ -102,8 +102,10 @@ function cauldron_get_host_triple() {
       arch_spec="$(find -L $spec -perm 400 -type f -name $HOST_ARCH \
         -print 2>$CAULDRON_NULL)"
     fi
+
     [[ -n $arch_spec ]] && break
   done
+
   host_triple="$(grep 'HOST=' $arch_spec | cut -d = -f 2)"
 
   echo "$host_triple"
@@ -120,15 +122,15 @@ function cauldron_get_host_triple() {
 ##
 #-------------------------------------------------------------------------------
 function cauldron_base_toolchain() {
-  local spell
-  local version
-  local spell_cache
-  local host_triple
+  local spell=""
+  local version=""
+  local spell_cache=""
+  local host_triple=""
 
   # get the value for HOST_TRIPLE
-  host_triple=$(cauldron_get_host_triple)
+  host_triple="$(cauldron_get_host_triple)"
 
-  [[ -z host_triple ]] && return $ERR_HOST_TRIPLE
+  [[ -z $host_triple ]] && return $ERR_HOST_TRIPLE
 
   # grab the list of spells needed as the base tool-chain which will be
   # used to create the cross-compile tool-chain
@@ -157,7 +159,7 @@ function cauldron_base_toolchain() {
         # couldn't find a cache file, so we'll need to build one
         if [[ -z cauldron_build_host_cache_file ]]
         then
-          cauldron_load_library lib.hostcache
+          cauldron_load_library "lib.hostcache"
         fi
         cauldron_build_host_cache_file "$spell" ||
           return $ERR_BUILD_CACHE
@@ -190,23 +192,23 @@ function cauldron_base_toolchain() {
 #-------------------------------------------------------------------------------
 function cauldron_cross_toolchain() {
   # build the stage 1 tools
-  cauldron_configure_toolchain 1
-  cauldron_chroot ${CAULDRON_CAST} binutils
-  cauldron_chroot ${CAULDRON_CAST} gcc
+  cauldron_configure_toolchain 1 || return $ERR_TOOLCHAIN_STAGE1
+  cauldron_chroot "$CAULDRON_CAST" "binutils" || return $ERR_CHROOT_CAST
+  cauldron_chroot "$CAULDRON_CAST" "gcc" || return $ERR_CHROOT_CAST
 
   # build glibc (stage 2)
-  cauldron_configure_toolchain 2
-  cauldron_chroot ${CAULDRON_CAST} glibc
+  cauldron_configure_toolchain 2 || return $ERR_TOOLCHAIN_STAGE2
+  cauldron_chroot "$CAULDRON_CAST" "glibc" || return $ERR_CHROOT_CAST
 
   # rebuild gcc (still stage 1, but this time linked against the
   # cross-glibc
-  cauldron_configure_toolchain 1
-  cauldron_chroot ${CAULDRON_CAST} gcc
+  cauldron_configure_toolchain 1 || return $ERR_TOOLCHAIN_STAGE1
+  cauldron_chroot "$CAULDRON_CAST" "gcc" || return $ERR_CHROOT_CAST
 
   # do a sorcery rebuild inside the BUILD dir to
   # generate the cross-compile tool-chain (stage 3)
-  cauldron_configure_toolchain 3
-  cauldron_chroot ${CAULDRON_REBUILD}
+  cauldron_configure_toolchain 3 || return $ERR_TOOLCHAIN_STAGE3
+  cauldron_chroot "$CAULDRON_REBUILD" || return $ERR_CHROOT_REBUILD
 }
 
 #-------------------------------------------------------------------------------
@@ -218,8 +220,8 @@ function cauldron_cross_toolchain() {
 ##
 #-------------------------------------------------------------------------------
 function cauldron_build_target_system() {
-  local target_spells=$1
-  local spell
+  local target_spells="$1"
+  local spell=""
 
   # Since we will be installing from the running ISO system instead of a giant
   # tarball, for each spell we only need to make sure that the cache file is
@@ -234,8 +236,8 @@ function cauldron_build_target_system() {
     # on the ISO filesystem (any spells cast here should be those not required
     # for the functioning of the ISO itself, only to be installed to the target
     # system).
-    cauldron_chroot ${CAULDRON_CAST} $spell
-    cauldron_chroot ${CAULDRON_DISPEL} $spell
+    cauldron_chroot "$CAULDRON_CAST" "$spell" || return $ERR_CHROOT_CAST
+    cauldron_chroot "$CAULDRON_DISPEL" "$spell" || return $ERR_CHROOT_DISPEL
   done
 
   return $ERR_OK
@@ -251,19 +253,19 @@ function cauldron_build_target_system() {
 ##
 #-------------------------------------------------------------------------------
 function cauldron_clean_iso_system() {
-  local cleanfile=$1
+  local cleanfile="$1"
 
   [[ -z "$cleanfile" ]] && return $ERR_CLEANFILE
 
   for i in $(sort -r $cleanfile)
   do
-    if [[ -d $i ]]
+    if [[ -d "$i" ]]
     then
       echo "Attempting to remove directory $i..."
-      rmdir $i || return $ERR_CLEAN_DIR
+      rmdir "$i" || return $ERR_CLEAN_DIR
     else
       echo "Deleting $i"
-      rm $i || return $ERR_CLEAN_FILE
+      rm "$i" || return $ERR_CLEAN_FILE
     fi
   done
 
@@ -277,15 +279,24 @@ function cauldron_clean_iso_system() {
 ##
 #-------------------------------------------------------------------------------
 function cauldron_mkisofs() {
-  mkisofs -R -b isolinux/isolinux.bin -c isolinux/boot.cat -no-emul-boot \
-    -boot-load-size 4 -boot-info-table -o ${SMGL_ISO} ${CAULDRON_BUILD}
+  mkisofs -R \
+    -b isolinux/isolinux.bin \
+    -c isolinux/boot.cat \
+    -no-emul-boot \
+    -boot-load-size 4 \
+    -boot-info-table \
+    -o "$SMGL_ISO" \
+    "$CAULDRON_BUILD" ||
+      return $ERR_MKISOFS
 
   if [[ "$CAULDRON_KEEPISO" == "yes" ]] ;
   then
-    bzip2 -k ${SMGL_ISO}
+    bzip2 -k "$SMGL_ISO" || return $ERR_COMPRESS_ISO
   else
-    bzip2 ${SMGL_ISO}
+    bzip2 "$SMGL_ISO" || return $ERR_COMPRESS_ISO
   fi
+
+  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
