@@ -114,19 +114,20 @@ function enchant_color() {
 ##
 #-------------------------------------------------------------------------------
 function enchant_copy_kernel() {
-  local KERNEL="$1"
-  local LINUX_VER="$2"
+  local iso="$ENCHANT_ISO_PATH"
+  local kernel="$1"
+  local linux_ver="$2"
 
   # copy the kernel over
-  cp "$ENCHANT_ISO/boot/$KERNEL" "$ENCHANT_TARGET/boot/" ||
+  cp "$iso/boot/$kernel" "$ENCHANT_TARGET/boot/" ||
     return $ERR_KERNEL
 
   # copy the modules over
-  cp --parents -r "$ENCHANT_ISO/lib/modules/$LINUX_VER"/* "$ENCHANT_TARGET/" ||
-    return $ERR_KERNEL_MODULES
+  cp --parents -r "$iso/lib/modules/$linux_ver"/* "$ENCHANT_TARGET/" ||
+      return $ERR_KERNEL_MODULES
 
   # make sure that the proper dep info is generated on the target system
-  depmod -a -b "$ENCHANT_TARGET/lib/modules/$LINUX_VER" "$LINUX_VER" ||
+  depmod -a -b "$ENCHANT_TARGET/lib/modules/$linux_ver" "$linux_ver" ||
     return $ERR_KERNEL_DEPMOD
 
   return $ERR_OK
