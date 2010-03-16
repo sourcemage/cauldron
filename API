@@ -22,9 +22,33 @@ API because I consider the OpenGL API to be an excellent example of a clean and
 efficient API. Familiarity with the OpenGL API is however not required to code
 or understand the Cauldron API.
 
+This API specification may be updated or altered at any time under the
+discretion of Cauldron Lead or by vote of the Cauldron Team. The voting may be
+informal, until formal voting is required, in which case this statement would
+be amended.
+
 In the context of the API, "cauldron" refers to the cauldron suite itself.
 Anything pertaining to installers is referred to collectively as "enchantment"
 (the enchantment suite).
+
+ * Global variables (including those sourced from the config files) are to be
+   in all UPPERCASE, must start with a letter, and can contain only letters,
+   underscores, and trailing numbers
+   - in regexp, [A-Z][A-Z_]*[0-9]*
+ * Global variables should be defined in the relevant config file
+   (etc/cauldron/config for cauldron and etc/enchantment/config for
+   enchantment)
+
+ * Local variables are to be in all lowercase, must begin with a letter, and
+   can contain only letters, underscores, and trailing numbers
+   - in regexp, [a-z][a-z_]*[0-9]*
+ * Local variables should be defined at the top of the function which scopes
+   them, and MUST be defined before being used.
+
+ * Functions are to be in all lowercase, unless there is a very good reason to
+   uppercase (initial portions must still be lowercased, i.e. initial_LATER or
+   initial_Later), and any uppercasing needs to be approved
+   - in regexp, [a-z][a-z_]*
 
  * All cauldron API functions are to be prefixed with cauldron_
  * All cauldron API variables are to be prefixed with CAULDRON_
@@ -41,8 +65,10 @@ Anything pertaining to installers is referred to collectively as "enchantment"
    liberror_.
 
  * Functions which logically group together (i.e., functions that operate
-   specifically on modules themselves) should share a common prefix (i.e.,
-   enchant_module_enter and enchant_module_exit)
+   specifically on modules themselves) should share a common prefix in addition
+   to the library prefix (i.e., enchant_module_enter and enchant_module_exit
+   have the common prefix module_)
+   - in regexp terms: libprefix_(commonprefix_)*name
 
  * Functions should be preceded by verbose comments to describe the use of the
    function, formatted for use with bashdoc
