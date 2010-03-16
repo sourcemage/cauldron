@@ -40,6 +40,25 @@ ERR_RM_CACHE=17           # couldn't remove spell cache after unpacking in build
 ERR_HOST_TRIPLE=18        # couldn't get host triple for builds
 ERR_ISO_SORCERY_CONFIG=19 # couldn't create the ISO local sorcery config dir
 ERR_INSTALLER_DIR=20      # couldn't create the ISO installer dir
+ERR_BUILD_SPOOL=21        # build directory sorcery spool does not exist
+ERR_DOWNLOAD_SORCERY=22   # could not download sorcery
+ERR_CHROOT_CAST=23        # chroot cast failed
+ERR_CHROOT_DISPEL=24      # chroot dispel failed
+ERR_CHROOT_REBUILD=25     # chroot rebuild failed
+ERR_CLEANUP_BUILD=26      # could not clean up build dir
+ERR_CLEANUP_TMP=27        # could not clean up tmp dir
+ERR_CLEAN_DIR=28          # failed to clean dir from ISO
+ERR_CLEAN_FILE=29         # failed to clean file from ISO
+ERR_COMPRESS_ISO=30       # could not compress final ISO file
+ERR_COPY_INSTALLER=31     # could not copy installer to ISO
+ERR_LINK_INSTALLER=32     # could not link installer programs to ISO usr/sbin/
+ERR_ENCHANT_CONFIG=33     # could not source enchant config
+ERR_MK_ISOFS=34           # could not create the final ISO file
+ERR_RESOLV=35             # resolv missing in the build dir
+ERR_SORCERY_INSTALL=36    # could not install sorcery into the build dir
+ERR_TOOLCHAIN_STAGE1=37   # cross-toolchain failed at stage 1
+ERR_TOOLCHAIN_STAGE2=38   # cross-toolchain failed at stage 2
+ERR_TOOLCHAIN_STAGE3=39   # cross-toolchain failed at stage 3
 
 # error messages
 ERR_MSGS=(
@@ -48,8 +67,8 @@ ERR_MSGS=(
   "sorcery not set to archive"                        # ERR_ARCHIVE
   "could not perform chroot command"                  # ERR_CHROOT
   "cleanfile not found"                               # ERR_CLEANFILE
-  "could not load target sorcery"                     # ERR_TARGETSORCERY
-  "could not load host sorcery"                       # ERR_HOSTSORCERY
+  "could not load target sorcery"                     # ERR_TARGET_SORCERY
+  "could not load host sorcery"                       # ERR_HOST_SORCERY
   "could not load cauldron library"                   # ERR_LOAD_LIBRARY
   "target chroot dir undefined"                       # ERR_CHROOT_UNDEF
   "could not init chroot"                             # ERR_CHROOT_INIT
@@ -64,6 +83,25 @@ ERR_MSGS=(
   "could not get host triple needed for builds"       # ERR_HOST_TRIPLE
   "couldn't create the ISO local sorcery config dir"  # ERR_ISO_SORCERY_CONFIG
   "couldn't create the installer dir"                 # ERR_INSTALLER_DIR
+  "build directory sorcery spool does not exist"      # ERR_BUILD_SPOOL
+  "could not download sorcery"                        # ERR_DOWNLOAD_SORCERY
+  "chroot cast failed"                                # ERR_CHROOT_CAST
+  "chroot dispel failed"                              # ERR_CHROOT_DISPEL
+  "chroot rebuild failed"                             # ERR_CHROOT_REBUILD
+  "could not clean up build dir"                      # ERR_CLEANUP_BUILD
+  "could not clean up tmp dir"                        # ERR_CLEANUP_TMP
+  "failed to clean dir from ISO"                      # ERR_CLEAN_DIR
+  "failed to clean file from ISO"                     # ERR_CLEAN_FILE
+  "could not compress final ISO file"                 # ERR_COMPRESS_ISO
+  "could not copy installer to ISO"                   # ERR_COPY_INSTALLER
+  "could not link installer programs to usr/sbin/"    # ERR_LINK_INSTALLER
+  "could not source enchant config"                   # ERR_ENCHANT_CONFIG
+  "could not create the final ISO file"               # ERR_MK_ISOFS
+  "resolv missing in the build dir"                   # ERR_RESOLV
+  "could not install sorcery into the build dir"      # ERR_SORCERY_INSTALL
+  "cross-toolchain failed at stage 1"                 # ERR_TOOLCHAIN_STAGE1
+  "cross-toolchain failed at stage 2"                 # ERR_TOOLCHAIN_STAGE2
+  "cross-toolchain failed at stage 3"                 # ERR_TOOLCHAIN_STAGE3
   )
 
 #-------------------------------------------------------------------------------

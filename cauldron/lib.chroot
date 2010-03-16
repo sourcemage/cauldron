@@ -35,9 +35,12 @@ function cauldron_chroot_init() {
     fi
 
     # bind the needed mounts
-    mount --bind "$HOST_PATH"/dev "$target"/dev || return $ERR_CHROOT_INIT
-    mount --bind "$HOST_PATH"/dev/pts "$target"/dev/pts || return $ERR_CHROOT_INIT
-    mount --bind "$HOST_PATH"/proc "$target"/proc || return $ERR_CHROOT_INIT
+    mount --bind "$CAULDRON_HOST/dev" "$target/dev" ||
+      return $ERR_CHROOT_INIT
+    mount --bind "$CAULDRON_HOST/dev/pts" "$target/dev/pts" ||
+      return $ERR_CHROOT_INIT
+    mount --bind "$CAULDRON_HOST/proc" "$target/proc" ||
+      return $ERR_CHROOT_INIT
 
     # make sure the sorcerous library is loaded
     # which provides cauldron_source_sorcery

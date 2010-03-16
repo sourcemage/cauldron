@@ -52,7 +52,7 @@ function cauldron_brew () {
   liberror_check_fatal_error
 
   # build the cross-compile tool-chain targeted for the target sys
-  if [ "$CAULDRON_ARCH" != "$HOST_ARCH" ]
+  if [ "$CAULDRON_ARCH" != "$CAULDRON_HOST_ARCH" ]
   then
     cauldron_chroot cauldron_cross_toolchain
     liberror_check_fatal_error

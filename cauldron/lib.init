@@ -36,8 +36,8 @@ function cauldron_iso_init() {
 ##
 #-------------------------------------------------------------------------------
 function cauldron_ramdisk() {
-  local initrd="${CAULDRON_TEMP}/initrd"
-  local initmnt="${CAULDRON_TEMP}/initrd_mount"
+  local initrd="$CAULDRON_TMP/initrd"
+  local initmnt="$CAULDRON_TMP/initrd_mount"
 
   mkdir -p "$initmnt"
   dd '-if' /dev/null '-of' "$initrd"
@@ -55,8 +55,8 @@ function cauldron_ramdisk() {
 ##
 #-------------------------------------------------------------------------------
 function cauldron_ramfs() {
-  local ramdir="$CAULDRON_TEMP/initram"
-  local ramfs="$CAULDRON_TEMP/initram.cpio"
+  local ramdir="$CAULDRON_TMP/initram"
+  local ramfs="$CAULDRON_TMP/initram.cpio"
 
   mkdir -p "$ramdir"
   cauldron_initfs "$ramdir"

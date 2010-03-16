@@ -92,15 +92,15 @@ function cauldron_get_host_triple() {
   local spec=""
 
   # get the value for the HOST triplet from sorcery archspecs
-  for spec in ${HOST_ARCH_PATH[@]}
+  for spec in ${CAULDRON_HOST_ARCH_PATH[@]}
   do
-    if [[ $(find --version|grep -q 'version 4\.1\(\.\|$\)') == 1 ]]
+    local search="-perm 400 -type f -name $CAULDRON_HOST_ARCH"
+
+    if [[ "$(find --version | grep -q 'version 4\.1\(\.\|$\)')" == 1 ]]
     then
-      arch_spec="$(find $spec -perm 400 -type f -name $HOST_ARCH \
-        -print 2>$CAULDRON_NULL)"
+      arch_spec="$(find $spec $search -print 2>$CAULDRON_NULL)"
     else
-      arch_spec="$(find -L $spec -perm 400 -type f -name $HOST_ARCH \
-        -print 2>$CAULDRON_NULL)"
+      arch_spec="$(find -L $spec $search -print 2>$CAULDRON_NULL)"
     fi
 
     [[ -n $arch_spec ]] && break
@@ -126,6 +126,7 @@ function cauldron_base_toolchain() {
   local version=""
   local spell_cache=""
   local host_triple=""
+  local ext="$CAULDRON_CACHE_EXTENSION"
 
   # get the value for HOST_TRIPLE
   host_triple="$(cauldron_get_host_triple)"
@@ -138,22 +139,22 @@ function cauldron_base_toolchain() {
   do
     # grab the version for the spell from sorcery's state info
     # on what's installed
-    version=$(grep "^$spell" "$HOST_SORCERY_PACKAGES" | cut -d : -f 4)
+    version="$(grep ^$spell $CAULDRON_HSORCERY_PACKAGES | cut -d: -f4)"
 
     # check if spell found on the system
     if [[ -n $version ]]
     then
       # set SPELL_CACHE as shorthand for SPELL-VERSION-HOST_TRIPLE.tar.bz2
-      spell_cache="${spell}-${version}-${host_triple}.tar${CACHE_EXTENSION}"
+      spell_cache="${spell}-${version}-${host_triple}.tar${ext}"
 
       # check to see if there is already a cache file from sorcery
       # this check could be based on spell-{names,versions} reported by
       # gaze/sorcery/dispel. Mirroring code in dispel might be the best bet,
       # since that has to find the version currently installed anyway.
-      if [[ -f "$HOST_SORCERY_SPOOL/$spell_cache" ]]
+      if [[ -f "$CAULDRON_HSORCERY_SPOOL/$spell_cache" ]]
       then
         # found a cache file, copy it to the BUILD dir
-        cp "$HOST_SORCERY_SPOOL/$spell_cache" "$CAULDRON_BUILD" ||
+        cp "$CAULDRON_HSORCERY_SPOOL/$spell_cache" "$CAULDRON_BUILD" ||
           return $ERR_CP_CACHE
       else
         # couldn't find a cache file, so we'll need to build one
@@ -227,6 +228,10 @@ function cauldron_build_target_system() {
   # tarball, for each spell we only need to make sure that the cache file is
   # available. This will require that the ISO sorcery has caching enabled. The
   # caching should really be turned on from the very beginning though...
+  if [[ -z $ARCHIVE ]]
+  then
+    cauldron_source_sorcery || return $ERR_TARGET_SORCERY
+  fi
   [[ "$ARCHIVE" == "off" ]] && return $ERR_ARCHIVE
 
   for spell in $target_spells
@@ -285,18 +290,50 @@ function cauldron_mkisofs() {
     -no-emul-boot \
     -boot-load-size 4 \
     -boot-info-table \
-    -o "$SMGL_ISO" \
+    -o "$CAULDRON_ISO_NAME" \
     "$CAULDRON_BUILD" ||
       return $ERR_MKISOFS
 
   if [[ "$CAULDRON_KEEPISO" == "yes" ]] ;
   then
-    bzip2 -k "$SMGL_ISO" || return $ERR_COMPRESS_ISO
+    bzip2 -k "$CAULDRON_ISO_NAME" || return $ERR_COMPRESS_ISO
   else
-    bzip2 "$SMGL_ISO" || return $ERR_COMPRESS_ISO
+    bzip2 "$CAULDRON_ISO_NAME" || return $ERR_COMPRESS_ISO
   fi
 
   return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##
+## Sources the enchantment config files in the build chroot so that we can
+## obtain (and modify if the user so wishes) the paths where we will store the
+## enchantment files (libraries, installers, install modules, etc.) on the ISO.
+##
+#-------------------------------------------------------------------------------
+function cauldron_source_enchantment() {
+  local host_enchant_config="$CAULDRON_HOST/etc/cauldron/enchantment/config"
+  local enchant_config="$CAULDRON_BUILD/etc/enchantment/config"
+  local enchant_lconfig="$CAULDRON_BUILD/etc/enchantment/local/config"
+
+  # make sure the ISO has the enchantment configs first
+  # if, we need to copy them (they are required for the ISO)
+  if [[ ! -f "$enchant_config" ]]
+  then
+    cp -f "$host_enchant_config" "$enchant_config" ||
+      liberror_die $ERR_ENCHANT_CONFIG
+  fi
+
+  # set ENCHANT_ISO_PATH before sourcing the enchantment configs so all the
+  # enchantment variables used by cauldron will be relative to the cauldron
+  # build chroot
+  ENCHANT_ISO_PATH="$CAULDRON_BUILD"
+
+  # source the enchantment config to make sure we get the paths correct
+  . "$enchant_config" 2>$CAULDRON_NULL ||
+    liberror_die $ERR_ENCHANT_CONFIG
+  # try to source the local config, but don't die if it doesn't exist
+  . "$enchant_lconfig" 2>$CAULDRON_NULL
 }
 
 #-------------------------------------------------------------------------------
@@ -310,18 +347,20 @@ function cauldron_mkisofs() {
 ## future though.
 ##
 #-------------------------------------------------------------------------------
-function cauldron_add_installer() {
-  local installer=$1
+function cauldron_add_installers() {
+  local installer=""
 
   # make sure CAULDRON_BUILD/ENCHANT_DATA exists
-  mkdir -p "$CAULDRON_BUILD/$ENCHANT_DATA/" || return $ERR_INSTALLER_DIR
+  mkdir -p "$ENCHANT_DATA" || return $ERR_INSTALLER_DIR
 
-  cp -r "$CAULDRON_LIBS/$installer" "$CAULDRON_BUILD/$ENCHANT_DATA/" ||
-    return $ERR_COPY_INSTALLER
+  for installer in $CAULDRON_INSTALLERS
+  do
+    cp -r "$CAULDRON_LIBS/enchantment/$installer" "$ENCHANT_DATA/" ||
+      return $ERR_COPY_INSTALLER
 
-  ln -sf "$CAULDRON_BUILD/$ENCHANT_DATA/$installer"/bin/* \
-    "$CAULDRON_BUILD"/usr/sbin/ ||
-    return $ERR_LINK_INSTALLER
+    ln -sf "$ENCHANT_DATA/$installer"/bin/* "$CAULDRON_BUILD/usr/sbin/" ||
+      return $ERR_LINK_INSTALLER
+  done
 
   return $ERR_OK
 }
@@ -365,11 +404,11 @@ function cauldron_cleanup() {
   # if the user wants everything cleaned, kill the build directory
   if [[ "$CAULDRON_CLEAN" == "yes" ]]
   then
-    rm -fr "$CAULDRON_BUILD" || return $ERR_CLEANUP
+    rm -fr "$CAULDRON_BUILD" || return $ERR_CLEANUP_BUILD
   fi
 
   # kill the temp directory
-  rm -fr "$CAULDRON_TMP" || return $ERR_CLEANUP
+  rm -fr "$CAULDRON_TMP" || return $ERR_CLEANUP_TMP
 
   return $ERR_OK
 }
