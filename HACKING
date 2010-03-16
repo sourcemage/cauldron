@@ -288,3 +288,19 @@ overrides what is in etc/cauldron/config.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
+
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+delint/
+
+	A collection of scripts for performing quality assurance on the
+Cauldron codebase.
+
+***************************
+* delint/global_variables *
+***************************
+	Performs a static analysis of global variables (the uppercased ones) in
+files passed on the command line against a "definition" file (typically this
+would either be one of the etc/config files, or one of the errorcodes files).
+
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+

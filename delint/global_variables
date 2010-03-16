@@ -1,0 +1,56 @@
+#!/bin/bash
+
+myself="$(dirname $0)"
+
+# load liberror (this is not optional)
+if ! . "${CAULDRON_LIBS:-$myself/../lib}/liberror"
+then
+  echo "error: could not load ${CAULDRON_LIBS:-$myself/../lib}/liberror"
+  exit 1
+fi
+
+# load libcolor (there should be an option for this later)
+if ! . "${CAULDRON_LIBS:-$myself/../lib}/libcolor"
+then
+  echo "error: could not load ${CAULDRON_LIBS:-$myself/../lib}/libcolor"
+  exit 1
+fi
+
+function print_usage() {
+  cat << EndUsage
+Usage: $(basename $0) definition_file file_to_check1 [file_to_check2 ...]
+
+Checks whether global variables in FILE_TO_CHECK1 [FILE_TO_CHECK2 ...] were
+defined in DEFINITION_FILE. For any global variables not so defined, they are
+printed on stdout along with the file in which they were used.
+EndUsage
+}
+
+function usage() {
+  print_usage
+  exit $ERR_FATAL
+}
+
+defines="$1"
+shift
+
+if [[ $# -eq 0 ]]
+then
+  echo "$(print_usage)"
+  liberror_die $ERR_FATAL
+fi
+
+while [[ $# -gt 0 ]]
+do
+  file="$1"
+  shift
+
+  # as per the API specification, all global variables are required to be
+  # uppercase, and must begin with a letter, containing only letters,
+  # underscores, and trailing numbers
+  for search in $(grep -o '${\?[A-Z][A-Z_]*[0-9]*' "$file" | sort -u | sed 's/^\${\?//')
+  do
+    grep -q "$search=" "$defines" || echo "$file: $search"
+  done
+done
+
