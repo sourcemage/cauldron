@@ -76,10 +76,11 @@ enchant_load_library "lib.potion"
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
 ##
-## Determines whether we should attempt to load libcolor
+## Determines whether we should attempt to load libcolor and enable colored
+## output.
 ##
 #-------------------------------------------------------------------------------
-function enchant_color() {
+function enchant_color_enabled() {
   # if ENCHANT_COLOR was set to null
   if [[ -z $ENCHANT_COLOR ]]
   then
