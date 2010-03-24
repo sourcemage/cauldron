@@ -69,6 +69,7 @@ function enchant_load_library() {
 #-------------------------------------------------------------------------------
 # enchant includes
 #-------------------------------------------------------------------------------
+enchant_load_library "lib.install"
 enchant_load_library "lib.potion"
 
 #-------------------------------------------------------------------------------
@@ -101,37 +102,6 @@ function enchant_color_enabled() {
 
   # for all other cases, we don't want color
   return 1
-}
-
-#-------------------------------------------------------------------------------
-##
-## @param kernel
-## @param linux_version
-##
-## Copies the kernel and it's associated modules from the ISO to the TARGET
-## system. Requires that / and /boot on the TARGET system are mounted. It is
-## capable of copying multiple kernels, but for now the ISO will only have 1
-## kernel.
-##
-#-------------------------------------------------------------------------------
-function enchant_copy_kernel() {
-  local iso="$ENCHANT_ISO_PATH"
-  local kernel="$1"
-  local linux_ver="$2"
-
-  # copy the kernel over
-  cp "$iso/boot/$kernel" "$ENCHANT_TARGET/boot/" ||
-    return $ERR_KERNEL
-
-  # copy the modules over
-  cp --parents -r "$iso/lib/modules/$linux_ver"/* "$ENCHANT_TARGET/" ||
-      return $ERR_KERNEL_MODULES
-
-  # make sure that the proper dep info is generated on the target system
-  depmod -a -b "$ENCHANT_TARGET/lib/modules/$linux_ver" "$linux_ver" ||
-    return $ERR_KERNEL_DEPMOD
-
-  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------

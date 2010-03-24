@@ -1,0 +1,160 @@
+#!/bin/bash
+#-------------------------------------------------------------------------------
+##
+##=head1 SYNOPSIS
+##
+##  Common functions and variables for different installers related to
+##  installing content
+##
+##=head1 DESCRIPTION
+##
+##  This is all the functions needed for actually installing content (spell
+##  sources, spell caches, kernels and modules, etc.) into a target system.
+##
+##=head1 COPYRIGHT
+##
+##  Copyright 2009 The Cauldron Team
+##
+##=head1 FUNCTIONS
+##
+##=over 4
+##
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+##
+## @param source
+## @param destination
+##
+## Installs the source file to the destination.
+##
+#-------------------------------------------------------------------------------
+function enchant_install_file() {
+  local $src="$1"
+  local $dst="$2"
+
+  [[ -z $src ]] && return $ERR_INSTALL_FILE
+  [[ -z $dst ]] && return $ERR_INSTALL_FILE
+
+  cp -dfp "$src" "$dst" || return $ERR_INSTALL_FILE
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##
+## @param source
+## @param destination
+##
+## Installs the source directory (including all subdirectories and their
+## contents) to the destination.
+##
+#-------------------------------------------------------------------------------
+function enchant_install_dir() {
+  local $src="$1"
+  local $dst="$2"
+
+  [[ -z $src ]] && return $ERR_INSTALL_FILE
+  [[ -z $dst ]] && return $ERR_INSTALL_FILE
+
+  cp --parents -dfpr "$src" "$dst" || return $ERR_INSTALL_DIR
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##
+## @param sources_list
+##
+## Copies the selected spell sources into the target.
+##
+#-------------------------------------------------------------------------------
+function enchant_install_sources() {
+  local sources="${1:-$(cat "$ENCHANT_TMP/spell-sources")}"
+  local dst="$ENCHANT_TARGET_SOURCES"
+
+  for spell in $sources
+  do
+    enchant_install_file "$ENCHANT_SPELL_SOURCES/$spell" "$dst/" ||
+      return $ERR_INSTALL_SOURCES
+  done
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##
+## @param caches_list
+##
+## Copies the selected spell caches into the target.
+##
+#-------------------------------------------------------------------------------
+function enchant_install_caches() {
+  local caches="${1:-$(cat "$ENCHANT_TMP/spell-caches")}"
+  local dst="$ENCHANT_TARGET_CACHES"
+
+  for spell in $caches
+  do
+    enchant_install_file "$ENCHANT_SPELL_SOURCES/spell" "$dst/" ||
+      return $ERR_INSTALL_CACHES
+  done
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##
+## @param kernel_image (absolute path)
+## @param modules_path (absolute path)
+##
+## Copies the kernel and it's associated modules from the ISO to the TARGET
+## system. Requires that / and /boot on the TARGET system are mounted (unless
+## ENCHANT_TARGET_KERNEL and ENCHANT_TARGET_KMODS are modified). The second
+## parameter (modules_path) *must* include the kernel version as the last
+## directory in the path (i.e., /path/to/kernel/modules/version/).
+##
+#-------------------------------------------------------------------------------
+function enchant_install_kernel() {
+  local target="$ENCHANT_TARGET"
+  local target_kernel="$ENCHANT_TARGET_KERNEL"
+  local target_kmods="$ENCHANT_TARGET_KMODS"
+  local kernel="${1:-$ENCHANT_KERNEL}"
+  local kmods="${2:-$ENCHANT_KMOD_PATH}"
+  local linux_ver="${2:-$ENCHANT_KERNEL_VERS}"
+
+  # copy the kernel over
+  enchant_install_file "$kernel" "$target_kernel" || return $ERR_KERNEL
+
+  # copy the modules over
+  enchant_install_dir "$kmods" "$target_kmods/$(basename $kmods)" ||
+      return $ERR_KERNEL_MODULES
+
+  # make sure that the proper dep info is generated on the target system
+  depmod -a -b "$target_kmods/$linux_ver" "$linux_ver" ||
+    return $ERR_KERNEL_DEPMOD
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##=back
+##
+##=head1 LICENSE
+##
+## This software is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2 of the License, or
+## (at your option) any later version.
+##
+## This software is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this software; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+##
+#-------------------------------------------------------------------------------
+
+# vim:ai:tw=80:tabstop=2:softtabstop=2:shiftwidth=2:expandtab
