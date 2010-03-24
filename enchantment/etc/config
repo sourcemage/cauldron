@@ -5,7 +5,7 @@
       ENCHANT_ISO_PATH="${ENCHANT_ISO_PATH:-}"
 
           # path to the enchant library modules
-          ENCHANT_BASE="${ENCHANT_BASE:-$ENCHANT_ISO_PATH/var/lib/cauldron/}"
+          ENCHANT_BASE="${ENCHANT_BASE:-$ENCHANT_ISO_PATH/var/lib/cauldron}"
           ENCHANT_LIBS="${ENCHANT_LIBS:-$ENCHANT_BASE/enchantment}"
 
           # where the installer files are located
