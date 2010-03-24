@@ -34,19 +34,21 @@
        ENCHANT_HISTORY=${ENCHANT_HISTORY:-20}
 
       # path where potion state data is stored
-      ENCHANT_HASHFUNC="${ENCHANT_HASHFUNC:-/bin/sha1sum}"
+      ENCHANT_HASHFUNC="${ENCHANT_HASHFUNC:-$ENCHANT_ISO_PATH/bin/sha1sum}"
 
        # path where potion state data is stored
-       ENCHANT_ARCHIVE="${ENCHANT_ARCHIVE:-/bin/tar}"
+       ENCHANT_ARCHIVE="${ENCHANT_ARCHIVE:-$ENCHANT_ISO_PATH/bin/tar}"
       # path where potion state data is stored
-      ENCHANT_COMPRESS="${ENCHANT_COMPRESS:-/bin/gzip}"
+      ENCHANT_COMPRESS="${ENCHANT_COMPRESS:-$ENCHANT_ISO_PATH/bin/gzip}"
 
          # whether to use color for displaying messages
          ENCHANT_COLOR="${ENCHANT_COLOR:-yes}"
 
 
-ENCHANT_SORCERY_CONFIG="${ENCHANT_SORCERY_CONFIG:-/etc/sorcery/config}"
-  ENCHANT_SORCERY_LIBS="${ENCHANT_SORCERY_LIBS:-/var/lib/sorcery/modules}"
+# ISO sorcery config paths
+ENCHANT_SORCERY_CONFIG="${ENCHANT_SORCERY_CONFIG:-$ENCHANT_ISO_PATH/etc/sorcery/config}"
+  ENCHANT_SORCERY_LIBS="${ENCHANT_SORCERY_LIBS:-$ENCHANT_ISO_PATH/var/lib/sorcery/modules}"
+
 # branch of sorcery to use in the ISO
 ENCHANT_SORCERY_BRANCH="${ENCHANT_SORCERY_BRANCH:-stable}"
 
