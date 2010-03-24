@@ -26,12 +26,13 @@
 
         # install module (step) info
         ENCHANT_STATUS="${ENCHANT_STATUS:-$ENCHANT_TMP/current_module}"
-	  # install module history
-          ENCHANT_BACK="${ENCHANT_BACK:-$ENCHANT_TMP/history/back}"
-       ENCHANT_FORWARD="${ENCHANT_FORWARD:-$ENCHANT_TMP/history/forward}"
 
-       # size of history buffers, total size = $ENCHANT_HISTORY * 2 = (back + forward)
-       ENCHANT_HISTORY=${ENCHANT_HISTORY:-20}
+       # install module history settings
+       ENCHANT_HISTORY="${ENCHANT_HISTORY:-$ENCHANT_TMP/history}"
+          ENCHANT_BACK="${ENCHANT_BACK:-$ENCHANT_HISTORY/back}"
+       ENCHANT_FORWARD="${ENCHANT_FORWARD:-$ENCHANT_HISTORY/forward}"
+  # size of history buffers, total size = $ENCHANT_HISTORY * 2 = (back + forward)
+  ENCHANT_HISTORY_SIZE="${ENCHANT_HISTORY_SIZE:-20}"
 
       # path where potion state data is stored
       ENCHANT_HASHFUNC="${ENCHANT_HASHFUNC:-$ENCHANT_ISO_PATH/bin/sha1sum}"

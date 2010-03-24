@@ -220,7 +220,7 @@ function enchant_set_current() {
   enchant_module_exit || return $ERR_MODULE_EXIT
 
   # if the max history size has been reached, then we drop the oldest item
-  if [[ "$(wc -l < $ENCHANT_BACK)" -ge "$ENCHANT_HISTORY" ]]
+  if [[ "$(wc -l < $ENCHANT_BACK)" -ge "$ENCHANT_HISTORY_SIZE" ]]
   then
     sed -i '1d' "$ENCHANT_BACK" || return $ERR_SET_CURRENT
   fi
@@ -334,7 +334,7 @@ function enchant_back() {
   [[ "$(wc -l < $ENCHANT_BACK)" -eq 0 ]] && return $ERR_BACK
 
   # if the max forward history size has been reached
-  if [[ "$(wc -l < $ENCHANT_FORWARD)" -ge $ENCHANT_HISTORY ]]
+  if [[ "$(wc -l < $ENCHANT_FORWARD)" -ge "$ENCHANT_HISTORY_SIZE" ]]
   then
     # then we drop the oldest item from the forward history
     sed -i '1d' "$ENCHANT_FORWARD" || return $ERR_BACK
@@ -366,7 +366,7 @@ function enchant_forward() {
   [[ "$(wc -l < $ENCHANT_FORWARD)" -eq 0 ]] && return $ERR_FORWARD
 
   # if the max back history size has been reached
-  if [[ "$(wc -l < $ENCHANT_BACK)" -ge "$ENCHANT_HISTORY" ]]
+  if [[ "$(wc -l < $ENCHANT_BACK)" -ge "$ENCHANT_HISTORY_SIZE" ]]
   then
     # then we drop the oldest item from the back history
     sed -i '1d' "$ENCHANT_BACK" || return $ERR_FORWARD
