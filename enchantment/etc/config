@@ -53,10 +53,12 @@ ENCHANT_SORCERY_CONFIG="${ENCHANT_SORCERY_CONFIG:-$ENCHANT_ISO_PATH/etc/sorcery/
 # branch of sorcery to use in the ISO
 ENCHANT_SORCERY_BRANCH="${ENCHANT_SORCERY_BRANCH:-stable}"
 
-        HOST_ARCH_PATH=$(grep "ARCH_SPEC=" ${SORCERY_CONFIG} | \
-                         cut -d = -f 2)
-             HOST_ARCH=$(grep "ARCHITECTURE=" ${HOST_SORCERY_CONFIG} | \
-                         cut -d = -f 2)
-       CACHE_EXTENSION=$(grep "EXTENSION=" ${HOST_SORCERY_CONFIG} | \
-                         cut -d = -f 2)
+# ISO architecture/machine/host information (used to select caches when more
+# than one architecture is available for caches)
+ENCHANT_HOST_ARCH_PATH="${ENCHANT_HOST_ARCH_PATH:-$ENCHANT_ISO_PATH/usr/share/archspecs}"
+          # list of archs available for install on this ISO, if undefined set to
+          # the first entry in the archs file written by cauldron at generation
+          ENCHANT_ARCH="${ENCHANT_ARCH:-$(head -n1 $ENCHANT_DATA/archs)}"
+      ENCHANT_MACHTYPE="${ENCHANT_HOST_ARCH:-$MACHTYPE}"
+     ENCHANT_CACHE_EXT="${ENCHANT_CACHE_EXT:-tar.bz2}"
 
