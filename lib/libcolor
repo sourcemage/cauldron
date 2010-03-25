@@ -15,6 +15,9 @@
 ##
 #-------------------------------------------------------------------------------
 
+# initialize for color - can be overridden after libcolor is loaded
+LIBCOLOR_NOCOLOR="no"
+
 #-------------------------------------------------------------------------------
 # Message Color Definitions
 #-------------------------------------------------------------------------------
@@ -43,9 +46,14 @@ LIBCOLOR_SYMLINK_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_CYAN}"
 ##
 #-------------------------------------------------------------------------------
 function libcolor_message() {
-  echo -n "$LIBCOLOR_MESSAGE_COLOR"
-  echo -n $1
-  echo -n "$LIBCOLOR_NORMAL_COLOR"
+  if [[ "LIBCOLOR_NOCOLOR" == "yes" ]]
+  then
+    echo -n "$1"
+  else
+    echo -ne "$LIBCOLOR_MESSAGE_COLOR"
+    echo -n "$1"
+    echo -ne "$LIBCOLOR_NORMAL_COLOR"
+  fi
 }
 
 #-------------------------------------------------------------------------------
@@ -55,9 +63,14 @@ function libcolor_message() {
 ##
 #-------------------------------------------------------------------------------
 function libcolor_error() {
-  echo -n "$LIBCOLOR_MESSAGE_COLOR"
-  echo -n $1
-  echo -n "$LIBCOLOR_NORMAL_COLOR"
+  if [[ "LIBCOLOR_NOCOLOR" == "yes" ]]
+  then
+    echo -n "$1"
+  else
+    echo -ne "$LIBCOLOR_ERROR_COLOR"
+    echo -n "$1"
+    echo -ne "$LIBCOLOR_NORMAL_COLOR"
+  fi
 }
 
 #-------------------------------------------------------------------------------
@@ -67,9 +80,14 @@ function libcolor_error() {
 ##
 #-------------------------------------------------------------------------------
 function libcolor_query() {
-  echo -n "$LIBCOLOR_MESSAGE_COLOR"
-  echo -n $1
-  echo -n "$LIBCOLOR_NORMAL_COLOR"
+  if [[ "LIBCOLOR_NOCOLOR" == "yes" ]]
+  then
+    echo -n "$1"
+  else
+    echo -ne "$LIBCOLOR_QUERY_COLOR"
+    echo -n "$1"
+    echo -ne "$LIBCOLOR_NORMAL_COLOR"
+  fi
 }
 
 #-------------------------------------------------------------------------------
@@ -79,9 +97,14 @@ function libcolor_query() {
 ##
 #-------------------------------------------------------------------------------
 function libcolor_file() {
-  echo -n "$LIBCOLOR_MESSAGE_COLOR"
-  echo -n $1
-  echo -n "$LIBCOLOR_NORMAL_COLOR"
+  if [[ "LIBCOLOR_NOCOLOR" == "yes" ]]
+  then
+    echo -n "$1"
+  else
+    echo -ne "$LIBCOLOR_FILE_COLOR"
+    echo -n "$1"
+    echo -ne "$LIBCOLOR_NORMAL_COLOR"
+  fi
 }
 
 #-------------------------------------------------------------------------------
@@ -91,9 +114,14 @@ function libcolor_file() {
 ##
 #-------------------------------------------------------------------------------
 function libcolor_symlink() {
-  echo -n "$LIBCOLOR_MESSAGE_COLOR"
-  echo -n $1
-  echo -n "$LIBCOLOR_NORMAL_COLOR"
+  if [[ "LIBCOLOR_NOCOLOR" == "yes" ]]
+  then
+    echo -n "$1"
+  else
+    echo -ne "$LIBCOLOR_SYMLINK_COLOR"
+    echo -n "$1"
+    echo -ne "$LIBCOLOR_NORMAL_COLOR"
+  fi
 }
 
 #-------------------------------------------------------------------------------
