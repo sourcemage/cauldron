@@ -32,6 +32,12 @@ then
   exit 1
 fi
 
+if ! . "$DELINT_PATH/libdelint"
+then
+  echo "error: could not load $DELINT_PATH/libdelint"
+  liberror_die $ERR_FATAL
+fi
+
 function delint_print_usage() {
   cat << EndUsage
 Usage: $(basename $0) definition_file file_to_check1 [file_to_check2 ...]
@@ -47,36 +53,16 @@ function delint_usage() {
   exit $ERR_FATAL
 }
 
-defines="$1"
-shift
 
-if [[ ! -f "$defines" ]]
-then
-  echo "error: definition file not found"
-  liberror_die $ERR_FATAL
-fi
-
-if [[ $# -eq 0 ]]
+# we need a minimum of 2 arguments at this point:
+# the defines file + at least one file to check
+if [[ $# -lt 2 ]]
 then
   echo "$(delint_print_usage)"
   liberror_die $ERR_FATAL
 fi
 
-while [[ $# -gt 0 ]]
-do
-  file="$1"
-  shift
-
-  [[ -f "$file" ]] || continue
-
-  # as per the API specification, all global variables are required to be
-  # uppercase, and must begin with a letter, containing only letters,
-  # underscores, and trailing numbers
-  for search in $(grep -o '${\?[A-Z][A-Z_]*[0-9]*' "$file" | sort -u | sed 's/^\${\?//')
-  do
-    grep -q "$search=" "$defines" || echo "$file: $search"
-  done
-done
+delint_global_variables "$@"
 
 #-------------------------------------------------------------------------------
 ##

@@ -1,0 +1,74 @@
+#!/bin/bash
+#-------------------------------------------------------------------------------
+##
+##=head1 SYNOPSIS
+##
+##  Function and variable definitions for the delinters.
+##
+##=head1 COPYRIGHT
+##
+##  Copyright 2010 by the Cauldron Team
+##
+##=head1 FUNCTIONS
+##
+##=over 4
+##
+#-------------------------------------------------------------------------------
+
+function delint_global_variables() {
+  local defines=""
+  local file=""
+
+  # get the defines file, then drop it from the argument list
+  defines="$1"
+  shift
+
+  # make sure the defines file exists, otherwise we can't check anything
+  if [[ ! -f "$defines" ]]
+  then
+    echo "error: definition file not found"
+    liberror_die $ERR_FATAL
+  fi
+
+  while [[ $# -gt 0 ]]
+  do
+    file="$1"
+    shift
+
+    [[ -f "$file" ]] || continue
+
+    # as per the API specification, all global variables are required to be
+    # uppercase, and must begin with a letter, containing only letters,
+    # underscores, and trailing numbers
+    for search in $(grep -o '${\?[A-Z][A-Z_]*[0-9]*' "$file" | sort -u | sed 's/^\${\?//')
+    do
+      if ! grep -q "$search=" "$defines"
+      then
+        libcolor_file "$file"
+        echo -n ": "
+        libcolor_message "$search"
+        echo ""
+      fi
+    done
+  done
+}
+
+#-------------------------------------------------------------------------------
+##
+## This software is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2 of the License, or
+## (at your option) any later version.
+##
+## This software is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this software; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+##
+#-------------------------------------------------------------------------------
+
+# vim:ai:tw=80:tabstop=2:softtabstop=2:shiftwidth=2:expandtab
