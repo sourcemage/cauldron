@@ -50,6 +50,12 @@ function usage() {
 defines="$1"
 shift
 
+if [[ ! -f "$defines" ]]
+then
+  echo "error: definition file not found"
+  liberror_die $ERR_FATAL
+fi
+
 if [[ $# -eq 0 ]]
 then
   echo "$(print_usage)"
@@ -60,6 +66,8 @@ while [[ $# -gt 0 ]]
 do
   file="$1"
   shift
+
+  [[ -f "$file" ]] || continue
 
   # as per the API specification, all global variables are required to be
   # uppercase, and must begin with a letter, containing only letters,
