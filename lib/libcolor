@@ -33,7 +33,7 @@ LIBCOLOR_CYAN="\e[36m"
 LIBCOLOR_WHITE="\e[37m"
 
 LIBCOLOR_NORMAL_COLOR="${LIBCOLOR_NORMAL}${LIBCOLOR_WHITE}"
-LIBCOLOR_MESSAGE_COLOR="${LIBCOLOR_NORMAL}${LIBCOLOR_CYAN}"
+LIBCOLOR_NOTICE_COLOR="${LIBCOLOR_NORMAL}${LIBCOLOR_CYAN}"
 LIBCOLOR_ERROR_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_RED}"
 LIBCOLOR_QUERY_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_YELLOW}"
 LIBCOLOR_FILE_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_GREEN}"
@@ -42,17 +42,17 @@ LIBCOLOR_SYMLINK_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_CYAN}"
 #-------------------------------------------------------------------------------
 ## @param message
 ##
-## Prints the given message in "message" color.
+## Prints the given message in "notice" color.
 ##
 #-------------------------------------------------------------------------------
-function libcolor_message() {
+function libcolor_notice() {
   if [[ "LIBCOLOR_NOCOLOR" == "yes" ]]
   then
     echo -ne "$LIBCOLOR_BOLD"
     echo -n "$*"
     echo -ne "$LIBCOLOR_NORMAL"
   else
-    echo -ne "$LIBCOLOR_MESSAGE_COLOR"
+    echo -ne "$LIBCOLOR_NOTICE_COLOR"
     echo -n "$*"
     echo -ne "$LIBCOLOR_NORMAL_COLOR"
   fi
