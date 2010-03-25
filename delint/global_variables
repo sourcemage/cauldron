@@ -16,23 +16,23 @@
 ##
 #-------------------------------------------------------------------------------
 
-myself="$(dirname $0)"
+DELINT_PATH="$(dirname $0)"
 
 # load liberror (this is not optional)
-if ! . "${CAULDRON_LIBS:-$myself/../lib}/liberror"
+if ! . "${CAULDRON_LIBS:-$DELINT_PATH/../lib}/liberror"
 then
-  echo "error: could not load ${CAULDRON_LIBS:-$myself/../lib}/liberror"
+  echo "error: could not load ${CAULDRON_LIBS:-$DELINT_PATH/../lib}/liberror"
   exit 1
 fi
 
 # load libcolor (there should be an option for this later)
-if ! . "${CAULDRON_LIBS:-$myself/../lib}/libcolor"
+if ! . "${CAULDRON_LIBS:-$DELINT_PATH/../lib}/libcolor"
 then
-  echo "error: could not load ${CAULDRON_LIBS:-$myself/../lib}/libcolor"
+  echo "error: could not load ${CAULDRON_LIBS:-$DELINT_PATH/../lib}/libcolor"
   exit 1
 fi
 
-function print_usage() {
+function delint_print_usage() {
   cat << EndUsage
 Usage: $(basename $0) definition_file file_to_check1 [file_to_check2 ...]
 
@@ -42,8 +42,8 @@ printed on stdout along with the file in which they were used.
 EndUsage
 }
 
-function usage() {
-  print_usage
+function delint_usage() {
+  delint_print_usage
   exit $ERR_FATAL
 }
 
@@ -58,7 +58,7 @@ fi
 
 if [[ $# -eq 0 ]]
 then
-  echo "$(print_usage)"
+  echo "$(delint_print_usage)"
   liberror_die $ERR_FATAL
 fi
 
