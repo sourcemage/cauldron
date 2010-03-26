@@ -33,7 +33,8 @@ LIBCOLOR_CYAN="[36m"
 LIBCOLOR_WHITE="[37m"
 
 LIBCOLOR_NORMAL_COLOR="${LIBCOLOR_NORMAL}${LIBCOLOR_WHITE}"
-LIBCOLOR_NOTICE_COLOR="${LIBCOLOR_NORMAL}${LIBCOLOR_CYAN}"
+LIBCOLOR_NOTICE_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_BLUE}"
+LIBCOLOR_WARN_COLOR="${LIBCOLOR_NORMAL}${LIBCOLOR_CYAN}"
 LIBCOLOR_ERROR_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_RED}"
 LIBCOLOR_QUERY_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_YELLOW}"
 LIBCOLOR_FILE_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_GREEN}"
@@ -53,6 +54,25 @@ function libcolor_notice() {
     echo -ne "$LIBCOLOR_NORMAL"
   else
     echo -ne "$LIBCOLOR_NOTICE_COLOR"
+    echo -n "$*"
+    echo -ne "$LIBCOLOR_NORMAL_COLOR"
+  fi
+}
+
+#-------------------------------------------------------------------------------
+## @param message
+##
+## Prints the given message in "warn" color.
+##
+#-------------------------------------------------------------------------------
+function libcolor_warn() {
+  if [[ "LIBCOLOR_NOCOLOR" == "yes" ]]
+  then
+    echo -ne "$LIBCOLOR_BOLD"
+    echo -n "$*"
+    echo -ne "$LIBCOLOR_NORMAL"
+  else
+    echo -ne "$LIBCOLOR_WARN_COLOR"
     echo -n "$*"
     echo -ne "$LIBCOLOR_NORMAL_COLOR"
   fi
