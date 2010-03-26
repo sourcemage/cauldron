@@ -46,8 +46,8 @@ ERR_MSGS=(
 ## defined as a variable in an errorcodes file, e.g. $ERR_FATAL) to the given
 ## output stream (defaults to STDOUT) in the configured error message color.
 ##
-## If libcolor is sourced and the $LIBCOLOR_ variables are defined then the
-## error message will be output in color.
+## If libcolor is sourced and color is not specifically disabled, then the error
+## message will be output in color.
 ##
 #-------------------------------------------------------------------------------
 function liberror_print_error() {
@@ -61,13 +61,26 @@ function liberror_print_error() {
   # exit if $errmsg not defined
   [[ -z $errmsg ]] && return 1
 
+  # print an OK message if the "error" is 0, otherwise print an error message
   if [[ "$error" == 0 ]]
   then
-    # print an OK message
-    echo -e "${LIBCOLOR_MESSAGE_COLOR}${errmsg}${LIBCOLOR_NORMAL_COLOR}" >&$output
+    # output using libcolor if available
+    if [[ "$(type -t libcolor_notice)" == "function" ]]
+    then
+      libcolor_notice "$errmsg" >&$output
+      echo "" >&$output
+    else
+      echo "$errmsg" >&$output
+    fi
   else
-    # print the error message
-    echo -e "${LIBCOLOR_ERROR_COLOR}${errmsg}${LIBCOLOR_NORMAL_COLOR}" >&$output
+    # output using libcolor if available
+    if [[ "$(type -t libcolor_error)" == "function" ]]
+    then
+      libcolor_error "$errmsg" >&$output
+      echo "" >&$output
+    else
+      echo "$errmsg" >&$output
+    fi
   fi || return 1
 
   return 0

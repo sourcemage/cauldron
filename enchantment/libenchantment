@@ -41,11 +41,18 @@ function enchant_fatal_error() {
 # liberror includes
 #-------------------------------------------------------------------------------
 . "$ENCHANT_BASE/liberror" ||
-  enchant_fatal_error "error: cannot load base libraries!"
+  enchant_fatal_error "error: cannot load base library liberror"
 
 # load enchantment error code and message defines
 . "$ENCHANT_LIBS/errorcodes" ||
-  enchant_fatal_error "error: cannot load enchantment libraries!"
+  enchant_fatal_error "error: cannot load enchantment error codes"
+
+. "$ENCHANT_BASE/libcolor" ||
+  enchant_fatal_error "error: cannot load base library libcolor"
+
+# test/set whether color output should be enabled
+[[ "$ENCHANT_COLOR" != "yes" || "$(grep -q 'nocolor' /proc/cmdline)" ]] &&
+  LIBCOLOR_NOCOLOR="yes"
 
 # drop enchant_fatal_error if liberror was successfully loaded
 unset enchant_fatal_error
@@ -75,35 +82,6 @@ enchant_load_library "lib.potion"
 #-------------------------------------------------------------------------------
 # function definitions
 #-------------------------------------------------------------------------------
-#-------------------------------------------------------------------------------
-##
-## Determines whether we should attempt to load libcolor and enable colored
-## output.
-##
-#-------------------------------------------------------------------------------
-function enchant_color_enabled() {
-  # if ENCHANT_COLOR was set to null
-  if [[ -z $ENCHANT_COLOR ]]
-  then
-    # check if nocolor wasn't passed on the boot command-line
-    if ! grep -q 'nocolor' /proc/cmdline
-    then
-      # we want color
-      return 0
-    fi
-  else
-    # if ENCHANT_COLOR specifically set to yes
-    if [[ "$ENCHANT_COLOR" == "yes" ]]
-    then
-      # we want color
-      return 0
-    fi
-  fi
-
-  # for all other cases, we don't want color
-  return 1
-}
-
 #-------------------------------------------------------------------------------
 ##
 ## Sets the installer system to a sane, known initial state. Should only be
