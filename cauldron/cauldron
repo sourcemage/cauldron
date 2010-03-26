@@ -139,7 +139,7 @@ function cauldron_menu_build() {
 }
 
 function cauldron_main() {
-  if [[ -z $1 ]]
+  if [[ -z "$1" ]]
   then
     cauldron_menu_main
   else

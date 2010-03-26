@@ -29,7 +29,7 @@ function cauldron_chroot_init() {
     local target="${1:-$CAULDRON_BUILD}"
 
     # if target is somehow null, return an error
-    if [[ -z $target ]]
+    if [[ -z "$target" ]]
     then
       return $ERR_CHROOT_UNDEF
     fi
@@ -70,7 +70,7 @@ function cauldron_chroot_done() {
     local target="${1:-$CAULDRON_BUILD}"
 
     # if target is somehow null, return an error
-    if [[ -z $target ]]
+    if [[ -z "$target" ]]
     then
       return $ERR_CHROOT_UNDEF
     fi

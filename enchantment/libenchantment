@@ -142,7 +142,7 @@ function enchant_get_modules() {
 ##
 #-------------------------------------------------------------------------------
 function enchant_get_current() {
-  [[ -z $ENCHANT_STATUS ]] && return $ERR_GET_CURRENT
+  [[ -z "$ENCHANT_STATUS" ]] && return $ERR_GET_CURRENT
 
   cat "$ENCHANT_STATUS" || return $ERR_GET_CURRENT
 
@@ -200,7 +200,7 @@ function enchant_get_next() {
 
   step="$(echo $step | cut -d: -f2)" || return $ERR_GET_NEXT
 
-  if [[ -z $step ]]
+  if [[ -z "$step" ]]
   then
     echo "error"
     return $ERR_GET_NEXT
@@ -243,7 +243,7 @@ function enchant_get_prev() {
 
   step="$(echo $step | cut -d: -f1)" || return $ERR_GET_PREV
 
-  if [[ -z $step ]]
+  if [[ -z "$step" ]]
   then
     echo "error"
     return $ERR_GET_PREV
@@ -345,7 +345,7 @@ function enchant_forward() {
 function enchant_get_num() {
   local num="$(grep -n -m1 \"^$(enchant_get_current):\" $ENCHANT_INSTALLER/modules)"
 
-  if [[ -z $num ]]
+  if [[ -z "$num" ]]
   then
     return $ERR_GET_NUM
   fi

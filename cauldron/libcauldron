@@ -103,7 +103,7 @@ function cauldron_get_host_triple() {
       arch_spec="$(find -L $spec $search -print 2>$CAULDRON_NULL)"
     fi
 
-    [[ -n $arch_spec ]] && break
+    [[ -n "$arch_spec" ]] && break
   done
 
   host_triple="$(grep 'HOST=' $arch_spec | cut -d = -f 2)"
@@ -131,7 +131,7 @@ function cauldron_base_toolchain() {
   # get the value for HOST_TRIPLE
   host_triple="$(cauldron_get_host_triple)"
 
-  [[ -z $host_triple ]] && return $ERR_HOST_TRIPLE
+  [[ -z "$host_triple" ]] && return $ERR_HOST_TRIPLE
 
   # grab the list of spells needed as the base tool-chain which will be
   # used to create the cross-compile tool-chain
@@ -142,7 +142,7 @@ function cauldron_base_toolchain() {
     version="$(grep ^$spell $CAULDRON_HSORCERY_PACKAGES | cut -d: -f4)"
 
     # check if spell found on the system
-    if [[ -n $version ]]
+    if [[ -n "$version" ]]
     then
       # set SPELL_CACHE as shorthand for SPELL-VERSION-HOST_TRIPLE.tar.bz2
       spell_cache="${spell}-${version}-${host_triple}.tar${ext}"
@@ -228,7 +228,7 @@ function cauldron_build_target_system() {
   # tarball, for each spell we only need to make sure that the cache file is
   # available. This will require that the ISO sorcery has caching enabled. The
   # caching should really be turned on from the very beginning though...
-  if [[ -z $ARCHIVE ]]
+  if [[ -z "$ARCHIVE" ]]
   then
     cauldron_source_sorcery || return $ERR_TARGET_SORCERY
   fi

@@ -135,7 +135,7 @@ function enchant_potion_set_hashsum() {
   local file="$1"
   local potion="${2:-$ENCHANT_POTION_CURRENT}"
 
-  [[ -f $file ]] || return $ERR_FILE_NOT_FOUND
+  [[ -f "$file" ]] || return $ERR_FILE_NOT_FOUND
 
   "$hashfunc" "$file" > "$ENCHANT_POTION/$potion/${file##*/}.${hashfunc##*/}" ||
     return $ERR_SET_HASHSUM
@@ -156,7 +156,7 @@ function enchant_potion_cache_file() {
   local potion="${2:-$ENCHANT_POTION_CURRENT}"
   local sum=""
 
-  [[ -f $file ]] || return $ERR_FILE_NOT_FOUND
+  [[ -f "$file" ]] || return $ERR_FILE_NOT_FOUND
 
   sum="$($ENCHANT_HASHFUNC $file | cut -d' ' -f1)"
 
@@ -188,7 +188,7 @@ function enchant_potion_get_partitions() {
   # each match is exact
   local excl="$ENCHANT_POTION_MOUNT_EXCLUDES"
 
-  [[ -d $ENCHANT_POTION ]] || return $ERR_POTION_DIR
+  [[ -d "$ENCHANT_POTION" ]] || return $ERR_POTION_DIR
 
   # for every line, if the 2nd field exactly matches one of excl, skip it
   # otherwise, store the filesystem (field 3) to the temp file
@@ -237,7 +237,7 @@ function enchant_potion_get_filesystems() {
   # each match is exact
   local excl="$ENCHANT_POTION_MOUNT_EXCLUDES"
 
-  [[ -d $ENCHANT_POTION ]] || return $ERR_POTION_DIR
+  [[ -d "$ENCHANT_POTION" ]] || return $ERR_POTION_DIR
 
   # for every line, if the 2nd field exactly matches one of excl, skip it
   # otherwise, store the filesystem (field 3) to the temp file
@@ -286,7 +286,7 @@ function enchant_potion_get_mount_points() {
   # each match is exact
   local excl="$ENCHANT_POTION_MOUNT_EXCLUDES"
 
-  [[ -d $ENCHANT_POTION ]] || return $ERR_POTION_DIR
+  [[ -d "$ENCHANT_POTION" ]] || return $ERR_POTION_DIR
 
   # for every line, if the 2nd field exactly matches one of excl, skip it
   # otherwise, store the mount point (field 2) to the temp file
@@ -524,7 +524,7 @@ function enchant_potion_quaff() {
 
   # if the end module wasn't explicitly specified, set it to the last possible
   # (non-error) module
-  if [[ -z $end ]]
+  if [[ -z "$end" ]]
   then
     endmod="${#list}"
   fi

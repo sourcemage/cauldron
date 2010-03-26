@@ -33,8 +33,8 @@ function enchant_install_file() {
   local $src="$1"
   local $dst="$2"
 
-  [[ -z $src ]] && return $ERR_INSTALL_FILE
-  [[ -z $dst ]] && return $ERR_INSTALL_FILE
+  [[ -z "$src" ]] && return $ERR_INSTALL_FILE
+  [[ -z "$dst" ]] && return $ERR_INSTALL_FILE
 
   cp -dfp "$src" "$dst" || return $ERR_INSTALL_FILE
 
@@ -54,8 +54,8 @@ function enchant_install_dir() {
   local $src="$1"
   local $dst="$2"
 
-  [[ -z $src ]] && return $ERR_INSTALL_FILE
-  [[ -z $dst ]] && return $ERR_INSTALL_FILE
+  [[ -z "$src" ]] && return $ERR_INSTALL_FILE
+  [[ -z "$dst" ]] && return $ERR_INSTALL_FILE
 
   cp --parents -dfpr "$src" "$dst" || return $ERR_INSTALL_DIR
 

@@ -59,7 +59,7 @@ function liberror_print_error() {
   output=${output:=$LIBERR_STDOUT}
 
   # exit if $errmsg not defined
-  [[ -z $errmsg ]] && return 1
+  [[ -z "$errmsg" ]] && return 1
 
   # print an OK message if the "error" is 0, otherwise print an error message
   if [[ "$error" == 0 ]]
@@ -98,7 +98,7 @@ function liberror_die() {
   local error=$1
 
   # exit if $errmsg not defined
-  [[ -z $error ]] && return 1
+  [[ -z "$error" ]] && return 1
 
   # print the corresponding error message on STDERR
   liberror_print_error $error $LIBERR_STDERR

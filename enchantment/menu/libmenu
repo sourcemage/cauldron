@@ -18,7 +18,7 @@ function die_cmd() {
   local rc=${2:-$?}
   local message
 
-  [[ -n $1 ]] &&
+  [[ -n "$1" ]] &&
     message="Error: $1 failed with exit code $rc, "
 
   message="${message}bailing out."
