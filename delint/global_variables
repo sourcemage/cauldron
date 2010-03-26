@@ -18,24 +18,10 @@
 
 DELINT_PATH="$(dirname $0)"
 
-# load liberror (this is not optional)
-if ! . "${CAULDRON_LIBS:-$DELINT_PATH/../lib}/liberror"
-then
-  echo "error: could not load ${CAULDRON_LIBS:-$DELINT_PATH/../lib}/liberror"
-  exit 1
-fi
-
-# load libcolor (there should be an option for this later)
-if ! . "${CAULDRON_LIBS:-$DELINT_PATH/../lib}/libcolor"
-then
-  echo "error: could not load ${CAULDRON_LIBS:-$DELINT_PATH/../lib}/libcolor"
-  exit 1
-fi
-
 if ! . "$DELINT_PATH/libdelint"
 then
   echo "error: could not load $DELINT_PATH/libdelint"
-  liberror_die $ERR_FATAL
+  exit 1
 fi
 
 function delint_print_usage() {

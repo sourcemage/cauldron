@@ -15,6 +15,23 @@
 ##
 #-------------------------------------------------------------------------------
 
+# ensure that DELINT_PATH has a value
+[[ -z "$DELINT_PATH" ]] && DELINT_PATH="$(dirname $0)"
+
+# load liberror (this is not optional)
+if ! . "$DELINT_PATH/../lib/liberror"
+then
+  echo "error: could not load $DELINT_PATH/../lib/liberror"
+  exit 1
+fi
+
+# load libcolor (there should be an option for this later)
+if ! . "$DELINT_PATH/../lib/libcolor"
+then
+  echo "error: could not load $DELINT_PATH/../lib/libcolor"
+  exit 1
+fi
+
 function delint_global_variables() {
   local defines=""
   local file=""
