@@ -23,10 +23,16 @@
 
         # where the target system is mounted
         ENCHANT_TARGET="${ENCHANT_TARGET:-$ENCHANT_ISO_PATH/mnt/root}"
+
  # absolute path to the file which the kernel should be installed as
  ENCHANT_TARGET_KERNEL="${ENCHANT_TARGET_KERNEL:-$ENCHANT_TARGET/boot/vmlinuz}"
   # path where kernel modules should be installed
   ENCHANT_TARGET_KMODS="${ENCHANT_TARGET_KMODS:-$ENCHANT_TARGET/lib/modules}"
+
+# path where spell sources will be installed
+ENCHANT_TARGET_SOURCES="${ENCHANT_TARGET_SOURCES:-$ENCHANT_TARGET/var/spool/sorcery}"
+ # path where spell caches will be installed
+ ENCHANT_TARGET_CACHES="${ENCHANT_TARGET_CACHES:-$ENCHANT_TARGET/var/cache/sorcery}"
 
         # command to chroot to the target
         ENCHANT_CHROOT="${ENCHANT_CHROOT:-$ENCHANT_ISO_PATH/bin/chroot $ENCHANT_TARGET}"
@@ -80,3 +86,5 @@ ENCHANT_HOST_ARCH_PATH="${ENCHANT_HOST_ARCH_PATH:-$ENCHANT_ISO_PATH/usr/share/ar
       ENCHANT_MACHTYPE="${ENCHANT_HOST_ARCH:-$MACHTYPE}"
      ENCHANT_CACHE_EXT="${ENCHANT_CACHE_EXT:-tar.bz2}"
 
+
+# vim:ai:tw=80:tabstop=2:softtabstop=2:shiftwidth=2:expandtab
