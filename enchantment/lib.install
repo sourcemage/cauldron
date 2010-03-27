@@ -70,7 +70,7 @@ function enchant_install_dir() {
 ##
 #-------------------------------------------------------------------------------
 function enchant_install_sources() {
-  local sources="${1:-$(cat "$ENCHANT_TMP/spell-sources")}"
+  local sources=( "${@:-$(cat $ENCHANT_SOURCES_LIST)}" )
   local dst="$ENCHANT_TARGET_SOURCES"
 
   for spell in $sources
@@ -90,7 +90,7 @@ function enchant_install_sources() {
 ##
 #-------------------------------------------------------------------------------
 function enchant_install_caches() {
-  local caches="${1:-$(cat "$ENCHANT_TMP/spell-caches")}"
+  local caches=( "${@:-$(cat $ENCHANT_CACHES_LIST)}" )
   local dst="$ENCHANT_TARGET_CACHES"
 
   for spell in $caches

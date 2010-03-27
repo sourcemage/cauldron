@@ -41,6 +41,10 @@ ENCHANT_TARGET_SOURCES="${ENCHANT_TARGET_SOURCES:-$ENCHANT_TARGET/var/spool/sorc
  ENCHANT_SPELL_SOURCES="${ENCHANT_SPELL_SOURCES:-$ENCHANT_ISO_PATH/var/spool/sorcery}"
   # path to installable spell caches (pre-built binaries)
   ENCHANT_SPELL_CACHES="${ENCHANT_SPELL_CACHES:-$ENCHANT_ISO_PATH/var/cache/sorcery}"
+  # file to hold sources selected for install
+  ENCHANT_SOURCES_LIST="${ENCHANT_SOURCES_LIST:-$ENCHANT_TMP/spell-sources}"
+   # file to hold caches selected for install
+   ENCHANT_CACHES_LIST="${ENCHANT_CACHES_LIST:-$ENCHANT_TMP/spell-caches}"
 
         # install module (step) info
         ENCHANT_STATUS="${ENCHANT_STATUS:-$ENCHANT_TMP/current_module}"
