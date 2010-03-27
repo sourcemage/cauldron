@@ -1,0 +1,270 @@
+#!/bin/bash
+#-------------------------------------------------------------------------------
+##
+##=head1 SYNOPSIS
+##
+##  This file is the user-level interface of the SMGL shell installer. All
+##  user-level commands are defined here, and either handle the input directly
+##  using libenchanment (and its sub-libraries) or route it to more high-level
+##  functions defined in the shell functions file.
+##
+##=head1 COPYRIGHT
+##
+##  Copyright 2010 by the Cauldron Team
+##
+##=head1 FUNCTIONS
+##
+##=over 4
+##
+#-------------------------------------------------------------------------------
+
+# let libenchantment know which installer this is
+ENCHANT_INSTALLER="shell"
+
+# source configs and libenchantment
+. "/etc/cauldron/enchant.config"
+. "/etc/cauldron/local/enchant.config" 2> /dev/null
+
+# load the main library (which in turn loads sub-libraries)
+if ! . "$ENCHANT_LIBS/libenchantment"
+then
+  echo "error: could not load libenchantment"
+  exit 1
+fi
+
+# add local error message(s) and error code(s)
+ERR_INSTALLER_FUNCS="$(echo $((${#ERR_MSGS[*]}+1)))"
+ERR_INSTALLER_CHROOT_MOUNT="$(echo $((${#ERR_MSGS[*]}+2)))"
+ERR_INSTALLER_CHROOT_EXEC="$(echo $((${#ERR_MSGS[*]}+3)))"
+ERR_INSTALLER_CHROOT_UMOUNT="$(echo $((${#ERR_MSGS[*]}+4)))"
+$enchant_shell_err_msgs=(
+                "could not load $ENCHANT_INSTALLER functions file"
+                "could not mount chroot subdirs"
+                "could not execute chroot command"
+                "could not unmount chroot subdirs"
+                )
+$ERR_MSGS=( "$ERR_MSGS" "${enchant_shell_err_msgs[*]}" )
+
+# source installer-specific functions
+[[ -f "$ENCHANT_DATA/$ENCHANT_INSTALLER/functions" ]] ||
+  liberror_die $ERR_INSTALLER_FUNCS
+
+
+#------------------------------------------------------------------------------
+function enchant_shell_command_keymap() {
+  [[ "$#" -eq 0 ]] || return $ERR_INSTALLER_CMD
+
+  enchant_shell_perform_keymap || return $ERR_INSTALLER_KEYMAP
+
+  return $ERR_OK
+}
+
+function enchant_shell_command_prompt() {
+  [[ "$#" -eq 0 ]] || return $ERR_INSTALLER_CMD
+
+  local current="current:$(enchant_get_current)"
+  local next="next:$(enchant_get_next)"
+  local num="$(enchant_get_num)"
+  local total="$(enchant_get_total)"
+
+  echo -n "[$current $next $num/$total] "
+  echo -n "For a list of commands, type "
+  libcolor_notice "help"
+
+  return $ERR_OK
+}
+
+function enchant_shell_command_chroot() {
+  # can take either 0 or multiple arguments,
+  # so don't check the number of arguments
+
+  enchant_shell_perform_chroot "$@"
+  liberror_check_fatal_error
+
+  return $ERR_OK
+}
+
+function_enchant_shell_command_list() {
+  [[ $# -eq 0 ]] || return $ERR_INSTALLER_CMD
+
+  enchant_shell_list_modules
+  liberror_check_fatal_error
+
+  return $ERR_OK
+}
+
+function enchant_shell_command_todo() {
+  [[ $# -le 1 ]] || return $ERR_INSTALLER_CMD
+
+  enchant_shell_perform_todo "$@"
+  liberror_check_fatal_error
+
+  return $ERR_OK
+}
+
+function enchant_shell_command_jump() {
+  [[ $# -eq 1 ]] || return $ERR_INSTALLER_CMD
+
+  enchant_shell_perform_jump "$@"
+  liberror_check_fatal_error
+
+  return $ERR_OK
+}
+
+function enchant_shell_command_help() {
+  [[ $# -le 1 ]] || return $ERR_INSTALLER_CMD
+
+  enchant_shell_perform_help "$@"
+  liberror_check_fatal_error
+
+  return $ERR_OK
+}
+
+# Initialize installer
+function enchant_shell_command_init() {
+  [[ "$#" -eq 0 ]] || return $ERR_INSTALLER_CMD
+
+  enchant_prepare
+  liberror_check_fatal_error
+
+  return $ERR_OK
+}
+
+function enchant_shell_command_install {
+  local command="$1"
+  shift
+
+  case "$command" in
+    "kernel" )
+      [[ $# -ne 3 ]] && return $ERR_INSTALLER_CMD
+      enchant_install_kernel "$@"
+      liberror_check_fatal_error
+      ;;
+    "isokernel" )
+      [[ $# -ne 0 ]] && return $ERR_INSTALLER_CMD
+      enchant_install_kernel
+      liberror_check_fatal_error
+      ;;
+    "system" )
+      [[ $# -ne 0 ]] && return $ERR_INSTALLER_CMD
+      enchant_install_system
+      liberror_check_fatal_error
+      ;;
+    "spells" )
+      [[ $# -ne 0 ]] && return $ERR_INSTALLER_CMD
+      enchant_install_spell_sources
+      liberror_check_fatal_error
+      enchant_install_spell_caches
+      liberror_check_fatal_error
+      ;;
+    "sources" )
+      # can take either 0 or multiple arguments,
+      # so don't check the number of arguments
+      enchant_install_spell_sources "$@"
+      liberror_check_fatal_error
+      ;;
+    "caches" )
+      # can take either 0 or multiple arguments,
+      # so don't check the number of arguments
+      enchant_install_spell_caches "$@"
+      liberror_check_fatal_error
+      ;;
+    * ) return $ERR_INSTALLER_CMD ;;
+  esac
+
+  return $ERR_OK
+}
+
+function enchant_shell_command_potion() {
+  # TODO: not yet implemented
+
+  return $ERR_OK
+}
+#------------------------------------------------------------------------------
+
+
+#####################
+## MAIN PROCESSING ##
+#####################
+
+command="$1"
+shift
+
+case "$command" in
+  "keymap" )
+    enchant_shell_command_keymap
+    liberror_check_fatal_error
+    ;;
+  "init" )
+    enchant_shell_command_init
+    liberror_check_fatal_error
+    ;;
+  "prompt" )
+    enchant_shell_command_prompt
+    liberror_check_fatal_error
+    ;;
+  "chroot" )
+    enchant_shell_command_chroot "$@"
+    liberror_check_fatal_error
+    ;;
+  "todo" )
+    enchant_shell_command_todo "$@"
+    liberror_check_fatal_error
+    ;;
+  "list" )
+    enchant_shell_command_list_modules "$@"
+    liberror_check_fatal_error
+    ;;
+  "next" )
+    enchant_shell_perform_next
+    liberror_check_fatal_error
+    ;;
+  "prev" )
+    enchant_shell_perform_prev
+    liberror_check_fatal_error
+    ;;
+  "jump" )
+    enchant_shell_command_jump "$@"
+    liberror_check_fatal_error
+    ;;
+  "welcome" )
+    enchant_shell_perform_welcome
+    liberror_check_fatal_error
+    ;;
+  "help" )
+    enchant_shell_command_help "$@"
+    liberror_check_fatal_error
+    ;;
+  "install" )
+    enchant_shell_command_install "$@"
+    liberror_check_fatal_error
+    ;;
+  "potion" )
+    enchant_shell_command_potion "$@"
+    liberror_check_fatal_error
+    ;;
+  * )
+    enchant_shell_command_help
+    liberror_check_fatal_error
+    ;;
+esac
+
+#-------------------------------------------------------------------------------
+##
+## This software is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2 of the License, or
+## (at your option) any later version.
+##
+## This software is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this software; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+##
+#-------------------------------------------------------------------------------
+
+# vim:ai:tw=80:tabstop=2:softtabstop=2:shiftwidth=2:expandtab

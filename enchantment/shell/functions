@@ -1,0 +1,343 @@
+#!/bin/bash
+#-------------------------------------------------------------------------------
+##
+##=head1 SYNOPSIS
+##
+##  These are the functions used by the SMGL shell installer.
+##  Take care not to pollute the user's namespace too much,
+##  and make sure your functions don't (accidentally) collide
+##  with existing commands.
+##
+##=head1 COPYRIGHT
+##
+##  Copyright 2010 by the Cauldron Team
+##
+##=head1 FUNCTIONS
+##
+##=over 4
+##
+#-------------------------------------------------------------------------------
+
+# print a standardized header
+# if given a filename for an argument, it will print the contents of the file
+# after the header
+function enchant_shell_header() {
+  echo ""
+  echo ""
+  echo ""
+
+  # if arg1 supplied, cat it
+  if [[ -n "$1" ]]
+  then
+    [[ -f "$1" ]] || return $ERR_FILE_NOT_FOUND
+    cat "$1"
+  fi
+
+  return $ERR_OK
+}
+
+# output the step instructions
+# use color if libcolor loaded, else just plain bold
+function enchant_shell_instructions() {
+  local file="$1"
+  local hilight=""
+  local normal=""
+
+  [[ -f "$file" ]] || return $ERR_FILE_NOT_FOUND
+
+  if [[ "$LIBCOLOR_NOCOLOR" == "yes" ]]
+  then
+    hilight="$LIBCOLOR_NOTICE_COLOR"
+    normal="$LIBCOLOR_NORMAL_COLOR"
+  else
+    hilight="$LIBCOLOR_BOLD"
+    normal="$LIBCOLOR_NORMAL"
+  fi
+
+  # replace instances of "@[...]" with $hilight...$normal in situ
+  # the color codes have to be used directly (rather than the libcolor_ message
+  # functions) due to the in situ nature of the markup, otherwise we would have
+  # to overly complicate the instruction printing function by printing one line
+  # at a time
+  sed "s/@\[\([^]]*\)\]/$hilight\1$normal/g" "$file"
+
+  return $ERR_OK
+}
+
+# display module names with short descriptions in columns
+function enchant_shell_modules() {
+  local list=""
+  local module=""
+  local col_width="0"
+
+  # get the list of modules
+  list=( $(enchant_get_modules) )
+
+  [[ "${#list[*]}" -eq 0 ]] && return $ERR_MODULE_NONE
+
+  # get the width of the widest column
+  for col in ${list[*]}
+  do
+    [[ "${#col}" -gt "$col_width" ]] && col_width="${#col}"
+  done
+
+  enchant_shell_header || return $ERR_FILE_NOT_FOUND
+
+  for module in ${list[*]}
+  do
+    # pad the output to align the columns
+    while [[ "${#module}" -lt "$col_width" ]]
+    do
+      module="$module "
+    done
+
+    # output name and info in columns
+    echo "$module" | paste - "$ENCHANT_MODULES/$module/${module}.info"
+  done
+
+  return $ERR_OK
+}
+
+function enchant_shell_perform_todo() {
+  local curstep="${1:-$(enchant_get_current)}"
+
+  [[ -z "$curstep" ]] && return $ERR_GET_CURRENT
+
+  # output the header
+  enchant_shell_header || return $ERR_FILE_NOT_FOUND
+
+  # output the current module's instructions
+  enchant_shell_instructions "$ENCHANT_MODULES/$curstep/$curstep" ||
+    return $ERR_FILE_NOT_FOUND
+
+  return $ERR_OK
+}
+
+function enchant_shell_perform_next() {
+  enchant_set_next || return $ERR_SET_NEXT
+
+  todo || return $ERR_FILE_NOT_FOUND
+
+  return $ERR_OK
+}
+
+function enchant_shell_perform_prev() {
+  enchant_set_prev || return $ERR_SET_PREV
+
+  todo || return $ERR_FILE_NOT_FOUND
+
+  return $ERR_OK
+}
+
+function enchant_shell_perform_back() {
+  enchant_back || return $ERR_HISTORY_BACK
+
+  return $ERR_OK
+}
+
+function enchant_shell_perform_forward() {
+  enchant_forward || return $ERR_HISTORY_FORWARD
+
+  return $ERR_OK
+}
+
+function enchant_shell_perform_list_modules() {
+  enchant_shell_modules || return $ERR_INSTALLER_MODULES
+
+  return $ERR_OK
+}
+
+function enchant_shell_perform_jump() {
+  local rc=""
+
+  enchant_set_current $*
+  rc="$?"
+
+  if [[ "$rc" -gt 0 ]]
+  then
+    echo ""
+    libcolor_error "'$@': error: "
+    liberror_print_error "$rc"
+
+    if [[ "$rc" == $ERR_SET_CURRENT ]]
+    then
+      echo "Type $(libcolor_notice enchantment list) to see a list of steps."
+    fi
+  fi
+
+  return $ERR_OK
+}
+
+function enchant_shell_perform_welcome() {
+  enchant_shell_header || return $ERR_FILE_NOT_FOUND
+
+  enchant_shell_instructions "$ENCHANT_MODULES/welcome/welcome" ||
+    return $ERR_FILE_NOT_FOUND
+
+  return $ERR_OK
+}
+
+function enchant_shell_perform_help() {
+  helpfile="$ENCHANT_MODULES/help/${1:-index}"
+
+  if [[ ! -f "$helpfile" ]]
+  then
+    if [[ -n "$1" ]]
+    then
+      libcolor_warn "No installer help for '$1', falling back to bash's builtin help"
+      echo ""
+      builtin help "$1"
+    fi
+  else
+    return $ERR_FILE_NOT_FOUND
+  fi
+
+  enchant_shell_header || return $ERR_FILE_NOT_FOUND
+  enchant_shell_instructions "$helpfile" ||
+    return $ERR_FILE_NOT_FOUND
+
+  return $ERR_OK
+}
+
+function enchant_shell_perform_chroot() {
+  enchant_chroot_init || return $ERR_CHROOT_INIT
+
+  # set the prompt to let the user know
+  # we are entering... the Chroot Zone
+  PS1="[inside chroot, type"
+  PS1="$PS1 $(libcolor_notice exit)"
+  PS1="$PS1 to return to installer]"
+  PS1="${PS1}\n\u \w\$ "
+  export PS1
+
+  enchant_chroot "$@" || return $ERR_CHROOT_EXEC
+
+  enchant_chroot_done || return $ERR_CHROOT_DONE
+
+  return $ERR_OK
+}
+
+function enchant_shell_keymap_list {
+  local choices=( "$@" )
+  local max="${#choices[*]}"
+  local i=""
+
+  [[ "$max" -lt 1 ]] && return $ERR_INSTALLER_KEYMAP
+
+  if [[ "$max" -gt 20 ]]
+  then
+    for ((i=0; i < "$max"; i++))
+    do
+      printf "\n[%2d] %s\n" "$(($i + 1))" "${choices[i]}"
+    done | column | more
+  else
+    for ((i=0; i < "$max"; i++))
+    do
+      printf "\n\t\t\t[%2d] %s\n" "$(($i + 1))" "${choices[i]}"
+    done | more
+  fi
+
+  return $ERR_OK
+}
+
+function enchant_shell_keymap_info() {
+  local i="0"
+
+  local msgs=(
+    "First, choose your keyboard's hardware type from the list below."
+    "Some hardware types will also have a subtype,"
+    "which will be presented in another menu."
+    "After you are done choosing your hardware type (and subtype),"
+    "choose your preferred keymapping from the menu you are presented with."
+    ""
+    "You may enter 0 to go back to a previous menu."
+  )
+
+  # print a header
+  printf "\n\t$(libcolor_notice Keymap Selection Menu)\n\n"
+
+  # print the welcome information
+  for ((i; i < "${#msgs[*]}"; i++))
+  do
+    printf "\t$(libcolor_notice ${msgs[i]})\n"
+  done
+
+  return $ERR_OK
+}
+
+function enchant_shell_keymap_prompt() {
+  # print an indented prompt
+  echo ""
+  printf "\t$(libcolor_notice Please enter a number (0 to go back, * to exit):)"
+  echo " "
+}
+
+function enchant_shell_peform_keymap() {
+  local choices=()
+  local prefix=""
+  local rc=""
+
+  # print the initial welcome info
+  enchant_shell_keymap_info
+
+  while [[ "$rc" -ne "$ERR_KEYMAP_EXIT" ]]
+  do
+    # get the list of choices
+    choices=( "$(enchant_i18n_keymap_make_list $prefix)" )
+
+    # print the list of choices as a numbered menu
+    enchant_shell_keymap_list "${choices[@]}"
+
+    # print a prompt, with indentation
+    enchant_shell_keymap_prompt
+
+    # get user input and update the menu prefix
+    # enchant_i18n_keymap_input will automatically set the keymap if the input
+    # is for a specific keymap rather than a directory
+    prefix="$(enchant_i18n_keymap_input $prefix ${#choices[*]})"
+    rc="$?"
+
+    # if we got bad input, just repeat the loop until we get good input
+    # but warn the user so they know what happened
+    if [[ "$rc" -ge 1 ]]
+    then
+      case "$rc" in
+        # exit is handled by the loop condition itself, so we don't need to do
+        # anything for this one
+        "$ERR_KEYMAP_EXIT" )
+          ;;
+        # if there was a problem with the input, let the user know and re-loop
+        "$ERR_KEYMAP_INPUT" )
+          echo "Error: You must enter a number corresponding to one"
+          echo "of the choices in the list above!"
+          ;;
+        * )
+          # return any errors which weren't explicitly handled above
+          return $rc
+          ;;
+      esac
+    fi
+  done
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##
+## This software is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2 of the License, or
+## (at your option) any later version.
+##
+## This software is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this software; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+##
+#-------------------------------------------------------------------------------
+
+# vim:ai:tw=80:tabstop=2:softtabstop=2:shiftwidth=2:expandtab

@@ -3,13 +3,13 @@
 ##
 ##=head1 SYNOPSIS
 ##
-##  This file is the SMGL shell installer.
+##  This is the init/setup of the SMGL shell installer.
 ##  Take care not to pollute the user's namespace too much,
 ##  And make sure your functions don't collide with existing commands.
 ##
 ##=head1 COPYRIGHT
 ##
-##  Copyright 2009 by the Cauldron Team
+##  Copyright 2010 by the Cauldron Team
 ##
 ##=head1 FUNCTIONS
 ##
@@ -17,156 +17,26 @@
 ##
 #-------------------------------------------------------------------------------
 
+# these variables are defined the same in etc/enchantment/config
+# if redefined in the environment, they will be overridden for
+# all enchantment scripts
+ENCHANT_ISO_PATH="${ENCHANT_ISO_PATH:-}"
+ENCHANT_DATA="${ENCHANT_DATA:-$ENCHANT_ISO_PATH/usr/share/enchantment}"
 
-# source configs and libenchantment
-. "/etc/cauldron/enchant.config"
-. "/etc/cauldron/local/enchant.config" 2> /dev/null
-. "${ENCHANT_DATA}/libenchantment"
+# set path to include the shell installer commands
+PATH="$ENCHANT_DATA/shell/bin:$PATH"
 
-# source libcolor if possible
-if enchant_color
-then
-  . "${ENCHANT_BASE}/libcolor" ||
-    liberror_print_error $ERR_LIBCOLOR $LIBERR_STDERR
-fi
+# initialize the installer
+enchantment init
 
-# let libenchantment know which installer this is
-ENCHANT_INSTALLER="shell"
-
-# Ensure installer sanity
-enchant_prepare
-
-# print a standardized header
-# if given a filename for an argument, it will print the contents of the file
-# after the header
-function shell_header() {
-  echo ""
-  echo ""
-  echo ""
-
-  # if arg1 supplied, cat it
-  [[ -n $1 ]] && cat $1
+# use titlecase because this will pollute the user's namespace, and we want to
+# minimize the likelihood that it would interfere with the user's regular
+# processing
+function Shell_Set_Prompt() {
+  enchantment prompt
 }
 
-# output the step instructions
-# use color if libcolor loaded, else just plain bold
-function shell_instructions() {
-  local file=$1
-  local hilight="${LIBCOLOR_MESSAGE_COLOR:-[1m}"
-  local normal="${LIBCOLOR_NORMAL_COLOR:-[0m}"
-
-  sed 's/@\[\([^]]*\)\]/'$hilight'\1'$normal'/g' "$file"
-}
-
-# display module names with short descriptions in columns
-function shell_modules() {
-  local list
-  local module
-  local col_width=0
-
-  # get the list of modules
-  list=( $(enchant_get_modules) )
-
-  # get the width of the widest column
-  for col in ${list[*]}
-  do
-    [[ ${#col} -gt $col_width ]] && col_width=${#col}
-  done
-
-  header
-  for module in ${list[*]}
-  do
-    # pad the output to align the columns
-    while [[ ${#module} -lt $col_width ]]
-    do
-      module="$module "
-    done
-
-    # output name and info in columns
-    echo "$module" | paste - "$ENCHANT_MODULES/$module/${module}.info"
-  done
-}
-
-function shell_set_ps() {
-  local hilight="${LIBCOLOR_MESSAGE_COLOR:-[1m}"
-  local normal="${LIBCOLOR_NORMAL_COLOR:-[0m}"
-
-  PS1=""
-  PS1="$PS1 ["
-  PS1="$PS1 current:\$(enchant_get_current)"
-  PS1="$PS1 next:\$(enchant_get_next)"
-  PS1="$PS1 \$(enchant_get_num)/\$(enchant_get_total)"
-  PS1="$PS1 ]"
-  PS1="$PS1 For a list of commands, type ${hilight}help${normal}\n\u \w\$ "
-}
-
-function todo() {
-  local curstep="$1"
-  curstep="${curstep:-$(enchant_getstep)}"
-
-  # output the header
-  shell_header
-
-  # output the current module's instructions
-  shell_instructions "$ENCHANT_MODULES/$curstep/$curstep"
-}
-
-function next() {
-  enchant_set_next
-  todo
-}
-
-function prev() {
-  enchant_set_prev
-  todo
-}
-
-function back() {
-  enchant_back
-}
-
-function forward() {
-  enchant_forward
-}
-
-function steps() {
-  shell_modules
-}
-
-function jump() {
-  local hilight="${LIBCOLOR_MESSAGE_COLOR:-[1m}"
-  local normal="${LIBCOLOR_NORMAL_COLOR:-[0m}"
-
-  if ! enchant_set_current $*
-  then
-    echo ""
-    echo -n "'$*': error: "
-    liberror_print_error $?
-
-    if [[ $? = $ERR_STEP ]]
-    then
-      echo "Type ${hilight}steps${normal} to see a list of steps."
-    fi
-  fi
-}
-
-function welcome() {
-  shell_header
-  shell_instructions "$ENCHANT_MODULES/welcome/welcome"
-}
-
-function help() {
-  helpfile="$ENCHANT_MODULES/help/${1:-index}"
-  if [[ -e $helpfile ]] ;then
-    shell_header
-    shell_instructions $helpfile
-  else
-    echo "No installer help for '$1', falling back to bash's builtin help"
-    builtin help $1
-  fi
-}
-
-shell_set_ps
+PS1="\$(Shell_Set_Prompt)\n\u \w\$ "
 
 #-------------------------------------------------------------------------------
 ##
