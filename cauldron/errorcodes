@@ -59,6 +59,7 @@ ERR_SORCERY_INSTALL=36    # could not install sorcery into the build dir
 ERR_TOOLCHAIN_STAGE1=37   # cross-toolchain failed at stage 1
 ERR_TOOLCHAIN_STAGE2=38   # cross-toolchain failed at stage 2
 ERR_TOOLCHAIN_STAGE3=39   # cross-toolchain failed at stage 3
+ERR_MKISOFS=40            # could not create final ISO filesystem
 
 # error messages
 ERR_MSGS=(
@@ -102,6 +103,7 @@ ERR_MSGS=(
   "cross-toolchain failed at stage 1"                 # ERR_TOOLCHAIN_STAGE1
   "cross-toolchain failed at stage 2"                 # ERR_TOOLCHAIN_STAGE2
   "cross-toolchain failed at stage 3"                 # ERR_TOOLCHAIN_STAGE3
+  "could not create final ISO filesystem"             # ERR_MKISOFS
   )
 
 #-------------------------------------------------------------------------------
