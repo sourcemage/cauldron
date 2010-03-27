@@ -34,8 +34,8 @@ ENCHANT_TARGET_SOURCES="${ENCHANT_TARGET_SOURCES:-$ENCHANT_TARGET/var/spool/sorc
  # path where spell caches will be installed
  ENCHANT_TARGET_CACHES="${ENCHANT_TARGET_CACHES:-$ENCHANT_TARGET/var/cache/sorcery}"
 
-        # command to chroot to the target
-        ENCHANT_CHROOT="${ENCHANT_CHROOT:-$ENCHANT_ISO_PATH/bin/chroot $ENCHANT_TARGET}"
+        # command to chroot to ENCHANT_TARGET
+        ENCHANT_CHROOT="${ENCHANT_CHROOT:-$ENCHANT_ISO_PATH/bin/chroot}"
 
  # path to installable spell sources
  ENCHANT_SPELL_SOURCES="${ENCHANT_SPELL_SOURCES:-$ENCHANT_ISO_PATH/var/spool/sorcery}"

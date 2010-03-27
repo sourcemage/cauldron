@@ -76,6 +76,7 @@ function enchant_load_library() {
 #-------------------------------------------------------------------------------
 # enchant includes
 #-------------------------------------------------------------------------------
+enchant_load_library "lib.chroot"
 enchant_load_library "lib.i18n"
 enchant_load_library "lib.install"
 enchant_load_library "lib.potion"

@@ -1,0 +1,109 @@
+#!/bin/bash
+#-------------------------------------------------------------------------------
+##
+##=head1 SYNOPSIS
+##
+##  Chroot construction and destruction functions for use in the installers.
+##
+##=head1 COPYRIGHT
+##
+##  Copyright 2010 by the Cauldron Team
+##
+##=head1 FUNCTIONS
+##
+##=over 4
+##
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+## @param target dir to chroot into
+##
+## Prepares a chroot environment and exports necessary variables. For every
+## target dir to chroot into, there should be one
+## [cauldron_chroot_init ... cauldron_chroot_done] pair.
+##
+#-------------------------------------------------------------------------------
+function enchant_chroot_init() {
+  if [[ "$ENCHANT_CHROOT_INIT" -ne 1 ]]
+  then
+    # if target is somehow null, return an error
+    [[ -z "$ENCHANT_TARGET" ]] && return $ERR_CHROOT_UNDEF
+
+    # bind the needed mounts
+    mount --bind "$ENCHANT_ISO_PATH/dev" "$ENCHANT_TARGET/dev" ||
+      return $ERR_CHROOT_INIT
+    mount --bind "$ENCHANT_ISO_PATH/dev/pts" "$ENCHANT_TARGET/dev/pts" ||
+      return $ERR_CHROOT_INIT
+    mount --bind "$ENCHANT_ISO_PATH/proc" "$ENCHANT_TARGET/proc" ||
+      return $ERR_CHROOT_INIT
+
+    # export that the chroot is successfully constructed
+    export ENCHANT_CHROOT_INIT=1
+  fi
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##
+## Cleans up the chroot environment after it is no longer needed
+##
+#-------------------------------------------------------------------------------
+function enchant_chroot_done() {
+  if [[ "$ENCHANT_CHROOT_INIT" -eq 1 ]]
+  then
+    # if target is somehow null, return an error
+    [[ -z "$ENCHANT_TARGET" ]] && return $ERR_CHROOT_UNDEF
+
+    # unmount the bind mounts
+    umount "$ENCHANT_TARGET/proc" || return $ERR_CHROOT_DONE
+    umount "$ENCHANT_TARGET/dev/pts" || return $ERR_CHROOT_DONE
+    umount "$ENCHANT_TARGET/dev" || return $ERR_CHROOT_DONE
+
+    # clear the chroot definitions
+    unset ENCHANT_CHROOTINIT
+  fi
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+## @param command plus args to execute inside the chroot
+##
+## Executes the command given as the first parameter and any args that follow
+## inside the chroot constructed by enchant_chroot_init.
+##
+#-------------------------------------------------------------------------------
+function enchant_chroot() {
+  if [[ "$ENCHANT_CHROOT_INIT" -eq 1 ]]
+  then
+    # if target is somehow null, return an error
+    [[ -z "$ENCHANT_TARGET" ]] && return $ERR_CHROOT_UNDEF
+
+    "$ENCHANT_CHROOT" "$ENCHANT_TARGET" "$@" || return $ERR_CHROOT_EXEC
+  else
+    return $ERR_CHROOT_NOT_INIT
+  fi
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##
+## This software is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2 of the License, or
+## (at your option) any later version.
+##
+## This software is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this software; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+##
+#-------------------------------------------------------------------------------
+
+# vim:ai:tw=80:tabstop=2:softtabstop=2:shiftwidth=2:expandtab
