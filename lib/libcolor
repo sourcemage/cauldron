@@ -47,7 +47,7 @@ LIBCOLOR_SYMLINK_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_CYAN}"
 ##
 #-------------------------------------------------------------------------------
 function libcolor_notice() {
-  if [[ "LIBCOLOR_NOCOLOR" == "yes" ]]
+  if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
   then
     echo -ne "$LIBCOLOR_BOLD"
     echo -n "$*"
@@ -66,7 +66,7 @@ function libcolor_notice() {
 ##
 #-------------------------------------------------------------------------------
 function libcolor_warn() {
-  if [[ "LIBCOLOR_NOCOLOR" == "yes" ]]
+  if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
   then
     echo -ne "$LIBCOLOR_BOLD"
     echo -n "$*"
@@ -85,7 +85,7 @@ function libcolor_warn() {
 ##
 #-------------------------------------------------------------------------------
 function libcolor_error() {
-  if [[ "LIBCOLOR_NOCOLOR" == "yes" ]]
+  if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
   then
     echo -ne "$LIBCOLOR_BOLD"
     echo -n "$*"
@@ -104,7 +104,7 @@ function libcolor_error() {
 ##
 #-------------------------------------------------------------------------------
 function libcolor_query() {
-  if [[ "LIBCOLOR_NOCOLOR" == "yes" ]]
+  if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
   then
     echo -n "$*"
   else
@@ -121,7 +121,7 @@ function libcolor_query() {
 ##
 #-------------------------------------------------------------------------------
 function libcolor_file() {
-  if [[ "LIBCOLOR_NOCOLOR" == "yes" ]]
+  if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
   then
     echo -n "$*"
   else
@@ -138,7 +138,7 @@ function libcolor_file() {
 ##
 #-------------------------------------------------------------------------------
 function libcolor_symlink() {
-  if [[ "LIBCOLOR_NOCOLOR" == "yes" ]]
+  if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
   then
     echo -n "$*"
   else
