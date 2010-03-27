@@ -104,8 +104,9 @@ function enchant_install_caches() {
 
 #-------------------------------------------------------------------------------
 ##
-## @param kernel_image (absolute path)
-## @param modules_path (absolute path)
+## @param kernel_image (absolute path - e.g. $ENCHANT_ISO_PATH/boot/vmlinux)
+## @param modules_path (absolute path - e.g. $ENCHANT_ISO_PATH/lib/modules)
+## @param kernel_version (e.g. 2.6.32.8)
 ##
 ## Copies the kernel and it's associated modules from the ISO to the TARGET
 ## system. Requires that / and /boot on the TARGET system are mounted (unless
@@ -118,19 +119,19 @@ function enchant_install_kernel() {
   local target="$ENCHANT_TARGET"
   local target_kernel="$ENCHANT_TARGET_KERNEL"
   local target_kmods="$ENCHANT_TARGET_KMODS"
-  local kernel="${1:-$ENCHANT_KERNEL}"
-  local kmods="${2:-$ENCHANT_KMOD_PATH}"
-  local linux_ver="${2:-$ENCHANT_KERNEL_VERS}"
+  local kernel="${1:-$ENCHANT_ISO_KERNEL}"
+  local kmods="${2:-$ENCHANT_ISO_KMODS}"
+  local kvers="${3:-$ENCHANT_ISO_KVERS}"
 
   # copy the kernel over
   enchant_install_file "$kernel" "$target_kernel" || return $ERR_KERNEL
 
   # copy the modules over
-  enchant_install_dir "$kmods" "$target_kmods/$(basename $kmods)" ||
+  enchant_install_dir "$kmods/$kvers" "$target_kmods/$(basename $kmods)" ||
       return $ERR_KERNEL_MODULES
 
   # make sure that the proper dep info is generated on the target system
-  depmod -a -b "$target_kmods/$linux_ver" "$linux_ver" ||
+  depmod -a -b "$target_kmods/$kvers" "$kvers" ||
     return $ERR_KERNEL_DEPMOD
 
   return $ERR_OK
