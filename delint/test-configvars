@@ -1,0 +1,102 @@
+#!/bin/bash
+#-------------------------------------------------------------------------------
+##
+##=head1 SYNOPSIS
+##
+##  This goes through all the known sources for both cauldron and enchantment,
+##  scans their uses of global configurable variables (those listed in the
+##  etc/config files), and ensures that they are defined in the relevant
+##  config files.
+##
+##=head1 COPYRIGHT
+##
+##  Copyright 2010 by the Cauldron Team
+##
+##=head1 FUNCTIONS
+##
+##=over 4
+##
+#-------------------------------------------------------------------------------
+
+
+DELINT_PATH="$(dirname $0)"
+
+cauldron="$DELINT_PATH/../cauldron"
+c_conf="$cauldron/etc/config"
+
+enchantment="$DELINT_PATH/../enchantment"
+e_conf="$enchantment/etc/config"
+
+if ! . "$DELINT_PATH/libdelint"
+then
+  echo "error: could not load $DELINT_PATH/libdelint"
+  exit 1
+fi
+
+# source the list of cauldron source files to examine
+if ! . "$DELINT_PATH/cauldron_sources"
+then
+  echo "error: could not load cauldron_sources"
+  exit $ERR_FATAL
+fi
+# source the list of enchantment source files to examine
+if ! . "$DELINT_PATH/enchantment_sources"
+then
+  echo "error: could not load enchantment_sources"
+  exit $ERR_FATAL
+fi
+
+function delint_print_usage() {
+  cat << EndUsage
+Usage: $(basename $0) [-n]
+
+Calls the global_variables delinter to check whether there are error codes used
+in the known cauldron and enchantment source files that aren't defined in the
+respective errorcodes files. If passed -n, color output is disabled.
+EndUsage
+}
+
+function delint_usage() {
+  delint_print_usage
+  exit $ERR_FATAL
+}
+
+# check if color should be disabled
+if [[ "$1" == "-n" ]]
+then
+  if [[ "$#" -eq 1 ]]
+  then
+    LIBCOLOR_NOCOLOR="yes"
+    shift
+  else
+    delint_usage
+  fi
+fi
+
+# check cauldron files
+delint_global_variables "$c_conf" "${cauldron_srcs[@]}" | \
+  grep -v '[^A-Z_]ERR_[A-Z_]*'
+
+# check enchantment files
+delint_global_variables "$e_conf" "${enchantment_srcs[@]}" | \
+  grep -v '[^A-Z_]ERR_[A-Z_]*'
+
+#-------------------------------------------------------------------------------
+##
+## This software is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2 of the License, or
+## (at your option) any later version.
+##
+## This software is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this software; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+##
+#-------------------------------------------------------------------------------
+
+# vim:ai:tw=80:tabstop=2:softtabstop=2:shiftwidth=2:expandtab
