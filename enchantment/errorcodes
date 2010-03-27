@@ -44,6 +44,15 @@ ERR_MODULE_SCRIPT=21      # could not process module script
 ERR_MODULE_ENTER=22       # could not process module entry
 ERR_MODULE_EXIT=23        # could not process module exit
 
+# lib.i18n keymap
+ERR_KEYMAP_EXIT=50
+ERR_KEYMAP_PREFIX=51
+ERR_KEYMAP_LIST=52
+ERR_KEYMAP_LIST_SIZE=53
+ERR_KEYMAP_INPUT=54
+ERR_KEYMAP_LOAD=55
+ERR_KEYMAP_SAVE=56
+
 # error messages
 ERR_MSGS=(
           "operation succeeded"                             # ERR_OK
@@ -69,6 +78,15 @@ ERR_MSGS=(
           "could not process module script"                 # ERR_MODULE_SCRIPT
           "could not process module entry"                  # ERR_MODULE_ENTER
           "could not process module exit"                   # ERR_MODULE_EXIT
+
+          # lib.i18n keymap
+          "keymap processing finished"                      # ERR_KEYMAP_EXIT
+          "invalid keymap prefix"                           # ERR_KEYMAP_PREFIX
+          "keymap list empty or not provided"               # ERR_KEYMAP_LIST
+          "invalid list size provided"                      # ERR_KEYMAP_LIST_SIZE
+          "invalid user input"                              # ERR_KEYMAP_INPUT
+          "could not load selected keymap"                  # ERR_KEYMAP_LOAD
+          "could not save selected keymap"                  # ERR_KEYMAP_SAVE
           )
 
 #-------------------------------------------------------------------------------

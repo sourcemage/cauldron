@@ -1,0 +1,202 @@
+#!/bin/bash
+#-------------------------------------------------------------------------------
+##
+##=head1 SYNOPSIS
+##
+##  These are the functions used for i18n, including setting keymaps, setting
+##  the current language the installer is running under, etc.
+##
+##  For the keymap functions, only numbers are to be used as input, since they
+##  are more likely to be consistent across different keymaps/keyboards, whereas
+##  letters and punctuation get moved around much more.
+##
+##=head1 COPYRIGHT
+##
+##  Copyright 2010 by the Cauldron Team
+##
+##=head1 FUNCTIONS
+##
+##=over 4
+##
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+## @param size of choices list (highest numbered entry to choose from)
+##
+## Reads input from the user, and ensures that it is either '*' or a number in
+## the range of 0-highest_entry. Echoes the input if it is a number that fits
+## the range. If the input is '*', then ERR_KEYMAP_EXIT is returned so that the
+## caller can do any cleanup needed and then exit.
+##
+#-------------------------------------------------------------------------------
+function enchant_i18n_keymap_get_input() {
+  local max="$1"
+  local input=""
+
+  [[ -z "$max" ]] && return $ERR_KEYMAP_LIST_SIZE
+
+  # grab the input, allowing readline editing
+  read -re input || return $ERR_KEYMAP_INPUT
+
+  if [[ -n "$input" ]]
+  then
+    # if the user entered '*', then we exit without finishing
+    if [[ "$input" == "*" ]]
+    then
+      return $ERR_KEYMAP_EXIT
+    fi
+
+    # if we got a number outside the range of what we can accept,
+    # tell the user before returning an error
+    if [[ "$input" -lt 0 || "$input" -gt "$max" ]]
+    then
+      return $ERR_KEYMAP_INPUT
+    fi
+  fi
+
+  echo "$input"
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+## @param prefix -> path to populate the list of choices from
+##
+## Creates a list of choices consisting of directory entries from the prefix. If
+## prefix is not explicitly provided, it defaults to /usr/share/keymaps (the base
+## of the keymap file hierarchy) relative to the ENCHANT_ISO_PATH.
+##
+#-------------------------------------------------------------------------------
+function enchant_i18n_keymap_make_list {
+  local prefix="${1:-$ENCHANT_ISO_PATH/usr/share/keymaps}"
+  local list=()
+  local result=()
+  local i=""
+
+  [[ -d "$prefix" ]] || return $ERR_DIR_NOT_FOUND
+
+  list=( $(find "$prefix"/* -maxdepth 0 -type d -not -name include) )
+
+  if [[ "${#list[*]}" -eq 0 ]]
+  then
+    list=( $(find "$prefix"/* -type f -name *.map.gz) )
+  fi
+
+  [[ "${#list[*]}" -eq 0 ]] && return $ERR_KEYMAP_LIST
+
+  for ((i=0; i < "${#list[*]}"; i++))
+  do
+    result=( "$result" "${list[i]##*/}" )
+  done
+
+  echo "${result[*]}"
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+## @param keymap to load
+##
+## Load the keymap passed as the first argument and store it into the
+## enchantment temporary directory for later use.
+##
+#-------------------------------------------------------------------------------
+function enchant_keymap_change() {
+  local keymap="$1"
+
+  [[ -f "$keymap" ]] || return $ERR_FILE_NOT_FOUND
+
+  loadkeys "$keymap" || return $ERR_KEYMAP_LOAD
+
+  # store the selected keymap for later use by enchantment (e.g., for potions)
+  echo "${keymap%.*map.*}" > "$ENCHANT_KEYMAP" ||
+    return $ERR_KEYMAP_SAVE
+
+  # instead of returning OK, return ERR_KEYMAP_EXIT to let the caller know that
+  # a keymap was successfully changed and this round of keymap processing should
+  # stop
+  return $ERR_KEYMAP_EXIT
+}
+
+#-------------------------------------------------------------------------------
+## @param prefix -> current path to populate the menu from
+## @param size of choices list (highest numbered entry to choose from)
+##
+## Gets the user input and then processes it, possibly calling
+## enchant_keymap_change to actually set the keymap if that's what was input.
+##
+#-------------------------------------------------------------------------------
+function enchant_i18n_keymap_input() {
+  local prefix="${1:-$ENCHANT_ISO_PATH/usr/share/keymaps}"
+  local max="$2"
+  local input=""
+  local rc=""
+
+  [[ ! -e "$prefix" ]] && return $ERR_KEYMAP_PREFIX
+
+  [[ -z "$max" ]] && return $ERR_KEYMAP_LIST_SIZE
+
+  # get the user's menu choice
+  input="$(enchant_i18n_keymap_get_input $max)"
+  rc="$?"
+
+  # if the user entered '*', exit the keymap routines
+  [[ "$rc" -eq "$ERR_KEYMAP_EXIT" ]] && return $ERR_KEYMAP_EXIT
+
+  # if there was an error in getting the input, report it to the caller
+  [[ "$rc" -eq "$ERR_KEYMAP_INPUT" ]] && return $ERR_KEYMAP_INPUT
+
+  # if the user entered '0', go "back" (up a dir/level)
+  if [[ "$input" -eq "0" ]]
+  then
+    # only go up a level if we aren't at the beginning
+    # (don't go lower than the floor)
+    [[ "$prefix" != "$ENCHANT_ISO_PATH/usr/share/keymaps" ]] &&
+      prefix="${prefix%/[^/]*}"
+  else
+    # get the menu item, adjusting for array indexed from 0
+    (( input -= 1 ))
+    input="${choices[input]}"
+
+    # if the input corresponds to a keymap file, attempt to switch to that
+    # keymap, otherwise set the prefix to the new path and loop again
+    if [[ "$input" == *.map.gz ]]
+    then
+      prefix="$prefix/$input"
+
+      enchant_keymap_change "$prefix"
+
+      # returns whatever enchant_keymap_change returns, which is either an error
+      # if something failed or ERR_KEYMAP_EXIT (meaning the keymap processing
+      # should end) if successful
+      return "$?"
+    else
+      prefix="$prefix/$input"
+
+      # echo (return) the new prefix back to the caller
+      echo "$prefix"
+    fi
+  fi
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##
+## This software is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2 of the License, or
+## (at your option) any later version.
+##
+## This software is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this software; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+##
+#-------------------------------------------------------------------------------
+
+# vim:ai:tw=80:tabstop=2:softtabstop=2:shiftwidth=2:expandtab

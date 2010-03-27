@@ -45,6 +45,9 @@ ENCHANT_TARGET_SOURCES="${ENCHANT_TARGET_SOURCES:-$ENCHANT_TARGET/var/spool/sorc
         # install module (step) info
         ENCHANT_STATUS="${ENCHANT_STATUS:-$ENCHANT_TMP/current_module}"
 
+        # user-selected keymap
+        ENCHANT_KEYMAP="${ENCHANT_KEYMAP:-$ENCHANT_TMP/i18n-keymap}"
+
        # install module history settings
        ENCHANT_HISTORY="${ENCHANT_HISTORY:-$ENCHANT_TMP/history}"
           ENCHANT_BACK="${ENCHANT_BACK:-$ENCHANT_HISTORY/back}"
