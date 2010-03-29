@@ -57,7 +57,7 @@ function delint_global_variables() {
     # as per the API specification, all global variables are required to be
     # uppercase, and must begin with a letter, containing only letters,
     # underscores, and trailing numbers
-    for search in $(grep -o '${\?[A-Z][A-Z_]*[0-9]*' "$file" | sort -u | sed 's/^\${\?//')
+    for search in $(grep -o '${\?[A-Z][A-Z_]*[0-9]*' "$file" | sed 's/^\${\?//' | sort -u)
     do
       if ! grep -q "$search=" "$defines"
       then
