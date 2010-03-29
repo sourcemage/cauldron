@@ -15,6 +15,10 @@
 ##
 #-------------------------------------------------------------------------------
 
+# set LC_COLLATE to C so we don't get affected by the user's locale
+# when grepping, sorting, etc.
+export LC_COLLATE="C"
+
 # ensure that DELINT_PATH has a value
 [[ -z "$DELINT_PATH" ]] && DELINT_PATH="$(dirname $0)"
 
