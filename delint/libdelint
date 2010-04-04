@@ -65,7 +65,7 @@ function delint_global_variables() {
     do
       if ! grep -q "$search=" "$defines"
       then
-        echo "$(libcolor_file $file): $(libcolor_notice $search)"
+        echo "$(libcolor_file $file): $(libcolor_warn $search)"
       fi
     done
   done
