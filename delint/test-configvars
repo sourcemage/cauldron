@@ -74,10 +74,12 @@ then
 fi
 
 # check cauldron files
+libcolor_notice "Checking cauldron config variables"
 delint_global_variables "$c_conf" "${cauldron_srcs[@]}" | \
   grep -v '[^A-Z_]ERR_[A-Z_]*'
 
 # check enchantment files
+libcolor_notice "Checking enchantment config variables"
 delint_global_variables "$e_conf" "${enchantment_srcs[@]}" | \
   grep -v '[^A-Z_]ERR_[A-Z_]*'
 
