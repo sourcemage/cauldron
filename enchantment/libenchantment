@@ -180,7 +180,7 @@ function enchant_set_current() {
   echo "$module" >> "$ENCHANT_BACK" || return $ERR_SET_CURRENT
 
   # check the installation state
-  enchant_check_state || return $ERR_CHECK_STATE
+  enchant_potion_check_state || return $ERR_POTION_CHECK_STATE
 
   # set the current module
   echo "$module" > "$ENCHANT_STATUS" || return $ERR_SET_CURRENT
@@ -282,24 +282,24 @@ function enchant_set_prev() {
 #-------------------------------------------------------------------------------
 function enchant_back() {
   # if the back history is empty, then we can't go back
-  [[ "$(wc -l < $ENCHANT_BACK)" -eq 0 ]] && return $ERR_BACK
+  [[ "$(wc -l < $ENCHANT_BACK)" -eq 0 ]] && return $ERR_HISTORY_BACK
 
   # if the max forward history size has been reached
   if [[ "$(wc -l < $ENCHANT_FORWARD)" -ge "$ENCHANT_HISTORY_SIZE" ]]
   then
     # then we drop the oldest item from the forward history
-    sed -i '1d' "$ENCHANT_FORWARD" || return $ERR_BACK
+    sed -i '1d' "$ENCHANT_FORWARD" || return $ERR_HISTORY_BACK
   fi
 
   # copy the current status to the forward history, so we can go forward to
   # where we are after we jump back
-  enchant_get_current >> "$ENCHANT_FORWARD" || return $ERR_BACK
+  enchant_get_current >> "$ENCHANT_FORWARD" || return $ERR_HISTORY_BACK
 
   # set the current step to be the one we are jumping to
-  tail -n 1 "$ENCHANT_BACK" > "$ENCHANT_STATUS" || return $ERR_BACK
+  tail -n 1 "$ENCHANT_BACK" > "$ENCHANT_STATUS" || return $ERR_HISTORY_BACK
 
   # remove the step we jumped to from the back history
-  sed -i '$d' "$ENCHANT_BACK" || return $ERR_BACK
+  sed -i '$d' "$ENCHANT_BACK" || return $ERR_HISTORY_BACK
 
   return $ERR_OK
 }
@@ -314,24 +314,24 @@ function enchant_back() {
 #-------------------------------------------------------------------------------
 function enchant_forward() {
   # if the forward history is empty, then we can't go forward
-  [[ "$(wc -l < $ENCHANT_FORWARD)" -eq 0 ]] && return $ERR_FORWARD
+  [[ "$(wc -l < $ENCHANT_FORWARD)" -eq 0 ]] && return $ERR_HISTORY_FORWARD
 
   # if the max back history size has been reached
   if [[ "$(wc -l < $ENCHANT_BACK)" -ge "$ENCHANT_HISTORY_SIZE" ]]
   then
     # then we drop the oldest item from the back history
-    sed -i '1d' "$ENCHANT_BACK" || return $ERR_FORWARD
+    sed -i '1d' "$ENCHANT_BACK" || return $ERR_HISTORY_FORWARD
   fi
 
   # copy the current status to the back history, so we can go back to where we
   # are after we jump forward
-  enchant_get_current >> "$ENCHANT_BACK" || return $ERR_FORWARD
+  enchant_get_current >> "$ENCHANT_BACK" || return $ERR_HISTORY_FORWARD
 
   # set the current step to be the one we are jumping to
-  tail -n 1 "$ENCHANT_FORWARD" > "$ENCHANT_STATUS" || return $ERR_FORWARD
+  tail -n 1 "$ENCHANT_FORWARD" > "$ENCHANT_STATUS" || return $ERR_HISTORY_FORWARD
 
   # remove the step we jumped to from the forward history
-  sed -i '$d' "$ENCHANT_FORWARD" || return $ERR_FORWARD
+  sed -i '$d' "$ENCHANT_FORWARD" || return $ERR_HISTORY_FORWARD
 
   return $ERR_OK
 }

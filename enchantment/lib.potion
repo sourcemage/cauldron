@@ -116,7 +116,7 @@ function enchant_potion_get_hashsum() {
   [[ -f "$file" ]] || return $ERR_FILE_NOT_FOUND
 
   cut -d' ' -f1 "$ENCHANT_POTION/$potion/${file##*/}.${hashfunc##*/}" ||
-    return $ERR_GET_HASHSUM
+    return $ERR_POTION_GET_HASHSUM
 
   return $ERR_OK
 }
@@ -138,7 +138,7 @@ function enchant_potion_set_hashsum() {
   [[ -f "$file" ]] || return $ERR_FILE_NOT_FOUND
 
   "$hashfunc" "$file" > "$ENCHANT_POTION/$potion/${file##*/}.${hashfunc##*/}" ||
-    return $ERR_SET_HASHSUM
+    return $ERR_POTION_SET_HASHSUM
 
   return $ERR_OK
 }
@@ -164,11 +164,11 @@ function enchant_potion_cache_file() {
   if [[ "$sum" != "$(enchant_potion_get_hashsum $file $potion)" ]]
   then
     # generate and store the (new) hashsum of the file
-    enchant_potion_set_hashsum "$file" "$potion" || return $ERR_SET_HASHSUM
+    enchant_potion_set_hashsum "$file" "$potion" || return $ERR_POTION_SET_HASHSUM
   fi
 
   # store the file itself
-  cp -f "$file" "$ENCHANT_POTION/$potion/${file##*/}" || return $ERR_CACHE_FILE
+  cp -f "$file" "$ENCHANT_POTION/$potion/${file##*/}" || return $ERR_POTION_CACHE_FILE
 
   return $ERR_OK
 }
@@ -193,7 +193,7 @@ function enchant_potion_get_partitions() {
   # for every line, if the 2nd field exactly matches one of excl, skip it
   # otherwise, store the filesystem (field 3) to the temp file
   gawk -v i="$excl" '{if(match(i,$2)) next; else print $1}' $mounts > \
-    $ENCHANT_POTION/partitions || return $ERR_GET_PARTITIONS
+    $ENCHANT_POTION/partitions || return $ERR_POTION_GET_PARTITIONS
 
   return $ERR_OK
 }
@@ -210,13 +210,13 @@ function enchant_potion_check_partitions() {
   local parts="$ENCHANT_POTION/filesystems"
   local potion="${1:-$ENCHANT_POTION_CURRENT}"
 
-  enchant_potion_get_filesystems || return $ERR_GET_PARTITIONS
+  enchant_potion_get_filesystems || return $ERR_POTION_GET_PARTITIONS
 
   # if there isn't a stored copy of the mount points, or if the stored copy
   # differs from what we currently have, then store the current set
   if [[ ! -f "$potion_parts" || "$(cat $potion_parts)" != "$(cat $parts)" ]]
   then
-    cp -f "$parts" > "$potion_parts" || return $ERR_CHK_PARTITIONS
+    cp -f "$parts" > "$potion_parts" || return $ERR_POTION_CHK_PARTITIONS
   fi
 
   return $ERR_OK
@@ -242,7 +242,7 @@ function enchant_potion_get_filesystems() {
   # for every line, if the 2nd field exactly matches one of excl, skip it
   # otherwise, store the filesystem (field 3) to the temp file
   gawk -v i="$excl" '{if(match(i,$2)) next; else print $3}' $mounts > \
-    $ENCHANT_POTION/filesystems || return $ERR_GET_FILESYSTEMS
+    $ENCHANT_POTION/filesystems || return $ERR_POTION_GET_FILESYSTEMS
 
   return $ERR_OK
 }
@@ -259,13 +259,13 @@ function enchant_potion_check_filesystems() {
   local fs="$ENCHANT_POTION/filesystems"
   local potion="${1:-$ENCHANT_POTION_CURRENT}"
 
-  enchant_potion_get_filesystems || return $ERR_GET_FILESYSTEMS
+  enchant_potion_get_filesystems || return $ERR_POTION_GET_FILESYSTEMS
 
   # if there isn't a stored copy of the mount points, or if the stored copy
   # differs from what we currently have, then store the current set
   if [[ ! -f "$potion_fs" || "$(cat $potion_fs)" != "$(cat $fs)" ]]
   then
-    cp -f "$fs" > "$potion_fs" || return $ERR_CHK_FILESYSTEMS
+    cp -f "$fs" > "$potion_fs" || return $ERR_POTION_CHK_FILESYSTEMS
   fi
 
   return $ERR_OK
@@ -291,7 +291,7 @@ function enchant_potion_get_mount_points() {
   # for every line, if the 2nd field exactly matches one of excl, skip it
   # otherwise, store the mount point (field 2) to the temp file
   gawk -v i="$excl" '{if(match(i,$2)) next; else print $2}' $mounts > \
-    $ENCHANT_POTION/mount_points || return $ERR_GET_MOUNT_POINTS
+    $ENCHANT_POTION/mount_points || return $ERR_POTION_GET_MOUNT_POINTS
 
   return $ERR_OK
 }
@@ -309,13 +309,13 @@ function enchant_potion_check_mount_points() {
   local mounts="$ENCHANT_POTION/mount_points"
   local potion="${1:-$ENCHANT_POTION_CURRENT}"
 
-  enchant_potion_get_mount_points || return $ERR_GET_MOUNT_POINTS
+  enchant_potion_get_mount_points || return $ERR_POTION_GET_MOUNT_POINTS
 
   # if there isn't a stored copy of the mount points, or if the stored copy
   # differs from what we currently have, then store the current set
   if [[ ! -f "$potion_mounts" || "$(cat $potion_mounts)" != "$(cat $mounts)" ]]
   then
-    cp -f "$mounts" > "$potion_mounts" || return $ERR_CHK_MOUNT_POINTS
+    cp -f "$mounts" > "$potion_mounts" || return $ERR_POTION_CHK_MOUNT_POINTS
   fi
 
   return $ERR_OK
@@ -334,7 +334,7 @@ function enchant_potion_check_kernel_config() {
 
   [[ -f "$kernel_config" ]] || return $ERR_FILE_NOT_FOUND
 
-  enchant_potion_cache_file "$kernel_config" "$potion" || return $ERR_CACHE_FILE
+  enchant_potion_cache_file "$kernel_config" "$potion" || return $ERR_POTION_CACHE_FILE
 
   return $ERR_OK
 }
@@ -352,7 +352,7 @@ function enchant_potion_check_kernel() {
 
   [[ -f "$kernels" ]] || return $ERR_FILE_NOT_FOUND
 
-  enchant_potion_cache_file "$kernels" "$potion" || return $ERR_CACHE_FILE
+  enchant_potion_cache_file "$kernels" "$potion" || return $ERR_POTION_CACHE_FILE
 
   return $ERR_OK
 }
@@ -370,7 +370,7 @@ function enchant_potion_check_spell_sources() {
 
   [[ -f "$spells" ]] || return $ERR_FILE_NOT_FOUND
 
-  enchant_potion_cache_file "$spells" "$potion" || return $ERR_CACHE_FILE
+  enchant_potion_cache_file "$spells" "$potion" || return $ERR_POTION_CACHE_FILE
 
   return $ERR_OK
 }
@@ -388,7 +388,7 @@ function enchant_potion_check_bootloader() {
 
   [[ -f "$bootloaders" ]] || return $ERR_FILE_NOT_FOUND
 
-  enchant_potion_cache_file "$bootloaders" "$potion" || return $ERR_CACHE_FILE
+  enchant_potion_cache_file "$bootloaders" "$potion" || return $ERR_POTION_CACHE_FILE
 
   return $ERR_OK
 }
@@ -409,7 +409,7 @@ function enchant_potion_check_confs() {
     conf="$ENCHANT_TARGET/$conf"
     [[ -f "$file" ]] || return $ERR_FILE_NOT_FOUND
 
-    enchant_potion_cache_file "$conf" "$potion" || return $ERR_CACHE_FILE
+    enchant_potion_cache_file "$conf" "$potion" || return $ERR_POTION_CACHE_FILE
   done
 
   return $ERR_OK
@@ -431,7 +431,7 @@ function enchant_potion_check_users() {
     file="$ENCHANT_TARGET/$file"
     [[ -f "$file" ]] || return $ERR_FILE_NOT_FOUND
 
-    enchant_potion_cache_file "$file" "$potion" || return $ERR_CACHE_FILE
+    enchant_potion_cache_file "$file" "$potion" || return $ERR_POTION_CACHE_FILE
   done
 
   return $ERR_OK
@@ -443,17 +443,17 @@ function enchant_potion_check_users() {
 ## Checks various state data for updates during the install.
 ##
 #-------------------------------------------------------------------------------
-function enchant_check_state() {
+function enchant_potion_check_state() {
   local potion="${1:-$ENCHANT_POTION_CURRENT}"
 
-  enchant_potion_check_partitions "$potion" || return $ERR_CHECK_PARTITIONS
-  enchant_potion_check_filesystems "$potion" || return $ERR_CHECK_FILESYSTEMS
-  enchant_potion_check_mount_points "$potion" || return $ERR_CHECK_MOUNT_POINTS
-  enchant_potion_check_opt_spells "$potion" || return $ERR_CHECK_OPT_SPELLS
-  enchant_potion_check_kernel "$potion" || return $ERR_CHECK_KERNEL
-  enchant_potion_check_bootloader "$potion" || return $ERR_CHECK_BOOTLOADER
-  enchant_potion_check_confs "$potion" || return $ERR_CHECK_CONFS
-  enchant_potion_check_users "$potion" || return $ERR_CHECK_USERS
+  enchant_potion_check_partitions "$potion" || return $ERR_POTION_CHK_PARTITIONS
+  enchant_potion_check_filesystems "$potion" || return $ERR_POTION_CHK_FILESYSTEMS
+  enchant_potion_check_mount_points "$potion" || return $ERR_POTION_CHK_MOUNT_POINTS
+  enchant_potion_check_opt_spells "$potion" || return $ERR_POTION_CHK_OPT_SPELLS
+  enchant_potion_check_kernel "$potion" || return $ERR_POTION_CHK_KERNEL
+  enchant_potion_check_bootloader "$potion" || return $ERR_POTION_CHK_BOOTLOADER
+  enchant_potion_check_confs "$potion" || return $ERR_POTION_CHK_CONFS
+  enchant_potion_check_users "$potion" || return $ERR_POTION_CHK_USERS
 
   return $ERR_OK
 }
@@ -475,20 +475,20 @@ function enchant_potion_bottle() {
   # package the potion into a compressed archive
   case "$ENCHANT_ARCHIVE" in
     "tar" )
-      tar cf "${output}.tar" "$ENCHANT_POTION/$potion"/* || return $ERR_ARCHIVE
+      tar cf "${output}.tar" "$ENCHANT_POTION/$potion"/* || return $ERR_POTION_ARCHIVE
       [[ -n "$ENCHANT_COMPRESS" ]] && "$ENCHANT_COMPRESS" "${output}.tar" ||
-        return $ERR_COMPRESS
+        return $ERR_POTION_COMPRESS
       ;;
     "cpio" )
       (
         cd "$potion"
-        find * | cpio -H newc -o > "${output}.io" || return $ERR_ARCHIVE
+        find * | cpio -H newc -o > "${output}.io" || return $ERR_POTION_ARCHIVE
         [[ -n "$ENCHANT_COMPRESS" ]] && "$ENCHANT_COMPRESS" "${output}.io" ||
-          return $ERR_COMPRESS
+          return $ERR_POTION_COMPRESS
       )
       ;;
     * )
-      return $ERR_ARCHIVE_FORMAT
+      return $ERR_POTION_ARCHIVE_FORMAT
   esac
 
   return $ERR_OK
