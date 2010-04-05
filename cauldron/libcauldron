@@ -75,7 +75,7 @@ cauldron_load_library "lib.chroot"
 
 cauldron_load_library "lib.init"
 
-#cauldron_load_library "lib.hostcache"
+#cauldron_load_library "lib.toolchain"
 
 #-------------------------------------------------------------------------------
 ##

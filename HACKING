@@ -17,35 +17,22 @@ menu-driven interface (via dialog), much like sorcery.
 ***************
 * libcauldron *
 ***************
-	This is the real work-horse. It directly handles the building of
-packages (including setting up cross-compiler toolchains), , etc. This is
-sourced by the cauldron script. It itself sources the liberror library (for
-returning error codes back to the calling script, in this case the cauldron
-script) and the cauldron sublibraries (e.g., lib.chroot, lib.init, etc.).
+	This is the main cauldron library. It is responsible for managing
+initialization and final cleanup and for providing functionality common to all
+the cauldron sub-libraries.
 
 **************
 * lib.chroot *
 **************
-	The lib.chroot module is responsible for setting up, tearing down, and
+	The lib.chroot library is responsible for setting up, tearing down, and
 calling into chroots. The code in this module gets used many times both in the
 other modules (in particular libcauldron) and in cauldron itself (particularly
 for the brew command).
 
-*****************
-* lib.hostcache *
-*****************
-	The lib.hostcache module provides functions for generating spell caches
-using the host system. If the host sorcery doesn't have ARCHIVE turned on, or
-if the cache file for a needed spell was deleted from the host system, then it
-will need to be generated before it can be used in the build chroot. Note that
-caches from the host system are only used to set up an initial build toolchain,
-which will then be used to produce a build toolchain specific to the target
-system the ISO is to be built for.
-
 ************
 * lib.init *
 ************
-	The lib.init module handles the init system for the ISO. It provides
+	The lib.init library handles the init system for the ISO. It provides
 functions for creating an initramfs/initrd and for setting up the ISO inittab
 for booting into the correct enchant setup (i.e. putting the menu installer on
 tty1 and the shell installer on all the remaining tty's). It will also set up
@@ -56,10 +43,16 @@ spells with their init scripts enabled.
 *****************
 * lib.sorcerous *
 *****************
-	The lib.sorcerous module provides an interface to sorcery components
+	The lib.sorcerous library provides an interface to sorcery components
 and functions as they are needed within cauldron. This includes functions which
 source sorcery files in the target, as well as functions to download and
 install sorcery into the target.
+
+*****************
+* lib.toolchain *
+*****************
+	The lib.toolchain library provides functions for generating the base
+toolchain used to build all the components that will make up the final ISO.
 
 
 **************
