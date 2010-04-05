@@ -514,7 +514,7 @@ function enchant_potion_quaff() {
   local endmod="$3"
 
   # get the list of modules to operate on
-  local list="$(enchant_get_modules)"
+  local list="$(enchant_modules_list)"
 
   # if the start module is given as the module name, get it's positional number
   if [[ "$start" = [a-z]* ]]
@@ -533,7 +533,7 @@ function enchant_potion_quaff() {
   for ((i < endmod; i++))
   do
     local module="${list[i]}"
-    enchant_module_potion "$module" "$potion"
+    enchant_modules_potion "$module" "$potion"
   done
 
   return $ERR_OK

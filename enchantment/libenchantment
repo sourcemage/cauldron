@@ -79,6 +79,7 @@ function enchant_load_library() {
 enchant_load_library "lib.chroot"
 enchant_load_library "lib.i18n"
 enchant_load_library "lib.install"
+enchant_load_library "lib.modules"
 enchant_load_library "lib.potion"
 
 #-------------------------------------------------------------------------------
@@ -116,30 +117,6 @@ function enchant_cleanup() {
 
 #-------------------------------------------------------------------------------
 ##
-## Returns a list of all modules recognized for the current installation, pruned
-## of duplicates and the special "error" module.
-##
-#-------------------------------------------------------------------------------
-function enchant_get_modules() {
-  local output=( )
-  local module
-
-  for module in $(cut -d: -f1 "$ENCHANT_DATA/modules")
-  do
-    if [[ "$module" != "error" ]]
-    then
-      if ! $(echo ${output[*]} | grep -q "$module")
-      then
-        output=( ${output[*]} "$module" )
-      fi
-    fi
-  done
-
-  echo ${output[@]}
-}
-
-#-------------------------------------------------------------------------------
-##
 ## Determines and returns the current module in the installation procedure.
 ##
 #-------------------------------------------------------------------------------
@@ -161,14 +138,14 @@ function enchant_get_current() {
 ##
 #-------------------------------------------------------------------------------
 function enchant_set_current() {
-  local module=$1
+  local module="$1"
 
-  if ! $(enchant_get_modules | grep -q $module)
+  if ! $(enchant_modules_list | grep -q "$module")
   then
     return $ERR_SET_CURRENT
   fi
 
-  enchant_module_exit || return $ERR_MODULE_EXIT
+  enchant_modules_exit || return $ERR_MODULE_EXIT
 
   # if the max history size has been reached, then we drop the oldest item
   if [[ "$(wc -l < $ENCHANT_BACK)" -ge "$ENCHANT_HISTORY_SIZE" ]]
@@ -185,7 +162,7 @@ function enchant_set_current() {
   # set the current module
   echo "$module" > "$ENCHANT_STATUS" || return $ERR_SET_CURRENT
 
-  enchant_module_enter || return $ERR_MODULE_ENTER
+  enchant_modules_enter || return $ERR_MODULE_ENTER
 
   return $ERR_OK
 }
@@ -335,117 +312,6 @@ function enchant_forward() {
 
   return $ERR_OK
 }
-
-#-------------------------------------------------------------------------------
-##
-## Returns the number of the current module to perform during the installation.
-## Expects $ENCHANT_INSTALLER to be set by the installer which is calling this
-## function, and for that installer to have a 'modules' file (see the
-## implementation of the shell installer for an example).
-##
-#-------------------------------------------------------------------------------
-function enchant_get_num() {
-  local num="$(grep -n -m1 \"^$(enchant_get_current):\" $ENCHANT_INSTALLER/modules)"
-
-  if [[ -z "$num" ]]
-  then
-    return $ERR_GET_NUM
-  fi
-
-  echo "$num" | cut -d: -f1 || return $ERR_GET_NUM
-
-  return $ERR_OK
-}
-
-#-------------------------------------------------------------------------------
-##
-## Returns the total number of modules to perform during the installation
-##
-#-------------------------------------------------------------------------------
-function enchant_get_total() {
-  local total="$(enchant_get_modules | wc -l)"
-
-  if [[ "$total" -eq 0 || -z $total ]]
-  then
-    return $ERR_TOTAL_ZERO
-  fi
-
-  echo "$total"
-
-  return $ERR_OK
-}
-
-#-------------------------------------------------------------------------------
-##
-## Processes the module entry functions. This is used to provide extra
-## functionality upon entering a module (usually preparatory work, like creating
-## module-specific temp files, etc.)
-##
-#-------------------------------------------------------------------------------
-function enchant_module_enter() {
-  local module="$(cat $ENCHANT_STATUS)"
-  local script=""
-
-  for script in "$ENCHANT_MODULES/$module/enter"/*
-  do
-    if [[ -f "$script" ]]
-    then
-      /bin/bash "$script" || return $ERR_MODULE_SCRIPT
-    fi
-  done
-
-  return $ERR_OK
-}
-
-#-------------------------------------------------------------------------------
-##
-## Processes the module exit functions. This is used to provide extra
-## functionality upon exiting a module, usually things like writing data to the
-## module's temp files, etc.
-##
-#-------------------------------------------------------------------------------
-function enchant_module_exit() {
-  local module="$(cat $ENCHANT_STATUS)"
-  local script=""
-
-  for script in "$ENCHANT_MODULES/$module/exit"/*
-  do
-    if [[ -f "$script" ]]
-    then
-      /bin/bash "$script" || return $ERR_MODULE_SCRIPT
-    fi
-  done
-
-  return $ERR_OK
-}
-
-#-------------------------------------------------------------------------------
-## @param potion to process for
-##
-## Processes the module potion functions. This is used to do automated installs
-## using pre-made potions (from previous installs or composed ahead of time). It
-## runs scripted versions of what the user would have done manually in each
-## module.
-##
-#-------------------------------------------------------------------------------
-function enchant_module_potion() {
-  local module="$(cat $ENCHANT_STATUS)"
-  local potion="$1"
-  local script=""
-
-  [[ -d "$potion" ]] || $ERR_DIR_NOT_FOUND
-
-  for script in "$ENCHANT_MODULES/$module/potion"/*
-  do
-    if [[ -f "$script" ]]
-    then
-      /bin/bash "$script" "$potion" || return $ERR_MODULE_SCRIPT
-    fi
-  done
-
-  return $ERR_OK
-}
-
 
 #-------------------------------------------------------------------------------
 ##=back

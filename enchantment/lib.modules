@@ -1,0 +1,188 @@
+#!/bin/bash
+#-------------------------------------------------------------------------------
+##
+##=head1 SYNOPSIS
+##
+##  Module (install step) processing functions
+##
+##=head1 DESCRIPTION
+##
+##  Provides the functions responsible for listing modules and processing
+##  module scripts.
+##
+##=head1 COPYRIGHT
+##
+##  Copyright 2010 The Cauldron Team
+##
+##=head1 FUNCTIONS
+##
+##=over 4
+##
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+##
+## Returns a list of all modules recognized for the current installation, pruned
+## of duplicates and the special "error" module. Expects $ENCHANT_INSTALLER to
+## be set by the installer which is calling this function, and for that
+## installer to have a 'modules' file (see the implementation of the shell
+## installer for an example).
+##
+#-------------------------------------------------------------------------------
+function enchant_modules_list() {
+  local output=()
+  local module=""
+
+  # make sure the installer's modules file exists
+  [[ -f "$ENCHANT_DATA/$INSTALLER/modules" ]] || return $ERR_MODULE_FILE
+
+  # for all modules, if the module isn't "error" and it isn't already in the
+  # output list, append it to the output list
+  for module in $(cut -d: -f1 "$ENCHANT_DATA/$INSTALLER/modules")
+  do
+    if [[ "$module" != "error" ]]
+    then
+      if ! $(echo "${output[@]}" | grep -q "$module")
+      then
+        output=( "${output[@]}" "$module" )
+      fi
+    fi
+  done
+
+  echo "${output[@]}"
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##
+## Returns the number of the current module to perform during the installation.
+## Expects $ENCHANT_INSTALLER to be set by the installer which is calling this
+## function, and for that installer to have a 'modules' file (see the
+## implementation of the shell installer for an example).
+##
+#-------------------------------------------------------------------------------
+function enchant_modules_number() {
+  local num="$(grep -n -m1 \"^$(enchant_get_current):\" $ENCHANT_INSTALLER/modules)"
+
+  if [[ -z "$num" ]]
+  then
+    return $ERR_MODULE_GET_NUM
+  fi
+
+  echo "$num" | cut -d: -f1 || return $ERR_MODULE_GET_NUM
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##
+## Returns the total number of modules to perform during the installation
+##
+#-------------------------------------------------------------------------------
+function enchant_modules_total() {
+  local total="$(enchant_modules_list | wc -l)"
+
+  if [[ "$total" -eq 0 || -z "$total" ]]
+  then
+    return $ERR_MODULE_NONE
+  fi
+
+  echo "$total"
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##
+## Processes the module entry functions. This is used to provide extra
+## functionality upon entering a module (usually preparatory work, like creating
+## module-specific temp files, etc.)
+##
+#-------------------------------------------------------------------------------
+function enchant_modules_enter() {
+  local module="$(cat $ENCHANT_STATUS)"
+  local script=""
+
+  for script in "$ENCHANT_MODULES/$module/enter"/*
+  do
+    if [[ -f "$script" ]]
+    then
+      /bin/bash "$script" || return $ERR_MODULE_SCRIPT
+    fi
+  done
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##
+## Processes the module exit functions. This is used to provide extra
+## functionality upon exiting a module, usually things like writing data to the
+## module's temp files, etc.
+##
+#-------------------------------------------------------------------------------
+function enchant_modules_exit() {
+  local module="$(cat $ENCHANT_STATUS)"
+  local script=""
+
+  for script in "$ENCHANT_MODULES/$module/exit"/*
+  do
+    if [[ -f "$script" ]]
+    then
+      /bin/bash "$script" || return $ERR_MODULE_SCRIPT
+    fi
+  done
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+## @param potion to process for
+##
+## Processes the module potion functions. This is used to do automated installs
+## using pre-made potions (from previous installs or composed ahead of time). It
+## runs scripted versions of what the user would have done manually in each
+## module.
+##
+#-------------------------------------------------------------------------------
+function enchant_modules_potion() {
+  local module="$(cat $ENCHANT_STATUS)"
+  local potion="$1"
+  local script=""
+
+  [[ -d "$potion" ]] || $ERR_DIR_NOT_FOUND
+
+  for script in "$ENCHANT_MODULES/$module/potion"/*
+  do
+    if [[ -f "$script" ]]
+    then
+      /bin/bash "$script" "$potion" || return $ERR_MODULE_SCRIPT
+    fi
+  done
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##=back
+##
+##=head1 LICENSE
+##
+## This software is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2 of the License, or
+## (at your option) any later version.
+##
+## This software is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this software; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+##
+#-------------------------------------------------------------------------------
+
+# vim:ai:tw=80:tabstop=2:softtabstop=2:shiftwidth=2:expandtab

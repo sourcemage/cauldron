@@ -64,8 +64,8 @@ function enchant_shell_command_prompt() {
 
   local current="current:$(enchant_get_current)"
   local next="next:$(enchant_get_next)"
-  local num="$(enchant_get_num)"
-  local total="$(enchant_get_total)"
+  local num="$(enchant_modules_number)"
+  local total="$(enchant_modules_total)"
 
   echo -n "[$current $next $num/$total] "
   echo -n "For a list of commands, type "

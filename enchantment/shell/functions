@@ -71,7 +71,7 @@ function enchant_shell_modules() {
   local col_width="0"
 
   # get the list of modules
-  list=( $(enchant_get_modules) )
+  list=( $(enchant_modules_list) )
 
   [[ "${#list[*]}" -eq 0 ]] && return $ERR_MODULE_NONE
 
