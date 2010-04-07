@@ -283,17 +283,93 @@ overrides what is in etc/cauldron/config.
 
 
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-delint/
+ward/
 
 	A collection of scripts for performing quality assurance on the
 Cauldron codebase.
 
-***************************
-* delint/global_variables *
-***************************
+*************************
+* ward/cauldron_sources *
+*************************
+	Defines an array which lists all the cauldron sources to scan using the
+wards.
+
+****************************
+* ward/enchantment_sources *
+****************************
+	Defines an array which lists all the enchantment sources to scan using
+the wards.
+
+
+****************
+* ward/libward *
+****************
+	Defines the various functions that are used to perform each ward's
+checks.
+
+
+******************
+* ward/functions *
+******************
+	Performs a static analysis of function calls in files passed on the
+command line, testing if they are defined first in the file being checked and
+then in the different libraries in the respective component, checking from
+outer prefix to inner.
+
+*************************
+* ward/global_variables *
+*************************
 	Performs a static analysis of global variables (the uppercased ones) in
 files passed on the command line against a "definition" file (typically this
 would either be one of the etc/config files, or one of the errorcodes files).
 
+************************
+* ward/local_variables *
+************************
+	Performs a static analysis of local variables (the lowercased ones
+defined with the "local" keyword) in files passed on the command line against
+the file being checked to ensure that the variable is properly defined within
+the scope it is being used in, and before the variable is used.
+
+
+*****************
+* ward/ward-all *
+*****************
+	Runs all wards on the cauldron and enchantment sources. This should be
+used for any "release" which is done to ensure both that the code is compliant
+with the API and that there is higher quality of the code (bug prevention is
+better than bug fixing).
+
+************************
+* ward/ward-configvars *
+************************
+	Tests the use of all configuration variables (global variables which
+aren't error codes) in all cauldron and enchantment sources (as defined in
+cauldron_sources and enchantment_sources above) to ensure that they are
+properly defined in the respective configuration files.
+
+************************
+* ward/ward-errorcodes *
+************************
+	Tests both the internal consistency of the cauldron and enchantment
+errorcodes files (makes sure that the number of codes matches the number of
+messages and that every code has a corresponding message and vice versa), and
+the use of all error codes in all cauldron and enchantment sources (as defined
+in cauldron_sources and enchantment_sources above) to ensure that they are
+properly defined in the respective errorcodes files.
+
+***********************
+* ward/ward-functions *
+***********************
+	Tests all function calls in all cauldron and enchantment sources (as
+defined in cauldron_sources and enchantment_sources above) to ensure that they
+are properly defined.
+
+***********************
+* ward/ward-localvars *
+***********************
+	Tests all local variables in all cauldron and enchantment sources (as
+defined in cauldron_sources and enchantment_sources above) to ensure that they
+are properly defined.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
