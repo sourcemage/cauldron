@@ -73,6 +73,7 @@ function delint_global_variables() {
 
 function delint_error_codes() {
   local errorcodes="$1"
+  local leader="       "
   local codes=()
   local msgcode=""
   local count=""
@@ -80,14 +81,17 @@ function delint_error_codes() {
   # make sure the defines file exists, otherwise we can't check anything
   if [[ ! -f "$errorcodes" ]]
   then
-    libcolor_error "error: error code file \"$errorcodes\" not found"
+    libcolor_error "error: error code file "
+    libcolor_file "$errorcodes"
+    libcolor_error " not found"
     echo ""
     liberror_die $ERR_FATAL
   fi
 
   if ! source "$errorcodes" 2 > /dev/null
   then
-    libcolor_error "error: could not source error code file \"$errorcodes\""
+    libcolor_error "error: could not source error code file "
+    libcolor_file "$errorcodes"
     echo ""
   fi
 
@@ -97,15 +101,13 @@ function delint_error_codes() {
   # test if the number of messages matches the number of error codes
   if [[ "${#codes[@]}" -ne "${#ERR_MSGS[@]}" ]]
   then
-    libcolor_error "error: number of error codes not equal to "
-    libcolor_error "number of messages in \"$errorcodes\""
+    libcolor_error "error: "
+    libcolor_error "number of error codes not equal to number of messages"
     echo ""
-    libcolor_error "     codes: ${#codes[@]}"
+    libcolor_error "${leader}codes:    ${#codes[@]}"
     echo ""
-    libcolor_error "  messages: ${#ERR_MSGS[@]}"
+    libcolor_error "${leader}messages: ${#ERR_MSGS[@]}"
     echo ""
-
-    echo "${codes[@]}"
   fi
 
   # for every error code defined, make sure there is a corresponding message
@@ -113,7 +115,8 @@ function delint_error_codes() {
   do
     if ! grep -q "${codes[count]}\$" "$errorcodes"
     then
-      libcolor_error "error: ${codes[count]} defined but has no corresponding message"
+      libcolor_error "error: ${codes[count]}: "
+      libcolor_error "DEFINED but has no corresponding message"
       echo ""
     fi
   done
@@ -125,7 +128,8 @@ function delint_error_codes() {
 
     if ! grep -q "^${msgcode}=" "$errorcodes"
     then
-      libcolor_error "error: $msgcode not defined but message is"
+      libcolor_error "error: $msgcode: "
+      libcolor_error "NOT DEFINED but message is"
       echo ""
     fi
   done

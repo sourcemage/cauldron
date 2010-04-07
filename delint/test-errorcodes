@@ -72,23 +72,23 @@ then
 fi
 
 # check cauldron error codes/messages files for internal consistency
-libcolor_notice "Checking cauldron error codes for internal consistency"
+libcolor_notice "Checking cauldron errorcodes for internal consistency"
 echo ""
 delint_error_codes "$c_codes"
 
 # check cauldron files
-libcolor_notice "Checking cauldron sources against cauldron error codes"
+libcolor_notice "Checking cauldron sources for undefined error codes"
 echo ""
 delint_global_variables "$c_codes" "${cauldron_srcs[@]}" | \
   grep '[^A-Z_]ERR_[A-Z_]*'
 
 # check enchantment error codes/messages files for internal consistency
-libcolor_notice "Checking enchantment error codes for internal consistency"
+libcolor_notice "Checking enchantment errorcodes for internal consistency"
 echo ""
 delint_error_codes "$e_codes"
 
 # check enchantment files
-libcolor_notice "Checking enchantment sources against enchantment error codes"
+libcolor_notice "Checking enchantment sources for undefined error codes"
 echo ""
 delint_global_variables "$e_codes" "${enchantment_srcs[@]}" | \
   grep '[^A-Z_]ERR_[A-Z_]*'
