@@ -36,6 +36,16 @@ then
   exit 1
 fi
 
+#-------------------------------------------------------------------------------
+## @param definition file
+## @param source1 [source2 source3...]
+##
+## Tests whether any variables used in source1 (source2, source3, etc.) are
+## defined in the definition file. Any variables that are used but not defined
+## in the definition file are output via libcolor_warn, preceded by the file
+## they were found in via libcolor_file.
+##
+#-------------------------------------------------------------------------------
 function delint_global_variables() {
   local defines=""
   local file=""
@@ -71,6 +81,14 @@ function delint_global_variables() {
   done
 }
 
+#-------------------------------------------------------------------------------
+## @param error code file
+##
+## Ensures that the error code file itself is properly defined, making sure that
+## for every error code there is a matching error message, and for every error
+## message there is a matching error code.
+##
+#-------------------------------------------------------------------------------
 function delint_error_codes() {
   local errorcodes="$1"
   local leader="       "
