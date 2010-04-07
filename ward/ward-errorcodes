@@ -17,34 +17,34 @@
 ##
 #-------------------------------------------------------------------------------
 
-DELINT_PATH="${DELINT_PATH:-$(dirname $0)}"
+WARD_PATH="${DELINT_PATH:-$(dirname $0)}"
 
-cauldron="$DELINT_PATH/../cauldron"
+cauldron="$WARD_PATH/../cauldron"
 c_codes="$cauldron/errorcodes"
 
-enchantment="$DELINT_PATH/../enchantment"
+enchantment="$WARD_PATH/../enchantment"
 e_codes="$enchantment/errorcodes"
 
-if ! . "$DELINT_PATH/libdelint"
+if ! . "$WARD_PATH/libdelint"
 then
-  echo "error: could not load $DELINT_PATH/libdelint"
+  echo "error: could not load $WARD_PATH/libdelint"
   exit 1
 fi
 
 # source the list of cauldron source files to examine
-if ! . "$DELINT_PATH/cauldron_sources"
+if ! . "$WARD_PATH/cauldron_sources"
 then
   echo "error: could not load cauldron_sources"
   exit $ERR_FATAL
 fi
 # source the list of enchantment source files to examine
-if ! . "$DELINT_PATH/enchantment_sources"
+if ! . "$WARD_PATH/enchantment_sources"
 then
   echo "error: could not load enchantment_sources"
   exit $ERR_FATAL
 fi
 
-function delint_print_usage() {
+function ward_print_usage() {
   cat << EndUsage
 Usage: $(basename $0) [-n]
 
@@ -54,8 +54,8 @@ respective errorcodes files. If passed -n, color output is disabled.
 EndUsage
 }
 
-function delint_usage() {
-  delint_print_usage
+function ward_usage() {
+  ward_print_usage
   exit $ERR_FATAL
 }
 
@@ -67,30 +67,30 @@ then
     LIBCOLOR_NOCOLOR="yes"
     shift
   else
-    delint_usage
+    ward_usage
   fi
 fi
 
 # check cauldron error codes/messages files for internal consistency
 libcolor_notice "Checking cauldron errorcodes for internal consistency"
 echo ""
-delint_error_codes "$c_codes"
+ward_error_codes "$c_codes"
 
 # check cauldron files
 libcolor_notice "Checking cauldron sources for undefined error codes"
 echo ""
-delint_global_variables "$c_codes" "${cauldron_srcs[@]}" | \
+ward_global_variables "$c_codes" "${cauldron_srcs[@]}" | \
   grep '[^A-Z_]ERR_[A-Z_]*'
 
 # check enchantment error codes/messages files for internal consistency
 libcolor_notice "Checking enchantment errorcodes for internal consistency"
 echo ""
-delint_error_codes "$e_codes"
+ward_error_codes "$e_codes"
 
 # check enchantment files
 libcolor_notice "Checking enchantment sources for undefined error codes"
 echo ""
-delint_global_variables "$e_codes" "${enchantment_srcs[@]}" | \
+ward_global_variables "$e_codes" "${enchantment_srcs[@]}" | \
   grep '[^A-Z_]ERR_[A-Z_]*'
 
 #-------------------------------------------------------------------------------

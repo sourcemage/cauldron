@@ -19,34 +19,34 @@
 #-------------------------------------------------------------------------------
 
 
-DELINT_PATH="${DELINT_PATH:-$(dirname $0)}"
+WARD_PATH="${DELINT_PATH:-$(dirname $0)}"
 
-cauldron="$DELINT_PATH/../cauldron"
+cauldron="$WARD_PATH/../cauldron"
 c_conf="$cauldron/etc/config"
 
-enchantment="$DELINT_PATH/../enchantment"
+enchantment="$WARD_PATH/../enchantment"
 e_conf="$enchantment/etc/config"
 
-if ! . "$DELINT_PATH/libdelint"
+if ! . "$WARD_PATH/libdelint"
 then
-  echo "error: could not load $DELINT_PATH/libdelint"
+  echo "error: could not load $WARD_PATH/libdelint"
   exit 1
 fi
 
 # source the list of cauldron source files to examine
-if ! . "$DELINT_PATH/cauldron_sources"
+if ! . "$WARD_PATH/cauldron_sources"
 then
   echo "error: could not load cauldron_sources"
   exit $ERR_FATAL
 fi
 # source the list of enchantment source files to examine
-if ! . "$DELINT_PATH/enchantment_sources"
+if ! . "$WARD_PATH/enchantment_sources"
 then
   echo "error: could not load enchantment_sources"
   exit $ERR_FATAL
 fi
 
-function delint_print_usage() {
+function ward_print_usage() {
   cat << EndUsage
 Usage: $(basename $0) [-n]
 
@@ -56,8 +56,8 @@ respective errorcodes files. If passed -n, color output is disabled.
 EndUsage
 }
 
-function delint_usage() {
-  delint_print_usage
+function ward_usage() {
+  ward_print_usage
   exit $ERR_FATAL
 }
 
@@ -69,20 +69,20 @@ then
     LIBCOLOR_NOCOLOR="yes"
     shift
   else
-    delint_usage
+    ward_usage
   fi
 fi
 
 # check cauldron files
 libcolor_notice "Checking cauldron config variables"
 echo ""
-delint_global_variables "$c_conf" "${cauldron_srcs[@]}" | \
+ward_global_variables "$c_conf" "${cauldron_srcs[@]}" | \
   grep -v '[^A-Z_]ERR_[A-Z_]*'
 
 # check enchantment files
 libcolor_notice "Checking enchantment config variables"
 echo ""
-delint_global_variables "$e_conf" "${enchantment_srcs[@]}" | \
+ward_global_variables "$e_conf" "${enchantment_srcs[@]}" | \
   grep -v '[^A-Z_]ERR_[A-Z_]*'
 
 #-------------------------------------------------------------------------------

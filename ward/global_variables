@@ -3,8 +3,8 @@
 ##
 ##=head1 SYNOPSIS
 ##
-##  Global variable delinter - tests all global variables (as defined in the
-##  API specification) for whether they are defined in a given definitions file.
+##  Global variable ward - tests all global variables (as defined in the API
+##  specification) for whether they are defined in a given definitions file.
 ##
 ##=head1 COPYRIGHT
 ##
@@ -16,15 +16,15 @@
 ##
 #-------------------------------------------------------------------------------
 
-DELINT_PATH="${DELINT_PATH:-$(dirname $0)}"
+WARD_PATH="${DELINT_PATH:-$(dirname $0)}"
 
-if ! . "$DELINT_PATH/libdelint"
+if ! . "$WARD_PATH/libdelint"
 then
-  echo "error: could not load $DELINT_PATH/libdelint"
+  echo "error: could not load $WARD_PATH/libdelint"
   exit 1
 fi
 
-function delint_print_usage() {
+function ward_print_usage() {
   cat << EndUsage
 Usage: $(basename $0) [-n] DEFINITION_FILE FILE_TO_CHECK1 [FILE_TO_CHECK2 ...]
 
@@ -35,8 +35,8 @@ color output is disabled.
 EndUsage
 }
 
-function delint_usage() {
-  delint_print_usage
+function ward_usage() {
+  ward_print_usage
   exit $ERR_FATAL
 }
 
@@ -48,7 +48,7 @@ then
     LIBCOLOR_NOCOLOR="yes"
     shift
   else
-    delint_usage
+    ward_usage
   fi
 fi
 
@@ -56,11 +56,11 @@ fi
 # the defines file + at least one file to check
 if [[ $# -lt 2 ]]
 then
-  echo "$(delint_print_usage)"
+  echo "$(ward_print_usage)"
   liberror_die $ERR_FATAL
 fi
 
-delint_global_variables "$@"
+ward_global_variables "$@"
 
 #-------------------------------------------------------------------------------
 ##

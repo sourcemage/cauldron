@@ -3,7 +3,7 @@
 ##
 ##=head1 SYNOPSIS
 ##
-##  Function and variable definitions for the delinters.
+##  Function and variable definitions for the wards.
 ##
 ##=head1 COPYRIGHT
 ##
@@ -19,20 +19,20 @@
 # when grepping, sorting, etc.
 export LC_COLLATE="C"
 
-# ensure that DELINT_PATH has a value
-DELINT_PATH="${DELINT_PATH:-$(dirname $0)}"
+# ensure that WARD_PATH has a value
+WARD_PATH="${WARD_PATH:-$(dirname $0)}"
 
 # load liberror (this is not optional)
-if ! . "$DELINT_PATH/../lib/liberror"
+if ! . "$WARD_PATH/../lib/liberror"
 then
-  echo "error: could not load $DELINT_PATH/../lib/liberror"
+  echo "error: could not load $WARD_PATH/../lib/liberror"
   exit 1
 fi
 
 # load libcolor (there should be an option for this later)
-if ! . "$DELINT_PATH/../lib/libcolor"
+if ! . "$WARD_PATH/../lib/libcolor"
 then
-  echo "error: could not load $DELINT_PATH/../lib/libcolor"
+  echo "error: could not load $WARD_PATH/../lib/libcolor"
   exit 1
 fi
 
@@ -46,7 +46,7 @@ fi
 ## they were found in via libcolor_file.
 ##
 #-------------------------------------------------------------------------------
-function delint_global_variables() {
+function ward_global_variables() {
   local defines=""
   local file=""
 
@@ -89,7 +89,7 @@ function delint_global_variables() {
 ## message there is a matching error code.
 ##
 #-------------------------------------------------------------------------------
-function delint_error_codes() {
+function ward_error_codes() {
   local errorcodes="$1"
   local leader="       "
   local codes=()
@@ -163,7 +163,7 @@ function delint_error_codes() {
 ## found in via libcolor_file.
 ##
 #-------------------------------------------------------------------------------
-function delint_functions() {
+function ward_functions() {
   local path=""
   local file=""
   local prefix=""
@@ -182,12 +182,12 @@ function delint_functions() {
   shift
 
   # make sure we got a good path component
-  if [[ ! -d "$DELINT_PATH/../$path" ]]
+  if [[ ! -d "$WARD_PATH/../$path" ]]
   then
     echo "error: library search path not recognized"
     liberror_die $ERR_FATAL
   else
-    path="$DELINT_PATH/../$path"
+    path="$WARD_PATH/../$path"
   fi
 
   while [[ $# -gt 0 ]]

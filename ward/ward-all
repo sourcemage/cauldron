@@ -16,8 +16,8 @@
 ##
 #-------------------------------------------------------------------------------
 
-DELINT_PATH="$(dirname $0)"
-PATH="$DELINT_PATH:$PATH"
+WARD_PATH="$(dirname $0)"
+PATH="$WARD_PATH:$PATH"
 
 TESTERS=(
         "test-configvars"
