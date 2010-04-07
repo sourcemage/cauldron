@@ -19,7 +19,7 @@
 #-------------------------------------------------------------------------------
 
 
-DELINT_PATH="$(dirname $0)"
+DELINT_PATH="${DELINT_PATH:-$(dirname $0)}"
 
 cauldron="$DELINT_PATH/../cauldron"
 c_conf="$cauldron/etc/config"

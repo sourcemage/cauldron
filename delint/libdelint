@@ -20,7 +20,7 @@
 export LC_COLLATE="C"
 
 # ensure that DELINT_PATH has a value
-[[ -z "$DELINT_PATH" ]] && DELINT_PATH="$(dirname $0)"
+DELINT_PATH="${DELINT_PATH:-$(dirname $0)}"
 
 # load liberror (this is not optional)
 if ! . "$DELINT_PATH/../lib/liberror"

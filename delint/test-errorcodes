@@ -17,7 +17,7 @@
 ##
 #-------------------------------------------------------------------------------
 
-DELINT_PATH="$(dirname $0)"
+DELINT_PATH="${DELINT_PATH:-$(dirname $0)}"
 
 cauldron="$DELINT_PATH/../cauldron"
 c_codes="$cauldron/errorcodes"

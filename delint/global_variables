@@ -16,7 +16,7 @@
 ##
 #-------------------------------------------------------------------------------
 
-DELINT_PATH="$(dirname $0)"
+DELINT_PATH="${DELINT_PATH:-$(dirname $0)}"
 
 if ! . "$DELINT_PATH/libdelint"
 then
