@@ -1,0 +1,84 @@
+#!/bin/bash
+#-------------------------------------------------------------------------------
+##
+##=head1 SYNOPSIS
+##
+##  Function delinter - tests all functions (as defined in the API
+##  specification) for whether they are defined in a given file.
+##
+##=head1 COPYRIGHT
+##
+##  Copyright 2010 by the Cauldron Team
+##
+##=head1 FUNCTIONS
+##
+##=over 4
+##
+#-------------------------------------------------------------------------------
+
+DELINT_PATH="${DELINT_PATH:-$(dirname $0)}"
+
+if ! . "$DELINT_PATH/libdelint"
+then
+  echo "error: could not load $DELINT_PATH/libdelint"
+  exit 1
+fi
+
+function delint_print_usage() {
+  cat << EndUsage
+Usage: $(basename $0) [-n] FILE_PATH FILE_TO_CHECK1 [FILE_TO_CHECK2 ...]
+
+Checks whether functions called in FILE_TO_CHECK1 [FILE_TO_CHECK2 ...] were
+defined in either the file being checked itself or a library in FILE_PATH which
+matches the function prefix(es) (as defined in the API). For any functions not
+so defined, they are printed on stdout along with the file in which they were
+used. If passed -n, color output is disabled.
+EndUsage
+}
+
+function delint_usage() {
+  delint_print_usage
+  exit $ERR_FATAL
+}
+
+# check if color should be disabled
+if [[ "$1" == "-n" ]]
+then
+  if [[ "$#" -gt 1 ]]
+  then
+    LIBCOLOR_NOCOLOR="yes"
+    shift
+  else
+    delint_usage
+  fi
+fi
+
+# we need a minimum of 2 arguments at this point:
+# the defines file + at least one file to check
+if [[ $# -lt 2 ]]
+then
+  echo "$(delint_print_usage)"
+  liberror_die $ERR_FATAL
+fi
+
+delint_functions "$@"
+
+#-------------------------------------------------------------------------------
+##
+## This software is free software; you can redistribute it and/or modify
+## it under the terms of the GNU General Public License as published by
+## the Free Software Foundation; either version 2 of the License, or
+## (at your option) any later version.
+##
+## This software is distributed in the hope that it will be useful,
+## but WITHOUT ANY WARRANTY; without even the implied warranty of
+## MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+## GNU General Public License for more details.
+##
+## You should have received a copy of the GNU General Public License
+## along with this software; if not, write to the Free Software
+## Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+##
+#-------------------------------------------------------------------------------
+
+# vim:ai:tw=80:tabstop=2:softtabstop=2:shiftwidth=2:expandtab

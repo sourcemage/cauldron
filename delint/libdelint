@@ -132,6 +132,96 @@ function delint_error_codes() {
 }
 
 #-------------------------------------------------------------------------------
+## @param directory where function definition files are stored
+## @param source1 [source2 source3...]
+##
+## Tests whether any functions used in source1 (source2, source3, etc.) are
+## defined. Any functions that are used but not defined in the corresponding
+## definition file are output via libcolor_warn, preceded by the file they were
+## found in via libcolor_file.
+##
+#-------------------------------------------------------------------------------
+function delint_functions() {
+  local path=""
+  local file=""
+  local prefix=""
+  local list=""
+  local matched=""
+
+  # make sure we have a minimum number of arguments
+  if [[ $# -lt 2 ]]
+  then
+    echo "error: improper number of arguments"
+    liberror_die $ERR_FATAL
+  fi
+
+  # get the defines file, then drop it from the argument list
+  path="$1"
+  shift
+
+  # make sure we got a good path component
+  if [[ ! -d "$DELINT_PATH/../$path" ]]
+  then
+    echo "error: library search path not recognized"
+    liberror_die $ERR_FATAL
+  else
+    path="$DELINT_PATH/../$path"
+  fi
+
+  while [[ $# -gt 0 ]]
+  do
+    file="$1"
+    shift
+
+    [[ -f "$file" ]] || continue
+
+    list=($(grep -o "^[ ]*[a-z]\+_[a-z_]\+" "$file" | sed 's/^ *//' | sort -u))
+    # for each called function, check prefix by prefix
+    for function in "${list[@]}"
+    do
+      # check if the function is defined somewhere in the file it came from
+      grep -q "^function $function() {" "$file" && continue
+
+      # seed the defines variable for the loop below
+      local mangle="$function"
+
+      # check against the prefixes, one at a time
+      while $(echo $mangle | grep -q '^[a-z]\+_[a-z_]\+')
+      do
+        prefix="${mangle%%_*}"
+        [[ "$prefix" == "enchant" ]] && prefix="enchantment"
+
+        # check for the function in a library file matching the prefix
+        if [[ -f "$path/lib$prefix" ]]
+        then
+          if grep -q "^function $function() {" "$path/lib$prefix"
+          then
+            matched="yes"
+            break
+          fi
+        elif [[ -f "$path/lib.$prefix" ]]
+        then
+          if grep -q "^function $function() {" "$path/lib.$prefix"
+          then
+            matched="yes"
+            break
+          fi
+        fi
+
+        # no match yet, strip the prefix and repeat
+        mangle="${mangle#*_}"
+      done
+
+      # if the function isn't defined in the corresponding file, warn the user
+      if [[ -z "$matched" ]]
+      then
+        echo "$(libcolor_file $file): $(libcolor_warn $function)"
+      fi
+    done
+  done
+}
+
+#-------------------------------------------------------------------------------
 ##
 ## This software is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
