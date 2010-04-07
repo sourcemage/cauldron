@@ -20,9 +20,9 @@ WARD_PATH="$(dirname $0)"
 PATH="$WARD_PATH:$PATH"
 
 TESTERS=(
-        "test-configvars"
-        "test-errorcodes"
-	"test-functions"
+        "ward-configvars"
+        "ward-errorcodes"
+        "ward-functions"
         )
 
 for tester in "${TESTERS[@]}"

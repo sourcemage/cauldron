@@ -25,9 +25,9 @@ cauldron="$WARD_PATH/../cauldron"
 
 enchantment="$WARD_PATH/../enchantment"
 
-if ! . "$WARD_PATH/libdelint"
+if ! . "$WARD_PATH/libward"
 then
-  echo "error: could not load $WARD_PATH/libdelint"
+  echo "error: could not load $WARD_PATH/libward"
   exit 1
 fi
 
