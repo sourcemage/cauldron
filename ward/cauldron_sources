@@ -21,9 +21,9 @@ cauldron_srcs=(
                "$cauldron/cauldron"
                "$cauldron/libcauldron"
                "$cauldron/lib.chroot"
-               "$cauldron/lib.hostcache"
                "$cauldron/lib.init"
                "$cauldron/lib.sorcerous"
+               "$cauldron/lib.toolchain"
                )
 
 #-------------------------------------------------------------------------------
