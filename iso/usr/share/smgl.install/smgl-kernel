@@ -52,8 +52,8 @@ echo "Installing kernel modules to $TARGET/lib/modules/$(uname -r)"
 cp -fr /lib/modules/$(uname -r) "$TARGET"/lib/modules/
 
 [[ ! -d "$TARGET"/etc/modprobe.d ]] && mkdir -p "$TARGET"/etc/modrobe.d
-echo "Installing modprobe blacklist to $TARGET/etc/modprobe.d/blacklist"
-cp -f /etc/modprobe.d/blacklist "$TARGET"/etc/modprobe.d/blacklist
+echo "Installing modprobe blacklist to $TARGET/etc/modprobe.d/blacklist.conf"
+cp -f /etc/modprobe.d/blacklist.conf "$TARGET"/etc/modprobe.d/blacklist.conf
 
 
 # vim:tabstop=2:softtabstop=2:shiftwidth=2:expandtab:ai
