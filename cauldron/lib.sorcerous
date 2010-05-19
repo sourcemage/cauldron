@@ -28,7 +28,7 @@
 ## chroot, which will need a lot of modified paths
 ##
 #-------------------------------------------------------------------------------
-function cauldron_source_sorcery() {
+function cauldron_sorcerous_load() {
   local config="${1:-$CAULDRON_ISORCERY_CONFIG}"
   local local_config="${2:-$CAULDRON_ISORCERY_LCONFIG}"
 
@@ -57,7 +57,7 @@ function cauldron_source_sorcery() {
 ## cross-compiler.
 ##
 #-------------------------------------------------------------------------------
-function cauldron_configure_toolchain() {
+function cauldron_sorcerous_cross_configure() {
   local stage="$1"
   local hostarch="$CAULDRON_HOST_ARCH"
   local arch="$CAULDRON_ARCH"
@@ -95,15 +95,16 @@ function cauldron_configure_toolchain() {
 ## download_path.
 ##
 #-------------------------------------------------------------------------------
-function cauldron_download_sorcery() {
+function cauldron_sorcerous_download() {
   local branch=$1
   local spool=$2
   local sorcery="sorcery-$branch.tar.bz2"
+  local sorcery_url="http://download.sourcemage.org/sorcery"
 
   # run in a subshell as an easy way of not messing with the working directory
   (
     cd ${spool}
-    wget http://download.sourcemage.org/sorcery/$sorcery ||
+    wget "$sorcery_url/$sorcery" ||
       return $ERR_DOWNLOAD_SORCERY
   )
 
@@ -123,7 +124,7 @@ function cauldron_download_sorcery() {
 ## config file.
 ##
 #-------------------------------------------------------------------------------
-function cauldron_sorcery_install() {
+function cauldron_sorcerous_install() {
   local force_download=$1
   local branch="$CAULDRON_SORCERY_BRANCH"
   local spool="$CAULDRON_BUILD/var/spool/sorcery"
@@ -137,12 +138,12 @@ function cauldron_sorcery_install() {
   then
     if [[ "$force_download" == "yes" ]]
     then
-      cauldron_download_sorcery $branch "$spool"
+      cauldron_sorcerous_download $branch "$spool"
     else
       cp "$CAULDRON_HSORCERY_SPOOL"/sorcery-${branch}.tar.bz2 "$spool"
     fi
   else
-    cauldron_download_sorcery ${branch} "$spool"
+    cauldron_sorcerous_download ${branch} "$spool"
   fi
 
   # unpack the source tarball

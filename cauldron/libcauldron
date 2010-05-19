@@ -230,7 +230,7 @@ function cauldron_build_target_system() {
   # caching should really be turned on from the very beginning though...
   if [[ -z "$ARCHIVE" ]]
   then
-    cauldron_source_sorcery || return $ERR_TARGET_SORCERY
+    cauldron_sorcerous_load || return $ERR_TARGET_SORCERY
   fi
   [[ "$ARCHIVE" == "off" ]] && return $ERR_ARCHIVE
 
@@ -382,11 +382,11 @@ function cauldron_prepare() {
     return $ERR_RESOLV
 
   # install sorcery into the build dir
-  if [[ -z cauldron_sorcery_install ]]
+  if [[ -z cauldron_sorcerous_install ]]
   then
     cauldron_load_library lib.sorcerous
   fi
-  cauldron_sorcery_install "$CAULDRON_BUILD" || return $ERR_SORCERY_INSTALL
+  cauldron_sorcerous_install "$CAULDRON_BUILD" || return $ERR_SORCERY_INSTALL
 
   # cauldron is a spell
   # there is a spoon
