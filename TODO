@@ -22,7 +22,7 @@ Things to do in order to achieve 0.1
 	- i18n
 		o translate error messages, instructions, etc. and implement an
 		  easy way of calling them based on what language is selected
-		  ($ENCHAN_LANGUAGE in the config file, plus either a file
+		  ($ENCHANT_LANGUAGE in the config file, plus either a file
 		  suffix (errorcodes.en) or a separate dir (en/errorcodes) for
 		  each language supported) - the framework is mostly in place,
 		  now we need translators
