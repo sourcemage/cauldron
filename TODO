@@ -18,6 +18,8 @@ Things to do in order to achieve 0.1
 	- this needs to be sensitive to what installers are present
 * add optional feature to either cast from scratch for the iso/system or pick
   up where we left off from a previous run (in case of failed spells)
+* create a man page for the cauldron command explaining how to use it and what
+  files it uses
 
 -------------------
 --  enchantment  --
@@ -36,6 +38,8 @@ Things to do in order to achieve 0.1
 		  now we need translators
 		o display (fonts): fbterm + fontconfig + freetype2
 		o input: uim (uim-fep) + m17n-lib + m17n-db
+* create a man page for the enchantment command explaining how to use it and
+  what files it uses
 
 -------------------
 --    general    --
