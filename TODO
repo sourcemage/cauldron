@@ -14,9 +14,10 @@ Things to do in order to achieve 0.1
 	  those familiar with the 0.10 series)
 	- switch initramfs to use busybox
 		o will need a scrubbed busybox config for this
-* write a cauldron spell so that cauldron can install itself
 * write code to set up the init process on the ISO
 	- this needs to be sensitive to what installers are present
+* add optional feature to either cast from scratch for the iso/system or pick
+  up where we left off from a previous run (in case of failed spells)
 
 -------------------
 --  enchantment  --
@@ -58,5 +59,6 @@ Things to do for 1.0
 
 * No (known) bugs
 * web installer (html), X installer? (xdirectfb?)
+* net install (tftp, ssh, etc.?)
 * ???
 
