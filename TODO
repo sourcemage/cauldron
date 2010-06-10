@@ -2,6 +2,9 @@
 Things to do in order to achieve 0.1
 ====================================
 
+-------------------
+--   cauldron    --
+-------------------
 * finish writing the cauldron script so it actually does the steps needed
 	- setup sorcery in build chroot (ARCHIVE=on, etc.)
 	- perform the build
@@ -14,6 +17,10 @@ Things to do in order to achieve 0.1
 * write a cauldron spell so that cauldron can install itself
 * write code to set up the init process on the ISO
 	- this needs to be sensitive to what installers are present
+
+-------------------
+--  enchantment  --
+-------------------
 * still need the installers themselves to be written
 	- for the shell installer, this is trivial (mostly done)
 	- the menu installer needs to be written
@@ -28,6 +35,10 @@ Things to do in order to achieve 0.1
 		  now we need translators
 		o display (fonts): fbterm + fontconfig + freetype2
 		o input: uim (uim-fep) + m17n-lib + m17n-db
+
+-------------------
+--    general    --
+-------------------
 * LOTS AND LOTS OF TESTING!
 * More sanity checks and error testing (use liberror!)
 	- this is done, but could be more complete
