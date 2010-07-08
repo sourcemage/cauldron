@@ -26,6 +26,10 @@ Things to do in order to achieve 0.1
 -------------------
 * still need the installers themselves to be written
 	- for the shell installer, this is trivial (mostly done)
+		o implement tab completion specific for the installer commands
+		  (no need for a full-blown bash-completion installation, which
+		  would add bloat; implementing tab completion only for the
+		  installer would be pretty small and fast)
 	- the menu installer needs to be written
 		~ Not sure if this should really be for 0.1, but a lot of
 		  people have asked for it already.
@@ -38,8 +42,6 @@ Things to do in order to achieve 0.1
 		  now we need translators
 		o display (fonts): fbterm + fontconfig + freetype2
 		o input: uim (uim-fep) + m17n-lib + m17n-db
-* create a man page for the enchantment command explaining how to use it and
-  what files it uses
 
 -------------------
 --    general    --

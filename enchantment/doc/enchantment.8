@@ -1,0 +1,336 @@
+'\" t
+.\"     Title: enchantment
+.\"    Author: [see the "Authors" section]
+.\"      Date: 07/06/2010
+.\"    Manual: Enchantment Manual
+.\"  Language: English
+.\"
+.\" Copyright 2010 by the Cauldron Team, Source Mage GNU/Linux
+.\" This software is free software; you can redistribute it and/or modify
+.\" it under the terms of the GNU General Public License as published by
+.\" the Free Software Foundation; either version 2 of the License, or
+.\" (at your option) any later version.
+.\"
+.\" This software is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public License
+.\" along with this software; if not, write to the Free Software
+.\" Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+.\"
+.TH "ENCHANTMENT" "8" "07/05/2010" "Source Mage GNU/Linux" "enchantment manual"
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+\fBenchantment\fR \- Source Mage GNU/Linux installation front-end
+.SH "SYNOPSIS"
+
+.nf
+\fBenchantment\fR COMMAND [ARGS]
+.fi
+
+.SH "DESCRIPTION"
+
+Enchantment is a command-line front-end to the enchantment library (which serves as a backend for all the Source Mage GNU/Linux front-ends, including the menu system). All of the installation functions are accessible through this single command-line frontend by passing the desired command as the first parameter to the program, followed by any arguments that command needs.
+.SH "ENCHANTMENT COMMANDS"
+A list of acceptable commands is given below. For each command, if it can accept any arguements, they are described in that command's section. Optional arguments are enclosed in square brackets ('[' and ']'), while required arguments are bare (not surrounded by brackets or anything else). The commands are organized by logical function.
+.SS General
+.PP
+\fBhelp\fR [TOPIC]
+.RS 4
+Displays help for a given topic. If no topic is provided, it will display a list of topics available.
+.RE
+.SS "Module Interaction"
+.PP
+\fBtodo\fR [MODULE]
+.RS 4
+If called without an argument, it displays the necessary procedures to complete the current installation module. If the name of an installation module, as listed by the \fBlist\fR command below, is provided as the only argument, then it displays the necessary procedures for that given module, rather than the current one.
+.RE
+.PP
+\fBlist\fR
+.RS 4
+List all the recognized installation modules for the current install.
+.RE
+.PP
+\fBnext\fR
+.RS 4
+Go to the next installation module in the current install.
+.RE
+.PP
+\fBprev\fR
+.RS 4
+Go to the previous installation module in the current install.
+.RE
+.PP
+\fBjump\fR MODULE
+.RS 4
+Jump to the installation step MODULE given as the first (and only) argument. MODULE is the name of a module as listed by the \fBlist\fR command above.
+.RE
+.PP
+\fBwelcome\fR
+.RS 4
+Display the initial welcome message, which provides some introductory information on how to use the installation interface.
+.RE
+.SS "Content Installation"
+.PP
+\fBchroot\fR [ARGS]
+.RS 4
+Chroot to $\fIENCHANT_TARGET\fR using the command given in $\fIENCHANT_CHROOT\fR (see the section on \fBENVIRONMENT VARIABLES\fR below), performing necessary mount bindings needed for shell functionality inside the chroot, and also setting the shell prompt to indicate that you are now in a chroot. If called with arguments, the arguments are passed to the $\fIENCHANT_CHROOT\fR command (you can use this to directly execute commands in the chroot, rather than having to first enter an interactive shell and then manually execute the command afterwards).
+.RE
+.PP
+\fBinstall\fR SUBCOMMAND
+.RS 4
+Performs a given installation, according to the supplied SUBCOMMAND, which can be one of the following:
+.RE
+
+.RS 4
+\fBkernel\fR KERNEL_IMAGE KERNEL_MODULES KERNEL_VERSION
+.RE
+.RS 8
+Installs the given kernel to the target as specified in \fIENCHANT_TARGET\fR (see the section on \fBENVIRONMENT VARIABLES\fR below). The first argument, KERNEL_IMAGE, must be an absolute path the to kernel image itself (i.e. /boot/vmlinuz), which will be installed to \fIENCHANT_TARGET_KERNEL\fR (see the section on \fBENVIRONMENT VARIABLES\fR below). The second argument, KERNEL_MODULES, must be an aboslute path to the directory where the kernel modules matching the image supplied in KERNEL_IMAGE are to be taken from (e.g. /lib/modules/2.6.32.8). The kernel modules will be installed to \fIENCHANT_TARGET_KMODS\fR (see the section on \fBENVIRONMENT VARIABLES\fR below). Finally, KERNEL_VERSION, the third and last argument, must supply the numbered kernel version associated with the kernel image and modules (e.g. 2.6.32.8).
+.RE
+.RS 4
+\fBisokernel\fR
+.RE
+.RS 8
+Installs the kernel image and modules that are used for the ISO runtime itself to the target specified in \fIENCHANT_TARGET\fR (see the section on \fBENVIRONMENT VARIABLES\fR below). The image is installed to \fIENCHANT_TARGET_KERNEL\fR, and the modules are installed to \fIENCHANT_TARGET_KMODS\fR.
+.RE
+.RS 4
+\fBsystem\fR
+.RE
+.RS 8
+Installs the minimal base system (system.tar.bz2) to the target specified in \fIENCHANT_TARGET\fR (see the section on \fBENVIRONMENT VARIABLES\fR below).
+.RE
+.RS 4
+\fBspells\fR
+.RE
+.RS 8
+Installs the currently selected spells to the target specified in \fIENCHANT_TARGET\fR (see the section on \fBENVIRONMENT VARIABLES\fR below).
+.RE
+.RS 4
+\fBsources\fR
+.RE
+.RS 8
+Installs spell sources from \fIENCHANT_SPELL_SOURCES\fR to the target location specified in \fIENCHANT_TARGET_SOURCES\fR (see the section on \fBENVIRONMENT VARIABLES\fR below). If called with no arguments, it installs the currently selected spell sources as given in \fIENCHANT_SOURCES_LIST\fR (see the section on \fBENVIRONMENT VARIABLES\fR below). If called with arguments, each argument is taken as the name of a spell whose sources are to be installed.
+.RE
+.RS 4
+\fBcaches\fR
+.RE
+.RS 8
+Installs spell caches from \fIENCHANT_SPELL_CACHES\fR to the target location specified in \fIENCHANT_TARGET_CACHES\fR (see the section on \fBENVIRONMENT VARIABLES\fR below). If called with no arguments, it installs the currently selected spell caches as given in \fIENCHANT_CACHES_LIST\fR (see the section on \fBENVIRONMENT VARIABLES\fR below). If called with arguments, each argument is taken as the name of a spell whose cache is to be installed.
+.RE
+
+.RS 8
+.RE
+.SS "Potion (history) Interaction"
+.PP
+\fBback\fR
+.RS 4
+Move back one level in the history stack (similar to pressing the back button on a web browser). This only takes effect if history is enabled in the current install (can be configured at run-time, see \fIENCHANT_HISTORY_SIZE\fR in the section on \fBENVIRONMENT VARIABLES\fR below for more information).
+.RE
+.PP
+\fBforward\fR
+.RS 4
+Move forward one level in the history stack (similar to pressing the forward button on a web browser). This only takes effect if history is enabled in the current install (can be configured at run-time, see \fIENCHANT_HISTORY_SIZE\fR in the section on \fBENVIRONMENT VARIABLES\fR below for more information).
+.RE
+.PP
+\fBpotion\fR
+.RS 4
+Package the present installation state into a restorable potion. This can then be used either to restore the current installation if something goes wrong, or it can be used later for automated installs (e.g. on other machines with the same hardware for site-wide installs). This only takes effect if history is enabled in the current install (can be configured at run-time, see the section on \fBENVIRONMENT VARIABLES\fR below for more information).
+.RE
+.SS "i18n"
+.PP
+\fBkeymap\fR [/path/to/keymap.file]
+.RS 4
+If called without an argument, presents a menu by which you can select an appropriate keymap to use for the current installation session. If supplied a keymap file (with path) as the only argument, it will directly select that keymap to use for the installation session.
+.RE
+.SS "Setup"
+.PP
+\fBinit\fR
+.RS 4
+Initializes the installation session. You should not normally have a reason to call this command yourself, unless things get messed up. This is used by other facets of the \fBEnchantment\fR suite when the installation is first started.
+.RE
+.PP
+\fBprompt\fR
+.RS 4
+Prints a shell prompt with information on the current installation status. You should not normally have a reason to call this command yourself, unless things get messed up. This is used by other facets of the \fBEnchantment\fR suite when the present installation module is changed/updated.
+.RE
+.SH "TERMINOLOGY"
+.PP
+target
+.RS 4
+Where the installation goes to. For example, if you have an 80GB partition /dev/sda1 and decide you want to use that as your root partition, that will be the target. Note that target refers not only to the disk, but to any/every aspect of the entire machine (the cpu architecture to install for, etc.).
+.RE
+.PP
+iso
+.RS 4
+Refers to the installation runtime. The runtime is typically available via a burned cd, consisting of the contents of an iso9660 filesystem prepared by cauldron, hence the labelling of the runtime as iso. This is in contrast to system, defined below. The spells and binaries available for use in the iso may differ from those available in the system.
+.RE
+.PP
+system
+.RS 4
+Refers to the target runtime. Note that the target runtime is not necessarily available in the target until after a certain stage of the installation is completed. This also refers to the pre-built compressed archive of the minimal target runtime, typically stored as system.tar.bz2 in the root directory of an officially released iso. The spells and binaries available for use in the system may differ from those available in the iso.
+.RE
+.PP
+module
+.RS 4
+An installation "step". It is a logical unit within the entire installation process/scheme. For example, disk partitioning is a module. A module minimally consists of a set of instructions to perform, but may also include such things as scripted events and stateful data.
+.RE
+.PP
+potion
+.RS 4
+This is the component of the Enchantment script suite responsible for managing history and state tracking. It is also the name of an instance of a collection of such state, to be used for install process recovery, automated installs, and possibly other things.
+.RE
+.PP
+installer
+.RS 4
+A user interface to libenchantment (and the associated sub-libraries). This includes, for example, the command-line installer (described by the present man-page you are reading) and the TUI menu installer (which uses dialog to display the text menus).
+.RE
+.PP
+spell
+.RS 4
+A software package.
+.RE
+.PP
+source
+.RS 4
+The source code collection needed to build a spell.
+.RE
+.PP
+cache
+.RS 4
+A compressed archive of a pre-built spell.
+.RE
+.SH "ENVIRONMENT VARIABLES"
+
+Various enchantment commands use the following user-level environment variables. The default value is given in square brackets ('[' and ']') after the name of the environment variable. The default values may be overridden/changed either on the command line in the shell, or by setting the variable's value in the local enchantment config file \fI/etc/enchantment/local/config\fR.
+.SS "Source Paths"
+.PP
+\fIENCHANT_ISO_PATH\fR [/]
+.RS 4
+This represents where the iso is running from. Unless you know what you are doing and you want to do some really tricky hacking with the installation, it is highly recommended that you leave this at the default setting.
+.RE
+.PP
+\fIENCHANT_SPELL_SOURCES\fR [$\fIENCHANT_ISO_PATH\fR/var/spool/sorcery]
+.RS 4
+Path where spell sources should be taken from to install into the target.
+.RE
+.PP
+\fIENCHANT_SPELL_CACHES\fR [$\fIENCHANT_ISO_PATH\fR/var/cache/sorcery]
+.RS 4
+Path where spell caches should be taken from to install into the target.
+.RE
+.SS "Target Paths"
+.PP
+\fIENCHANT_TARGET\fR [$\fIENCHANT_ISO_PATH\fR/mnt/root]
+.RS 4
+Base path where content will be installed to. Typically this is where the root filesystem of the target system is mounted (e.g., /dev/sda1).
+.RE
+.PP
+\fIENCHANT_TARGET_SOURCES\fR [$\fIENCHANT_TARGET\fR/var/spool/sorcery]
+.RS 4
+Path where spell sources should be installed to within the target. Normally you should not change this.
+.RE
+.PP
+\fIENCHANT_TARGET_CACHES\fR [$\fIENCHANT_TARGET\fR/var/cache/sorcery]
+.RS 4
+Path where spell caches should be installed to within the target. Normally you should not change this.
+.RE
+.SS "Target Kernel"
+.PP
+\fIENCHANT_TARGET_KERNEL\fR [$\fIENCHANT_TARGET\fR/boot/vmlinuz]
+.RS 4
+Absolute path (including file name) of where the kernel image will be installed to in the target.
+.RE
+.PP
+\fIENCHANT_TARGET_KMODS\fR [$\fIENCHANT_TARGET\fR/lib/modules]
+.RS 4
+Absolute path to the base directory of where the kernel modules will be installed to in the target. You normally shouldn't change this setting unless you have a good reason to and you know what you are doing.
+.RE
+.SS "Source Kernel"
+.PP
+\fIENCHANT_ISO_KVERS\fR [$(uname -r)]
+.RS 4
+The version of the kernel which the installation (not the target) is running.
+.RE
+.PP
+\fIENCHANT_ISO_KERNEL\fR [$\fIENCHANT_ISO_PATH\fR/boot/vmlinux]
+.RS 4
+The kernel image which the installation (not the target) is running.
+.RE
+.PP
+\fIENCHANT_ISO_KMODS\fR [$\fIENCHANT_ISO_PATH\fR/lib/modules]
+.RS 4
+The kernel modules which the installation (not the target) is running, corresponding to the kernel image and version given in \fIENCHANT_ISO_KVERS\fR and \fIENCHANT_ISO_KERNEL\fR.
+.RE
+.SS "Chroot Command"
+.PP
+\fIENCHANT_CHROOT\fR [$\fIENCHANT_ISO_PATH\fR/bin/chroot]
+.RS 4
+The command to run when chrooting into the target.
+.RE
+.SS "Spell Selection"
+.PP
+\fIENCHANT_SOURCES_LIST\fR [$\fIENCHANT_TMP\fR/spell-sources]
+.RS 4
+The list of spell sources you want to install.
+.RE
+.PP
+\fIENCHANT_CACHES_LIST\fR [$\fIENCHANT_TMP\fR/spell-caches]
+.RS 4
+The list of spell caches you want to install.
+.RE
+.SS "Potion (history) Functionality"
+.PP
+\fIENCHANT_POTION\fR [$\fIENCHANT_TMP\fR/potion]
+.RS 4
+Specifies the base path of where installation state information is recorded. This information is used for the back and forward commands (see the \fBCOMMANDS\fR section above) as well as for installation restoration and automated installation.
+.RE
+.PP
+\fIENCHANT_POTION_BUFFER\fR [20]
+.RS 4
+The size of each buffer in the potion system. This is the number of forward/back steps you can take. If this value is set to 0, potion is disabled.
+.RE
+.SS "Appearance"
+.PP
+\fIENCHANT_COLOR\fR [yes]
+.RS 4
+Whether to use colored output.
+.RE
+.SH "FILES"
+.PP
+$\fIENCHANT_TMP\fR/current_module
+.RS 4
+Tracks the current installation module (step) within the installation scheme.
+.RE
+.PP
+$\fIENCHANT_TMP\fR/i18n-keymap
+.RS 4
+Defines the keymap in use for the installation session.
+.RE
+.PP
+$\fIENCHANT_POTION\fR/back
+.RS 4
+A list of modules of length $\fIENCHANT_HISTORY_SIZE\fR used to go to previously visited modules, in the order they were visited.
+.RE
+.PP
+$\fIENCHANT_POTION\fR/forward
+.RS 4
+A list of modules of length $\fIENCHANT_HISTORY_SIZE\fR used to return to modules one went "back" from (see above and the \fBCOMMANDS\fR section), in the order they were visited.
+.RE
+.SH "AUTHORS"
+.PP
+The Cauldron Team, Source Mage GNU/Linux
+.SH "SEE ALSO"
+
+\fBcauldron\fR(8), \fBsorcery\fR(8)
