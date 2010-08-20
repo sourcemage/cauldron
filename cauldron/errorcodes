@@ -157,7 +157,7 @@ ERR_MSGS=(
           "failed to cast toolchain spell"                  # ERR_TOOLCHAIN_CAST
           "failed to dispel toolchain spell"                # ERR_TOOLCHAIN_DISPEL
           "failed to generate toolchain spell cache"        # ERR_TOOLCHAIN_GATHER
-          "sorcery not installed in toolcahin chroot"       # ERR_TOOLCHAIN_SORCERY
+          "sorcery not installed in toolchain chroot"       # ERR_TOOLCHAIN_SORCERY
   )
 
 #-------------------------------------------------------------------------------
