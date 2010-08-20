@@ -59,12 +59,16 @@ Things to do in order to achieve 0.1
 	  debug messages - once we determine all this we can start properly
 	  handling, passing, or ignoring errors
 
-====================
-Things to do for 1.0
-====================
+===============================
+Things to do for 1.0 (or later)
+===============================
 
 * No (known) bugs
+* cauldron "possess" command for taking possession of a machine under another
+  distro (don't generate install media, since the host system itself will be
+  the install media)
+* simple tab-completion for enchantment (CLI) and all its subcommands?
 * web installer (html), X installer? (xdirectfb?)
-* net install (tftp, ssh, etc.?)
+* net install (tftp, ssh, etc.?) called "voodoo"
 * ???
 
