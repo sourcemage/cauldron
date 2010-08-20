@@ -33,12 +33,12 @@ function cauldron_sorcerous_load() {
   local local_config="${2:-$CAULDRON_ISORCERY_LCONFIG}"
 
   # source the main config file
-  source "$config" || return $ERR_TARGET_SORCERY
+  source "$config" || return $ERR_SORCEROUS_CONFIG
 
   # if the local config exists, source it
   if [[ -f "$local_config" ]]
   then
-    source "$local_config" || return $ERR_TARGET_SORCERY
+    source "$local_config" || return $ERR_SORCEROUS_LOCAL_CONFIG
   fi
 
   return $ERR_OK
@@ -65,11 +65,11 @@ function cauldron_sorcerous_cross_configure() {
   if [[ -z modify_config ]]
   then
     . "$CAULDRON_HSORCERY_LIBS/libtrack" 2> $CAULDRON_NULL ||
-      liberror_die $ERR_HOST_SORCERY
+      liberror_die $ERR_SORCEROUS_HOST_SORCERY
   fi
 
   # make sure the sorcery local config dir exists on the ISO
-  mkdir -p "$CAULDRON_ISORCERY_LCONFIG" || return $ERR_ISO_SORCERY_CONFIG
+  mkdir -p "$CAULDRON_ISORCERY_LCONFIG" || return $ERR_SORCEROUS_ISO_SORCERY_CONFIG
 
   case "$stage" in
     1)
@@ -105,7 +105,7 @@ function cauldron_sorcerous_download() {
   (
     cd ${spool}
     wget "$sorcery_url/$sorcery" ||
-      return $ERR_DOWNLOAD_SORCERY
+      return $ERR_SORCEROUS_DOWNLOAD
   )
 
   return $ERR_OK
@@ -147,7 +147,8 @@ function cauldron_sorcerous_install() {
   fi
 
   # unpack the source tarball
-  tar -C "$CAULDRON_BUILD"/usr/src -jxf "$spool"/sorcery-${branch}.tar.bz2
+  tar -C "$CAULDRON_BUILD/usr/src" -jxf "$spool/sorcery-${branch}.tar.bz2" ||
+    return $ERR_SORCEROUS_UNPACK
 
   # make sure the chroot library is loaded so cauldron_chroot is available
   if [[ -z cauldron_chroot ]]
@@ -155,7 +156,10 @@ function cauldron_sorcerous_install() {
     cauldron_load_library lib.chroot
   fi
   # install the source tarball, relative to CAULDRON_BUILD
-  "$CAULDRON_BUILD"/usr/src/sorcery/install "$CAULDRON_BUILD"
+  "$CAULDRON_BUILD/usr/src/sorcery/install" "$CAULDRON_BUILD" ||
+    return $ERR_SORCEROUS_INSTALL
+
+  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------

@@ -260,7 +260,7 @@ function cauldron_build_target_system() {
 function cauldron_clean_iso_system() {
   local cleanfile="$1"
 
-  [[ -z "$cleanfile" ]] && return $ERR_CLEANFILE
+  [[ -z "$cleanfile" ]] && return $ERR_CLEAN_FILE
 
   for i in $(sort -r $cleanfile)
   do
@@ -390,7 +390,7 @@ function cauldron_prepare() {
 
   # cauldron is a spell
   # there is a spoon
-  cauldron_chroot "$CAULDRON_CAST" cauldron || return $ERR_CHROOT
+  cauldron_chroot "$CAULDRON_CAST" cauldron || return $ERR_CHROOT_CAST
 
   return $ERR_OK
 }
