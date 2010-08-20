@@ -117,7 +117,7 @@ In the comment block preceding the function definition, the parameters are
 defined according to the bashdoc specification, and following that is clear
 text which explains the purpose of the function and what the parameters will be
 used for. The function definition is preceded by the "function" keyword so that
-bashdoc can properly identify the fucntion definition. The function name is
+bashdoc can properly identify the function definition. The function name is
 prefixed by "cauldron_" since this is a cauldron function (incidentally, this
 function is defined in libcauldron). Local variable copies of the API-named
 parameters are made as shorthand notations for the full API names.
