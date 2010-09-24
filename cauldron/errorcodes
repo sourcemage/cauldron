@@ -63,6 +63,7 @@ ERR_CHROOT_EXEC=64        # could not execute chroot command
 ERR_CHROOT_CAST=65        # chroot cast failed
 ERR_CHROOT_DISPEL=66      # chroot dispel failed
 ERR_CHROOT_REBUILD=67     # chroot rebuild failed
+ERR_CHROOT_NEST=68        # chroot already defined -- nesting not allowed
 
 # lib.init
 ERR_INSTALL_RAMFS=70      # problem installing built initramfs into ISO fs
@@ -135,6 +136,7 @@ ERR_MSGS=(
           "chroot cast failed"                              # ERR_CHROOT_CAST
           "chroot dispel failed"                            # ERR_CHROOT_DISPEL
           "chroot rebuild failed"                           # ERR_CHROOT_REBUILD
+          "chroot already defined -- nesting not allowed"   # ERR_CHROOT_NEST
 
           # lib.init
           "problem installing built initramfs into ISO fs"  # ERR_INSTALL_RAMFS

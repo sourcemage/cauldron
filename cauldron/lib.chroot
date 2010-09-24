@@ -24,37 +24,36 @@
 ##
 #-------------------------------------------------------------------------------
 function cauldron_chroot_init() {
-  if [[ "$CAULDRON_CHROOTINIT" -ne 1 ]]
+  local target="${1:-$CAULDRON_BUILD}"
+
+  [[ "$CAULDRON_CHROOTINIT" -eq 1 ]] && return $ERR_CHROOT_NEST
+
+  # if target is somehow null, return an error
+  if [[ -z "$target" ]]
   then
-    local target="${1:-$CAULDRON_BUILD}"
-
-    # if target is somehow null, return an error
-    if [[ -z "$target" ]]
-    then
-      return $ERR_CHROOT_UNDEF
-    fi
-
-    # bind the needed mounts
-    mount --bind "$CAULDRON_HOST/dev" "$target/dev" ||
-      return $ERR_CHROOT_INIT
-    mount --bind "$CAULDRON_HOST/dev/pts" "$target/dev/pts" ||
-      return $ERR_CHROOT_INIT
-    mount --bind "$CAULDRON_HOST/proc" "$target/proc" ||
-      return $ERR_CHROOT_INIT
-
-    # make sure the sorcerous library is loaded
-    # which provides cauldron_source_sorcery
-    if [[ -z cauldron_source_sorcery ]]
-    then
-      cauldron_load_library lib.sorcerous
-    fi
-    # source the target sorcery, so we have access to its functions
-    cauldron_sorcerous_load "$target" || return $ERR_SORCEROUS_TARGET_SORCERY
-
-    # everything went OK, so export the chroot definitions
-    export CAULDRON_CHROOTINIT=1
-    export CAULDRON_CHROOT="$CAULDRON_CHROOT_CMD \"$target\""
+    return $ERR_CHROOT_UNDEF
   fi
+
+  # bind the needed mounts
+  mount --bind "$CAULDRON_HOST/dev" "$target/dev" ||
+    return $ERR_CHROOT_INIT
+  mount --bind "$CAULDRON_HOST/dev/pts" "$target/dev/pts" ||
+    return $ERR_CHROOT_INIT
+  mount --bind "$CAULDRON_HOST/proc" "$target/proc" ||
+    return $ERR_CHROOT_INIT
+
+  # make sure the sorcerous library is loaded
+  # which provides cauldron_source_sorcery
+  if [[ -z cauldron_source_sorcery ]]
+  then
+    cauldron_load_library lib.sorcerous
+  fi
+  # source the target sorcery, so we have access to its functions
+  cauldron_sorcerous_load "$target" || return $ERR_SORCEROUS_TARGET_SORCERY
+
+  # everything went OK, so export the chroot definitions
+  export CAULDRON_CHROOTINIT=1
+  export CAULDRON_CHROOT="$CAULDRON_CHROOT_CMD \"$target\""
 
   return $ERR_OK
 }
