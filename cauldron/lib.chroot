@@ -53,7 +53,7 @@ function cauldron_chroot_init() {
 
   # everything went OK, so export the chroot definitions
   export CAULDRON_CHROOTINIT=1
-  export CAULDRON_CHROOT="$CAULDRON_CHROOT_CMD \"$target\""
+  export CAULDRON_CHROOT=( "${CAULDRON_CHROOT_CMD[@]}" "$target" )
 
   return $ERR_OK
 }
@@ -97,7 +97,7 @@ function cauldron_chroot_done() {
 function cauldron_chroot() {
   if [[ "$CAULDRON_CHROOTINIT" -eq 1 ]]
   then
-    "$CAULDRON_CHROOT" $* || return $ERR_CHROOT_EXEC
+    "${CAULDRON_CHROOT[@]}" $* || return $ERR_CHROOT_EXEC
   else
     return $ERR_CHROOT_NOT_INIT
   fi

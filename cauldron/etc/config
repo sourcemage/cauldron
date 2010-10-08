@@ -52,7 +52,7 @@
            CAULDRON_CACHES="${CAULDRON_CACHES:-$CAULDRON_DATA/$CAULDRON_ARCH/caches}"
 
        # command to enter a chroot
-       CAULDRON_CHROOT_CMD="${CAULDRON_CHROOT_CMD:-chroot}"
+       CAULDRON_CHROOT_CMD=( "${CAULDRON_CHROOT_CMD[@]:-chroot}" )
 
      # sorcery cast/dispel/rebuild commands
      CAULDRON_SORCERY_PATH="${CAULDRON_SORCERY_PATH:-$CAULDRON_HOST/usr/sbin}"
