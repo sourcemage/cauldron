@@ -20,6 +20,10 @@
 
    # branch of sorcery to use in the ISO
    CAULDRON_SORCERY_BRANCH="${CAULDRON_SORCERY_BRANCH:-stable}"
+      # branch of sorcery to use in the ISO
+      CAULDRON_SORCERY_PKG="${CAULDRON_SORCERY_PACKAGE:-sorcery-${CAULDRON_SORCERY_BRANCH}.tar.bz2}"
+      # URL to download sorcery from
+      CAULDRON_SORCERY_URL="${CAULDRON_SORCERY_URL:-http://download.sourcemage.org/sorcery/}"
 
    # list of installers to include in the ISO
        CAULDRON_INSTALLERS=(
@@ -53,6 +57,9 @@
 
        # command to enter a chroot
        CAULDRON_CHROOT_CMD=( "${CAULDRON_CHROOT_CMD[@]:-chroot}" )
+
+       # command to download a url from the internet
+       CAULDRON_URL_DL_CMD=( "${CAULDRON_URL_DL_CMD[@]:-wget}" )
 
      # sorcery cast/dispel/rebuild commands
      CAULDRON_SORCERY_PATH="${CAULDRON_SORCERY_PATH:-$CAULDRON_HOST/usr/sbin}"

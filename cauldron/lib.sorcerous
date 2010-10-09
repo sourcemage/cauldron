@@ -88,66 +88,55 @@ function cauldron_sorcerous_cross_configure() {
 }
 
 #-------------------------------------------------------------------------------
-## @param sorcery_branch
-## @param download_path
+## @param spool_path
 ##
-## Downloads a fresh sorcery source tarball from the net, and places it in
-## download_path.
+## Downloads a sorcery source tarball from the net if we don't already have one
+## or are forcing a download, and places it in spool_path (optional), or in
+## the CAULDRON_BUILD/var/spool/sorcery directory.
 ##
 #-------------------------------------------------------------------------------
 function cauldron_sorcerous_download() {
-  local branch=$1
-  local spool=$2
-  local sorcery="sorcery-$branch.tar.bz2"
-  local sorcery_url="http://download.sourcemage.org/sorcery"
-
-  # run in a subshell as an easy way of not messing with the working directory
-  (
-    cd ${spool}
-    wget "$sorcery_url/$sorcery" ||
-      return $ERR_SORCEROUS_DOWNLOAD
-  )
-
-  return $ERR_OK
-}
-
-#-------------------------------------------------------------------------------
-## @param force_download
-##
-## Installs sorcery into the ISO system. If force_download is "yes", it will
-## download a fresh copy from the net. Otherwise, it will check to see if the
-## sorcery sources are present in the host system, and copy those first, but if
-## they cannot be found it will resort to downloading them. It shouldn't matter
-## if the version of sorcery is a little old, since a system update can be
-## performed inside $CAULDRON_BUILD after the base toolchain is set up. The
-## branch should be one of {stable, test, devel}, and is set in the cauldron
-## config file.
-##
-#-------------------------------------------------------------------------------
-function cauldron_sorcerous_install() {
-  local force_download=$1
-  local branch="$CAULDRON_SORCERY_BRANCH"
-  local spool="$CAULDRON_BUILD/var/spool/sorcery"
+  local spool="${1:-$CAULDRON_BUILD/var/spool/sorcery}"
+  local sorcery_url="${CAULDRON_SORCERY_URL%/}"
+  local sorcery="$CAULDRON_SORCERY_PKG"
+  local url_get=( "${CAULDRON_URL_DL_CMD[@]}" )
 
   # ensure the spool dir exists for getting spell sources
   mkdir -p "$spool" || return $ERR_BUILD_SPOOL
 
   # check to see if we will copy or download the sorcery source tarball
   # then get the source tarball and place it in CAULDRON_BUILD
-  if [[ -e "$CAULDRON_HSORCERY_SPOOL"/sorcery-${branch}.tar.bz2 ]]
+  if [[ ! -e "$spool/$sorcery" || "$CAULDRON_FORCE_DOWNLOAD" == "yes" ]]
   then
-    if [[ "$force_download" == "yes" ]]
-    then
-      cauldron_sorcerous_download $branch "$spool"
-    else
-      cp "$CAULDRON_HSORCERY_SPOOL"/sorcery-${branch}.tar.bz2 "$spool"
-    fi
-  else
-    cauldron_sorcerous_download ${branch} "$spool"
-  fi
+    # run in a subshell as an easy way of not messing with the working directory
+    (
+      cd "$spool"
+      "${url_get[@]}" "$sorcery_url/$sorcery" ||
+        return $ERR_SORCEROUS_DOWNLOAD
+    )
+  fi &&
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+## @param spool_path
+##
+## Installs sorcery into the build directory. The download_path parameter
+## (optional) indicates where the sorcery source tarball to install from is
+## stored. If spool_path is not supplied, the tarball is assumed to be in
+## the CAULDRON_BUILD/var/spool/sorcery directory.
+##
+#-------------------------------------------------------------------------------
+function cauldron_sorcerous_install() {
+  local spool="${1:-$CAULDRON_BUILD/var/spool/sorcery}"
+  local sorcery="$CAULDRON_SORCERY_PKG"
 
   # unpack the source tarball
-  tar -C "$CAULDRON_BUILD/usr/src" -jxf "$spool/sorcery-${branch}.tar.bz2" ||
+  tar -C "$CAULDRON_BUILD/usr/src" -jxf "$spool/$sorcery" ||
+    return $ERR_SORCEROUS_UNPACK
+
+  [[ -x "$CAULDRON_BUILD/usr/src/sorcery/install" ]] ||
     return $ERR_SORCEROUS_UNPACK
 
   # make sure the chroot library is loaded so cauldron_chroot is available
