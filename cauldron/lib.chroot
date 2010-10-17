@@ -107,6 +107,112 @@ function cauldron_chroot() {
 }
 
 #-------------------------------------------------------------------------------
+## @param target_spells
+##
+## Performs cast on the list of spells needed for installation to the target
+## system. "target_spells" can either be a list of spells passed as arguments or
+## a file which contains such a list. The members of the spell list can be
+## separated by anything IFS will recognize (typically any whitespace).
+##
+#-------------------------------------------------------------------------------
+function cauldron_chroot_cast() {
+  local target_spells=( "$@" )
+  local spell=""
+
+  # if a file that lists spells to cast is passed in, get the list of spells
+  # from the file
+  [[ -f "$target_spells" ]] && target_spells=( $(< "$target_spells") )
+
+  # make sure we have a valid chroot of where we will cast
+  [[ -z "$CAULDRON_CHROOT" ]] && return $ERR_CHROOT_INIT
+
+  # cast all the spells in the list in one shot for better efficiency
+  cauldron_chroot "$CAULDRON_CAST" "${target_spells[@]}" ||
+    return $ERR_CHROOT_CAST
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+## @param target_spells
+##
+## Performs dispel on the list of spells needed for installation to the target
+## system. "target_spells" can either be a list of spells passed as arguments or
+## a file which contains such a list. The members of the spell list can be
+## separated by anything IFS will recognize (typically any whitespace).
+##
+#-------------------------------------------------------------------------------
+function cauldron_chroot_dispel() {
+  local target_spells=( "$@" )
+  local spell=""
+
+  # if a file that lists spells to cast is passed in, get the list of spells
+  # from the file
+  [[ -f "$target_spells" ]] && target_spells=( $(< "$target_spells") )
+
+  # make sure we have a valid chroot of where we will cast
+  [[ -z "$CAULDRON_CHROOT" ]] && return $ERR_CHROOT_INIT
+
+  # dispel all the spells in the list in one shot for better efficiency
+  cauldron_chroot "$CAULDRON_DISPEL" "${target_spells[@]}" ||
+    return $ERR_CHROOT_DISPEL
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+## @param target_spells
+##
+## Performs cast and immediate dispel on the each spell in the list of spells
+## to ensure that each spell is cast "cleanly" (meaning that no idle
+## dependencies are laying about in the build tree to get inadvertently picked
+## up by arguably broken spell builds). "target_spells" can either be a list of
+## spells passed as arguments or a file which contains such a list. The members
+## of the spell list can be separated by anything IFS will recognize (typically
+## any whitespace).
+##
+#-------------------------------------------------------------------------------
+function cauldron_chroot_cast_clean() {
+  local target_spells=( "$@" )
+  local spell=""
+
+  # if a file that lists spells to cast is passed in, get the list of spells
+  # from the file
+  [[ -f "$target_spells" ]] && target_spells=( $(< "$target_spells") )
+
+  # Since we will be installing from the running ISO system instead of a giant
+  # tarball, for each spell we only need to make sure that the cache file is
+  # available. This will require that the ISO sorcery has caching enabled. The
+  # caching should really be turned on from the very beginning though...
+  if [[ -z "$ARCHIVE" ]]
+  then
+    cauldron_sorcerous_load || return $ERR_TARGET_SORCERY
+  fi
+  [[ "$ARCHIVE" == "off" ]] && return $ERR_ARCHIVE
+
+  # make sure we have a valid chroot of where we will cast
+  [[ -z "$CAULDRON_CHROOT" ]] && return $ERR_CHROOT_INIT
+
+  for spell in "${target_spells[@]}"
+  do
+    # cast the spell to generate the cache, and then dispel it from the system
+    # so that it isn't wasting space in the build filesystem (and so it doesn't
+    # interfere with later casts for spells that, wrongly, pull in dependencies
+    # that are present but not wanted)
+    #
+    # TODO: to be able to ensure that dependencies that get pulled in are also
+    # dispelled we'll have to get the list of everything that was cast during
+    # the cast round from sorcery, which at present will require modifying cast
+    # itself to export the list (otherwise we'll have to trap the output and
+    # parse it, which is far less machine-readable)
+    cauldron_chroot "$CAULDRON_CAST" "$spell" || return $ERR_CHROOT_CAST
+    cauldron_chroot "$CAULDRON_DISPEL" "$spell" || return $ERR_CHROOT_DISPEL
+  done
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
 ##
 ## This software is free software; you can redistribute it and/or modify
 ## it under the terms of the GNU General Public License as published by
