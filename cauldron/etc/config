@@ -52,12 +52,26 @@
 
         # file listing all the spells needed for the build toolchain
         CAULDRON_TOOLCHAIN="${CAULDRON_TOOLCHAIN:-$CAULDRON_DATA/$CAULDRON_ARCH/toolchain}"
-           # file listing all the spells needed for the ISO runtime
-           CAULDRON_SPELLS="${CAULDRON_SPELLS:-$CAULDRON_DATA/$CAULDRON_ARCH/spells}"
-          # file listing all the sources needed on the ISO runtime
-          CAULDRON_SOURCES="${CAULDRON_SOURCES:-$CAULDRON_DATA/$CAULDRON_ARCH/sources}"
-           # file listing all the spell caches needed on the ISO runtime
-           CAULDRON_CACHES="${CAULDRON_CACHES:-$CAULDRON_DATA/$CAULDRON_ARCH/caches}"
+
+        # kernel config used to build the kernel for the ISO
+        CAULDRON_KERN_CONF="${CAULDRON_KERN_CONF:-$CAULDRON_DATA/$CAULDRON_ARCH/kernel}"
+
+        # busybox config used to build busybox for the initrd/initramfs in the ISO
+        CAULDRON_BBOX_CONF="${CAULDRON_BBOX_CONF:-$CAULDRON_DATA/$CAULDRON_ARCH/initfs/busybox}"
+
+       # file listing all the spells to compose the ISO runtime
+       CAULDRON_ISO_SPELLS="${CAULDRON_ISO_SPELLS:-$CAULDRON_DATA/$CAULDRON_ARCH/iso.spells}"
+      # file listing all the sources to supply in the ISO runtime
+      CAULDRON_ISO_SOURCES="${CAULDRON_ISO_SOURCES:-$CAULDRON_DATA/$CAULDRON_ARCH/iso.sources}"
+       # file listing all the spell caches to supply in the ISO runtime
+       CAULDRON_ISO_CACHES="${CAULDRON_ISO_CACHES:-$CAULDRON_DATA/$CAULDRON_ARCH/iso.caches}"
+
+       # file listing all the spells to compose the SYS runtime
+       CAULDRON_SYS_SPELLS="${CAULDRON_SYS_SPELLS:-$CAULDRON_DATA/$CAULDRON_ARCH/sys.spells}"
+      # file listing all the sources to supply in the SYS runtime
+      CAULDRON_SYS_SOURCES="${CAULDRON_SYS_SOURCES:-$CAULDRON_DATA/$CAULDRON_ARCH/sys.sources}"
+       # file listing all the spell caches to supply in the SYS runtime
+       CAULDRON_SYS_CACHES="${CAULDRON_SYS_CACHES:-$CAULDRON_DATA/$CAULDRON_ARCH/sys.caches}"
 
        # command to enter a chroot
        CAULDRON_CHROOT_CMD=( "${CAULDRON_CHROOT_CMD[@]:-chroot}" )
