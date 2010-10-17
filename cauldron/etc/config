@@ -39,7 +39,7 @@
              # path to the host cauldron library modules
              CAULDRON_LIBS="${CAULDRON_LIBS:-$CAULDRON_BASE/cauldron}"
              # path to the host cauldron configs
-             CAULDRON_DATA="{$CAULDRON_DATA:-$CAULDRON_HOST/etc/cauldron}"
+             CAULDRON_DATA="${CAULDRON_DATA:-$CAULDRON_HOST/etc/cauldron}"
 
             # path to the ISO build chroot
             CAULDRON_BUILD="${CAULDRON_BUILD:-$CAULDRON_HOST/tmp/cauldron}"
