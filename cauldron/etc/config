@@ -45,7 +45,7 @@
              # path to the host system (null for normal use)
              CAULDRON_HOST="${CAULDRON_HOST:-}"
              # path to the host base library modules
-             CAULDRON_BASE="${CAULDRON_BASE:-$CAULDRON_HOST/var/lib/cauldron}"
+             CAULDRON_BASE="${CAULDRON_BASE:-$CAULDRON_HOST/usr/share/smgl}"
              # path to the host cauldron library modules
              CAULDRON_LIBS="${CAULDRON_LIBS:-$CAULDRON_BASE/cauldron}"
              # path to the host cauldron configs
