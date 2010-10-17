@@ -31,6 +31,11 @@
                            # "menu"
                            )
 
+       # whether cauldron should try it's hardest to generate needed spell
+       # caches, even if that means casting and dispelling extra spells in a
+       # chroot (only used when generating the base toolchain)
+       CAULDRON_AGGRESSIVE="${CAULDRON_AGGRESSIVE:-yes}"
+
 
              # path to the host system (null for normal use)
              CAULDRON_HOST="${CAULDRON_HOST:-}"
