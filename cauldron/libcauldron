@@ -69,13 +69,10 @@ function cauldron_load_library() {
 #-------------------------------------------------------------------------------
 # cauldron includes
 #-------------------------------------------------------------------------------
-#cauldron_load_library "lib.sorcerous"
-
+cauldron_load_library "lib.sorcerous"
 cauldron_load_library "lib.chroot"
-
 cauldron_load_library "lib.init"
-
-#cauldron_load_library "lib.toolchain"
+cauldron_load_library "lib.toolchain"
 
 #-------------------------------------------------------------------------------
 ##
