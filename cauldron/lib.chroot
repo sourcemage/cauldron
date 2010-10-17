@@ -16,7 +16,7 @@
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
-## @param target dir to chroot into
+## @param target dir to chroot into (optional)
 ##
 ## Prepares a chroot environment and exports necessary variables. For every
 ## target dir to chroot into, there should be one
@@ -59,8 +59,9 @@ function cauldron_chroot_init() {
 }
 
 #-------------------------------------------------------------------------------
+## @param target dir to chroot into
 ##
-## Cleans up the chroot environment after it is no longer needed
+## Cleans up the chroot environment after it is no longer needed.
 ##
 #-------------------------------------------------------------------------------
 function cauldron_chroot_done() {

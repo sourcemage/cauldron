@@ -16,6 +16,7 @@
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
+## @param path to the sorcery config to load
 ##
 ## Sources the sorcery config files. Mainly called by cauldron_chroot_init.
 ##

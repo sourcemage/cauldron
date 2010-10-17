@@ -76,11 +76,10 @@ cauldron_load_library "lib.toolchain"
 
 #-------------------------------------------------------------------------------
 ##
-## Scans the sorcery archspec files to find the host triplet
+## Scans the sorcery archspec files to find the host triplet.
 ##
 ## Later, this will be used to set the value of HOST_TRIPLE in
-## /etc/cauldron/config after the code to write the config file is in
-## place
+## /etc/cauldron/config after the code to write the config file is in place.
 ##
 #-------------------------------------------------------------------------------
 function cauldron_get_host_triple() {
@@ -334,14 +333,14 @@ function cauldron_source_enchantment() {
 }
 
 #-------------------------------------------------------------------------------
-## @param INSTALLER_MODULE
 ##
-## Adds the given installer to the ISO system. The user can then choose this
-## installer either at boot-time or run-time, depending on the installer.
-## INSTALLER_MODULE is currently one of shell or menu (future: X?). In theory it
-## should support any installer, as long as it's packaged in its own directory and
-## the name of that dir is passed as the arg. This behavior may change in the
-## future though.
+## Adds the given installer(s) listed in $CAULDRON_INSTALLERS to the ISO system.
+## The user can then choose the installer either at boot-time or run-time.
+##
+## The installer(s) can currently be shell or menu (future: X?). In theory it
+## should support any installer, as long as it's packaged in its own directory
+## and the name of that dir is passed as the arg. This behavior may change in
+## the future though.
 ##
 #-------------------------------------------------------------------------------
 function cauldron_add_installers() {
