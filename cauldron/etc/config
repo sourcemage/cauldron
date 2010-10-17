@@ -41,10 +41,14 @@
              # path to the host cauldron configs
              CAULDRON_DATA="${CAULDRON_DATA:-$CAULDRON_HOST/etc/cauldron}"
 
-            # path to the ISO build chroot
-            CAULDRON_BUILD="${CAULDRON_BUILD:-$CAULDRON_HOST/tmp/cauldron}"
-	      # temporary files generated while cauldron does its work
-              CAULDRON_TMP="${CAULDRON_TMP:-$CAULDRON_BUILD/tmp}"
+              # temporary files generated while cauldron does its work
+              CAULDRON_TMP="${CAULDRON_TMP:-$CAULDRON_HOST/tmp/cauldron}"
+            # path to the ISO build chroots
+            CAULDRON_BUILD="${CAULDRON_BUILD:-$CAULDRON_TMP/build}"
+              # path where the final ISO product is generated
+              CAULDRON_ISO="${CAULDRON_ISO:-$CAULDRON_TMP/iso}"
+              # path where the installable system chroot is generated
+              CAULDRON_SYS="${CAULDRON_SYS:-$CAULDRON_TMP/sys}"
 
         # file listing all the spells needed for the build toolchain
         CAULDRON_TOOLCHAIN="${CAULDRON_TOOLCHAIN:-$CAULDRON_DATA/$CAULDRON_ARCH/toolchain}"
