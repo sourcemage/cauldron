@@ -76,9 +76,9 @@ function cauldron_chroot_done() {
     fi
 
     # unmount the bind mounts
-    umount "target"/proc || return $ERR_CHROOT_DONE
-    umount "target"/dev/pts || return $ERR_CHROOT_DONE
-    umount "target"/dev || return $ERR_CHROOT_DONE
+    umount "$target/proc" || return $ERR_CHROOT_DONE
+    umount "$target/dev/pts" || return $ERR_CHROOT_DONE
+    umount "$target/dev" || return $ERR_CHROOT_DONE
 
     # clear the chroot definitions
     unset CAULDRON_CHROOTINIT
