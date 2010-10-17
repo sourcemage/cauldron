@@ -1,4 +1,9 @@
 #!/bin/bash
+             # the user cauldron should run as
+             # make sure the user you choose has proper permissions
+             # (especially for chrooting)
+             CAULDRON_USER="${CAULDRON_USER:-root}"
+
              # the arch to generate the .iso for
              CAULDRON_ARCH="${CAULDRON_ARCH:-x86}"
 
