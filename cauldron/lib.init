@@ -18,141 +18,270 @@
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
-## @param XXX
 ##
 ## Handles setting up the init process on the ISO. The ISO init is
 ## responsible for detecting hardware, loading device drivers, setting
 ## console fonts, etc.
 ##
 #-------------------------------------------------------------------------------
-function cauldron_iso_init() {
-  cp "$CAULDRON_DATA/inittab" "$CAULDRON_BUILD/etc/inittab"
+function cauldron_init_setup() {
+  mkdir -p "$CAULDRON_ISO/etc" || return $ERR_MK_DIR
+
+  cp "$CAULDRON_DATA/$CAULDRON_ARCH/inittab" "$CAULDRON_ISO/etc/inittab" ||
+    return $ERR_CP_FILE
+
+  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
-## @param XXX
+## @param init ramdisk/ramfs image (required)
+##
+## Copies the image passed as first parameter into the ISO run-time filesystem
+## for use during the ISO boot process.
+##
+#-------------------------------------------------------------------------------
+function cauldron_init_img_install() {
+  local img="$1"
+
+  mkdir -p "$CAULDRON_ISO/boot" || return $ERR_MK_DIR
+
+  cp "$img" "$CAULDRON_ISO/boot/$img" || return $ERR_CP_FILE
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
 ##
 ## Makes the initrd to be used by the ISO on booting.
 ##
 #-------------------------------------------------------------------------------
-function cauldron_ramdisk() {
+function cauldron_init_make_ramdisk() {
   local initrd="$CAULDRON_TMP/initrd"
   local initmnt="$CAULDRON_TMP/initrd_mount"
 
-  mkdir -p "$initmnt"
-  dd '-if' /dev/null '-of' "$initrd"
-  mke2fs "$initrd"
-  mount -o loop "$initrd" "$initmnt"
-  cauldron_initfs "$initmnt"
-  umount "$initmnt"
-  gzip -9 "$initrd"
+  mkdir -p "$initmnt" || return $ERR_MK_DIR
+
+  dd '-if' /dev/null '-of' "$initrd" || return $ERR_INIT_MAKE_RD
+  mke2fs "$initrd" || return $ERR_INIT_MAKE_RD
+  mount -o loop "$initrd" "$initmnt" || return $ERR_INIT_MAKE_RD
+  cauldron_init_fs_make "$initmnt" || return $ERR_INIT_MAKE_RD
+  umount "$initmnt" || return $ERR_INIT_MAKE_RD
+  gzip -9 "$initrd" || return $ERR_INIT_MAKE_RD
+
+  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
-## @param XXX
+##
+## Installs the init ramdisk to be used by the ISO on booting.
+##
+#-------------------------------------------------------------------------------
+function cauldron_init_install_ramdisk() {
+  local ramdisk="$CAULDRON_TMP/initrd.gz"
+
+  cauldron_init_img_install "$ramdisk" || return $ERR_INIT_INSTALL_RD
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
 ##
 ## Makes the initramfs be used by the ISO on booting.
 ##
 #-------------------------------------------------------------------------------
-function cauldron_ramfs() {
+function cauldron_init_make_ramfs() {
   local ramdir="$CAULDRON_TMP/initram"
-  local ramfs="$CAULDRON_TMP/initram.cpio"
+  local ramfs="$CAULDRON_TMP/initram.cpio.gz"
 
-  mkdir -p "$ramdir"
-  cauldron_initfs "$ramdir"
+  mkdir -p "$ramdir" || return $ERR_MK_DIR
+
+  cauldron_init_fs_make "$ramdir" || return $ERR_INIT_FS_MAKE
+
   (
     cd "$ramdir"
-    find . -print -depth | cpio -o > "$ramfs"
-    gzip -9 "$ramfs"
-  )
+    find * -depth -print | cpio -H newc -o | gzip -9c > "$ramfs"
+  ) ||
+    return $ERR_INIT_MAKE_RAMFS
+
+  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
-## @param path_to_initfs
+##
+## Installs the init ramfs to be used by the ISO on booting.
+##
+#-------------------------------------------------------------------------------
+function cauldron_init_install_ramfs() {
+  local ramfs="$CAULDRON_TMP/initram.cpio.gz"
+
+  cauldron_init_img_install "$ramfs" || return $ERR_INIT_INSTALL_RAMFS
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+## @param path_to_initfs (required)
 ##
 ## Sets up the basic directories that will be needed on the initfs
 ##
 #-------------------------------------------------------------------------------
-function cauldron_initfs_dirs() {
+function cauldron_init_fs_dirs() {
   local initfs="$1"
+  local list="$CAULDRON_DATA/$CAULDRON_ARCH/initfs/dirs"
 
-  for dir in $(cat "$CAULDRON_DATA/initfs.dirs")
-  do
-    mkdir -p "$initfs/$dir"
-  done
+  if [[ -f "$list" ]]
+    for dir in $(cat "$list")
+    do
+      mkdir -p "$initfs/$dir" || return $ERR_MK_DIR
+    done
+  fi
+
+  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
-## @param path_to_initfs
+## @param path_to_initfs (required)
 ##
 ## Gathers and copies the necessary binaries into the initfs
 ##
 #-------------------------------------------------------------------------------
-function cauldron_initfs_bins() {
+function cauldron_init_fs_bins() {
   local initfs="$1"
+  local list="$CAULDRON_DATA/$CAULDRON_ARCH/initfs/binaries"
 
-  for bin in $(cat "$CAULDRON_DATA/initfs.binaries")
-  do
-    cp "$bin" "$initfs/bin"
-  done
+  if [[ -f "$list" ]]
+    for bin in $(cat "$CAULDRON_DATA/$CAULDRON_ARCH/initfs/binaries")
+    do
+      cp "$bin" "$initfs/bin" || return $ERR_CP_FILE
+    done
+  fi
+
+  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
-## @param path_to_initfs
+## @param path_to_initfs (required)
 ##
 ## Gathers and copies the necessary libraries into the initfs
 ##
 #-------------------------------------------------------------------------------
-function cauldron_initfs_libs() {
+function cauldron_init_fs_libs() {
   local initfs="$1"
+  local list="$CAULDRON_DATA/$CAULDRON_ARCH/initfs/libs"
 
-  for lib in $(cat "$CAULDRON_DATA/initfs.libs")
-  do
-    cp "$lib" "$initfs/lib/"
-  done
+  if [[ -f "$list" ]]
+    for lib in $(cat "$CAULDRON_DATA/$CAULDRON_ARCH/initfs/libs")
+    do
+      cp "$lib" "$initfs/lib/" || return $ERR_CP_FILE
+    done
+  fi
+
+  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
-## @param path_to_initfs
+## @param path_to_initfs (required)
 ##
 ## Copies over any required kernel modules into the initfs
 ##
 #-------------------------------------------------------------------------------
-function cauldron_initfs_mods() {
+function cauldron_init_fs_mods() {
   local initfs="$1"
+  local list="$CAULDRON_DATA/$CAULDRON_ARCH/initfs/modules"
 
-  for module in $(cat "$CAULDRON_DATA/initfs.modules")
-  do
-    cp "$module" "$initfs/lib/modules/$CAULDRON_KVERS"
-  done
+  if [[ -f "$list" ]]
+    for module in $(cat "$CAULDRON_DATA/$CAULDRON_ARCH/initfs/modules")
+    do
+      cp "$module" "$initfs/lib/modules/$CAULDRON_KVERS" || return $ERR_CP_FILE
+    done
+  fi
+
+  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
-## @param path_to_initfs
+## @param path_to_initfs (required)
 ##
-## Sets up the "init" in the initfs (AKA linuxrc)
+## Sets up the "init" in the initfs (AKA linuxrc in ramdisks)
 ##
 #-------------------------------------------------------------------------------
-function cauldron_initfs_init() {
+function cauldron_init_fs_init() {
   local initfs="$1"
+  local init_script="$CAULDRON_DATA/$CAULDRON_ARCH/initfs/init"
 
-  cp "$CAULDRON_DATA/initfs.init" "$initfs/linuxrc"
+  # copy the init script to /init in the init filesystem, because /init is
+  # *requried* by init ramfs and an init ramdisk can be configured to use
+  # anything we want via the init= boot parameter, and we can also symlink for
+  # ramdisks if we want to.
+  cp "$init_script" "$initfs/init" || return $ERR_CP_FILE
+
+  # make sure the init script is executable
+  chmod 0755 "$initfs/init" || return $ERR_CHMOD_FILE
+
+  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
-## @param path_to_initfs
+## @param path_to_initfs (required)
+## @param path to build directory (optional)
 ##
-## Builds a "filesystem" to be used in an initrd or initramfs
+## Builds busybox for use in the initramfs using a preconfigured config file for
+## the build. It builds by casting in the build chroot, copies the resulting
+## busybox binary, and then dispels the busybox spell in the chroot to clean up.
 ##
 #-------------------------------------------------------------------------------
-function cauldron_initfs() {
+function cauldron_init_fs_busybox() {
+  local initfs="$1"
+  local build="${2:-$CAULDRON_BUILD}"
+  local bbconf="$CAULDRON_DATA/$CAULDRON_ARCH/initfs/busybox.config"
+
+  if [[ ! -d "$build" ]]
+  then
+    mkdir -p "$build" || return $ERR_MK_DIR
+  fi
+
+  mkdir -p "$build/etc/sorcery/local" || return $ERR_MK_DIR
+
+  cp -f "$bbconf" "$build/etc/sorcery/local/busybox.config" ||
+    return $ERR_CP_FILE
+
+  cauldron_chroot_init "$build"
+  [[ $? -eq 0 || $? -eq $ERR_CHROOT_NEST ]] || return $ERR_CHROOT_INIT
+
+  cauldron_chroot_cast "busybox" || return $ERR_CHROOT_CAST
+
+  cp "$build/sbin/busybox" "$initfs/sbin/busybox" ||
+    return $ERR_CP_FILE
+
+  cauldron_chroot_dispel "busybox" || return $ERR_CHROOT_DISPEL
+
+  cauldorn_chroot_done "$build" || return $ERR_CHROOT_DONE
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+## @param path_to_initfs (required)
+##
+## Higher-level function that builds a "filesystem" to be used in an initrd or
+## initramfs by calling the appropriate low-level functions in turn.
+##
+#-------------------------------------------------------------------------------
+function cauldron_init_fs_make() {
   local initfs="$1"
 
-  cauldron_initfs_dirs "$initfs"
-  cauldron_initfs_bins "$initfs"
-  cauldron_initfs_libs "$initfs"
-  cauldron_initfs_mods "$initfs"
-  cauldron_initfs_init "$initfs"
+  [[ -d "$initfs" ]] || return $ERR_DIR_NOT_FOUND
+
+  cauldron_init_fs_busybox "$initfs" &&
+  cauldron_init_fs_dirs "$initfs" &&
+  cauldron_init_fs_bins "$initfs" &&
+  cauldron_init_fs_libs "$initfs" &&
+  cauldron_init_fs_mods "$initfs" &&
+  cauldron_init_fs_init "$initfs"
+
+  [[ "$?" -gt 0 ]] && return $ERR_INIT_FS_MAKE
+
+  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
