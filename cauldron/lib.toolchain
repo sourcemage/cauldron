@@ -19,15 +19,16 @@
 
 #-------------------------------------------------------------------------------
 ## @param spell
+## @param install_log_path
 ##
 ## Builds a cache file from the information provided by the install log for the
 ## spell passed as an argument. It expects the provided spell to include the
 ## version as a suffix (i.e. bash-3.2).
 ##
 #-------------------------------------------------------------------------------
-function cauldron_create_host_cache() {
+function cauldron_toolchain_cache_resurrect() {
   local spell="$1"
-  local install_log="$CAULDRON_HOST/var/log/sorcery/install/$spell"
+  local install_logs="${2:-$CAULDRON_HOST/var/log/sorcery/install}"
   local cache="$CAULDRON_CACHES/$spell.tar"
 
   if [[ -z create_cache_archive ]]
@@ -36,79 +37,147 @@ function cauldron_create_host_cache() {
       liberror_die $ERR_SORCEROUS_HOST_SORCERY
   fi
 
-  create_cache_archive "$install_log" "$cache" "${cache}${EXTENSION}" ||
+  # generate the missing cache file using sorcery
+  create_cache_archive "$install_logs/$spell" "$cache" "${cache}${EXTENSION}" ||
     return $ERR_TOOLCHAIN_RESURRECT
 
   return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
+## @param spell_name
+## @param spell_version
+## @param install_log_path
+##
+## Generates a spell cache by manually copying files from the spell's install
+## log and packaging them. Assumes that the spell's install log exists and is
+## intact.
+##
+#-------------------------------------------------------------------------------
+function cauldron_toolchain_cache_gather() {
+  local spell="$1"
+  local version="$2"
+  local install_logs="${3:-$CAULDRON_HOST/var/log/sorcery/install}"
+  local gather="$CAULDRON_TMP/gather"
+
+  [[ -d "$install_logs" ]] || return $ERR_TOOLCHAIN_GATHER
+
+  [[ -z "$spell" ]] && return $ERR_TOOLCHAIN_GATHER
+  [[ -z "$version" ]] && return $ERR_TOOLCHAIN_GATHER
+
+  # make sure the gather path is clean
+  # completely wipe it out and recreate it
+  rm -fr "$gather" || return $ERR_RM_FILES
+  mkdir -p "$gather" || return $ERR_MK_DIR
+
+  # find all the files installed by the given spell
+  for file in "$install_logs/${spell}-${version}"/*
+  do
+    # copy all files from the sorcery install log
+    cp -a --parents "$file" "$gather/" || return $ERR_TOOLCHAIN_GATHER
+  done
+
+  # package the collection of files from the install log as a cache file
+  tar jcf "${spell}-${version}.tar.bz2" \
+    --transform "s#$gather/##" \
+    "$gather"/* ||
+      return $ERR_TOOLCHAIN_GATHER
+
+  # if the packaging was successful, wipe out the gather dir
+  rm -fr "$gather"
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
 ## @param spell
-## @param aggressive
+##
+## Generates a spell cache by casting the spell and then dispelling it.
+##
+#-------------------------------------------------------------------------------
+function cauldron_toolchain_cache_cast() {
+  local spells="$CAULDRON_SYS_SPELLS"
+
+  [[ -f "$spells" ]] || return $ERR_TOOLCHAIN_CAST
+
+  # make sure we have a chroot accessible
+  # default to $CAULDRON_BUILD, unless one is already defined
+  cauldron_chroot_init
+  [[ $? -eq $ERR_OK || $? -eq $ERR_CHROOT_NEST ]] || return $ERR_CHROOT_INIT
+
+  # generate the caches for the needed spells
+  cauldron_chroot_cast_clean "$spells" || return $ERR_TOOLCHAIN_CAST
+
+  # clean up the chroot
+  cauldron_chroot_done || return $ERR_CHROOT_DONE
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+## @param spell
 ##
 ## Generates a cache file for the given spell. It will try to use information
 ## from an already installed/cast spell (in the case of the host system having
-## sorcery configured to not generate the caches), and, failing that, will cast the
-## spell and then dispel it (the second step only being performed if aggressive
-## is true).
+## sorcery configured to not generate the caches), and, failing that, will cast
+## the spell and then dispel it (the second step only being performed if
+## aggressive is true).
 ##
 #-------------------------------------------------------------------------------
-function cauldron_build_host_cache_file() {
+function cauldron_toolchain_cache_make() {
   local spell="$1"
-  local aggressive="$2"
+  local config="$CAULDRON_ISORCERY_CONFIG"
+  local lconfig="$CAULDRON_ISORCERY_LCONFIG"
   local install_logs="$CAULDRON_HOST/var/log/sorcery/install"
   local version=""
 
   # First check to see if the spell was installed, but no cache exists.
-  if gaze -q installed "$spell"
+  if gaze -q installed "$spell" > $CAULDRON_NULL
   then
-    # Spell is installed, generate a cache file using the install log?
+    # use sorcery to generate a cache file using the install log
+    # this is the least intensive of the three options
     version="$(grep ^$spell $CAULDRON_HSORCERY_PACKAGES | cut -d: -f4)"
-    cauldron_create_host_cache "${spell}-${version}"
-  else
-    # Only do this part if the caller wants us to be aggressive in building the
-    # cache.
-    if [[ "$aggressive" == yes || "$aggressive" == 1 ]]
+
+    if ! cauldron_toolchain_cache_resurrect "${spell}-${version}"
     then
-      # Do some trickery to get a cache file. Make sure that sorcery is set to
-      # generate a cache file, and if not then either set sorcery to do so or
-      # build the cache file afterwards by being recursive? This should be done
-      # in a build chroot so that the user's host filesystem is not polluted.
-      local aggr_build="$CAULDRON_BUILD/tmp/cauldron_aggressive_cache"
-
-      if [[ -e "$install_logs/${spell}-${version}" ]]
+      # Only do this part if the caller wants us to be aggressive in building the
+      # cache.
+      if [[ "$CAULDRON_AGGRESSIVE" == yes ]]
       then
-        # make sure the $aggr_build path is clean
-        # completely wipe it out and recreate it
-        rm -fr "$aggr_build"
-        mkdir -p "$aggr_build"
-
-        # find all the files installed by the given spell
-        for file in "$install_logs/${spell}-${version}"/*
-        do
-          # copy all files from the sorcery install log into $aggr_build
-          cp -a --parents "$file" "$aggr_build/"
-        done
-
-        # package the collection of files from the install log as a cache file
-        tar jcf "${spell}-${version}.tar.bz2" \
-          --transform "s#$aggr_build/##" "$aggr_build"/*
-
-        # if the packaging was successful, wipe out the $aggr_build dir
-        [[ $? -eq 0 ]] && rm -fr "$aggr_build"
-      else
-        if [[ -e "$CAULDRON_BUILD/etc/sorcery/local/config" ]]
+        if [[ -e "$install_logs/${spell}-${version}" ]]
         then
-          local config="$CAULDRON_BUILD/etc/sorcery/local/config"
-          local archive=$(grep "ARCHIVE=" "$config" | cut -d= -f2)
-          [[ $archive != "on" ]] &&
-          sed -i 's/ARCHIVE=.*/ARCHIVE="on"/' "$config"
+          # try making a cache from the install logs manually
+          cauldron_toolchain_cache_gather "$install_logs" "$spell" "$version"
         fi
-        cauldron_chroot "$CAULDRON_CAST" "$spell"
-        cauldron_chroot "$CAULDRON_DISPEL" "$spell"
       fi
     fi
+
+  # otherwise, there's no install logs so we will need to cast the spell
+  elif [[ "$CAULDRON_AGGRESSIVE" == "yes" ]]
+  then
+    # make sure sorcery is in the build chroot
+    [[ -f "$config" ]] || return $ERR_TOOLCHAIN_SORCERY
+
+    # sorcery defaults to archiving, but can be overridden in a local config
+    # check for the local config
+    if [[ -f "$lconfig" ]]
+    then
+      archive=$(grep '[^#]*ARCHIVE=' "$config" | cut -d= -f2)
+
+      # if archiving is off in the local config, turn it on
+      if [[ "$archive" != "on" ]]
+      then
+        sed -i 's/ARCHIVE=.*/ARCHIVE="on"/' "$config" ||
+          return $ERR_SORCEROUS_ARCHIVE
+      fi
+    fi
+
+    # get the cache by manually casting/dispelling
+    # this is the most resource intensive of the three options
+    cauldron_toolchain_cache_cast "$spell" || return $ERR_TOOLCHAIN_CAST
   fi
+
+  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
