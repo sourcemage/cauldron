@@ -25,10 +25,10 @@
       # URL to download sorcery from
       CAULDRON_SORCERY_URL="${CAULDRON_SORCERY_URL:-http://download.sourcemage.org/sorcery/}"
 
-   # list of installers to include in the ISO
+       # list of installers to include in the ISO
        CAULDRON_INSTALLERS=(
                            "shell"
-                           "menu"
+                           # "menu"
                            )
 
 
