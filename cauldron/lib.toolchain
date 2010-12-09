@@ -58,8 +58,8 @@ function cauldron_toolchain_host_get() {
 ## @param install_log_path
 ##
 ## Builds a cache file from the information provided by the install log for the
-## spell passed as an argument. It expects the provided spell to include the
-## version as a suffix (i.e. bash-3.2).
+## spell passed as an argument using sorcery's create_cache_archive. It expects
+## the provided spell to include the version as a suffix (i.e. bash-3.2).
 ##
 #-------------------------------------------------------------------------------
 function cauldron_toolchain_cache_resurrect() {
@@ -128,7 +128,8 @@ function cauldron_toolchain_cache_gather() {
 #-------------------------------------------------------------------------------
 ## @param spell
 ##
-## Generates a spell cache by casting the spell and then dispelling it.
+## Generates a spell cache by casting the spell and then dispelling it. This
+## assumes that ARCHIVE is already set to "yes" in the chroot's sorcery config.
 ##
 #-------------------------------------------------------------------------------
 function cauldron_toolchain_cache_cast() {
