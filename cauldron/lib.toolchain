@@ -18,6 +18,42 @@
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
+##
+## Scans the sorcery archspec files to find the host triplet.
+##
+## Later, this will be used to set the value of HOST_TRIPLE in
+## /etc/cauldron/config after the code to write the config file is in place.
+##
+#-------------------------------------------------------------------------------
+function cauldron_toolchain_host_get() {
+  local specs="${CAULDRON_HOST_ARCH_PATH//\"/}"
+  local search="-perm 400 -type f -name $CAULDRON_HOST_ARCH"
+  local arch_spec=
+  local host_triple=
+
+  # get the value for the HOST triplet from sorcery archspecs
+
+  if [[ "$(find --version | grep -q 'version 4\.1\(\.\|$\)')" ]]
+  then
+    arch_spec="$(find $spec $search -print 2>$CAULDRON_NULL)"
+  else
+    arch_spec="$(find -L $spec $search -print 2>$CAULDRON_NULL)"
+  fi
+
+  # no matching arch spec found
+  [[ -z "$arch_spec" ]] && return $ERR_HOST_TRIPLE
+
+  host_triple="$(grep 'HOST=' $arch_spec | cut -d = -f 2)"
+
+  # no matching host definition
+  [[ -z "$host_triple" ]] && return $ERR_HOST_TRIPLE
+
+  echo "$host_triple"
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
 ## @param spell
 ## @param install_log_path
 ##
@@ -178,6 +214,102 @@ function cauldron_toolchain_cache_make() {
   fi
 
   return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##
+## Generates the base toolchain using the HOST information. This is
+## done by unpacking the cache file for each spell required for the
+## toolchain if it exists. If it does not exist, this may be because
+## caching is disabled on the host machine, or perhaps the cache file
+## was deleted by accident. Otherwise the spell must be cast within
+## a chroot environment in the CAULDRON_BUILD directory.
+##
+#-------------------------------------------------------------------------------
+function cauldron_toolchain_build_host() {
+  local spell=""
+  local version=""
+  local spell_cache=""
+  local host_triple=""
+  local ext="$CAULDRON_CACHE_EXTENSION"
+
+  # get the value for HOST_TRIPLE
+  host_triple="$(cauldron_toolchain_host_get)"
+
+  [[ -z "$host_triple" ]] && return $ERR_HOST_TRIPLE
+
+  # grab the list of spells needed as the base tool-chain which will be
+  # used to create the cross-compile tool-chain
+  for spell in "$CAULDRON_TOOLCHAIN"
+  do
+    # grab the version for the spell from sorcery's state info
+    # on what's installed
+    version="$(grep \"^$spell\" $CAULDRON_HSORCERY_PACKAGES | cut -d: -f4)"
+
+    # check if spell found on the system
+    if [[ -n "$version" ]]
+    then
+      # set SPELL_CACHE as shorthand for SPELL-VERSION-HOST_TRIPLE.tar.bz2
+      spell_cache="${spell}-${version}-${host_triple}.tar${ext}"
+
+      # unpack the cache file, effectively installing
+      # the spell into the BUILD dir
+      # the unpacking is done against the BUILD dir as the root dir, so
+      # this should not touch the HOST filesystem at all
+      tar xjf "$CAULDRON_BUILD/$spell_cache" -C "$CAULDRON_BUILD/" ||
+        return $ERR_UNPACK_CACHE
+
+      # if the tar was successful, then remove the temporary file
+      rm "$CAULDRON_BUILD/$spell_cache" ||
+        return $ERR_RM_CACHE
+    fi
+  done
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##
+## This builds the cross-compiler to produce the TARGET binaries.
+##
+#-------------------------------------------------------------------------------
+function cauldron_toolchain_build_cross() {
+  local chroot=0
+
+  # make sure we have a chroot accessible
+  # default to $CAULDRON_BUILD, unless one is already defined
+  if [[ "$CAULDRON_CHROOTINIT" -ne 1 ]]
+  then
+    chroot=1
+    cauldron_chroot_init
+    [[ $? -eq 0 || $? -eq $ERR_CHROOT_NEST ]] || return $ERR_CHROOT_INIT
+  fi
+
+  # build the stage 1 tools
+  cauldron_sorcerous_configure 1 || return $ERR_TOOLCHAIN_STAGE1
+  cauldron_chroot "$CAULDRON_CAST" "binutils" || return $ERR_CHROOT_CAST
+  cauldron_chroot "$CAULDRON_CAST" "gcc" || return $ERR_CHROOT_CAST
+
+  # build glibc (stage 2)
+  cauldron_sorcerous_configure 2 || return $ERR_TOOLCHAIN_STAGE2
+  cauldron_chroot "$CAULDRON_CAST" "glibc" || return $ERR_CHROOT_CAST
+
+  # rebuild gcc (still stage 1, but this time linked against the
+  # cross-glibc
+  cauldron_sorcerous_configure 1 || return $ERR_TOOLCHAIN_STAGE1
+  cauldron_chroot "$CAULDRON_CAST" "gcc" || return $ERR_CHROOT_CAST
+
+  # do a sorcery rebuild inside the BUILD dir to
+  # generate the cross-compile tool-chain (stage 3)
+  cauldron_sorcerous_configure 3 || return $ERR_TOOLCHAIN_STAGE3
+  cauldron_chroot "$CAULDRON_REBUILD" || return $ERR_CHROOT_REBUILD
+
+  # if we had to initialize a default chroot
+  # clean up by shutting it down
+  if [[ "$chroot" -eq 1 ]]
+  then
+    cauldron_chroot_done || return $ERR_CHROOT_DONE
+  fi
 }
 
 #-------------------------------------------------------------------------------
