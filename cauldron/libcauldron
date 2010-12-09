@@ -212,6 +212,10 @@ function cauldron_source_enchantment() {
 function cauldron_add_installers() {
   local installer=""
 
+  # no need to return error if cauldron_source_enchantment fails, because it
+  # runs liberror_die itself on error, which causes an exit
+  [[ -z $ENCHANT_DATA ]] && cauldron_source_enchantment
+
   # make sure CAULDRON_BUILD/ENCHANT_DATA exists
   mkdir -p "$ENCHANT_DATA" || return $ERR_INSTALLER_DIR
 
