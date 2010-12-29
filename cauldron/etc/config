@@ -51,6 +51,8 @@
              CAULDRON_BASE="${CAULDRON_BASE:-$CAULDRON_HOST/usr/share/smgl}"
              # path to the host cauldron library modules
              CAULDRON_LIBS="${CAULDRON_LIBS:-$CAULDRON_BASE/cauldron}"
+           # path to Source Mage common library modules
+           CAULDRON_COMMON="${CAULDRON_COMMON:-$CAULDRON_BASE/common}"
              # path to the host cauldron configs
              CAULDRON_DATA="${CAULDRON_DATA:-$CAULDRON_HOST/etc/cauldron}"
 

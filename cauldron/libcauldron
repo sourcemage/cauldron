@@ -31,17 +31,17 @@ function cauldron_fatal_error() {
 
 #-------------------------------------------------------------------------------
 ##
-## liberror includes - load these first!
+## error handling library includes - load these first!
 ##
 #-------------------------------------------------------------------------------
-. "$CAULDRON_BASE/liberror" 2>$CAULDRON_NULL ||
+. "$CAULDRON_COMMON/liberror" 2>$CAULDRON_NULL ||
   cauldron_fatal_error "error: cannot load base library liberror"
 
 # load cauldron error code and message defines
 . "$CAULDRON_LIBS/errorcodes" 2>$CAULDRON_NULL ||
   cauldron_fatal_error "error: cannot load cauldron error codes"
 
-. "$CAULDRON_BASE/libcolor" 2>$CAULDRON_NULL ||
+. "$CAULDRON_COMMON/libcolor" 2>$CAULDRON_NULL ||
   cauldron_fatal_error "error: cannot load base library libcolor"
 
 # test/set whether color output should be enabled
