@@ -176,8 +176,9 @@ function cauldron_source_enchantment() {
 ##
 ## The installer(s) can currently be shell or menu (future: X?). In theory it
 ## should support any installer, as long as it's packaged in its own directory
-## and the name of that dir is passed as the arg. This behavior may change in
-## the future though.
+## and the name of that dir is included in CAULDRON_INSTALLERS, and the binary
+## to execute for that installer is named enchantment* (i.e., enchantment
+## (shell) or enchantment-menu). This behavior may change in the future though.
 ##
 #-------------------------------------------------------------------------------
 function cauldron_add_installers() {
@@ -194,9 +195,9 @@ function cauldron_add_installers() {
   do
     cp -r "$CAULDRON_LIBS/enchantment/$installer" "$ENCHANT_DATA/" ||
       return $ERR_COPY_INSTALLER
-
-    ln -sf "$ENCHANT_DATA/$installer"/bin/* "$CAULDRON_BUILD/usr/sbin/" ||
-      return $ERR_LINK_INSTALLER
+    ln -sf "$ENCHANT_DATA/$installer"/bin/enchantment* \
+      "$CAULDRON_BUILD/usr/sbin/" ||
+        return $ERR_LINK_INSTALLER
   done
 
   return $ERR_OK
