@@ -9,6 +9,9 @@
 
          # filename of the produced .iso (should follow Cauldron naming conventions)
          CAULDRON_ISO_NAME="${CAULDRON_ISO_NAME:-smgl-devel-$(date +%Y%m%d).$CAULDRON_ARCH}"
+         # filename of the compressed system archive that goes into the base of
+         # the iso filesystem for base installation
+         CAULDRON_SYS_NAME="${CAULDRON_SYS_NAME:-system.tar.bz2}"
 
             # the version of the kernel to be used in the .iso
 	    # if empty, then it will default to the version in cauldron
@@ -84,10 +87,35 @@
        CAULDRON_SYS_CACHES="${CAULDRON_SYS_CACHES:-$CAULDRON_DATA/$CAULDRON_ARCH/sys.caches}"
 
        # command to enter a chroot
-       CAULDRON_CHROOT_CMD=( "${CAULDRON_CHROOT_CMD[@]:-chroot}" )
+       CAULDRON_CHROOT_CMD=( ${CAULDRON_CHROOT_CMD[@]:-chroot} )
+
+        # command to generate the final iso media
+        CAULDRON_MKISO_CMD=( ${CAULDRON_MKISO_CMD[@]:-mkisofs -R
+                               -b isolinux/isolinux.bin
+                               -c isolinux/boot.cat
+                               -no-emul-boot
+                               -boot-load-size 4
+                               -boot-info-table
+                               -o "$CAULDRON_ISO_NAME"
+                               "$CAULDRON_ISO"
+                             }
+                           )
+
+      # command to archive the sys directory
+      CAULDRON_ARCHIVE_CMD=( ${CAULDRON_ARCHIVE_CMD[@]:-tar
+                               cf "$CAULDRON_BUILD"/"${CAULDRON_SYS_NAME%.*}"
+                               -C "$CAULDRON_SYS"
+                             }
+                           )
+
+     # command to archive the sys directory
+     CAULDRON_COMPRESS_CMD=( ${CAULDRON_COMPRESS_CMD[@]:-bzip2
+                               "${CAULDRON_SYS_NAME%.*}"
+                             }
+                           )
 
        # command to download a url from the internet
-       CAULDRON_URL_DL_CMD=( "${CAULDRON_URL_DL_CMD[@]:-wget}" )
+       CAULDRON_URL_DL_CMD=( ${CAULDRON_URL_DL_CMD[@]:-wget} )
 
      # sorcery cast/dispel/rebuild commands
      CAULDRON_SORCERY_PATH="${CAULDRON_SORCERY_PATH:-$CAULDRON_HOST/usr/sbin}"

@@ -105,20 +105,27 @@ function cauldron_clean_iso_system() {
 
 #-------------------------------------------------------------------------------
 ##
+## Packages the sys directory into a compressed tarball to be placed in the iso
+## filesystem as system.tar.bz2.
+##
+#-------------------------------------------------------------------------------
+function cauldron_package_sys() {
+  "${CAULDRON_ARCHIVE_CMD[@]}" || return $ERR_MKISOFS
+
+  "${CAULDRON_COMPRESS_CMD[@]}" "$CAULDRON_BUILD/$CAULDRON_SYS_NAME" ||
+    return $ERR_COMPRESS_SYS
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##
 ## Builds the ISO filesystem using the generated ISO data and the filename
 ## set in the cauldron config file.
 ##
 #-------------------------------------------------------------------------------
-function cauldron_mkisofs() {
-  mkisofs -R \
-    -b isolinux/isolinux.bin \
-    -c isolinux/boot.cat \
-    -no-emul-boot \
-    -boot-load-size 4 \
-    -boot-info-table \
-    -o "$CAULDRON_ISO_NAME" \
-    "$CAULDRON_BUILD" ||
-      return $ERR_MKISOFS
+function cauldron_package_iso() {
+  "${CAULDRON_MKISO_CMD[@]}" || return $ERR_MKISOFS
 
   if [[ "$CAULDRON_KEEPISO" == "yes" ]] ;
   then
