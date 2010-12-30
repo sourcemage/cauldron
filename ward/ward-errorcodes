@@ -19,29 +19,10 @@
 
 WARD_PATH="${WARD_PATH:-$(dirname $0)}"
 
-cauldron="$WARD_PATH/../cauldron"
-c_codes="$cauldron/errorcodes"
-
-enchantment="$WARD_PATH/../enchantment"
-e_codes="$enchantment/errorcodes"
-
 if ! . "$WARD_PATH/libward"
 then
   echo "error: could not load $WARD_PATH/libward"
   exit 1
-fi
-
-# source the list of cauldron source files to examine
-if ! . "$WARD_PATH/cauldron_sources"
-then
-  echo "error: could not load cauldron_sources"
-  exit $ERR_FATAL
-fi
-# source the list of enchantment source files to examine
-if ! . "$WARD_PATH/enchantment_sources"
-then
-  echo "error: could not load enchantment_sources"
-  exit $ERR_FATAL
 fi
 
 function ward_print_usage() {
@@ -71,6 +52,10 @@ then
   fi
 fi
 
+ward_get_sources "cauldron_sources"
+cauldron="$WARD_PATH/../cauldron"
+c_codes="$cauldron/errorcodes"
+
 # check cauldron error codes/messages files for internal consistency
 libcolor_notice "Checking cauldron errorcodes for internal consistency"
 echo ""
@@ -81,6 +66,10 @@ libcolor_notice "Checking cauldron sources for undefined error codes"
 echo ""
 ward_global_variables -p "$cauldron" "$c_codes" "${sources[@]}" | \
   grep '[^A-Z_]ERR_[A-Z_]*'
+
+ward_get_sources "enchantment_sources"
+enchantment="$WARD_PATH/../enchantment"
+e_codes="$enchantment/errorcodes"
 
 # check enchantment error codes/messages files for internal consistency
 libcolor_notice "Checking enchantment errorcodes for internal consistency"

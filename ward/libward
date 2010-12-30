@@ -40,6 +40,56 @@ then
 fi
 
 #-------------------------------------------------------------------------------
+## @param -p path to sources (optional)
+## @param project (required)
+##
+## Pulls in the definitions of which source files to ward for the given project.
+## If passed -p as an optional flag, the argument to -p is used as the base path
+## for pulling in the source file definitons from. This path defaults to
+## WARD_PATH.
+##
+#-------------------------------------------------------------------------------
+function ward_get_sources() {
+  local path="$WARD_PATH"
+  local project=""
+
+  # process any optional parameters
+  while [[ "${1:0:1}" == "-" ]]
+  do
+    case "$1" in
+      "-p")
+        path="${2%/}"
+        shift 2
+        ;;
+      *)
+        libcolor_error "error: invalid function parameter $1"
+        echo ""
+        liberror_die $ERR_FATAL
+        ;;
+    esac
+  done
+
+  # make sure we have a good source file path component
+  if [[ ! -d "$path" ]]
+  then
+    echo "error: source file search path not recognized"
+    liberror_die $ERR_FATAL
+  fi
+
+  project="$1"
+
+  # if file is not given with an absolute path, add the base path prefix
+  [[ "${project:0:1}" != "/" ]] && project="$path/$project"
+
+  # source the list of source files to examine
+  if ! . "$project"
+  then
+    echo "error: could not load $project"
+    exit $ERR_FATAL
+  fi
+}
+
+#-------------------------------------------------------------------------------
 ## @param -p base path to sources (optional)
 ## @param -d base path to definition file (optional)
 ## @param definition file (required)

@@ -21,10 +21,6 @@
 
 WARD_PATH="${WARD_PATH:-$(dirname $0)}"
 
-cauldron="$WARD_PATH/../cauldron"
-
-enchantment="$WARD_PATH/../enchantment"
-
 if ! . "$WARD_PATH/libward"
 then
   echo "error: could not load $WARD_PATH/libward"
@@ -71,10 +67,16 @@ then
   fi
 fi
 
+ward_get_sources "cauldron_sources"
+cauldron="$WARD_PATH/../cauldron"
+
 # check cauldron files
 libcolor_notice "Checking cauldron functions"
 echo ""
 ward_functions -p "$cauldron" -l "$cauldron" "${sources[@]}"
+
+ward_get_sources "enchantment_sources"
+enchantment="$WARD_PATH/../enchantment"
 
 # check enchantment files
 libcolor_notice "Checking enchantment functions"
