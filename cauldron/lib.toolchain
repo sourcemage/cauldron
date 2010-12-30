@@ -70,7 +70,7 @@ function cauldron_toolchain_cache_resurrect() {
   if [[ -z create_cache_archive ]]
   then
     . "$CAULDRON_HSORCERY_LIBS/libstate" 2>$CAULDRON_NULL ||
-      liberror_die $ERR_SORCEROUS_HOST_SORCERY
+      liberror_die $ERR_SORCEROUS_HOST
   fi
 
   # generate the missing cache file using sorcery

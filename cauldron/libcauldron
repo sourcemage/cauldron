@@ -110,10 +110,10 @@ function cauldron_clean_iso_system() {
 ##
 #-------------------------------------------------------------------------------
 function cauldron_package_sys() {
-  "${CAULDRON_ARCHIVE_CMD[@]}" || return $ERR_MKISOFS
+  "${CAULDRON_ARCHIVE_CMD[@]}" || return $ERR_SYS_PACKAGE
 
   "${CAULDRON_COMPRESS_CMD[@]}" "$CAULDRON_BUILD/$CAULDRON_SYS_NAME" ||
-    return $ERR_COMPRESS_SYS
+    return $ERR_SYS_COMPRESS
 
   return $ERR_OK
 }
@@ -125,13 +125,13 @@ function cauldron_package_sys() {
 ##
 #-------------------------------------------------------------------------------
 function cauldron_package_iso() {
-  "${CAULDRON_MKISO_CMD[@]}" || return $ERR_MKISOFS
+  "${CAULDRON_MKISO_CMD[@]}" || return $ERR_ISO_PACKAGE
 
   if [[ "$CAULDRON_KEEPISO" == "yes" ]] ;
   then
-    bzip2 -k "$CAULDRON_ISO_NAME" || return $ERR_COMPRESS_ISO
+    bzip2 -k "$CAULDRON_ISO_NAME" || return $ERR_ISO_COMPRESS
   else
-    bzip2 "$CAULDRON_ISO_NAME" || return $ERR_COMPRESS_ISO
+    bzip2 "$CAULDRON_ISO_NAME" || return $ERR_ISO_COMPRESS
   fi
 
   return $ERR_OK
@@ -224,7 +224,7 @@ function cauldron_prepare() {
   then
     cauldron_load_library lib.sorcerous
   fi
-  cauldron_sorcerous_install "$CAULDRON_BUILD" || return $ERR_SORCERY_INSTALL
+  cauldron_sorcerous_install "$CAULDRON_BUILD" || return $ERR_SORCEROUS_INSTALL
 
   # cauldron is a spell
   # there is a spoon

@@ -49,7 +49,7 @@ function cauldron_chroot_init() {
     cauldron_load_library lib.sorcerous
   fi
   # source the target sorcery, so we have access to its functions
-  cauldron_sorcerous_load "$target" || return $ERR_SORCEROUS_TARGET_SORCERY
+  cauldron_sorcerous_load "$target" || return $ERR_SORCEROUS_TARGET
 
   # everything went OK, so export the chroot definitions
   export CAULDRON_CHROOTINIT=1
@@ -186,9 +186,9 @@ function cauldron_chroot_cast_clean() {
   # caching should really be turned on from the very beginning though...
   if [[ -z "$ARCHIVE" ]]
   then
-    cauldron_sorcerous_load || return $ERR_TARGET_SORCERY
+    cauldron_sorcerous_load || return $ERR_SORCEROUS_TARGET
   fi
-  [[ "$ARCHIVE" == "off" ]] && return $ERR_ARCHIVE
+  [[ "$ARCHIVE" == "off" ]] && return $ERR_SORCEROUS_ARCHIVE
 
   # make sure we have a valid chroot of where we will cast
   [[ -z "$CAULDRON_CHROOT" ]] && return $ERR_CHROOT_INIT

@@ -34,12 +34,12 @@ function cauldron_sorcerous_load() {
   local local_config="${2:-$CAULDRON_ISORCERY_LCONFIG}"
 
   # source the main config file
-  source "$config" || return $ERR_SORCEROUS_CONFIG
+  source "$config" || return $ERR_SORCEROUS_TARGET
 
   # if the local config exists, source it
   if [[ -f "$local_config" ]]
   then
-    source "$local_config" || return $ERR_SORCEROUS_LOCAL_CONFIG
+    source "$local_config" || return $ERR_SORCEROUS_TARGET
   fi
 
   return $ERR_OK
@@ -66,7 +66,7 @@ function cauldron_sorcerous_cross_configure() {
   if [[ -z modify_config ]]
   then
     . "$CAULDRON_HSORCERY_LIBS/libtrack" 2> $CAULDRON_NULL ||
-      liberror_die $ERR_SORCEROUS_HOST_SORCERY
+      liberror_die $ERR_SORCEROUS_HOST
   fi
 
   # make sure the sorcery local config dir exists on the ISO

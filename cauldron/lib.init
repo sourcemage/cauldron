@@ -95,7 +95,7 @@ function cauldron_init_make_ramfs() {
 
   mkdir -p "$ramdir" || return $ERR_MK_DIR
 
-  cauldron_init_fs_make "$ramdir" || return $ERR_INIT_FS_MAKE
+  cauldron_init_fs_make "$ramdir" || return $ERR_INIT_MAKE_FS
 
   (
     cd "$ramdir"
@@ -279,7 +279,7 @@ function cauldron_init_fs_make() {
   cauldron_init_fs_mods "$initfs" &&
   cauldron_init_fs_init "$initfs"
 
-  [[ "$?" -gt 0 ]] && return $ERR_INIT_FS_MAKE
+  [[ "$?" -gt 0 ]] && return $ERR_INIT_MAKE_FS
 
   return $ERR_OK
 }
