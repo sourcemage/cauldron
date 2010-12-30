@@ -22,6 +22,9 @@ export LC_COLLATE="C"
 # ensure that WARD_PATH has a value
 WARD_PATH="${WARD_PATH:-$(dirname $0)}"
 
+###
+# TODO: these paths should not be hardcoded in the future
+###
 # load liberror (this is not optional)
 if ! . "$WARD_PATH/../lib/liberror"
 then
@@ -37,22 +40,64 @@ then
 fi
 
 #-------------------------------------------------------------------------------
-## @param definition file
-## @param source1 [source2 source3...]
+## @param -p base path to sources (optional)
+## @param -d base path to definition file (optional)
+## @param definition file (required)
+## @param source1 [source2 source3...] (required)
 ##
 ## Tests whether any variables used in source1 (source2, source3, etc.) are
 ## defined in the definition file. Any variables that are used but not defined
 ## in the definition file are output via libcolor_warn, preceded by the file
-## they were found in via libcolor_file.
+## they were found in via libcolor_file. Both base paths default to the current
+## working directory if not supplied.
 ##
 #-------------------------------------------------------------------------------
 function ward_global_variables() {
+  local fpath="."
+  local dpath="."
   local defines=""
   local file=""
+
+  # process any optional parameters
+  while [[ "${1:0:1}" == "-" ]]
+  do
+    case "$1" in
+      "-p")
+        fpath="${2%/}"
+        shift 2
+        ;;
+      "-d")
+        dpath="${2%/}"
+        shift 2
+        ;;
+      *)
+        libcolor_error "error: invalid function parameter $1"
+        echo ""
+        liberror_die $ERR_FATAL
+        ;;
+    esac
+  done
+
+  # make sure we have a good source file path component
+  if [[ ! -d "$fpath" ]]
+  then
+    echo "error: source file search path not recognized"
+    liberror_die $ERR_FATAL
+  fi
+
+  # make sure we have a good definition file path component
+  if [[ ! -d "$dpath" ]]
+  then
+    echo "error: variable definition file search path not recognized"
+    liberror_die $ERR_FATAL
+  fi
 
   # get the defines file, then drop it from the argument list
   defines="$1"
   shift
+
+  # if defines is not given with an absolute path, add the base path prefix
+  [[ "${defines:0:1}" != "/" ]] && defines="$dpath/$defines"
 
   # make sure the defines file exists, otherwise we can't check anything
   if [[ ! -f "$defines" ]]
@@ -65,6 +110,9 @@ function ward_global_variables() {
   do
     file="$1"
     shift
+
+    # if file is not given with an absolute path, add the base path prefix
+    [[ "${file:0:1}" != "/" ]] && file="$fpath/$file"
 
     [[ -f "$file" ]] || continue
 
@@ -82,19 +130,50 @@ function ward_global_variables() {
 }
 
 #-------------------------------------------------------------------------------
-## @param error code file
+## @param -p base path to sources (optional)
+## @param error code file (required)
 ##
 ## Ensures that the error code file itself is properly defined, making sure that
 ## for every error code there is a matching error message, and for every error
-## message there is a matching error code.
+## message there is a matching error code. The base path defaults to the current
+## working directory if not supplied.
 ##
 #-------------------------------------------------------------------------------
 function ward_error_codes() {
-  local errorcodes="$1"
+  local path="."
+  local errorcodes=""
   local leader="       "
   local codes=()
   local msgcode=""
   local count=""
+
+  # process any optional parameters
+  while [[ "${1:0:1}" == "-" ]]
+  do
+    case "$1" in
+      "-p")
+        path="${2%/}"
+        shift 2
+        ;;
+      *)
+        libcolor_error "error: invalid function parameter $1"
+        echo ""
+        liberror_die $ERR_FATAL
+        ;;
+    esac
+  done
+
+  # make sure we have a good errorcodes file path component
+  if [[ ! -d "$path" ]]
+  then
+    echo "error: error code file search path not recognized"
+    liberror_die $ERR_FATAL
+  fi
+
+  errorcodes="$1"
+
+  # if errorcodes is not given with an absolute path, add the base path prefix
+  [[ "${errorcodes:0:1}" != "/" ]] && errorcodes="$path/$errorcodes"
 
   # make sure the defines file exists, otherwise we can't check anything
   if [[ ! -f "$errorcodes" ]]
@@ -154,17 +233,20 @@ function ward_error_codes() {
 }
 
 #-------------------------------------------------------------------------------
-## @param directory where function definition files are stored
-## @param source1 [source2 source3...]
+## @param -p base path to sources (optional)
+## @param -l base path to libraries (optional)
+## @param source1 [source2 source3...] (required)
 ##
 ## Tests whether any functions used in source1 (source2, source3, etc.) are
 ## defined. Any functions that are used but not defined in the corresponding
 ## definition file are output via libcolor_warn, preceded by the file they were
-## found in via libcolor_file.
+## found in via libcolor_file. Both base paths default to the current working
+## directory if not supplied.
 ##
 #-------------------------------------------------------------------------------
 function ward_functions() {
-  local path=""
+  local fpath="."
+  local lpath="."
   local file=""
   local prefix=""
   local list=""
@@ -177,23 +259,47 @@ function ward_functions() {
     liberror_die $ERR_FATAL
   fi
 
-  # get the defines file, then drop it from the argument list
-  path="$1"
-  shift
+  # process any optional parameters
+  while [[ "${1:0:1}" == "-" ]]
+  do
+    case "$1" in
+      "-p")
+        fpath="${2%/}"
+        shift 2
+        ;;
+      "-l")
+        lpath="${2%/}"
+        shift 2
+        ;;
+      *)
+        libcolor_error "error: invalid function parameter $1"
+        echo ""
+        liberror_die $ERR_FATAL
+        ;;
+    esac
+  done
 
-  # make sure we got a good path component
-  if [[ ! -d "$WARD_PATH/../$path" ]]
+  # make sure we have a good source file path component
+  if [[ ! -d "$fpath" ]]
+  then
+    echo "error: source file search path not recognized"
+    liberror_die $ERR_FATAL
+  fi
+
+  # make sure we have a good library path component
+  if [[ ! -d "$lpath" ]]
   then
     echo "error: library search path not recognized"
     liberror_die $ERR_FATAL
-  else
-    path="$WARD_PATH/../$path"
   fi
 
   while [[ $# -gt 0 ]]
   do
     file="$1"
     shift
+
+    # if file is not given with an absolute path, add the base path prefix
+    [[ "${file:0:1}" != "/" ]] && file="$fpath/$file"
 
     [[ -f "$file" ]] || continue
 
@@ -214,16 +320,16 @@ function ward_functions() {
         [[ "$prefix" == "enchant" ]] && prefix="enchantment"
 
         # check for the function in a library file matching the prefix
-        if [[ -f "$path/lib$prefix" ]]
+        if [[ -f "$lpath/lib$prefix" ]]
         then
-          if grep -q "^function $function() {" "$path/lib$prefix"
+          if grep -q "^function $function() {" "$lpath/lib$prefix"
           then
             matched="yes"
             break
           fi
-        elif [[ -f "$path/lib.$prefix" ]]
+        elif [[ -f "$lpath/lib.$prefix" ]]
         then
-          if grep -q "^function $function() {" "$path/lib.$prefix"
+          if grep -q "^function $function() {" "$lpath/lib.$prefix"
           then
             matched="yes"
             break

@@ -17,13 +17,13 @@
 ##
 #-------------------------------------------------------------------------------
 
-cauldron_srcs=(
-               "$cauldron/cauldron"
-               "$cauldron/libcauldron"
-               "$cauldron/lib.chroot"
-               "$cauldron/lib.init"
-               "$cauldron/lib.sorcerous"
-               "$cauldron/lib.toolchain"
+sources=(
+               "cauldron"
+               "libcauldron"
+               "lib.chroot"
+               "lib.init"
+               "lib.sorcerous"
+               "lib.toolchain"
                )
 
 #-------------------------------------------------------------------------------

@@ -17,7 +17,7 @@
 ##
 #-------------------------------------------------------------------------------
 
-WARD_PATH="${DELINT_PATH:-$(dirname $0)}"
+WARD_PATH="${WARD_PATH:-$(dirname $0)}"
 
 cauldron="$WARD_PATH/../cauldron"
 c_codes="$cauldron/errorcodes"
@@ -79,7 +79,7 @@ ward_error_codes "$c_codes"
 # check cauldron files
 libcolor_notice "Checking cauldron sources for undefined error codes"
 echo ""
-ward_global_variables "$c_codes" "${cauldron_srcs[@]}" | \
+ward_global_variables -p "$cauldron" "$c_codes" "${sources[@]}" | \
   grep '[^A-Z_]ERR_[A-Z_]*'
 
 # check enchantment error codes/messages files for internal consistency
@@ -90,7 +90,7 @@ ward_error_codes "$e_codes"
 # check enchantment files
 libcolor_notice "Checking enchantment sources for undefined error codes"
 echo ""
-ward_global_variables "$e_codes" "${enchantment_srcs[@]}" | \
+ward_global_variables -p "$enchantment" "$e_codes" "${sources[@]}" | \
   grep '[^A-Z_]ERR_[A-Z_]*'
 
 #-------------------------------------------------------------------------------

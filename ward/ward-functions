@@ -19,7 +19,7 @@
 #-------------------------------------------------------------------------------
 
 
-WARD_PATH="${DELINT_PATH:-$(dirname $0)}"
+WARD_PATH="${WARD_PATH:-$(dirname $0)}"
 
 cauldron="$WARD_PATH/../cauldron"
 
@@ -74,12 +74,12 @@ fi
 # check cauldron files
 libcolor_notice "Checking cauldron functions"
 echo ""
-ward_functions "cauldron" "${cauldron_srcs[@]}"
+ward_functions -p "$cauldron" -l "$cauldron" "${sources[@]}"
 
 # check enchantment files
 libcolor_notice "Checking enchantment functions"
 echo ""
-ward_functions "enchantment" "${enchantment_srcs[@]}"
+ward_functions -p "$enchantment" -l "$enchantment" "${sources[@]}"
 
 #-------------------------------------------------------------------------------
 ##

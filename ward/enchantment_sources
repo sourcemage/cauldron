@@ -17,16 +17,16 @@
 ##
 #-------------------------------------------------------------------------------
 
-enchantment_srcs=(
-                  "$enchantment/libenchantment"
-                  "$enchantment/lib.chroot"
-                  "$enchantment/lib.i18n"
-                  "$enchantment/lib.install"
-                  "$enchantment/lib.potion"
-                  "$enchantment/shell/bashrc"
-                  "$enchantment/shell/functions"
-                  "$enchantment/shell/bin/enchantment"
-                  "$enchantment/modules/*/{enter,exit,potion}/*"
+sources=(
+                  "libenchantment"
+                  "lib.chroot"
+                  "lib.i18n"
+                  "lib.install"
+                  "lib.potion"
+                  "shell/bashrc"
+                  "shell/functions"
+                  "shell/bin/enchantment"
+                  "modules/*/{enter,exit,potion}/*"
                   )
 
 #-------------------------------------------------------------------------------
