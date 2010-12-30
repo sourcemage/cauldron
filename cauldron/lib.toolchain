@@ -65,7 +65,7 @@ function cauldron_toolchain_host_get() {
 function cauldron_toolchain_cache_resurrect() {
   local spell="$1"
   local install_logs="${2:-$CAULDRON_HOST/var/log/sorcery/install}"
-  local cache="$CAULDRON_CACHES/$spell.tar"
+  local cache="$CAULDRON_HOST_CACHE_PATH/$spell.tar"
 
   if [[ -z create_cache_archive ]]
   then

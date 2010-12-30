@@ -28,7 +28,10 @@
 
    # branch of sorcery to use in the ISO
    CAULDRON_SORCERY_BRANCH="${CAULDRON_SORCERY_BRANCH:-stable}"
-      # branch of sorcery to use in the ISO
+   # whether to always download sorcery anew or use an already downloaded file
+   # if found
+   CAULDRON_FORCE_DOWNLOAD="${CAULDRON_FORCE_DOWNLOAD:-yes}"
+      # name of the sorcery file to download
       CAULDRON_SORCERY_PKG="${CAULDRON_SORCERY_PACKAGE:-sorcery-${CAULDRON_SORCERY_BRANCH}.tar.bz2}"
       # URL to download sorcery from
       CAULDRON_SORCERY_URL="${CAULDRON_SORCERY_URL:-http://download.sourcemage.org/sorcery/}"
@@ -141,6 +144,7 @@ CAULDRON_HSORCERY_PACKAGES="${CAULDRON_HSORCERY_PACKAGES:-$CAULDRON_HOST/var/sta
          # contains the arch info for the HOST
          CAULDRON_HOST_TRIPLE="${CAULDRON_HOST_TRIPLE:-}"
       CAULDRON_HOST_ARCH_PATH="$(grep ARCH_SPECS= $CAULDRON_HSORCERY_CONFIG | cut -d= -f2-)"
+     CAULDRON_HOST_CACHE_PATH="${CAULDRON_HOST_CACHE_PATH:-/var/cache/sorcery}"
       eval CAULDRON_HOST_ARCH="$(grep ARCHITECTURE= $CAULDRON_HSORCERY_CONFIG | cut -d= -f2-)"
 eval CAULDRON_CACHE_EXTENSION="$(grep EXTENSION= $CAULDRON_HSORCERY_CONFIG | cut -d= -f2-)"
 
