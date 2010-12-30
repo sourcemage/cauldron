@@ -42,37 +42,57 @@ function ward_usage() {
   exit $ERR_FATAL
 }
 
-# check if color should be disabled
-if [[ "$1" == "-n" ]]
+while [[ "$#" -gt 0 ]]
+do
+  case "$1" in
+    # check if color should be disabled
+    "-n")
+      LIBCOLOR_NOCOLOR="yes"
+      ;;
+    # check if the user only wants to process cauldron
+    "cauldron")
+      PROCESS_ENCHANTMENT="no"
+      ;;
+    # check if the user only wants to process enchantment
+    "enchantment")
+      PROCESS_CAULDRON="no"
+      ;;
+    # unknown argument
+    *)
+      ward_print_usage
+      ;;
+  esac
+  shift
+done
+
+PROCESS_CAULDRON="${PROCESS_CAULDRON:-yes}"
+PROCESS_ENCHANTMENT="${PROCESS_ENCHANTMENT:-yes}"
+
+if [[ "$PROCESS_CAULDRON" == "yes" ]]
 then
-  if [[ "$#" -eq 1 ]]
-  then
-    LIBCOLOR_NOCOLOR="yes"
-    shift
-  else
-    ward_usage
-  fi
+  ward_get_sources "cauldron_sources"
+  cauldron="$WARD_PATH/../cauldron"
+  c_conf="$cauldron/etc/config"
+
+  # check cauldron files
+  libcolor_notice "Checking cauldron config variables"
+  echo ""
+  ward_global_variables -p "$cauldron" "$c_conf" "${sources[@]}" | \
+    grep -v '[^A-Z_]ERR_[A-Z_]*'
 fi
 
-ward_get_sources "cauldron_sources"
-cauldron="$WARD_PATH/../cauldron"
-c_conf="$cauldron/etc/config"
+if [[ "$PROCESS_ENCHANTMENT" == "yes" ]]
+then
+  ward_get_sources "enchantment_sources"
+  enchantment="$WARD_PATH/../enchantment"
+  e_conf="$enchantment/etc/config"
 
-# check cauldron files
-libcolor_notice "Checking cauldron config variables"
-echo ""
-ward_global_variables -p "$cauldron" "$c_conf" "${sources[@]}" | \
-  grep -v '[^A-Z_]ERR_[A-Z_]*'
-
-ward_get_sources "enchantment_sources"
-enchantment="$WARD_PATH/../enchantment"
-e_conf="$enchantment/etc/config"
-
-# check enchantment files
-libcolor_notice "Checking enchantment config variables"
-echo ""
-ward_global_variables -p "$enchantment" "$e_conf" "${sources[@]}" | \
-  grep -v '[^A-Z_]ERR_[A-Z_]*'
+  # check enchantment files
+  libcolor_notice "Checking enchantment config variables"
+  echo ""
+  ward_global_variables -p "$enchantment" "$e_conf" "${sources[@]}" | \
+    grep -v '[^A-Z_]ERR_[A-Z_]*'
+fi
 
 #-------------------------------------------------------------------------------
 ##

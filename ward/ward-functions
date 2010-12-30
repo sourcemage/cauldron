@@ -55,33 +55,53 @@ function ward_usage() {
   exit $ERR_FATAL
 }
 
-# check if color should be disabled
-if [[ "$1" == "-n" ]]
+while [[ "$#" -gt 0 ]]
+do
+  case "$1" in
+    # check if color should be disabled
+    "-n")
+      LIBCOLOR_NOCOLOR="yes"
+      ;;
+    # check if the user only wants to process cauldron
+    "cauldron")
+      PROCESS_ENCHANTMENT="no"
+      ;;
+    # check if the user only wants to process enchantment
+    "enchantment")
+      PROCESS_CAULDRON="no"
+      ;;
+    # unknown argument
+    *)
+      ward_print_usage
+      ;;
+  esac
+  shift
+done
+
+PROCESS_CAULDRON="${PROCESS_CAULDRON:-yes}"
+PROCESS_ENCHANTMENT="${PROCESS_ENCHANTMENT:-yes}"
+
+if [[ "$PROCESS_CAULDRON" == "yes" ]]
 then
-  if [[ "$#" -eq 1 ]]
-  then
-    LIBCOLOR_NOCOLOR="yes"
-    shift
-  else
-    ward_usage
-  fi
+  ward_get_sources "cauldron_sources"
+  cauldron="$WARD_PATH/../cauldron"
+
+  # check cauldron files
+  libcolor_notice "Checking cauldron functions"
+  echo ""
+  ward_functions -p "$cauldron" -l "$cauldron" "${sources[@]}"
 fi
 
-ward_get_sources "cauldron_sources"
-cauldron="$WARD_PATH/../cauldron"
+if [[ "$PROCESS_ENCHANTMENT" == "yes" ]]
+then
+  ward_get_sources "enchantment_sources"
+  enchantment="$WARD_PATH/../enchantment"
 
-# check cauldron files
-libcolor_notice "Checking cauldron functions"
-echo ""
-ward_functions -p "$cauldron" -l "$cauldron" "${sources[@]}"
-
-ward_get_sources "enchantment_sources"
-enchantment="$WARD_PATH/../enchantment"
-
-# check enchantment files
-libcolor_notice "Checking enchantment functions"
-echo ""
-ward_functions -p "$enchantment" -l "$enchantment" "${sources[@]}"
+  # check enchantment files
+  libcolor_notice "Checking enchantment functions"
+  echo ""
+  ward_functions -p "$enchantment" -l "$enchantment" "${sources[@]}"
+fi
 
 #-------------------------------------------------------------------------------
 ##

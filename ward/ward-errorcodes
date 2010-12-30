@@ -40,47 +40,67 @@ function ward_usage() {
   exit $ERR_FATAL
 }
 
-# check if color should be disabled
-if [[ "$1" == "-n" ]]
-then
-  if [[ "$#" -eq 1 ]]
-  then
-    LIBCOLOR_NOCOLOR="yes"
-    shift
-  else
-    ward_usage
-  fi
-fi
+while [[ "$#" -gt 0 ]]
+do
+  case "$1" in
+    # check if color should be disabled
+    "-n")
+      LIBCOLOR_NOCOLOR="yes"
+      ;;
+    # check if the user only wants to process cauldron
+    "cauldron")
+      PROCESS_ENCHANTMENT="no"
+      ;;
+    # check if the user only wants to process enchantment
+    "enchantment")
+      PROCESS_CAULDRON="no"
+      ;;
+    # unknown argument
+    *)
+      ward_print_usage
+      ;;
+  esac
+  shift
+done
 
-ward_get_sources "cauldron_sources"
-cauldron="$WARD_PATH/../cauldron"
-c_codes="$cauldron/errorcodes"
+PROCESS_CAULDRON="${PROCESS_CAULDRON:-yes}"
+PROCESS_ENCHANTMENT="${PROCESS_ENCHANTMENT:-yes}"
 
 # check cauldron error codes/messages files for internal consistency
-libcolor_notice "Checking cauldron errorcodes for internal consistency"
-echo ""
-ward_error_codes "$c_codes"
+if [[ "$PROCESS_CAULDRON" == "yes" ]]
+then
+  ward_get_sources "cauldron_sources"
+  cauldron="$WARD_PATH/../cauldron"
+  c_codes="$cauldron/errorcodes"
 
-# check cauldron files
-libcolor_notice "Checking cauldron sources for undefined error codes"
-echo ""
-ward_global_variables -p "$cauldron" "$c_codes" "${sources[@]}" | \
-  grep '[^A-Z_]ERR_[A-Z_]*'
+  libcolor_notice "Checking cauldron errorcodes for internal consistency"
+  echo ""
+  ward_error_codes "$c_codes"
 
-ward_get_sources "enchantment_sources"
-enchantment="$WARD_PATH/../enchantment"
-e_codes="$enchantment/errorcodes"
+  # check cauldron files
+  libcolor_notice "Checking cauldron sources for undefined error codes"
+  echo ""
+  ward_global_variables -p "$cauldron" "$c_codes" "${sources[@]}" | \
+    grep '[^A-Z_]ERR_[A-Z_]*'
+fi
 
 # check enchantment error codes/messages files for internal consistency
-libcolor_notice "Checking enchantment errorcodes for internal consistency"
-echo ""
-ward_error_codes "$e_codes"
+if [[ "$PROCESS_ENCHANTMENT" == "yes" ]]
+then
+  ward_get_sources "enchantment_sources"
+  enchantment="$WARD_PATH/../enchantment"
+  e_codes="$enchantment/errorcodes"
 
-# check enchantment files
-libcolor_notice "Checking enchantment sources for undefined error codes"
-echo ""
-ward_global_variables -p "$enchantment" "$e_codes" "${sources[@]}" | \
-  grep '[^A-Z_]ERR_[A-Z_]*'
+  libcolor_notice "Checking enchantment errorcodes for internal consistency"
+  echo ""
+  ward_error_codes "$e_codes"
+
+  # check enchantment files
+  libcolor_notice "Checking enchantment sources for undefined error codes"
+  echo ""
+  ward_global_variables -p "$enchantment" "$e_codes" "${sources[@]}" | \
+    grep '[^A-Z_]ERR_[A-Z_]*'
+fi
 
 #-------------------------------------------------------------------------------
 ##
