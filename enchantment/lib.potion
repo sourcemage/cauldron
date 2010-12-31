@@ -205,7 +205,7 @@ function enchant_potion_get_partitions() {
 ## cache if they were changed.
 ##
 #-------------------------------------------------------------------------------
-function enchant_potion_check_partitions() {
+function enchant_potion_update_partitions() {
   local potion_parts="$ENCHANT_POTION/$1/filesystems"
   local parts="$ENCHANT_POTION/filesystems"
   local potion="${1:-$ENCHANT_POTION_CURRENT}"
@@ -254,7 +254,7 @@ function enchant_potion_get_filesystems() {
 ## changed, and updates the state cache if they were changed.
 ##
 #-------------------------------------------------------------------------------
-function enchant_potion_check_filesystems() {
+function enchant_potion_update_filesystems() {
   local potion_fs="$ENCHANT_POTION/$1/filesystems"
   local fs="$ENCHANT_POTION/filesystems"
   local potion="${1:-$ENCHANT_POTION_CURRENT}"
@@ -304,7 +304,7 @@ function enchant_potion_get_mount_points() {
 ## changed.
 ##
 #-------------------------------------------------------------------------------
-function enchant_potion_check_mount_points() {
+function enchant_potion_update_mount_points() {
   local potion_mounts="$ENCHANT_POTION/$1/mount_points"
   local mounts="$ENCHANT_POTION/mount_points"
   local potion="${1:-$ENCHANT_POTION_CURRENT}"
@@ -328,7 +328,7 @@ function enchant_potion_check_mount_points() {
 ## used. Updates the state cache if the kernel config changed.
 ##
 #-------------------------------------------------------------------------------
-function enchant_potion_check_kernel_config() {
+function enchant_potion_update_kernel_config() {
   local potion="${1:-$ENCHANT_POTION_CURRENT}"
   local kernel_config="$ENCHANT_TARGET/usr/src/linux/.config"
 
@@ -346,7 +346,7 @@ function enchant_potion_check_kernel_config() {
 ## Updates the state cache if the kernel choice changed.
 ##
 #-------------------------------------------------------------------------------
-function enchant_potion_check_kernel() {
+function enchant_potion_update_kernel() {
   local potion="${1:-$ENCHANT_POTION_CURRENT}"
   local kernels="$ENCHANT_TMP/kernels"
 
@@ -364,7 +364,7 @@ function enchant_potion_check_kernel() {
 ## updates the state cache if the list changed.
 ##
 #-------------------------------------------------------------------------------
-function enchant_potion_check_spell_sources() {
+function enchant_potion_update_spell_sources() {
   local potion="${1:-$ENCHANT_POTION_CURRENT}"
   local spells="$ENCHANT_TMP/spells"
 
@@ -382,9 +382,9 @@ function enchant_potion_check_spell_sources() {
 ## choice changed.
 ##
 #-------------------------------------------------------------------------------
-function enchant_potion_check_bootloader() {
+function enchant_potion_update_bootloader() {
   local potion="${1:-$ENCHANT_POTION_CURRENT}"
-  local kernels="$ENCHANT_TMP/bootloaders"
+  local bootloaders="$ENCHANT_TMP/bootloaders"
 
   [[ -f "$bootloaders" ]] || return $ERR_FILE_NOT_FOUND
 
@@ -400,7 +400,7 @@ function enchant_potion_check_bootloader() {
 ## state cache if there were any changes.
 ##
 #-------------------------------------------------------------------------------
-function enchant_potion_check_confs() {
+function enchant_potion_update_confs() {
   local potion="${1:-$ENCHANT_POTION_CURRENT}"
   local conf=""
 
@@ -422,7 +422,7 @@ function enchant_potion_check_confs() {
 ## cache if there were any changes.
 ##
 #-------------------------------------------------------------------------------
-function enchant_potion_check_users() {
+function enchant_potion_update_users() {
   local potion="${1:-$ENCHANT_POTION_CURRENT}"
   local file=""
 
@@ -440,20 +440,20 @@ function enchant_potion_check_users() {
 #-------------------------------------------------------------------------------
 ## @param potion directory name (relative to $ENCHANT_POTION/) [optional]
 ##
-## Checks various state data for updates during the install.
+## Checks various state data and performs any needed updates during the install.
 ##
 #-------------------------------------------------------------------------------
-function enchant_potion_check_state() {
+function enchant_potion_update() {
   local potion="${1:-$ENCHANT_POTION_CURRENT}"
 
-  enchant_potion_check_partitions "$potion" || return $ERR_POTION_CHK_PARTITIONS
-  enchant_potion_check_filesystems "$potion" || return $ERR_POTION_CHK_FILESYSTEMS
-  enchant_potion_check_mount_points "$potion" || return $ERR_POTION_CHK_MOUNT_POINTS
-  enchant_potion_check_opt_spells "$potion" || return $ERR_POTION_CHK_OPT_SPELLS
-  enchant_potion_check_kernel "$potion" || return $ERR_POTION_CHK_KERNEL
-  enchant_potion_check_bootloader "$potion" || return $ERR_POTION_CHK_BOOTLOADER
-  enchant_potion_check_confs "$potion" || return $ERR_POTION_CHK_CONFS
-  enchant_potion_check_users "$potion" || return $ERR_POTION_CHK_USERS
+  enchant_potion_update_partitions "$potion" || return $ERR_POTION_CHK_PARTITIONS
+  enchant_potion_update_filesystems "$potion" || return $ERR_POTION_CHK_FILESYSTEMS
+  enchant_potion_update_mount_points "$potion" || return $ERR_POTION_CHK_MOUNT_POINTS
+  enchant_potion_update_opt_spells "$potion" || return $ERR_POTION_CHK_OPT_SPELLS
+  enchant_potion_update_kernel "$potion" || return $ERR_POTION_CHK_KERNEL
+  enchant_potion_update_bootloader "$potion" || return $ERR_POTION_CHK_BOOTLOADER
+  enchant_potion_update_confs "$potion" || return $ERR_POTION_CHK_CONFS
+  enchant_potion_update_users "$potion" || return $ERR_POTION_CHK_USERS
 
   return $ERR_OK
 }

@@ -77,7 +77,7 @@ ERR_MODULE_EXIT=73        # could not process module exit
 ERR_MODULE_GET_NUM=74     # could not get number of current module
 
 # lib.potion base
-ERR_POTION_CHECK_STATE=80       # could not process installer state
+ERR_POTION_UPDATE=80            # could not process installer state
 ERR_POTION_DIR=81               # potion directory is missing
 ERR_POTION_CACHE_FILE=82        # couldn't copy file into potion dir
 ERR_POTION_ARCHIVE_FORMAT=83    # unknown archive format
@@ -167,7 +167,7 @@ ERR_MSGS=(
           "could not get number of current module"          # ERR_MODULE_GET_NUM
 
           # lib.potion base
-          "could not process installer state"               # ERR_POTION_CHECK_STATE
+          "could not process installer state"               # ERR_POTION_UPDATE
           "potion directory is missing"                     # ERR_POTION_DIR
           "could not cache file"                            # ERR_POTION_CACHE_FILE
           "unknown archive format"                          # ERR_POTION_ARCHIVE_FORMAT
