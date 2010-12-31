@@ -160,13 +160,13 @@ function enchant_shell_command_install {
     "sources" )
       # can take either 0 or multiple arguments,
       # so don't check the number of arguments
-      enchant_install_spell_sources "$@"
+      enchant_install_sources "$@"
       liberror_check_fatal_error
       ;;
     "caches" )
       # can take either 0 or multiple arguments,
       # so don't check the number of arguments
-      enchant_install_spell_caches "$@"
+      enchant_install_caches "$@"
       liberror_check_fatal_error
       ;;
     * ) return $ERR_INSTALLER_CMD ;;
