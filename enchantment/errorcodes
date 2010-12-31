@@ -57,7 +57,8 @@ ERR_KEYMAP_LIST=52        # keymap list empty or not provided
 ERR_KEYMAP_LIST_SIZE=53   # invalid list size provided
 ERR_KEYMAP_INPUT=54       # invalid user input
 ERR_KEYMAP_LOAD=55        # could not load selected keymap
-ERR_KEYMAP_SAVE=56        # could not save selected keymap
+ERR_KEYMAP_GET=56         # could not get selected keymap
+ERR_KEYMAP_SET=57         # could not set selected keymap
 
 # lib.install
 ERR_INSTALL_DIR=60        # could not install directory
@@ -107,7 +108,7 @@ ERR_POTION_CHK_USERS=108        # could not store user/group config
 
 # error messages
 ERR_MSGS=(
-          # base error  codes
+          # base error codes
           "operation succeeded"                             # ERR_OK
           "fatal error"                                     # ERR_FATAL
           "could not make directory"                        # ERR_MK_DIR
@@ -146,7 +147,8 @@ ERR_MSGS=(
           "invalid list size provided"                      # ERR_KEYMAP_LIST_SIZE
           "invalid user input"                              # ERR_KEYMAP_INPUT
           "could not load selected keymap"                  # ERR_KEYMAP_LOAD
-          "could not save selected keymap"                  # ERR_KEYMAP_SAVE
+          "could not get selected keymap"                   # ERR_KEYMAP_GET
+          "could not set selected keymap"                   # ERR_KEYMAP_SET
 
           # lib.install
           "could not install directory"                     # ERR_INSTALL_DIR

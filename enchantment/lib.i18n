@@ -29,7 +29,7 @@
 ## caller can do any cleanup needed and then exit.
 ##
 #-------------------------------------------------------------------------------
-function enchant_i18n_keymap_get_input() {
+function enchant_i18n_keymap_input_get() {
   local max="$1"
   local input=""
 
@@ -95,13 +95,24 @@ function enchant_i18n_keymap_make_list {
 }
 
 #-------------------------------------------------------------------------------
+##
+## Get the current keymap setting from the enchantment temporary directory.
+##
+#-------------------------------------------------------------------------------
+function enchant_i18n_keymap_get() {
+  cat "$ENCHANT_KEYMAP" || return $ERR_KEYMAP_GET
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
 ## @param keymap to load
 ##
 ## Load the keymap passed as the first argument and store it into the
 ## enchantment temporary directory for later use.
 ##
 #-------------------------------------------------------------------------------
-function enchant_keymap_change() {
+function enchant_i18n_keymap_set() {
   local keymap="$1"
 
   [[ -f "$keymap" ]] || return $ERR_FILE_NOT_FOUND
@@ -110,12 +121,9 @@ function enchant_keymap_change() {
 
   # store the selected keymap for later use by enchantment (e.g., for potions)
   echo "${keymap%.*map.*}" > "$ENCHANT_KEYMAP" ||
-    return $ERR_KEYMAP_SAVE
+    return $ERR_KEYMAP_SET
 
-  # instead of returning OK, return ERR_KEYMAP_EXIT to let the caller know that
-  # a keymap was successfully changed and this round of keymap processing should
-  # stop
-  return $ERR_KEYMAP_EXIT
+  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
@@ -123,10 +131,10 @@ function enchant_keymap_change() {
 ## @param size of choices list (highest numbered entry to choose from)
 ##
 ## Gets the user input and then processes it, possibly calling
-## enchant_keymap_change to actually set the keymap if that's what was input.
+## enchant_i18n_keymap_set to actually set the keymap if that's what was input.
 ##
 #-------------------------------------------------------------------------------
-function enchant_i18n_keymap_input() {
+function enchant_i18n_keymap_input_handler() {
   local prefix="${1:-$ENCHANT_ISO_PATH/usr/share/keymaps}"
   local max="$2"
   local input=""
@@ -137,7 +145,7 @@ function enchant_i18n_keymap_input() {
   [[ -z "$max" ]] && return $ERR_KEYMAP_LIST_SIZE
 
   # get the user's menu choice
-  input="$(enchant_i18n_keymap_get_input $max)"
+  input="$(enchant_i18n_keymap_input_get $max)"
   rc="$?"
 
   # if the user entered '*', exit the keymap routines
@@ -164,11 +172,12 @@ function enchant_i18n_keymap_input() {
     then
       prefix="$prefix/$input"
 
-      enchant_keymap_change "$prefix"
+      # if a keymap is successfully set, return ERR_KEYMAP_EXIT to the caller,
+      # so they know that the keymap was successfully chosen and loaded
+      enchant_i18n_keymap_set "$prefix" && return $ERR_KEYMAP_EXIT
 
-      # returns whatever enchant_keymap_change returns, which is either an error
-      # if something failed or ERR_KEYMAP_EXIT (meaning the keymap processing
-      # should end) if successful
+      # return any errors from enchant_i18n_keymap_set if it didn't load a
+      # keymap successfully
       return "$?"
     else
       prefix="$prefix/$input"
