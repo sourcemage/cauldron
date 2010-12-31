@@ -52,9 +52,9 @@ $ERR_MSGS=( "$ERR_MSGS" "${enchant_shell_err_msgs[*]}" )
 
 #------------------------------------------------------------------------------
 function enchant_shell_command_keymap() {
-  [[ "$#" -eq 0 ]] || return $ERR_INSTALLER_CMD
+  [[ "$#" -le 1 ]] || return $ERR_INSTALLER_CMD
 
-  enchant_shell_perform_keymap || return $ERR_INSTALLER_KEYMAP
+  enchant_shell_perform_keymap "$@" || return $ERR_INSTALLER_KEYMAP
 
   return $ERR_OK
 }
@@ -75,7 +75,7 @@ function enchant_shell_command_prompt() {
 }
 
 function enchant_shell_command_chroot() {
-  # can take either 0 or multiple arguments,
+  # can take any number of arguments,
   # so don't check the number of arguments
 
   enchant_shell_perform_chroot "$@"
