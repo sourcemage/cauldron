@@ -231,16 +231,16 @@ case "$command" in
     enchant_shell_perform_welcome
     liberror_check_fatal_error
     ;;
-  "help" )
-    enchant_shell_command_help "$@"
-    liberror_check_fatal_error
-    ;;
   "install" )
     enchant_shell_command_install "$@"
     liberror_check_fatal_error
     ;;
   "potion" )
     enchant_shell_command_potion "$@"
+    liberror_check_fatal_error
+    ;;
+  "help" )
+    enchant_shell_command_help "$@"
     liberror_check_fatal_error
     ;;
   * )
