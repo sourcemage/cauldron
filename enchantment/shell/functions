@@ -38,7 +38,7 @@ function enchant_shell_header() {
 
 # output the step instructions
 # use color if libcolor loaded, else just plain bold
-function enchant_shell_instructions() {
+function enchant_shell_print() {
   local file="$1"
   local hilight=""
   local normal=""
@@ -107,7 +107,7 @@ function enchant_shell_perform_todo() {
   enchant_shell_header || return $ERR_FILE_NOT_FOUND
 
   # output the current module's instructions
-  enchant_shell_instructions "$ENCHANT_MODULES/$curstep/$curstep" ||
+  enchant_shell_print "$ENCHANT_MODULES/$curstep/$curstep" ||
     return $ERR_FILE_NOT_FOUND
 
   return $ERR_OK
@@ -171,7 +171,7 @@ function enchant_shell_perform_jump() {
 function enchant_shell_perform_welcome() {
   enchant_shell_header || return $ERR_FILE_NOT_FOUND
 
-  enchant_shell_instructions "$ENCHANT_MODULES/welcome/welcome" ||
+  enchant_shell_print "$ENCHANT_MODULES/welcome/welcome" ||
     return $ERR_FILE_NOT_FOUND
 
   return $ERR_OK
@@ -184,16 +184,15 @@ function enchant_shell_perform_help() {
   then
     if [[ -n "$1" ]]
     then
-      libcolor_warn "No installer help for '$1', falling back to bash's builtin help"
+      libcolor_warn "No installer help for '$1'"
       echo ""
-      builtin help "$1"
     fi
   else
     return $ERR_FILE_NOT_FOUND
   fi
 
   enchant_shell_header || return $ERR_FILE_NOT_FOUND
-  enchant_shell_instructions "$helpfile" ||
+  enchant_shell_print "$helpfile" ||
     return $ERR_FILE_NOT_FOUND
 
   return $ERR_OK
