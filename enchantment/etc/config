@@ -71,7 +71,7 @@ ENCHANT_TARGET_SOURCES="${ENCHANT_TARGET_SOURCES:-$ENCHANT_TARGET/var/spool/sorc
          ENCHANT_COLOR="${ENCHANT_COLOR:-yes}"
 
      # kernel version to use for installs
-     ENCHANT_ISO_KVERS="${ENCHANT_ISO_KVERS:-}"
+     ENCHANT_ISO_KVERS="${ENCHANT_ISO_KVERS:-$(uname -r)}"
     # kernel image to use for installs
     ENCHANT_ISO_KERNEL="${ENCHANT_ISO_KERNEL:-$ENCHANT_ISO_PATH/boot/vmlinux}"
      # path to the kernel modules to use for the install
