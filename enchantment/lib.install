@@ -66,7 +66,9 @@ function enchant_install_dir() {
 ##
 ## @param sources_list
 ##
-## Copies the selected spell sources into the target.
+## Copies the selected spell sources into the target. If sources_list is empty
+## (no sources were passed as arguments), it reads the list of sources to
+## install from $ENCHANT_SOURCES_LIST.
 ##
 #-------------------------------------------------------------------------------
 function enchant_install_sources() {
@@ -86,7 +88,9 @@ function enchant_install_sources() {
 ##
 ## @param caches_list
 ##
-## Copies the selected spell caches into the target.
+## Copies the selected spell caches into the target. If caches_list is empty
+## (no caches were passed as arguments), it reads the list of caches to
+## install from $ENCHANT_SOURCES_LIST.
 ##
 #-------------------------------------------------------------------------------
 function enchant_install_caches() {
