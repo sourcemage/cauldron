@@ -163,8 +163,7 @@ function enchant_i18n_keymap_input_handler() {
       prefix="${prefix%/[^/]*}"
   else
     # get the menu item, adjusting for array indexed from 0
-    (( input -= 1 ))
-    input="${choices[input]}"
+    input="${choices[((input-1))]}"
 
     # if the input corresponds to a keymap file, attempt to switch to that
     # keymap, otherwise set the prefix to the new path and loop again
