@@ -495,31 +495,65 @@ function enchant_potion_bottle() {
 }
 
 #-------------------------------------------------------------------------------
-## @param potion
-## @param start
-## @param end
+## @param -s start (optional)
+## @param -e end (optional)
+## @param potion (required)
 ##
 ## If potion is an archive, it unpacks the archive and performs an automated
 ## install. If potion is a directory, it assumes it is a proper state directory
 ## (what an unpacked potion archive is) and does the same as for an archive, but
-## skipping the unpacking step. If the second argument (optional) is given, it
-## determines at which module to begin the automation (defaults to the first).
-## If the third argument is given, it determines at which module to end the
-## automation and at which module to end the automation (defaults to the last).
+## skipping the unpacking step.
+##
+## If the start argument is given, it determines at which module to begin the
+## automation (defaults to the first). If the end ## argument is given, it
+## determines at which module to end the automation and at which module to end
+## the automation (defaults to the last). Both start and end can be specified
+## either as module names or (positional) module numbers. If '--' is passed as
+## an argument, it forces the function to stop scanning for flag parameters so that
+## one can pass in filenames beginning with a '-' and not experience an error.
+##
+## Once the potion is unpacked and ready, each module from start to end is
+## processed in turn by calling enchant_modules_potion, which runs any
+## module-specific scripts (in the module's directory) for processing potion
+## actions.
 ##
 #-------------------------------------------------------------------------------
 function enchant_potion_quaff() {
   local potion="$1"
-  local startmod="${2:-0}"
-  local endmod="$3"
+  local current=""
+  local end=""
+  local list=""
 
-  # get the list of modules to operate on
-  local list="$(enchant_modules_list)"
+  # process any optional parameters
+  while [[ "${1:0:1}" == "-" ]]
+  do
+    case "$1" in
+      # starting module
+      "-s")
+        current="${2}"
+        shift 2
+        ;;
+      # ending module
+      "-e")
+        end="${2}"
+        shift 2
+        ;;
+      # stop processing optional parameters if passed '--'
+      "--")
+        shift
+        break
+        ;;
+      *)
+        ;;
+    esac
+  done
 
-  # if the start module is given as the module name, get it's positional number
-  if [[ "$start" = [a-z]* ]]
+  # if the start module was given as a module name, get it's positional number
+  if [[ -z "$current" ]]
   then
-    startmod="$(grep -n $start $ENCHANT_DATA/modules | cut -d: -f1)"
+    current="0"
+  elif [[ "$current" = [a-z]* ]]
+    current="$(grep -n $current $ENCHANT_DATA/modules | cut -d: -f1)"
   fi
 
   # if the end module wasn't explicitly specified, set it to the last possible
@@ -527,13 +561,20 @@ function enchant_potion_quaff() {
   if [[ -z "$end" ]]
   then
     endmod="${#list}"
+  # if the end module was specified as a module name, get it's positional number
+  elif [[ "$end" = [a-z]* ]]
+  then
+    end="$(grep -n $end $ENCHANT_DATA/modules | cut -d: -f1)"
   fi
 
-  local i="$startmod"
-  for ((i < endmod; i++))
+
+  # get the list of modules to operate on
+  list=($(enchant_modules_list))
+
+  # process each module's potion scripts from start module to end module
+  for ((current < end; current++))
   do
-    local module="${list[i]}"
-    enchant_modules_potion "$module" "$potion"
+    enchant_modules_potion "${list[current]}" "$potion"
   done
 
   return $ERR_OK
