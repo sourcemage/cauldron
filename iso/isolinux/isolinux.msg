@@ -16,7 +16,7 @@ Download Source Mage GNU/Linux and documentation from
   you need special kernel parameters, just type 02install07 followed by
   kernel parameters, like "acpi=off" for instance.
 
-* Thank you for trying a testing version. Remember, you can get help on IRC
+* Thank you for trying Source Mage GNU/Linux. Remember, you can get help on IRC
   on irc.freenode.net, channel #sourcemage-cauldron or #sourcemage.
   If you find any bugs, please go to bugs.sourcemage.org and report them, we
   absolutely love feedback.
