@@ -98,8 +98,7 @@ function cauldron_sorcerous_cross_configure() {
 #-------------------------------------------------------------------------------
 function cauldron_sorcerous_download() {
   local spool="${1:-$CAULDRON_BUILD/var/spool/sorcery}"
-  local sorcery_url="${CAULDRON_SORCERY_URL%/}"
-  local sorcery="$CAULDRON_SORCERY_PKG"
+  local sorcery_url="${CAULDRON_SORCERY_URL}"
   local url_get=( "${CAULDRON_URL_DL_CMD[@]}" )
 
   # ensure the spool dir exists for getting spell sources
@@ -112,7 +111,7 @@ function cauldron_sorcerous_download() {
     # run in a subshell as an easy way of not messing with the working directory
     (
       cd "$spool"
-      "${url_get[@]}" "$sorcery_url/$sorcery" ||
+      "${url_get[@]}" "$sorcery_url" ||
         return $ERR_SORCEROUS_DOWNLOAD
     )
   fi &&

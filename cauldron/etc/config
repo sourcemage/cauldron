@@ -34,7 +34,7 @@
       # name of the sorcery file to download
       CAULDRON_SORCERY_PKG="${CAULDRON_SORCERY_PACKAGE:-sorcery-${CAULDRON_SORCERY_BRANCH}.tar.bz2}"
       # URL to download sorcery from
-      CAULDRON_SORCERY_URL="${CAULDRON_SORCERY_URL:-http://download.sourcemage.org/sorcery/}"
+      CAULDRON_SORCERY_URL="${CAULDRON_SORCERY_URL:-http://download.sourcemage.org/sorcery/$CAULDRON_SORCERY_PKG}"
 
        # list of installers to include in the ISO
        CAULDRON_INSTALLERS=(
