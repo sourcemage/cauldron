@@ -235,50 +235,125 @@ function ward_error_codes() {
     liberror_die $ERR_FATAL
   fi
 
-  if ! source "$errorcodes" 2 > /dev/null
-  then
-    libcolor_error "error: could not source error code file "
-    libcolor_file "$errorcodes"
-    echo ""
-  fi
-
   # get the list of defined error codes
-  codes=( $(grep -o '^ERR_[A-Z_]\+[0-9]*' "$errorcodes" | grep -v 'ERR_MSGS') )
+  codes=( $(gawk '/liberror_add_error/ {print $2}' "$errorcodes") )
+
+  # get the list of defined error messages
+  eval msgs=(
+    $(gawk \
+      '/liberror_add_error/ {if($3 == "\\"){getline} sub(/^[^"]*"/,"\""); print}' \
+      "$errorcodes"
+      )
+    )
 
   # test if the number of messages matches the number of error codes
-  if [[ "${#codes[@]}" -ne "${#ERR_MSGS[@]}" ]]
+  if [[ "${#codes[@]}" -ne "${#msgs[@]}" ]]
   then
     libcolor_error "error: "
     libcolor_error "number of error codes not equal to number of messages"
     echo ""
     libcolor_error "${leader}codes:    ${#codes[@]}"
     echo ""
-    libcolor_error "${leader}messages: ${#ERR_MSGS[@]}"
+    libcolor_error "${leader}messages: ${#msgs[@]}"
     echo ""
   fi
+}
 
-  # for every error code defined, make sure there is a corresponding message
-  for ((count=0; "$count" < "${#codes[@]}"; count++))
+#-------------------------------------------------------------------------------
+## @param -p base path to sources (optional)
+## @param -d base path to definition file (optional)
+## @param definition file (required)
+## @param source1 [source2 source3...] (required)
+##
+## Tests whether any error variables used in source1 (source2, source3, etc.)
+## are defined in the errorr definition file. Any error variables that are used
+## but not defined in the definition file are output via libcolor_warn, preceded
+## by the file they were found in via libcolor_file. Both base paths default to
+## the current working directory if not supplied.
+##
+#-------------------------------------------------------------------------------
+function ward_error_variables() {
+  local fpath="."
+  local epath="."
+  local errorcodes=""
+  local file=""
+
+  # process any optional parameters
+  while [[ "${1:0:1}" == "-" ]]
   do
-    if ! grep -q "${codes[count]}\$" "$errorcodes"
-    then
-      libcolor_error "error: ${codes[count]}: "
-      libcolor_error "DEFINED but has no corresponding message"
-      echo ""
-    fi
+    case "$1" in
+      "-p")
+        fpath="${2%/}"
+        shift 2
+        ;;
+      "-d")
+        epath="${2%/}"
+        shift 2
+        ;;
+      *)
+        libcolor_error "error: invalid function parameter $1"
+        echo ""
+        liberror_die $ERR_FATAL
+        ;;
+    esac
   done
 
-  # for every error message defined, make sure there is a corresponding code
-  for ((count=0; "$count" < "${#ERR_MSGS[@]}"; count++))
-  do
-    msgcode=$(grep "${ERR_MSGS[count]}.*# " "$errorcodes" | sed 's/.*# //')
+  # make sure we have a good source file path component
+  if [[ ! -d "$fpath" ]]
+  then
+    echo "error: source file search path not recognized"
+    liberror_die $ERR_FATAL
+  fi
 
-    if ! grep -q "^${msgcode}=" "$errorcodes"
-    then
-      libcolor_error "error: $msgcode: "
-      libcolor_error "NOT DEFINED but message is"
-      echo ""
-    fi
+  # make sure we have a good definition file path component
+  if [[ ! -d "$epath" ]]
+  then
+    echo "error: error code file search path not recognized"
+    liberror_die $ERR_FATAL
+  fi
+
+  # get the defines file, then drop it from the argument list
+  errorcodes="$1"
+  shift
+
+  # if defines is not given with an absolute path, add the base path prefix
+  [[ "${errorcodes:0:1}" != "/" ]] && errorcodes="$epath/$errorcodes"
+
+  # make sure the defines file exists, otherwise we can't check anything
+  if [[ ! -f "$errorcodes" ]]
+  then
+    echo "error: error code file not found"
+    liberror_die $ERR_FATAL
+  fi
+
+  # get the list of defined error codes
+  codes=( $(gawk '/liberror_add_error/ {print $2}' "$errorcodes") )
+
+  while [[ $# -gt 0 ]]
+  do
+    file="$1"
+    shift
+
+    # if file is not given with an absolute path, add the base path prefix
+    [[ "${file:0:1}" != "/" ]] && file="$fpath/$file"
+
+    [[ -f "$file" ]] || continue
+
+    # as per the API specification, all global variables are required to be
+    # uppercase, and must begin with a letter, containing only letters,
+    # underscores, and trailing numbers
+    for search in $(grep -o '${\?[A-Z][A-Z_]*[0-9]*' "$file" | sed 's/^\${\?//' | sort -u)
+    do
+      if [[ "$search" == "ERR_OK" || "$search" == "ERR_FATAL" ]]
+      then
+        continue
+      fi
+
+      if ! echo " ${codes[*]} " | grep -q " $search "
+      then
+        echo "$(libcolor_file $file): $(libcolor_warn $search)"
+      fi
+    done
   done
 }
 

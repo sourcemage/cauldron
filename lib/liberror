@@ -36,8 +36,42 @@ ERR_MSGS=(
           )
 
 #-------------------------------------------------------------------------------
+# Internal definitions - do not use in external/public code!
+#-------------------------------------------------------------------------------
+# error counter -- for internal use only!
+LIBERR_ERRCODE_COUNT=2
+
+#-------------------------------------------------------------------------------
 # Function definitions
 #-------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+## @param error name (required)
+## @param error message (required)
+##
+## Defines the given error code with corresponding name and message.
+## Automatically assigns the next available number to the error code.
+## Usage example:
+##   liberror_add_error ERR_EXAMPLE "example error message"
+##
+#-------------------------------------------------------------------------------
+function liberror_add_error() {
+  local code="$1"
+  local msg="$2"
+
+  [[ -z "$code" || -z "$msg" ]] && return $ERR_FATAL
+
+  [[ "$LIBERR_ERRCODE_COUNT" -ge 255 ]] && return $ERR_FATAL
+
+  # define the error code itself
+  eval "$code"=$LIBERR_ERRCODE_COUNT
+
+  # define a corresponding message in the message array
+  ERR_MSGS[$LIBERR_ERRCODE_COUNT]="$msg"
+  ((LIBERR_ERRCODE_COUNT++))
+
+  return $ERR_OK
+}
+
 #-------------------------------------------------------------------------------
 ## @param error number
 ## @param output stream (default is 1 [stdout], 2 for stderr)

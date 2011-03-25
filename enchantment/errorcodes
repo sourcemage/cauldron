@@ -19,184 +19,96 @@
 # ERROR definitions
 #-------------------------------------------------------------------------------
 # base error codes
-ERR_OK=0                  # everything is good
-ERR_FATAL=1               # fatal error (missing cauldron libs, etc.)
-ERR_MK_DIR=2              # couldn't make directory
-ERR_DIR_EXISTS=3          # directory already exists
-ERR_FILE_NOT_FOUND=5      # requested file not found
-ERR_DIR_NOT_FOUND=6       # requested dir not found
+liberror_add_error ERR_MK_DIR "could not make directory"
+liberror_add_error ERR_DIR_EXISTS "directory already exists"
+liberror_add_error ERR_FILE_NOT_FOUND "requested file not found"
+liberror_add_error ERR_DIR_NOT_FOUND "requested directory not found"
 
 # libenchantment base
-ERR_LOAD_LIBRARY=10       # could not load enchantment library
-ERR_PREPARE=11            # could not initialize enchantment
-ERR_CLEANUP=12            # could not clean up after finishing
+liberror_add_error ERR_LOAD_LIBRARY "could not load enchantment library"
+liberror_add_error ERR_PREPARE "could not initialize enchantment"
+liberror_add_error ERR_CLEANUP "could not clean up after finishing"
 
 # libenchantment module processing
-ERR_GET_CURRENT=20        # could not get current module
-ERR_GET_NEXT=21           # could not get next module
-ERR_GET_PREV=22           # could not get previous module
-ERR_SET_CURRENT=24        # could not set current module
-ERR_SET_NEXT=25           # could not set next module
-ERR_SET_PREV=26           # could not set previous module
+liberror_add_error ERR_GET_CURRENT "could not get current module"
+liberror_add_error ERR_GET_NEXT "could not get next module"
+liberror_add_error ERR_GET_PREV "could not get previous module"
+liberror_add_error ERR_SET_CURRENT "could not set current module"
+liberror_add_error ERR_SET_NEXT "could not set next module"
+liberror_add_error ERR_SET_PREV "could not set previous module"
 
 # history
-ERR_HISTORY_BACK=31       # could not go back in install history
-ERR_HISTORY_FORWARD=32    # could not go forward in install history
+liberror_add_error ERR_HISTORY_BACK "could not go back in install history"
+liberror_add_error ERR_HISTORY_FORWARD "could not go forward in install history"
 
 # lib.chroot
-ERR_CHROOT_INIT=40        # could not initialize chroot
-ERR_CHROOT_NOT_INIT=41    # tried to use the chroot but its not initialized
-ERR_CHROOT_UNDEF=42       # chroot command undefined
-ERR_CHROOT_EXEC=43        # could not execute chroot command
-ERR_CHROOT_DONE=44        # could not properly clean up chroot
+liberror_add_error ERR_CHROOT_INIT "could not initialized chroot"
+liberror_add_error ERR_CHROOT_NOT_INIT "chroot not initialized"
+liberror_add_error ERR_CHROOT_UNDEF "chroot command undefined"
+liberror_add_error ERR_CHROOT_EXEC "could not execute chroot command"
+liberror_add_error ERR_CHROOT_DONE "could not properly clean up chroot"
 
 # lib.i18n keymap
-ERR_KEYMAP_EXIT=50        # keymap processing finished
-ERR_KEYMAP_PREFIX=51      # invalid keymap prefix
-ERR_KEYMAP_LIST=52        # keymap list empty or not provided
-ERR_KEYMAP_LIST_SIZE=53   # invalid list size provided
-ERR_KEYMAP_INPUT=54       # invalid user input
-ERR_KEYMAP_LOAD=55        # could not load selected keymap
-ERR_KEYMAP_GET=56         # could not get selected keymap
-ERR_KEYMAP_SET=57         # could not set selected keymap
+liberror_add_error ERR_KEYMAP_EXIT "keymap processing finished"
+liberror_add_error ERR_KEYMAP_PREFIX "invalid keymap prefix"
+liberror_add_error ERR_KEYMAP_LIST "keymap list empty or not provided"
+liberror_add_error ERR_KEYMAP_LIST_SIZE "invalid list size provided"
+liberror_add_error ERR_KEYMAP_INPUT "invalid user input"
+liberror_add_error ERR_KEYMAP_LOAD "could not load selected keymap"
+liberror_add_error ERR_KEYMAP_GET "could not get selected keymap"
+liberror_add_error ERR_KEYMAP_SET "could not set selected keymap"
 
 # lib.install
-ERR_INSTALL_DIR=60        # could not install directory
-ERR_INSTALL_FILE=61       # could not install file
-ERR_INSTALL_CACHES=62     # could not install spell caches
-ERR_INSTALL_SOURCES=63    # could not install spell sources
-ERR_INSTALL_KERNEL=64     # could not install kernel image
-ERR_INSTALL_KMODS=65      # could not install kernel modules
-ERR_INSTALL_DEPMOD=66     # could not perform depmod in install
+liberror_add_error ERR_INSTALL_DIR "could not install directory"
+liberror_add_error ERR_INSTALL_FILE "could not install file"
+liberror_add_error ERR_INSTALL_CACHES "could not install spell caches"
+liberror_add_error ERR_INSTALL_SOURCES "could not install spell sources"
+liberror_add_error ERR_INSTALL_KERNEL "could not install kernel image"
+liberror_add_error ERR_INSTALL_KMODS "could not install kernel modules"
+liberror_add_error ERR_INSTALL_DEPMOD "could not perform depmod in install"
 
 # lib.module
-ERR_MODULE_NONE=70        # no modules found
-ERR_MODULE_SCRIPT=71      # could not process module script
-ERR_MODULE_ENTER=72       # could not process module entry
-ERR_MODULE_EXIT=73        # could not process module exit
-ERR_MODULE_GET_NUM=74     # could not get number of current module
+liberror_add_error ERR_MODULE_NONE "no modules found"
+liberror_add_error ERR_MODULE_SCRIPT "could not process module script"
+liberror_add_error ERR_MODULE_ENTER "could not process module entry"
+liberror_add_error ERR_MODULE_EXIT "could not process module exit"
+liberror_add_error ERR_MODULE_GET_NUM "could not get number of current module"
 
-# lib.potion base
-ERR_POTION_UPDATE=80            # could not process installer state
-ERR_POTION_DIR=81               # potion directory is missing
-ERR_POTION_CACHE_FILE=82        # couldn't copy file into potion dir
-ERR_POTION_ARCHIVE_FORMAT=83    # unknown archive format
-ERR_POTION_ARCHIVE=84           # could not build archive of potion
-ERR_POTION_COMPRESS=85          # could not compress potion archive
+# lib.potion
+liberror_add_error ERR_POTION_DIR "potion directory not found"
+liberror_add_error ERR_POTION_GET_HASHSUM "could not read hashsum of file"
+liberror_add_error ERR_POTION_SET_HASHSUM "could not store hashsum of file"
+liberror_add_error ERR_POTION_CACHE_FILE \
+  "could not copy file into potion directory"
+liberror_add_error ERR_POTION_ARCHIVE_FORMAT "unknown archive format"
+liberror_add_error ERR_POTION_ARCHIVE "could not make potion archive"
+liberror_add_error ERR_POTION_COMPRESS "could not compress potion archive"
 
 # lib.potion gets
-ERR_POTION_GET_HASHSUM=90       # could not read hashsum of file
-ERR_POTION_GET_BOOTLOADER=91    # could not read bootloader config
-ERR_POTION_GET_CONFS=92         # could not read target system configs
-ERR_POTION_GET_FILESYSTEMS=93   # could not read filesystems
-ERR_POTION_GET_KERNEL=94        # could not read kernel config
-ERR_POTION_GET_MOUNT_POINTS=95  # could not read mount points
-ERR_POTION_GET_OPT_SPELLS=96    # could not read optional spell selection
-ERR_POTION_GET_PARTITIONS=97    # could not read partitions
-ERR_POTION_GET_USERS=98         # could not read user/group config
+liberror_add_error ERR_POTION_GET_BOOTLOADER "could not read bootloader config"
+liberror_add_error ERR_POTION_GET_CONFS "could not read target system configs"
+liberror_add_error ERR_POTION_GET_FILESYSTEMS "could not read filesystems"
+liberror_add_error ERR_POTION_GET_KERNEL "could not read kernel config"
+liberror_add_error ERR_POTION_GET_MOUNT_POINTS "could not read mount points"
+liberror_add_error ERR_POTION_GET_OPT_SPELLS \
+  "could not read optional spell selection"
+liberror_add_error ERR_POTION_GET_PARTITIONS "could not read partitions"
+liberror_add_error ERR_POTION_GET_USERS "could not read user/group config"
 
-# lib.potion checks
-ERR_POTION_SET_HASHSUM=100      # could not store hashsum of file
-ERR_POTION_CHK_BOOTLOADER=101   # could not store bootloader config
-ERR_POTION_CHK_CONFS=102        # could not store target system configs
-ERR_POTION_CHK_FILESYSTEMS=104  # could not store filesystems
-ERR_POTION_CHK_KERNEL=104       # could not store kernel config
-ERR_POTION_CHK_MOUNT_POINTS=105 # could not store mount points
-ERR_POTION_CHK_OPT_SPELLS=106   # could not store optional spell selection
-ERR_POTION_CHK_PARTITIONS=107   # could not store partitions
-ERR_POTION_CHK_USERS=108        # could not store user/group config
-
-# error messages
-ERR_MSGS=(
-          # base error codes
-          "operation succeeded"                             # ERR_OK
-          "fatal error"                                     # ERR_FATAL
-          "could not make directory"                        # ERR_MK_DIR
-          "directory already exists"                        # ERR_DIR_EXISTS
-          "file not found"                                  # ERR_FILE_NOT_FOUND
-          "directory not found"                             # ERR_DIR_NOT_FOUND
-
-          # libenchantment base
-          "could not load enchantment library"              # ERR_LOAD_LIBRARY
-          "could not initialize enchantment"                # ERR_PREPARE
-          "could not clean up after finishing"              # ERR_CLEANUP
-
-          # libenchantment module processing
-          "could not get current module"                    # ERR_GET_CURRENT
-          "could not get next module"                       # ERR_GET_NEXT
-          "could not get previous module"                   # ERR_GET_PREV
-          "could not set current module"                    # ERR_SET_CURRENT
-          "could not set next module"                       # ERR_SET_NEXT
-          "could not set previous module"                   # ERR_SET_PREV
-
-          # history
-          "could not go back in install history"            # ERR_HISTORY_BACK
-          "could not go forward in install history"         # ERR_HISTORY_FORWARD
-
-          # lib.chroot
-          "could not initialize chroot"                     # ERR_CHROOT_INIT
-          "tried to use the chroot but its not initialized" # ERR_CHROOT_NOT_INIT
-          "chroot command undefined"                        # ERR_CHROOT_UNDEF
-          "could not execute chroot command"                # ERR_CHROOT_EXEC
-          "could not properly clean up chroot"              # ERR_CHROOT_DONE
-
-          # lib.i18n keymap
-          "keymap processing finished"                      # ERR_KEYMAP_EXIT
-          "invalid keymap prefix"                           # ERR_KEYMAP_PREFIX
-          "keymap list empty or not provided"               # ERR_KEYMAP_LIST
-          "invalid list size provided"                      # ERR_KEYMAP_LIST_SIZE
-          "invalid user input"                              # ERR_KEYMAP_INPUT
-          "could not load selected keymap"                  # ERR_KEYMAP_LOAD
-          "could not get selected keymap"                   # ERR_KEYMAP_GET
-          "could not set selected keymap"                   # ERR_KEYMAP_SET
-
-          # lib.install
-          "could not install directory"                     # ERR_INSTALL_DIR
-          "could not install file"                          # ERR_INSTALL_FILE
-          "could not install spell caches"                  # ERR_INSTALL_CACHES
-          "could not install spell sources"                 # ERR_INSTALL_SOURCES
-          "could not install kernel image"                  # ERR_INSTALL_KERNEL
-          "could not install kernel modules"                # ERR_INSTALL_KMODS
-          "could not perform depmod in install"             # ERR_INSTALL_DEPMOD
-
-          # lib.module
-          "no modules found"                                # ERR_MODULE_NONE
-          "could not process module script"                 # ERR_MODULE_SCRIPT
-          "could not process module entry"                  # ERR_MODULE_ENTER
-          "could not process module exit"                   # ERR_MODULE_EXIT
-          "could not get number of current module"          # ERR_MODULE_GET_NUM
-
-          # lib.potion base
-          "could not process installer state"               # ERR_POTION_UPDATE
-          "potion directory is missing"                     # ERR_POTION_DIR
-          "could not cache file"                            # ERR_POTION_CACHE_FILE
-          "unknown archive format"                          # ERR_POTION_ARCHIVE_FORMAT
-          "could not create potion archive"                 # ERR_POTION_ARCHIVE
-          "could not compress potion archive"               # ERR_POTION_COMPRESS
-
-          # lib.potion gets
-          "could not read hashsum of file"                  # ERR_POTION_GET_HASHSUM
-          "could not read bootloader config"                # ERR_POTION_GET_BOOTLOADER
-          "could not read target system configs"            # ERR_POTION_GET_CONFS
-          "could not read filesystems"                      # ERR_POTION_GET_FILESYSTEMS
-          "could not read kernel config"                    # ERR_POTION_GET_KERNEL
-          "could not read mount points"                     # ERR_POTION_GET_MOUNT_POINTS
-          "could not read optional spell selection"         # ERR_POTION_GET_OPT_SPELLS
-          "could not read partitions"                       # ERR_POTION_GET_PARTITIONS
-          "could not read user/group config"                # ERR_POTION_GET_USERS
-
-          # lib.potion checks
-          "could not store hashsum of file"                 # ERR_POTION_SET_HASHSUM
-          "could not store bootloader config"               # ERR_POTION_CHK_BOOTLOADER
-          "could not store target system configs"           # ERR_POTION_CHK_CONFS
-          "could not store filesystems"                     # ERR_POTION_CHK_FILESYSTEMS
-          "could not store kernel config"                   # ERR_POTION_CHK_KERNEL
-          "could not store mount points"                    # ERR_POTION_CHK_MOUNT_POINTS
-          "could not store optional spell selection"        # ERR_POTION_CHK_OPT_SPELLS
-          "could not store partitions"                      # ERR_POTION_CHK_PARTITIONS
-          "could not store user/group config"               # ERR_POTION_CHK_USERS
-
-          )
+# lib.potion updates
+liberror_add_error ERR_POTION_UPDATE_BOOTLOADER \
+  "could not update bootloader config"
+liberror_add_error ERR_POTION_UPDATE_CONFS \
+  "could not update target system configs"
+liberror_add_error ERR_POTION_UPDATE_FILESYSTEMS "could not update filesystems"
+liberror_add_error ERR_POTION_UPDATE_KERNEL "could not update kernel config"
+liberror_add_error ERR_POTION_UPDATE_MOUNT_POINTS "could not update mount points"
+liberror_add_error ERR_POTION_UPDATE_SPELL_SOURCES \
+  "could not update spell sources selection"
+liberror_add_error ERR_POTION_UPDATE_SPELL_CACHES \
+  "could not update spell caches selection"
+liberror_add_error ERR_POTION_UPDATE_PARTITIONS "could not update partitions"
+liberror_add_error ERR_POTION_UPDATE_USERS "could not update user/group config"
 
 #-------------------------------------------------------------------------------
 ##

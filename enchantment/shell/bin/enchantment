@@ -33,17 +33,10 @@ then
 fi
 
 # add local error message(s) and error code(s)
-ERR_INSTALLER_FUNCS="$(echo $((${#ERR_MSGS[*]}+1)))"
-ERR_INSTALLER_CHROOT_MOUNT="$(echo $((${#ERR_MSGS[*]}+2)))"
-ERR_INSTALLER_CHROOT_EXEC="$(echo $((${#ERR_MSGS[*]}+3)))"
-ERR_INSTALLER_CHROOT_UMOUNT="$(echo $((${#ERR_MSGS[*]}+4)))"
-$enchant_shell_err_msgs=(
-                "could not load $ENCHANT_INSTALLER functions file"
-                "could not mount chroot subdirs"
-                "could not execute chroot command"
-                "could not unmount chroot subdirs"
-                )
-$ERR_MSGS=( "$ERR_MSGS" "${enchant_shell_err_msgs[*]}" )
+liberror_add_error ERR_INSTALLER_FUNCS "could not load $ENCHANT_INSTALLER functions file"
+liberror_add_error ERR_INSTALLER_CHROOT_MOUNT "could not mount chroot subdirs"
+liberror_add_error ERR_INSTALLER_CHROOT_EXEC "could not execute chroot command"
+liberror_add_error ERR_INSTALLER_CHROOT_UMOUNT "could not unmount chroot subdirs"
 
 # source installer-specific functions
 [[ -f "$ENCHANT_DATA/$ENCHANT_INSTALLER/functions" ]] ||

@@ -80,7 +80,7 @@ then
   # check cauldron files
   libcolor_notice "Checking cauldron sources for undefined error codes"
   echo ""
-  ward_global_variables -p "$cauldron" "$c_codes" "${sources[@]}" | \
+  ward_error_variables -p "$cauldron" "$c_codes" "${sources[@]}" | \
     grep '[^A-Z_]ERR_[A-Z_]*'
 fi
 
@@ -98,7 +98,7 @@ then
   # check enchantment files
   libcolor_notice "Checking enchantment sources for undefined error codes"
   echo ""
-  ward_global_variables -p "$enchantment" "$e_codes" "${sources[@]}" | \
+  ward_error_variables -p "$enchantment" "$e_codes" "${sources[@]}" | \
     grep '[^A-Z_]ERR_[A-Z_]*'
 fi
 

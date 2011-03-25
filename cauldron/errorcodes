@@ -18,169 +18,104 @@
 #-------------------------------------------------------------------------------
 # ERROR definitions
 #-------------------------------------------------------------------------------
+
 # base error codes
-ERR_OK=0                  # everything is good
-ERR_FATAL=1               # fatal error (missing cauldron libs, etc.)
-ERR_MK_DIR=2              # couldn't make directory
-ERR_DIR_EXISTS=3          # directory already exists
-ERR_FILE_NOT_FOUND=5      # requested file not found
-ERR_DIR_NOT_FOUND=6       # requested dir not found
-ERR_CP_FILE=7             # could not copy file
-ERR_CHMOD_FILE=8          # could not chmod file
-ERR_RM_FILES=9            # could not remove files
+liberror_add_error ERR_MK_DIR "could not make directory"
+liberror_add_error ERR_DIR_EXISTS "directory already exists"
+liberror_add_error ERR_FILE_NOT_FOUND "requested file not found"
+liberror_add_error ERR_DIR_NOT_FOUND "requested directory not found"
+liberror_add_error ERR_CP_FILE "could not copy file"
+liberror_add_error ERR_CHMOD_FILE "could not chmod file"
+liberror_add_error ERR_RM_FILES "could not remove files"
 
 # libcauldron base
-ERR_LOAD_LIBRARY=10       # problem loading a library/include
-ERR_CLEANUP_BUILD=11      # could not clean up build dir
-ERR_CLEANUP_TMP=12        # could not clean up tmp dir
+liberror_add_error ERR_LOAD_LIBRARY "problem loading library"
+liberror_add_error ERR_CLEANUP_BUILD "could not clean up build directory"
+liberror_add_error ERR_CLEANUP_TMP "could not clean up temporary directory"
 
 # libcauldron build
-ERR_UNPACK_CACHE=20       # couldn't unpack spell cache inside build dir
-ERR_RM_CACHE=21           # couldn't remove spell cache after unpacking in build
-ERR_HOST_TRIPLE=22        # couldn't get host triple for builds
-ERR_BUILD_SPOOL=23        # build directory sorcery spool does not exist
-ERR_RESOLV=24             # resolv.conf missing in the build dir
+liberror_add_error ERR_UNPACK_CACHE \
+  "could not unpack spell cache inside build directory"
+liberror_add_error ERR_RM_CACHE \
+  "could not remove spell cache after unpacking in build"
+liberror_add_error ERR_HOST_TRIPLE "could not get host triple for builds"
+liberror_add_error ERR_BUILD_SPOOL "build directory sorcery spool does not exist"
+liberror_add_error ERR_RESOLV "resolv.conf missing in the build directory"
 
 # libcauldron cleaner files
-ERR_CLEAN_CLEANER=30      # missing cleaner files
-ERR_CLEAN_DIR=31          # failed to clean dir from ISO
-ERR_CLEAN_FILE=32         # failed to clean file from ISO
+liberror_add_error ERR_CLEAN_CLEANER "cleaner files could not be found"
+liberror_add_error ERR_CLEAN_DIR "failed to clean directory from iso"
+liberror_add_error ERR_CLEAN_FILE "failed to clean file from iso"
 
 # libcauldron enchantment
-ERR_ENCHANT_CONFIG=40     # could not source enchant config
-ERR_INSTALLER_DIR=41      # could not create the ISO installer dir
-ERR_COPY_INSTALLER=42     # could not copy installer to ISO
-ERR_LINK_INSTALLER=43     # could not copy installer to ISO
+liberror_add_error ERR_ENCHANT_CONFIG "could not source enchant config"
+liberror_add_error ERR_INSTALLER_DIR \
+  "could not create the iso installer directory"
+liberror_add_error ERR_COPY_INSTALLER "could not copy installer to iso"
+liberror_add_error ERR_LINK_INSTALLER "could not link installer in iso"
 
 # libcauldron final product
-ERR_ISO_PACKAGE=50           # could not create the final ISO file
-ERR_ISO_COMPRESS=51       # could not compress final ISO file
-ERR_SYS_PACKAGE=52        # could not package final SYS archive
-ERR_SYS_COMPRESS=53       # could not compress final SYS archive
+liberror_add_error ERR_ISO_PACKAGE "could not create final iso file"
+liberror_add_error ERR_ISO_COMPRESS "could not compress final iso file"
+liberror_add_error ERR_SYS_PACKAGE "could not package final sys file"
+liberror_add_error ERR_SYS_COMPRESS "could not compress final sys archive"
 
 # lib.chroot
-ERR_CHROOT_UNDEF=60       # chroot TARGET is undefined
-ERR_CHROOT_INIT=61        # couldn't init chroot
-ERR_CHROOT_DONE=62        # couldn't close chroot
-ERR_CHROOT_NOT_INIT=63    # chroot isn't initialized
-ERR_CHROOT_EXEC=64        # could not execute chroot command
-ERR_CHROOT_CAST=65        # chroot cast failed
-ERR_CHROOT_DISPEL=66      # chroot dispel failed
-ERR_CHROOT_REBUILD=67     # chroot rebuild failed
-ERR_CHROOT_NEST=68        # chroot already defined -- nesting not allowed
+liberror_add_error ERR_CHROOT_UNDEF "chroot target is undefined"
+liberror_add_error ERR_CHROOT_INIT "could not init chroot"
+liberror_add_error ERR_CHROOT_DONE "could not close chroot"
+liberror_add_error ERR_CHROOT_NOT_INIT "chroot not initialized"
+liberror_add_error ERR_CHROOT_EXEC "could not execute chroot command"
+liberror_add_error ERR_CHROOT_CAST "chroot cast failed"
+liberror_add_error ERR_CHROOT_DISPEL "chroot dispel failed"
+liberror_add_error ERR_CHROOT_REBUILD "chroot rebuild failed"
+liberror_add_error ERR_CHROOT_NEST "chroot already defined"
 
 # lib.init
-ERR_INIT_INSTALL_RAMFS=70 # problem installing built initramfs into ISO fs
-ERR_INIT_INSTALL_RD=71    # problem installing built initramdisk into ISO fs
-ERR_INIT_MAKE_RAMFS=72    # could not build initramfs
-ERR_INIT_MAKE_RD=73       # could not build initramdisk
-ERR_INIT_MAKE_FS=73       # could not make filesystem for initramfs/ramdisk
+liberror_add_error ERR_INIT_INSTALL_RAMFS \
+  "problem installing built initramfs into iso"
+liberror_add_error ERR_INIT_INSTALL_RD \
+  "problem installing built initramdisk into iso"
+liberror_add_error ERR_INIT_MAKE_RAMFS "could not build initramfs"
+liberror_add_error ERR_INIT_MAKE_RD "could not build initramdisk"
+liberror_add_error ERR_INIT_MAKE_FS \
+  "could not make filesystem for initramfs/ramdisk"
 
 # lib.sorcerous
-ERR_SORCEROUS_ARCHIVE=80            # target sorcery not set to archive casts
-ERR_SORCEROUS_TARGET=81             # missing target sorcery files
-ERR_SORCEROUS_HOST=82               # sorcery not installed on host
-ERR_SORCEROUS_CREATE_CACHE=83       # error creating spell cache
-ERR_SORCEROUS_ISO_SORCERY_CONFIG=84 # couldn't create the ISO local sorcery config dir
-ERR_SORCEROUS_DOWNLOAD=85           # could not download sorcery
-ERR_SORCEROUS_UNPACK=86             # could not unpack a valid sorcery install
-ERR_SORCEROUS_INSTALL=87            # could not install sorcery into the build dir
+liberror_add_error ERR_SORCEROUS_ARCHIVE \
+  "target sorcery not set to archive casts"
+liberror_add_error ERR_SORCEROUS_TARGET "target sorcery files not found"
+liberror_add_error ERR_SORCEROUS_HOST "host sorcery not found"
+liberror_add_error ERR_SORCEROUS_CREATE_CACHE "could not create spell cache"
+liberror_add_error ERR_SORCEROUS_ISO_SORCERY_CONFIG \
+  "could not create local sorcery config directory in iso"
+liberror_add_error ERR_SORCEROUS_DOWNLOAD "could not download sorcery"
+liberror_add_error ERR_SORCEROUS_UNPACK \
+  "could not unpack a valid sorcery install"
+liberror_add_error ERR_SORCEROUS_INSTALL \
+  "could not install sorcery into build directory"
 
 # lib.toolchain
-ERR_TOOLCHAIN_CP_CACHE=90     # problem copying spell cache from HOST to build dir
-ERR_TOOLCHAIN_BUILD_CACHE=91  # problem building cache file from spell install info
-ERR_TOOLCHAIN_STAGE1=92       # cross-toolchain failed at stage 1
-ERR_TOOLCHAIN_STAGE2=93       # cross-toolchain failed at stage 2
-ERR_TOOLCHAIN_STAGE3=94       # cross-toolchain failed at stage 3
-ERR_TOOLCHAIN_CAST=95         # failed to cast toolchain spell
-ERR_TOOLCHAIN_DISPEL=96       # failed to dispel toolchain spell
-ERR_TOOLCHAIN_GATHER=97       # failed to generate toolchain spell cache
-ERR_TOOLCHAIN_SORCERY=98      # sorcery not installed in toolchain chroot
-ERR_TOOLCHAIN_RESURRECT=99    # could not resurrect spell using sorcery
-
-
-# error messages
-ERR_MSGS=(
-          # base error codes
-          "operation succeeded"                             # ERR_OK
-          "fatal error"                                     # ERR_FATAL
-          "could not make directory"                        # ERR_MK_DIR
-          "directory already exists"                        # ERR_DIR_EXISTS
-          "file not found"                                  # ERR_FILE_NOT_FOUND
-          "directory not found"                             # ERR_DIR_NOT_FOUND
-          "could not copy file"                             # ERR_CP_FILE
-          "could not chmod file"                            # ERR_CHMOD_FILE
-          "could not remove files"                          # ERR_RM_FILES
-
-          # libcauldron base
-          "could not load cauldron library"                 # ERR_LOAD_LIBRARY
-          "could not clean up build dir"                    # ERR_CLEANUP_BUILD
-          "could not clean up tmp dir"                      # ERR_CLEANUP_TMP
-
-          # libcauldron build
-          "could not unpack spell cache in build dir"       # ERR_UNPACK_CACHE
-          "could not remove temporary spell cache file"     # ERR_RM_CACHE
-          "could not get host triple needed for builds"     # ERR_HOST_TRIPLE
-          "build directory sorcery spool does not exist"    # ERR_BUILD_SPOOL
-          "resolv.conf missing in the build dir"            # ERR_RESOLV
-
-          # libcauldron cleaner files
-          "cleanfile not found"                             # ERR_CLEAN_CLEANER
-          "failed to clean dir from ISO"                    # ERR_CLEAN_DIR
-          "failed to clean file from ISO"                   # ERR_CLEAN_FILE
-
-          # libcauldron enchantment
-          "could not source enchant config"                 # ERR_ENCHANT_CONFIG
-          "couldn't create the installer dir"               # ERR_INSTALLER_DIR
-          "could not copy installer to ISO"                 # ERR_COPY_INSTALLER
-          "could not link installer programs to usr/sbin/"  # ERR_LINK_INSTALLER
-
-          # libcauldron final product
-          "could not package the final ISO file"            # ERR_ISO_PACKAGE
-          "could not compress final ISO file"               # ERR_ISO_COMPRESS
-          "could not package the final SYS file"            # ERR_SYS_PACKAGE
-          "could not compress final SYS file"               # ERR_SYS_COMPRESS
-
-          # lib.chroot
-          "target chroot dir undefined"                     # ERR_CHROOT_UNDEF
-          "could not init chroot"                           # ERR_CHROOT_INIT
-          "could not clean up chroot"                       # ERR_CHROOT_DONE
-          "cauldron chroot not initialized"                 # ERR_CHROOT_NOT_INIT
-          "could not execute chroot command"                # ERR_CHROOT_EXEC
-          "chroot cast failed"                              # ERR_CHROOT_CAST
-          "chroot dispel failed"                            # ERR_CHROOT_DISPEL
-          "chroot rebuild failed"                           # ERR_CHROOT_REBUILD
-          "chroot already defined -- nesting not allowed"   # ERR_CHROOT_NEST
-
-          # lib.init
-          "problem installing built initramfs into ISO fs"    # ERR_INIT_INSTALL_RAMFS
-          "problem installing built initramdisk into ISO fs"  # ERR_INIT_INSTALL_RD
-          "could not build initramfs"                         # ERR_INIT_MAKE_RAMFS
-          "could not build initramdisk"                       # ERR_INIT_MAKE_RD
-          "could not make filesystem for initramfs/ramdisk"   # ERR_INIT_MAKE_FS
-
-          # lib.sorcerous
-          "sorcery not set to archive"                      # ERR_SORCEROUS_ARCHIVE
-          "could not load target sorcery"                   # ERR_SORCEROUS_TARGET
-          "could not load host sorcery"                     # ERR_SORCEROUS_HOST
-          "could not create spell cache"                    # ERR_SORCEROUS_CREATE_CACHE
-          "couldn't create ISO sorcery local config dir"    # ERR_SORCEROUS_ISO_SORCERY_CONFIG
-          "could not download sorcery"                      # ERR_SORCEROUS_DOWNLOAD
-          "could not unpack a valid sorcery install"        # ERR_SORCEROUS_UNPACK
-          "could not install sorcery into the build dir"    # ERR_SORCEROUS_INSTALL
-
-          # lib.toolchain
-          "could not copy spell cache file to build dir"    # ERR_TOOLCHAIN_CP_CACHE
-          "could not build spell cache file"                # ERR_TOOLCHAIN_BUILD_CACHE
-          "cross-toolchain failed at stage 1"               # ERR_TOOLCHAIN_STAGE1
-          "cross-toolchain failed at stage 2"               # ERR_TOOLCHAIN_STAGE2
-          "cross-toolchain failed at stage 3"               # ERR_TOOLCHAIN_STAGE3
-          "failed to cast toolchain spell"                  # ERR_TOOLCHAIN_CAST
-          "failed to dispel toolchain spell"                # ERR_TOOLCHAIN_DISPEL
-          "failed to generate toolchain spell cache"        # ERR_TOOLCHAIN_GATHER
-          "sorcery not installed in toolchain chroot"       # ERR_TOOLCHAIN_SORCERY
-          "could not resurrect spell using sorcery"         # ERR_TOOLCHAIN_RESURRECT
-  )
+liberror_add_error ERR_TOOLCHAIN_CP_CACHE \
+  "could not copy toolchain spell cache from host system into build directory"
+liberror_add_error ERR_TOOLCHAIN_BUILD_CACHE \
+  "could not build toolchain cache file from spell install info"
+liberror_add_error ERR_TOOLCHAIN_STAGE1 \
+  "cross-toolchain stage 1 failed"
+liberror_add_error ERR_TOOLCHAIN_STAGE2 \
+  "cross-toolchain stage 2 failed"
+liberror_add_error ERR_TOOLCHAIN_STAGE3 \
+  "cross-toolchain stage 3 failed"
+liberror_add_error ERR_TOOLCHAIN_CAST \
+  "could not cast toolchain spell cache"
+liberror_add_error ERR_TOOLCHAIN_DISPEL \
+  "could not dispel toolchain spell cache"
+liberror_add_error ERR_TOOLCHAIN_GATHER \
+  "could not generate toolchain spell cache"
+liberror_add_error ERR_TOOLCHAIN_SORCERY \
+  "sorcery not found in toolchain root"
+liberror_add_error ERR_TOOLCHAIN_RESURRECT \
+  "could not resurrect spell using sorcery"
 
 #-------------------------------------------------------------------------------
 ##
