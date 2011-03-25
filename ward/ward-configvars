@@ -73,6 +73,7 @@ then
   ward_get_sources "cauldron_sources"
   cauldron="$WARD_PATH/../cauldron"
   c_conf="$cauldron/etc/cauldron.conf"
+  CAULDRON_CONF="$cauldron/config"
 
   # check cauldron files
   libcolor_notice "Checking cauldron config variables"
@@ -86,6 +87,7 @@ then
   ward_get_sources "enchantment_sources"
   enchantment="$WARD_PATH/../enchantment"
   e_conf="$enchantment/etc/enchantment.conf"
+  ENCHANTMENT_CONF="$enchantment/config"
 
   # check enchantment files
   libcolor_notice "Checking enchantment config variables"

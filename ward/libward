@@ -90,6 +90,56 @@ function ward_get_sources() {
 }
 
 #-------------------------------------------------------------------------------
+## @param definition file to parse (required)
+##
+## Gets a list of include files sourced by the definition file passed as the
+## first parameter.
+##
+#-------------------------------------------------------------------------------
+function ward_parse_includes() {
+  local include="$1"
+
+  [[ -z "$include" ]] && liberror_die $ERR_FATAL
+
+  # for every line starting with "source" or ".", grab the argument to be
+  # sourced
+  grep '^[[:space:]]*\(source \|\. \)' "${include[@]}" |
+    sed 's/.*\(source\|\.\) //'
+}
+
+#-------------------------------------------------------------------------------
+## @param definition file to parse (required)
+##
+## Implements a recursive descent parser of include files, scanning each file in
+## turn and building a list of all sourced include files.
+##
+#-------------------------------------------------------------------------------
+function ward_descend_includes() {
+  local defines=( "$1" )
+  local includes=()
+  local file=""
+
+  [[ "${#defines[@]}" -eq 0 ]] && liberror_die $ERR_FATAL
+
+  # seed the includes by doing a single pass
+  eval includes=( "$(ward_parse_includes ${defines[0]})" )
+
+  # if there aren't any further includes, nothing is sourced so we can stop
+  # descending
+  [[ "${#includes[@]}" -eq 0 ]] && return $ERR_OK
+
+  for file in "${includes[@]}"
+  do
+    if ! echo "${defines[@]}" | grep "$file"
+    then
+      eval defines=( "${defines[@]}" "$file" "$(ward_descend_includes $file)" )
+    fi
+  done
+
+  echo "${defines[@]}"
+}
+
+#-------------------------------------------------------------------------------
 ## @param -p base path to sources (optional)
 ## @param -d base path to definition file (optional)
 ## @param definition file (required)
@@ -105,7 +155,9 @@ function ward_get_sources() {
 function ward_global_variables() {
   local fpath="."
   local dpath="."
-  local defines=""
+  local defines=()
+  local inc=""
+  local vars=()
   local file=""
 
   # process any optional parameters
@@ -143,7 +195,7 @@ function ward_global_variables() {
   fi
 
   # get the defines file, then drop it from the argument list
-  defines="$1"
+  defines=( "$1" )
   shift
 
   # if defines is not given with an absolute path, add the base path prefix
@@ -155,6 +207,29 @@ function ward_global_variables() {
     echo "error: definition file not found"
     liberror_die $ERR_FATAL
   fi
+
+  # recursively descend the definitions files to scan for any files they in turn
+  # include/source
+  for inc in "${defines[@]}"
+  do
+    #eval defines=( "${defines[@]}" $(ward_descend_includes "$inc") )
+    defines=( "${defines[@]}" $(ward_descend_includes "$inc") )
+  done
+  # pass the data to sort so it can sort and remove duplicates
+  defines=(
+    "$(echo ${defines[@]} | gawk '{for(i=1;i<=NF;i++){print $i}}' | sort -u)"
+    )
+
+  # get a list of all variables defined in the definition file(s)
+  for file in ${defines[@]}
+  do
+    #eval vars=( "${vars[@]}" $(grep '[A-Z][A-Z_]*[0-9]*=' "$file" | cut -d= -f1) )
+    vars=( "${vars[@]}" $(grep '[A-Z][A-Z_]*[0-9]*=' "$file" | cut -d= -f1) )
+  done
+  # pass the data to sort so it can sort and remove duplicates
+  vars=(
+    "$(echo ${vars[@]} | gawk '{for(i=1;i<=NF;i++){print $i}}' | sort -u)"
+    )
 
   while [[ $# -gt 0 ]]
   do
@@ -171,7 +246,7 @@ function ward_global_variables() {
     # underscores, and trailing numbers
     for search in $(grep -o '${\?[A-Z][A-Z_]*[0-9]*' "$file" | sed 's/^\${\?//' | sort -u)
     do
-      if ! grep -q "$search=" "$defines"
+      if ! echo "${vars[@]}" | grep -q "$search"
       then
         echo "$(libcolor_file $file): $(libcolor_warn $search)"
       fi
@@ -196,6 +271,7 @@ function ward_error_codes() {
   local codes=()
   local msgcode=""
   local count=""
+  local codes=""
 
   # process any optional parameters
   while [[ "${1:0:1}" == "-" ]]
@@ -277,6 +353,7 @@ function ward_error_variables() {
   local epath="."
   local errorcodes=""
   local file=""
+  local codes=""
 
   # process any optional parameters
   while [[ "${1:0:1}" == "-" ]]
@@ -344,10 +421,7 @@ function ward_error_variables() {
     # underscores, and trailing numbers
     for search in $(grep -o '${\?[A-Z][A-Z_]*[0-9]*' "$file" | sed 's/^\${\?//' | sort -u)
     do
-      if [[ "$search" == "ERR_OK" || "$search" == "ERR_FATAL" ]]
-      then
-        continue
-      fi
+      [[ "$search" == "ERR_OK" || "$search" == "ERR_FATAL" ]] && continue
 
       if ! echo " ${codes[*]} " | grep -q " $search "
       then
