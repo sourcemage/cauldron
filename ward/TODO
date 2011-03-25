@@ -1,0 +1,17 @@
+add ISO runtime/build tests
+	test for all necessary runtime spells
+	test for all necessary install caches
+	test for all necessary install sources
+	test for enchantment and enchantment init environment
+		enchantment should be smart about this itself, as long as all
+		its files are intact and present in the correct paths
+	test for presence and validity of initramfs/ramdisk
+
+add SYS build tests
+	test for kernel source availability/location/linking
+	test for all necessary runtime spells
+	test validity of SYS compiler toolchain
+		can be accomplished by compiling a very small program and
+		testing its output (for non-crossbuild cases), as well as
+		running file on the compiled binary to ensure that it is built
+		for the correct architecture
