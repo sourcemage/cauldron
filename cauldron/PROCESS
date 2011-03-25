@@ -1,0 +1,36 @@
+toolchain:
+	get CC (gcc, llvm?, etc.?), binutils, glibc, coreutils, bash, gawk,
+	   bzip2, ncurses, make, gnupg, autoconf, and anything else directly
+	   needed for compiling the initial sources (gcc, binutils, and glibc)
+	if doing a cross-compile, rebuild the compiler chain (gcc, binutils,
+	   glibc) for the new arch, then rebuild the basesystem spells using the
+	   cross-compiler
+	if using a baseroot, scribe update && sorcery queue && cast --queue to
+	   ensure up-to-date packages?
+sys:
+	build all spells required for initial sys runtime (mostly just
+	   basesystem, perhaps with a few exceptions)
+	clean the sys filesystem (sanity/security/QA)
+	package sys into a compressed tarball
+
+iso:
+	build all spells required for iso runtime, save the caches of the
+	   builds for later install
+	build caches for recommended install that are not needed for the iso
+	   runtime
+	summon sources for optional install
+	acquire sources for a kernel, implant a predetermined .config, and
+	   build the kernel
+	save the kernel sources for recommended install
+	copy the built kernel and modules into the iso filesystem
+	enchant the iso
+	generate an initramfs/initrd for the iso using the content generated to
+	   this point
+	setup the iso init system (which installer(s) to start initially on
+	   what terminal(s), etc.)
+	install sys tarball into iso filesystem
+	clean the iso filesystem (sanity/security/QA)
+	package into the final media form (iso9660, udf, etc.)
+	compress the final output
+
+each individual part of this process should be separately executable
