@@ -75,11 +75,34 @@ Their spell caches are provided instead, and they are to be accessed from the
 installed platform.
 
 
+***********
+* config/ *
+***********
+	This directory contains all the default configuration variables and
+values used by cauldron.
+
+***********************
+* config/default.conf *
+***********************
+	This is the default configuration profile. It does nothing than to
+source all the other configuration files in the correct order.
+
+****************
+* config/arch/ *
+****************
+	This directory contains the different architecture definitions needed
+by cauldron.
+
 *********************
 * etc/cauldron.conf *
 *********************
-	The config file contains all the global variables used by the cauldron
-scripts used to build an ISO that can be user-configured.
+	This config file is the default configuration that is installed with
+cauldron. It sets the CAULDRON_CONF variable to point to the location of the
+cauldron default configuration files and sources the default configuration
+profile (config/default.conf). It can be highly customized, where any config
+file that is loaded by the default profile can be loaded directly, skipped,
+etc., and all config variables defined can be overridden after they are loaded
+by simply redefining them.
 
 ********************
 * etc/$ARCH/spells *
