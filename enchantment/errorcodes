@@ -110,6 +110,12 @@ liberror_add_error ERR_POTION_UPDATE_SPELL_CACHES \
 liberror_add_error ERR_POTION_UPDATE_PARTITIONS "could not update partitions"
 liberror_add_error ERR_POTION_UPDATE_USERS "could not update user/group config"
 
+# installer
+liberror_add_error ERR_INSTALLER_FUNCS "could not load \$ENCHANT_INSTALLER functions file"
+liberror_add_error ERR_INSTALLER_CMD "incorrect usage or unrecognized command"
+liberror_add_error ERR_INSTALLER_KEYMAP "could not process keymap list"
+liberror_add_error ERR_INSTALLER_MODULES "could not process module list"
+
 #-------------------------------------------------------------------------------
 ##
 ## This software is free software; you can redistribute it and/or modify

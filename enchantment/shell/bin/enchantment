@@ -31,12 +31,6 @@ then
   exit 1
 fi
 
-# add local error message(s) and error code(s)
-liberror_add_error ERR_INSTALLER_FUNCS "could not load $ENCHANT_INSTALLER functions file"
-liberror_add_error ERR_INSTALLER_CHROOT_MOUNT "could not mount chroot subdirs"
-liberror_add_error ERR_INSTALLER_CHROOT_EXEC "could not execute chroot command"
-liberror_add_error ERR_INSTALLER_CHROOT_UMOUNT "could not unmount chroot subdirs"
-
 # source installer-specific functions
 [[ -f "$ENCHANT_DATA/$ENCHANT_INSTALLER/functions" ]] ||
   liberror_die $ERR_INSTALLER_FUNCS
