@@ -103,9 +103,9 @@ liberror_add_error ERR_POTION_UPDATE_CONFS \
 liberror_add_error ERR_POTION_UPDATE_FILESYSTEMS "could not update filesystems"
 liberror_add_error ERR_POTION_UPDATE_KERNEL "could not update kernel config"
 liberror_add_error ERR_POTION_UPDATE_MOUNT_POINTS "could not update mount points"
-liberror_add_error ERR_POTION_UPDATE_SPELL_SOURCES \
+liberror_add_error ERR_POTION_UPDATE_SOURCES \
   "could not update spell sources selection"
-liberror_add_error ERR_POTION_UPDATE_SPELL_CACHES \
+liberror_add_error ERR_POTION_UPDATE_CACHES \
   "could not update spell caches selection"
 liberror_add_error ERR_POTION_UPDATE_PARTITIONS "could not update partitions"
 liberror_add_error ERR_POTION_UPDATE_USERS "could not update user/group config"
