@@ -75,15 +75,11 @@ Their spell caches are provided instead, and they are to be accessed from the
 installed platform.
 
 
-**************
-* etc/config *
-**************
+*********************
+* etc/cauldron.conf *
+*********************
 	The config file contains all the global variables used by the cauldron
-scripts used to build an ISO that can be user-configured. Like the sorcery
-config file(s), etc/cauldron/config is the main (default) config file, and
-etc/cauldron/local/config is meant to contain modified or custom values.  For
-any setting found in both config files, the etc/cauldron/local/config file
-overrides what is in etc/cauldron/config.
+scripts used to build an ISO that can be user-configured.
 
 ********************
 * etc/$ARCH/spells *
@@ -269,15 +265,11 @@ process of the module. Each script in this directory must take one argument,
 which is the path to the potion to use for automating the module.
 
 
-**************
-* etc/config *
-**************
+************************
+* etc/enchantment.conf *
+************************
 	The config file contains all the global variables used by the
 enchantment scripts used during the ISO runtime that can be user-configured.
-Like the sorcery config file(s), etc/enchantment/config is the main (default)
-config file, and etc/enchantment/local/config is meant to contain modified or
-custom values. For any setting found in both config files, the
-etc/enchantment/local/config file overrides what is in etc/enchantment/config.
 
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 

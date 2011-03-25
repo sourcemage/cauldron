@@ -5,7 +5,7 @@
 ##
 ##  This goes through all the known sources for both cauldron and enchantment,
 ##  scans their uses of global configurable variables (those listed in the
-##  etc/config files), and ensures that they are defined in the relevant
+##  etc/ config files), and ensures that they are defined in the relevant
 ##  config files.
 ##
 ##=head1 COPYRIGHT

@@ -22,8 +22,7 @@
 ENCHANT_INSTALLER="shell"
 
 # source configs and libenchantment
-. "/etc/cauldron/enchant.config"
-. "/etc/cauldron/local/enchant.config" 2> /dev/null
+. "/etc/enchantment/enchantment.config"
 
 # load the main library (which in turn loads sub-libraries)
 if ! . "$ENCHANT_LIBS/libenchantment"

@@ -5,7 +5,7 @@
 ##
 ##  This goes through all the known sources for both cauldron and enchantment,
 ##  scans their uses of global configurable variables (those listed in the
-##  etc/config files), and ensures that they are defined in the relevant
+##  etc/ config files), and ensures that they are defined in the relevant
 ##  config files.
 ##
 ##=head1 COPYRIGHT
@@ -72,7 +72,7 @@ if [[ "$PROCESS_CAULDRON" == "yes" ]]
 then
   ward_get_sources "cauldron_sources"
   cauldron="$WARD_PATH/../cauldron"
-  c_conf="$cauldron/etc/config"
+  c_conf="$cauldron/etc/cauldron.conf"
 
   # check cauldron files
   libcolor_notice "Checking cauldron config variables"
@@ -85,7 +85,7 @@ if [[ "$PROCESS_ENCHANTMENT" == "yes" ]]
 then
   ward_get_sources "enchantment_sources"
   enchantment="$WARD_PATH/../enchantment"
-  e_conf="$enchantment/etc/config"
+  e_conf="$enchantment/etc/enchantment.conf"
 
   # check enchantment files
   libcolor_notice "Checking enchantment config variables"

@@ -36,8 +36,8 @@ Anything pertaining to installers is referred to collectively as "enchantment"
    underscores, and trailing numbers
    - in regexp, [A-Z][A-Z_]*[0-9]*
  * Global variables should be defined in the relevant config file
-   (etc/cauldron/config for cauldron and etc/enchantment/config for
-   enchantment)
+   (etc/cauldron/cauldron.conf for cauldron and
+   etc/enchantment/enchantment.conf for enchantment)
 
  * Local variables are to be in all lowercase, must begin with a letter, and
    can contain only letters, underscores, and trailing numbers

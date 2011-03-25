@@ -17,7 +17,7 @@
 ##
 #-------------------------------------------------------------------------------
 
-# these variables are defined the same in etc/enchantment/config
+# these variables are defined the same in etc/enchantment/enchantment.conf
 # if redefined in the environment, they will be overridden for
 # all enchantment scripts
 ENCHANT_ISO_PATH="${ENCHANT_ISO_PATH:-}"
