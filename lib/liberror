@@ -101,19 +101,19 @@ function liberror_print_error() {
     # output using libcolor if available
     if [[ "$(type -t libcolor_notice)" == "function" ]]
     then
-      libcolor_notice "$errmsg" >&$output
+      eval libcolor_notice "$errmsg" >&$output
       echo "" >&$output
     else
-      echo "$errmsg" >&$output
+      eval echo "$errmsg" >&$output
     fi
   else
     # output using libcolor if available
     if [[ "$(type -t libcolor_error)" == "function" ]]
     then
-      libcolor_error "$errmsg" >&$output
+      eval libcolor_error "$errmsg" >&$output
       echo "" >&$output
     else
-      echo "$errmsg" >&$output
+      eval echo "$errmsg" >&$output
     fi
   fi || return 1
 
