@@ -6,32 +6,32 @@ cauldron/
 
 	Code for cauldron, the ISO generation script(s).
 
-************
-* cauldron *
-************
+****************
+* bin/cauldron *
+****************
 	This is the interface to all the different libraries. It accepts user
 input, and (when later implemented) presents an interface for modifying the
 cauldron config file. It will have both a command-line interface and a
 menu-driven interface (via dialog), much like sorcery.
 
-***************
-* libcauldron *
-***************
+*******************
+* lib/libcauldron *
+*******************
 	This is the main cauldron library. It is responsible for managing
 initialization and final cleanup and for providing functionality common to all
 the cauldron sub-libraries.
 
-**************
-* lib.chroot *
-**************
+******************
+* lib/lib.chroot *
+******************
 	The lib.chroot library is responsible for setting up, tearing down, and
 calling into chroots. The code in this module gets used many times both in the
 other modules (in particular libcauldron) and in cauldron itself (particularly
 for the brew command).
 
-************
-* lib.init *
-************
+****************
+* lib/lib.init *
+****************
 	The lib.init library handles the init system for the ISO. It provides
 functions for creating an initramfs/initrd and for setting up the ISO inittab
 for booting into the correct enchant setup (i.e. putting the menu installer on
@@ -40,31 +40,31 @@ other necessary init scripts (and possibly the init system itself, if this is
 needed), though these should really be taken care of via sorcery and casting
 spells with their init scripts enabled.
 
-*****************
-* lib.sorcerous *
-*****************
+*********************
+* lib/lib.sorcerous *
+*********************
 	The lib.sorcerous library provides an interface to sorcery components
 and functions as they are needed within cauldron. This includes functions which
 source sorcery files in the target, as well as functions to download and
 install sorcery into the target.
 
-*****************
-* lib.toolchain *
-*****************
+*********************
+* lib/lib.toolchain *
+*********************
 	The lib.toolchain library provides functions for generating the base
 toolchain used to build all the components that will make up the final ISO.
 
 
-**************
-* errorcodes *
-**************
+******************
+* lib/errorcodes *
+******************
 	Defines the cauldron-specific error codes and corresponding messages to
 be used for error-checking via liberror functions.
 
 
-*************
-* cleaners/ *
-*************
+******************
+* data/cleaners/ *
+******************
 	This directory contains text files that list files to be removed from
 the final ISO, one file per line (note: files, not spells!). For example, the
 build toolchain is removed from the ISO before it is packaged, but it is not
@@ -75,21 +75,21 @@ Their spell caches are provided instead, and they are to be accessed from the
 installed platform.
 
 
-***********
-* config/ *
-***********
+****************
+* data/config/ *
+****************
 	This directory contains all the default configuration variables and
 values used by cauldron.
 
-***********************
-* config/default.conf *
-***********************
+****************************
+* data/config/default.conf *
+****************************
 	This is the default configuration profile. It does nothing than to
 source all the other configuration files in the correct order.
 
-****************
-* config/arch/ *
-****************
+*********************
+* data/config/arch/ *
+*********************
 	This directory contains the different architecture definitions needed
 by cauldron.
 
