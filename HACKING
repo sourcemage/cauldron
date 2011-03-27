@@ -165,17 +165,17 @@ enchantment/
 
 	Code for enchantment, the installer interface(s) used on the ISOs.
 
-******************
-* libenchantment *
-******************
+**********************
+* lib/libenchantment *
+**********************
 	This library provides common functions to be used across the different
 ISO installers. Currently sourced by libcauldron, but likely will be sourced by
 cauldron instead of libcauldron soon. It is also sourced by the different
 installers, as it provides common functionality for them.
 
-**************
-* lib.potion *
-**************
+******************
+* lib/lib.potion *
+******************
 	This library provides state tracking functionality for enchantment. The
 state tracking can be used for error-proofing installation procedures,
 automating installs (or even portions of them, as it can function over ranges
@@ -184,9 +184,9 @@ history functionality provided by libenchantment. This library is sourced by
 libenchantment.
 
 
-**************
-* errorcodes *
-**************
+******************
+* lib/errorcodes *
+******************
 	Defines the enchantment-specific error codes and corresponding messages to
 be used for error-checking via liberror functions.
 
