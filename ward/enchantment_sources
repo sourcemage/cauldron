@@ -18,11 +18,11 @@
 #-------------------------------------------------------------------------------
 
 sources=(
-                  "libenchantment"
-                  "lib.chroot"
-                  "lib.i18n"
-                  "lib.install"
-                  "lib.potion"
+                  "lib/libenchantment"
+                  "lib/lib.chroot"
+                  "lib/lib.i18n"
+                  "lib/lib.install"
+                  "lib/lib.potion"
                   "shell/bashrc"
                   "shell/functions"
                   "shell/bin/enchantment"

@@ -18,12 +18,12 @@
 #-------------------------------------------------------------------------------
 
 sources=(
-               "cauldron"
-               "libcauldron"
-               "lib.chroot"
-               "lib.init"
-               "lib.sorcerous"
-               "lib.toolchain"
+               "bin/cauldron"
+               "lib/libcauldron"
+               "lib/lib.chroot"
+               "lib/lib.init"
+               "lib/lib.sorcerous"
+               "lib/lib.toolchain"
                )
 
 #-------------------------------------------------------------------------------

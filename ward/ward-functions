@@ -89,7 +89,7 @@ then
   # check cauldron files
   libcolor_notice "Checking cauldron functions"
   echo ""
-  ward_functions -p "$cauldron" -l "$cauldron" "${sources[@]}"
+  ward_functions -p "$cauldron" -l "$cauldron/lib" "${sources[@]}"
 fi
 
 if [[ "$PROCESS_ENCHANTMENT" == "yes" ]]
@@ -100,7 +100,7 @@ then
   # check enchantment files
   libcolor_notice "Checking enchantment functions"
   echo ""
-  ward_functions -p "$enchantment" -l "$enchantment" "${sources[@]}"
+  ward_functions -p "$enchantment" -l "$enchantment/lib" "${sources[@]}"
 fi
 
 #-------------------------------------------------------------------------------

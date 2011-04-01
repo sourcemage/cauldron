@@ -73,7 +73,7 @@ then
   ward_get_sources "cauldron_sources"
   cauldron="$WARD_PATH/../cauldron"
   c_conf="$cauldron/etc/cauldron.conf"
-  CAULDRON_CONF="$cauldron/config"
+  CAULDRON_CONF="$cauldron/data/config"
 
   # check cauldron files
   libcolor_notice "Checking cauldron config variables"
