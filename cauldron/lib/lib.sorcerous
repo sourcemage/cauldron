@@ -70,7 +70,8 @@ function cauldron_sorcerous_cross_configure() {
   fi
 
   # make sure the sorcery local config dir exists on the ISO
-  mkdir -p "$CAULDRON_ISORCERY_LCONFIG" || return $ERR_SORCEROUS_ISO_SORCERY_CONFIG
+  "${CAULDRON_CMD_MKDIR[@]}" "$CAULDRON_ISORCERY_LCONFIG" ||
+    return $ERR_SORCEROUS_ISO_SORCERY_CONFIG
 
   case "$stage" in
     1)
@@ -99,10 +100,10 @@ function cauldron_sorcerous_cross_configure() {
 function cauldron_sorcerous_download() {
   local spool="${1:-$CAULDRON_BUILD/var/spool/sorcery}"
   local sorcery_url="${CAULDRON_SORCERY_URL}"
-  local url_get=( "${CAULDRON_URL_DL_CMD[@]}" )
+  local url_get=( "${CAULDRON_CMD_URL_DL[@]}" )
 
   # ensure the spool dir exists for getting spell sources
-  mkdir -p "$spool" || return $ERR_BUILD_SPOOL
+  "${CAULDRON_CMD_MKDIR[@]}" "$spool" || return $ERR_BUILD_SPOOL
 
   # check to see if we will copy or download the sorcery source tarball
   # then get the source tarball and place it in CAULDRON_BUILD
@@ -133,7 +134,7 @@ function cauldron_sorcerous_install() {
   local sorcery="$CAULDRON_SORCERY_PKG"
 
   # unpack the source tarball
-  tar -C "$CAULDRON_BUILD/usr/src" -jxf "$spool/$sorcery" ||
+  "${CAULDRON_CMD_UNPACK_SORCERY[@]}" "$spool/$sorcery" ||
     return $ERR_SORCEROUS_UNPACK
 
   [[ -x "$CAULDRON_BUILD/usr/src/sorcery/install" ]] ||

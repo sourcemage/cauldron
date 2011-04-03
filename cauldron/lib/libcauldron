@@ -92,11 +92,11 @@ function cauldron_clean_iso_system() {
   do
     if [[ -d "$i" ]]
     then
-      echo "Attempting to remove directory $i..."
-      rmdir "$i" || return $ERR_CLEAN_DIR
+      "$CAULDRON_CMD_OUTPUT[@]}" "Attempting to remove directory $i..."
+      cauldron_chroot rmdir "$i" || return $ERR_CLEAN_DIR
     else
-      echo "Deleting $i"
-      rm "$i" || return $ERR_CLEAN_FILE
+      "$CAULDRON_CMD_OUTPUT[@]}" "Deleting $i"
+      cauldron_chroot rm "$i" || return $ERR_CLEAN_FILE
     fi
   done
 
@@ -106,13 +106,15 @@ function cauldron_clean_iso_system() {
 #-------------------------------------------------------------------------------
 ##
 ## Packages the sys directory into a compressed tarball to be placed in the iso
-## filesystem as system.tar.bz2.
+## filesystem as system.tar.bz2. Relies on the fact that
+## CAULDRON_CMD_ARCHIVE_SYS will add a file suffix to the CAULDRON_SYS_NAME
+## base filename.
 ##
 #-------------------------------------------------------------------------------
 function cauldron_package_sys() {
-  "${CAULDRON_ARCHIVE_CMD[@]}" || return $ERR_SYS_PACKAGE
+  "${CAULDRON_CMD_ARCHIVE_SYS[@]}" || return $ERR_SYS_PACKAGE
 
-  "${CAULDRON_COMPRESS_CMD[@]}" "$CAULDRON_BUILD/$CAULDRON_SYS_NAME" ||
+  "${CAULDRON_CMD_COMPRESS[@]}" "$CAULDRON_BUILD/$CAULDRON_SYS_NAME".* ||
     return $ERR_SYS_COMPRESS
 
   return $ERR_OK
@@ -125,14 +127,9 @@ function cauldron_package_sys() {
 ##
 #-------------------------------------------------------------------------------
 function cauldron_package_iso() {
-  "${CAULDRON_MKISO_CMD[@]}" || return $ERR_ISO_PACKAGE
+  "${CAULDRON_CMD_MKISO[@]}" || return $ERR_ISO_PACKAGE
 
-  if [[ "$CAULDRON_KEEPISO" == "yes" ]] ;
-  then
-    bzip2 -k "$CAULDRON_ISO_NAME" || return $ERR_ISO_COMPRESS
-  else
-    bzip2 "$CAULDRON_ISO_NAME" || return $ERR_ISO_COMPRESS
-  fi
+  "${CAULDRON_CMD_COMPRESS[@]}" "$CAULDRON_ISO_NAME" || return $ERR_ISO_COMPRESS
 
   return $ERR_OK
 }
@@ -153,7 +150,7 @@ function cauldron_source_enchantment() {
   # if, we need to copy them (they are required for the ISO)
   if [[ ! -f "$enchant_config" ]]
   then
-    cp -f "$host_enchant_config" "$enchant_config" ||
+    "${CAULDRON_CMD_CP_FORCE[@]}" "$host_enchant_config" "$enchant_config" ||
       liberror_die $ERR_ENCHANT_CONFIG
   fi
 
@@ -189,13 +186,16 @@ function cauldron_add_installers() {
   [[ -z $ENCHANT_DATA ]] && cauldron_source_enchantment
 
   # make sure CAULDRON_BUILD/ENCHANT_DATA exists
-  mkdir -p "$ENCHANT_DATA" || return $ERR_INSTALLER_DIR
+  "${CAULDRON_CMD_MKDIR[@]}" "$ENCHANT_DATA" || return $ERR_INSTALLER_DIR
 
   for installer in $CAULDRON_INSTALLERS
   do
-    cp -r "$CAULDRON_LIBS/enchantment/$installer" "$ENCHANT_DATA/" ||
-      return $ERR_COPY_INSTALLER
-    ln -sf "$ENCHANT_DATA/$installer"/bin/enchantment* \
+    "${CAULDRON_CMD_CP_RECURSE[@]}" \
+      "$CAULDRON_LIBS/enchantment/$installer" \
+      "$ENCHANT_DATA/" ||
+        return $ERR_COPY_INSTALLER
+    "$CAULDRON_CMD_SYMLINK_FORCE[@]}" \
+      "$ENCHANT_DATA/$installer"/bin/enchantment* \
       "$CAULDRON_BUILD/usr/sbin/" ||
         return $ERR_LINK_INSTALLER
   done
@@ -213,11 +213,13 @@ function cauldron_add_installers() {
 #-------------------------------------------------------------------------------
 function cauldron_prepare() {
   # ensure that the build dir exists
-  mkdir -p "$CAULDRON_BUILD"
+  "${CAULDRON_CMD_MKDIR[@]}" "$CAULDRON_BUILD"
 
   # copy the host's resolv.conf in order to dl sources from the net
-  cp -L /etc/resolv.conf "$CAULDRON_BUILD"/etc/resolv.conf ||
-    return $ERR_RESOLV
+  "${CAULDRON_CMD_CP[@]}" \
+    "$CAULDRON_RESOLV" \
+    "$CAULDRON_BUILD/etc/resolv.conf" ||
+      return $ERR_RESOLV
 
   # install sorcery into the build dir
   if [[ -z cauldron_sorcerous_install ]]
@@ -228,7 +230,7 @@ function cauldron_prepare() {
 
   # cauldron is a spell
   # there is a spoon
-  cauldron_chroot "$CAULDRON_CAST" cauldron || return $ERR_CHROOT_CAST
+  cauldron_chroot "${CAULDRON_CMD_CAST[@]}" cauldron || return $ERR_CHROOT_CAST
 
   return $ERR_OK
 }
@@ -242,11 +244,12 @@ function cauldron_cleanup() {
   # if the user wants everything cleaned, kill the build directory
   if [[ "$CAULDRON_CLEAN" == "yes" ]]
   then
-    rm -fr "$CAULDRON_BUILD" || return $ERR_CLEANUP_BUILD
+    "${CAULDRON_CMD_RM_RECURSE_FORCE[@]}" "$CAULDRON_BUILD" ||
+      return $ERR_CLEANUP_BUILD
   fi
 
   # kill the temp directory
-  rm -fr "$CAULDRON_TMP" || return $ERR_CLEANUP_TMP
+  "${CAULDRON_CMD_RM_RECURSE_FORCE[@]}" "$CAULDRON_TMP" || return $ERR_CLEANUP_TMP
 
   return $ERR_OK
 }

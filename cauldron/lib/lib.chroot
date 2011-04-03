@@ -35,12 +35,18 @@ function cauldron_chroot_init() {
   fi
 
   # bind the needed mounts
-  mount --bind "$CAULDRON_HOST/dev" "$target/dev" ||
-    return $ERR_CHROOT_INIT
-  mount --bind "$CAULDRON_HOST/dev/pts" "$target/dev/pts" ||
-    return $ERR_CHROOT_INIT
-  mount --bind "$CAULDRON_HOST/proc" "$target/proc" ||
-    return $ERR_CHROOT_INIT
+  "${CAULDRON_CMD_MOUNT_BIND[@]}" \
+    "$CAULDRON_HOST/dev" \
+    "$target/dev" ||
+      return $ERR_CHROOT_INIT
+  "${CAULDRON_CMD_MOUNT_BIND[@]}" \
+    "$CAULDRON_HOST/dev/pts" \
+    "$target/dev/pts" ||
+      return $ERR_CHROOT_INIT
+  "${CAULDRON_CMD_MOUNT_BIND[@]}" \
+    "$CAULDRON_HOST/proc" \
+    "$target/proc" ||
+      return $ERR_CHROOT_INIT
 
   # make sure the sorcerous library is loaded
   # which provides cauldron_source_sorcery
@@ -53,7 +59,7 @@ function cauldron_chroot_init() {
 
   # everything went OK, so export the chroot definitions
   export CAULDRON_CHROOTINIT=1
-  export CAULDRON_CHROOT=( "${CAULDRON_CHROOT_CMD[@]}" "$target" )
+  export CAULDRON_CHROOT=( "${CAULDRON_CMD_CHROOT[@]}" "$target" )
 
   return $ERR_OK
 }
@@ -76,9 +82,9 @@ function cauldron_chroot_done() {
     fi
 
     # unmount the bind mounts
-    umount "$target/proc" || return $ERR_CHROOT_DONE
-    umount "$target/dev/pts" || return $ERR_CHROOT_DONE
-    umount "$target/dev" || return $ERR_CHROOT_DONE
+    "${CAULDRON_CMD_UNMOUNT[@]}" "$target/proc" || return $ERR_CHROOT_DONE
+    "${CAULDRON_CMD_UNMOUNT[@]}" "$target/dev/pts" || return $ERR_CHROOT_DONE
+    "${CAULDRON_CMD_UNMOUNT[@]}" "$target/dev" || return $ERR_CHROOT_DONE
 
     # clear the chroot definitions
     unset CAULDRON_CHROOTINIT
@@ -127,7 +133,7 @@ function cauldron_chroot_cast() {
   [[ -z "$CAULDRON_CHROOT" ]] && return $ERR_CHROOT_INIT
 
   # cast all the spells in the list in one shot for better efficiency
-  cauldron_chroot "$CAULDRON_CAST" "${target_spells[@]}" ||
+  cauldron_chroot "${CAULDRON_CMD_CAST[@]}" "${target_spells[@]}" ||
     return $ERR_CHROOT_CAST
 
   return $ERR_OK
@@ -154,7 +160,7 @@ function cauldron_chroot_dispel() {
   [[ -z "$CAULDRON_CHROOT" ]] && return $ERR_CHROOT_INIT
 
   # dispel all the spells in the list in one shot for better efficiency
-  cauldron_chroot "$CAULDRON_DISPEL" "${target_spells[@]}" ||
+  cauldron_chroot "${CAULDRON_CMD_DISPEL[@]}" "${target_spells[@]}" ||
     return $ERR_CHROOT_DISPEL
 
   return $ERR_OK
@@ -205,8 +211,10 @@ function cauldron_chroot_cast_clean() {
     # the cast round from sorcery, which at present will require modifying cast
     # itself to export the list (otherwise we'll have to trap the output and
     # parse it, which is far less machine-readable)
-    cauldron_chroot "$CAULDRON_CAST" "$spell" || return $ERR_CHROOT_CAST
-    cauldron_chroot "$CAULDRON_DISPEL" "$spell" || return $ERR_CHROOT_DISPEL
+    cauldron_chroot "${CAULDRON_CMD_CAST[@]}" "$spell" ||
+      return $ERR_CHROOT_CAST
+    cauldron_chroot "${CAULDRON_CMD_DISPEL[@]}" "$spell" ||
+      return $ERR_CHROOT_DISPEL
   done
 
   return $ERR_OK

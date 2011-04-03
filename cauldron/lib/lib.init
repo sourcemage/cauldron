@@ -27,8 +27,10 @@
 function cauldron_init_setup() {
   mkdir -p "$CAULDRON_ISO/etc" || return $ERR_MK_DIR
 
-  cp "$CAULDRON_DATA/$CAULDRON_ARCH/inittab" "$CAULDRON_ISO/etc/inittab" ||
-    return $ERR_CP_FILE
+  "${CAULDRON_CMD_CP[@]}" \
+    "$CAULDRON_DATA/$CAULDRON_ARCH/inittab" \
+    "$CAULDRON_ISO/etc/inittab" ||
+      return $ERR_CP_FILE
 
   return $ERR_OK
 }
@@ -43,9 +45,10 @@ function cauldron_init_setup() {
 function cauldron_init_img_install() {
   local img="$1"
 
-  mkdir -p "$CAULDRON_ISO/boot" || return $ERR_MK_DIR
+  "${CAULDRON_CMD_MKDIR[@]}" "$CAULDRON_ISO/boot" || return $ERR_MK_DIR
 
-  cp "$img" "$CAULDRON_ISO/boot/$img" || return $ERR_CP_FILE
+  "${CAULDRON_CMD_CP[@]}" "$img" "$CAULDRON_ISO/boot/$img" ||
+    return $ERR_CP_FILE
 
   return $ERR_OK
 }
@@ -59,14 +62,25 @@ function cauldron_init_make_ramdisk() {
   local initrd="$CAULDRON_TMP/initrd"
   local initmnt="$CAULDRON_TMP/initrd_mount"
 
-  mkdir -p "$initmnt" || return $ERR_MK_DIR
+  "${CAULDRON_CMD_MKDIR[@]}" "$initmnt" || return $ERR_MK_DIR
 
-  dd '-if' /dev/null '-of' "$initrd" || return $ERR_INIT_MAKE_RD
-  mke2fs "$initrd" || return $ERR_INIT_MAKE_RD
-  mount -o loop "$initrd" "$initmnt" || return $ERR_INIT_MAKE_RD
+  "${CAULDRON_CMD_DD[@]}" \
+    '-if' /dev/null \
+    '-of' "$initrd" ||
+      return $ERR_INIT_MAKE_RD
+
+  "${CAULDRON_CMD_MKRDFS[@]}" "$initrd" || return $ERR_INIT_MAKE_RD
+
+  "${CAULDRON_CMD_MOUNT_LOOP[@]}" \
+    "$initrd" \
+    "$initmnt" ||
+      return $ERR_INIT_MAKE_RD
+
   cauldron_init_fs_make "$initmnt" || return $ERR_INIT_MAKE_RD
-  umount "$initmnt" || return $ERR_INIT_MAKE_RD
-  gzip -9 "$initrd" || return $ERR_INIT_MAKE_RD
+
+  "${CAULDRON_CMD_UNMOUNT[@]}" "$initmnt" || return $ERR_INIT_MAKE_RD
+
+  "${CAULDRON_CMD_COMPRESS_RAMDISK[@]}" "$initrd" || return $ERR_INIT_MAKE_RD
 
   return $ERR_OK
 }
@@ -93,13 +107,13 @@ function cauldron_init_make_ramfs() {
   local ramdir="$CAULDRON_TMP/initram"
   local ramfs="$CAULDRON_TMP/initram.cpio.gz"
 
-  mkdir -p "$ramdir" || return $ERR_MK_DIR
+  "${CAULDRON_CMD_MKDIR[@]}" "$ramdir" || return $ERR_MK_DIR
 
   cauldron_init_fs_make "$ramdir" || return $ERR_INIT_MAKE_FS
 
   (
     cd "$ramdir"
-    find * -depth -print | cpio -H newc -o | gzip -9c > "$ramfs"
+    "${CAULDRON_CMD_MKRAMFS[@]}" > "$ramfs"
   ) ||
     return $ERR_INIT_MAKE_RAMFS
 
@@ -130,9 +144,9 @@ function cauldron_init_fs_dirs() {
   local list="$CAULDRON_DATA/$CAULDRON_ARCH/initfs/dirs"
 
   if [[ -f "$list" ]]
-    for dir in $(cat "$list")
+    for dir in $("${CAULDRON_CMD_CAT[@]}" "$list")
     do
-      mkdir -p "$initfs/$dir" || return $ERR_MK_DIR
+      "${CAULDRON_CMD_MKDIR[@]}" "$initfs/$dir" || return $ERR_MK_DIR
     done
   fi
 
@@ -150,9 +164,9 @@ function cauldron_init_fs_bins() {
   local list="$CAULDRON_DATA/$CAULDRON_ARCH/initfs/binaries"
 
   if [[ -f "$list" ]]
-    for bin in $(cat "$CAULDRON_DATA/$CAULDRON_ARCH/initfs/binaries")
+    for bin in $("${CAULDRON_CMD_CAT[@]}" "$list")
     do
-      cp "$bin" "$initfs/bin" || return $ERR_CP_FILE
+      "${CAULDRON_CMD_CP[@]}" "$bin" "$initfs/bin" || return $ERR_CP_FILE
     done
   fi
 
@@ -170,9 +184,9 @@ function cauldron_init_fs_libs() {
   local list="$CAULDRON_DATA/$CAULDRON_ARCH/initfs/libs"
 
   if [[ -f "$list" ]]
-    for lib in $(cat "$CAULDRON_DATA/$CAULDRON_ARCH/initfs/libs")
+    for lib in $("${CAULDRON_CMD_CAT[@]}" "$list")
     do
-      cp "$lib" "$initfs/lib/" || return $ERR_CP_FILE
+      "${CAULDRON_CMD_CP[@]}" "$lib" "$initfs/lib/" || return $ERR_CP_FILE
     done
   fi
 
@@ -190,9 +204,12 @@ function cauldron_init_fs_mods() {
   local list="$CAULDRON_DATA/$CAULDRON_ARCH/initfs/modules"
 
   if [[ -f "$list" ]]
-    for module in $(cat "$CAULDRON_DATA/$CAULDRON_ARCH/initfs/modules")
+    for module in $("${CAULDRON_CMD_CAT[@]}" "$list")
     do
-      cp "$module" "$initfs/lib/modules/$CAULDRON_KVERS" || return $ERR_CP_FILE
+      "${CAULDRON_CMD_CP[@]}" \
+        "$module" \
+        "$initfs/lib/modules/$CAULDRON_KVERS" ||
+          return $ERR_CP_FILE
     done
   fi
 
@@ -213,10 +230,10 @@ function cauldron_init_fs_init() {
   # *requried* by init ramfs and an init ramdisk can be configured to use
   # anything we want via the init= boot parameter, and we can also symlink for
   # ramdisks if we want to.
-  cp "$init_script" "$initfs/init" || return $ERR_CP_FILE
+  "${CAULDRON_CMD_CP[@]}" "$init_script" "$initfs/init" || return $ERR_CP_FILE
 
   # make sure the init script is executable
-  chmod 0755 "$initfs/init" || return $ERR_CHMOD_FILE
+  "${CAULDRON_CMD_CHMOD}" 0755 "$initfs/init" || return $ERR_CHMOD_FILE
 
   return $ERR_OK
 }
@@ -240,17 +257,19 @@ function cauldron_init_fs_busybox() {
     mkdir -p "$build" || return $ERR_MK_DIR
   fi
 
-  mkdir -p "$build/etc/sorcery/local" || return $ERR_MK_DIR
+  "${CAULDRON_CMD_MKDIR[@]}" "$build/etc/sorcery/local" || return $ERR_MK_DIR
 
-  cp -f "$bbconf" "$build/etc/sorcery/local/busybox.config" ||
-    return $ERR_CP_FILE
+  "${CAULDRON_CMD_CP_FORCE[@]}" \
+    "$bbconf" \
+    "$build/etc/sorcery/local/busybox.config" ||
+      return $ERR_CP_FILE
 
   cauldron_chroot_init "$build"
   [[ $? -eq 0 || $? -eq $ERR_CHROOT_NEST ]] || return $ERR_CHROOT_INIT
 
   cauldron_chroot_cast "busybox" || return $ERR_CHROOT_CAST
 
-  cp "$build/sbin/busybox" "$initfs/sbin/busybox" ||
+  "${CAULDRON_CMD_CP[@]}" "$build/sbin/busybox" "$initfs/sbin/busybox" ||
     return $ERR_CP_FILE
 
   cauldron_chroot_dispel "busybox" || return $ERR_CHROOT_DISPEL
