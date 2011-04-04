@@ -6,13 +6,27 @@ cauldron/
 
 	Code for cauldron, the ISO generation script(s).
 
+********
+* bin/ *
+********
+	This directory hosts any end-user executable scripts. Currently this is
+only meant for the main front-end, cauldron, described below.
+
 ****************
 * bin/cauldron *
 ****************
-	This is the interface to all the different libraries. It accepts user
-input, and (when later implemented) presents an interface for modifying the
-cauldron config file. It will have both a command-line interface and a
-menu-driven interface (via dialog), much like sorcery.
+	This is the front-end interface to all the different libraries. It
+accepts user input, and (when later implemented) presents an interface for
+modifying the cauldron config file. It will have both a command-line interface
+and a menu-driven interface (via dialog), much like sorcery.
+
+
+********
+* lib/ *
+********
+	This directory hosts all the back-end code, logically separated
+according to function and purpose. This is where the real work in generating an
+ISO is carried out.
 
 *******************
 * lib/libcauldron *
@@ -62,6 +76,13 @@ toolchain used to build all the components that will make up the final ISO.
 be used for error-checking via liberror functions.
 
 
+*********
+* data/ *
+*********
+	Everything in this directory consists of necessary auxiliary files. At
+present, this includes configuration files as well as the "cleaners" (files
+that list paths to prune from generated content).
+
 ******************
 * data/cleaners/ *
 ******************
@@ -93,6 +114,17 @@ source all the other configuration files in the correct order.
 	This directory contains the different architecture definitions needed
 by cauldron.
 
+
+********
+* etc/ *
+********
+	This directory contains the end-user configurable files. These files
+consist of the main cauldron.conf file that specifies all of cauldron's
+configuration, as well as architecture specific spell listing and configuration
+files (such as the iso and sys spell/cache/source lists, and the files that
+specify what will go into the initramfs and how busybox will be configured for
+the initramfs).
+
 *********************
 * etc/cauldron.conf *
 *********************
@@ -104,38 +136,70 @@ file that is loaded by the default profile can be loaded directly, skipped,
 etc., and all config variables defined can be overridden after they are loaded
 by simply redefining them.
 
-********************
-* etc/$ARCH/spells *
-********************
+************************
+* etc/$ARCH/iso.spells *
+************************
 	A list of all the spells necessary for the ISO runtime to function.
-These are all basic spells, like bash for example. Later we will likely also
-have arch-specific spell lists, since different archs will need, for example,
-different boot loaders (grub and lilo are only for x86). The spell list is used
-by libcauldron.
+This includes all spells the ISO needs, including basesystem-level spells
+through higher-level recovery tools, as well as any optional tools that are
+wanted.
 
-********************
-* etc/$ARCH/caches *
-********************
-	A list of the spells which are necessary for a basic installed target
-system. This should be as close to a minimal basesystem as possible. Anything
-which is truly optional should be provided as spell sources rather than built
-caches. All spells whose caches are provided on the ISO must also have their
-sources provided on the ISO.
+************************
+* etc/$ARCH/iso.caches *
+************************
+	Spell caches provided for installation. These are all in addition to
+the system.tar.bz2 basesystem provided in the ISO. These are all optional
+packages, in the sense that whether they are required for a system to function
+depends on the configuration of the system (i.e., a root filesystem formatted
+with XFS will require xfsprogs in order to be able to boot). These are spells
+that can readily be provided as caches, meaning they do not have selectable
+options during compile time (aside from the usual architecture and path
+options). Any provided spell caches should also have their sources provided
+(see below), so long as doing so does not overly enlarge the ISO (this proviso
+may be dropped in the future depending on source collection sizes).
 
-*********************
-* etc/$ARCH/sources *
-*********************
-	A list of the spells which are not necessary for a basic installed
-target system. These sources are provided for additional functionality, like
-networking. Exclusion of a spell from this list does not imply exclusion of the
-spell's sources from the ISO (cf. iso-caches.$ARCH, mentioned above).
+*************************
+* etc/$ARCH/iso.sources *
+*************************
+	Spell sources provided for installation. Sources are provided for two
+reasons: 1) the spell in question is truly optional (not strictly needed for a
+system to function); 2) the spell in question is actually needed for a typical
+system to function (i.e., a bootloader), but the spell has compilation options
+that mean the spell cannot be provided simply as a cache and still satisfy the
+needs of all potential users. Exclusion of a spell from this list does not
+necessarily imply exclusion of the spell's sources from the ISO (cf. iso.caches
+above).
+
+************************
+* etc/$ARCH/sys.spells *
+************************
+	A list of all the spells necessary for an installed target system to
+function initially. This should be kept as minimal as possible, and typically
+consists purely of a build toolchain and a shell. Of course any auxiliary
+spells necessary for sorcery are also included.
+
+*************************
+* etc/$ARCH/sys.sources *
+*************************
+	A list of all the spell sources necessary for an installed target
+system to function initially. Currently this consists only of the linux
+sources.
 
 ***********************
 * etc/$ARCH/toolchain *
 ***********************
 	This is a list of all the spells needed for building the binaries to go
-onto the ISO. It includes things like gcc, as well as arch-specific spells such
-as bin86 for x86.
+onto the ISO. It should be kept absolutely minimal, providing only what is
+absolutely necessary to compile sources for the given architecture (i.e.,
+things like gcc, binutils, and glibc, and possibly any architecture-specific
+build spells).
+
+*********************
+* etc/$ARCH/initfs/ *
+*********************
+	This directory contains configuration files and listing files for the
+content that is to populate a generated initramfs/initramdisk for the given
+architecture. This includes, for example, the busybox configuration.
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 
@@ -165,6 +229,13 @@ enchantment/
 
 	Code for enchantment, the installer interface(s) used on the ISOs.
 
+********
+* lib/ *
+********
+	This directory hosts all the back-end code, logically separated
+according to function and purpose. This is where the real work in processing an
+install is carried out.
+
 **********************
 * lib/libenchantment *
 **********************
@@ -172,6 +243,35 @@ enchantment/
 ISO installers. Currently sourced by libcauldron, but likely will be sourced by
 cauldron instead of libcauldron soon. It is also sourced by the different
 installers, as it provides common functionality for them.
+
+******************
+* lib/lib.chroot *
+******************
+	This library provides functions for preparing, entering, executing
+within, exiting, and cleaning up chroots.
+
+****************
+* lib/lib.i18n *
+****************
+	This library provides functionality for internationalization. This
+currently consists of setting up keymaps, but in the future will include
+locale, display terminal (such as fbterm), input method loading (such as uim
+and m17n-lib), etc.
+
+*******************
+* lib/lib.install *
+*******************
+	This is perhaps the library most associated with the purpose of
+enchantment: installing files, directories, caches, etc. into a target. No file
+should be directly copied/installed to a target by any enchantment code except
+in this library.
+
+*******************
+* lib/lib.modules *
+*******************
+	Enchantment has the ability to have very complicated install
+procedures. This library is responsible for managing access/interfacing to each
+of the procedures, called modules.
 
 ******************
 * lib/lib.potion *
@@ -210,6 +310,13 @@ highly stable and robust, and requires very little in the way of system
 resources. It's a good backup if something goes wrong with another installer,
 and has proven capable of being the only installer on the ISO as well. Other
 installers are just eye-candy on top of this one.)
+
+*******************
+* $installer/bin/ *
+*******************
+	These directories host any end-user executable front-ends which call
+the functions in the various enchantment libraries. The primary front-end is
+enchantment, the shell installer.
 
 **********************
 * $installer/modules *
