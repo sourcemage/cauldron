@@ -7,17 +7,15 @@ Things to do in order to achieve 0.1
 -------------------
 * finish writing the cauldron script so it actually does the steps needed
 	- setup sorcery in build chroot (ARCHIVE=on, etc.)
-	- perform the build
-	- clean the chroot out (cleaners)
-	- add installer(s)
 	- extra sanity checks on boot and etc in chroot (add_sauce stuff for
 	  those familiar with the 0.10 series)
-	- switch initramfs to use busybox
-		o will need a scrubbed busybox config for this
+		o this should be done in ward and liberror
 * write code to set up the init process on the ISO
-	- this needs to be sensitive to what installers are present
+	- this may need to be sensitive to what installers are present
 * add optional feature to either cast from scratch for the iso/system or pick
   up where we left off from a previous run (in case of failed spells)
+	- automatic inter-dependency resolution for the different stages of the
+	  ISO generation
 * create a man page for the cauldron command explaining how to use it and what
   files it uses
 
@@ -26,13 +24,17 @@ Things to do in order to achieve 0.1
 -------------------
 * still need the installers themselves to be written
 	- for the shell installer, this is trivial (mostly done)
+		o implement the hooks to use lib.potion
 		o implement tab completion specific for the installer commands
 		  (no need for a full-blown bash-completion installation, which
 		  would add bloat; implementing tab completion only for the
-		  installer would be pretty small and fast)
+		  installer would be pretty small and fast) - see 1.0 below
 	- the menu installer needs to be written
 		~ Not sure if this should really be for 0.1, but a lot of
 		  people have asked for it already.
+		o needs to be implemented via a good abstracted API or not at
+		  all - maintaining a mess of dialog calls with it's plethora
+		  of command-line option requirements is a nightmare
 	- i18n
 		o translate error messages, instructions, etc. and implement an
 		  easy way of calling them based on what language is selected
@@ -41,7 +43,12 @@ Things to do in order to achieve 0.1
 		  each language supported) - the framework is mostly in place,
 		  now we need translators
 		o display (fonts): fbterm + fontconfig + freetype2
+			> might be too big due to the size of the fonts, but no
+			  other way to really have an internationalized ISO -
+			  maybe have both a "core" ISO that lacks true i18n and
+			  a full i18n ISO as official
 		o input: uim (uim-fep) + m17n-lib + m17n-db
+			> only useful if display is also in place
 
 -------------------
 --    general    --
