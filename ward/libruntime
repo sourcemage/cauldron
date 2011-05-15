@@ -60,7 +60,7 @@ function ward_symlink_dir() {
 function ward_kernel_symlink() {
   local base="$1"
 
-  ward_symlink_dir "$base/usr/src/linux"
+  if ! ward_symlink_dir "$base/usr/src/linux"
   then
     libcolor_error "error: kernel symlink not found in "
     libcolor_file "$base"
