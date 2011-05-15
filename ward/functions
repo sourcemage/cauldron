@@ -16,7 +16,7 @@
 ##
 #-------------------------------------------------------------------------------
 
-WARD_PATH="${DELINT_PATH:-$(dirname $0)}"
+WARD_PATH="${WARD_PATH:-$(dirname $0)}"
 
 if ! . "$WARD_PATH/libward"
 then
