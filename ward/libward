@@ -63,7 +63,7 @@ unset ward_fatal_error
 function ward_load_library() {
   local lib="$1"
 
-  . "$WARD_PATH/$lib" 2>$CAULDRON_NULL
+  . "$WARD_PATH/$lib" 2>$WARD_NULL
   liberror_check_fatal_error
 }
 
