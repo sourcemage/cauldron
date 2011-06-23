@@ -49,9 +49,7 @@ LIBCOLOR_SYMLINK_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_CYAN}"
 function libcolor_notice() {
   if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
   then
-    echo -ne "$LIBCOLOR_BOLD"
     echo -n "$@"
-    echo -ne "$LIBCOLOR_NORMAL"
   else
     echo -ne "$LIBCOLOR_NOTICE_COLOR"
     echo -n "$@"
@@ -68,9 +66,7 @@ function libcolor_notice() {
 function libcolor_warn() {
   if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
   then
-    echo -ne "$LIBCOLOR_BOLD"
     echo -n "$@"
-    echo -ne "$LIBCOLOR_NORMAL"
   else
     echo -ne "$LIBCOLOR_WARN_COLOR"
     echo -n "$@"
@@ -87,9 +83,7 @@ function libcolor_warn() {
 function libcolor_error() {
   if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
   then
-    echo -ne "$LIBCOLOR_BOLD"
     echo -n "$@"
-    echo -ne "$LIBCOLOR_NORMAL"
   else
     echo -ne "$LIBCOLOR_ERROR_COLOR"
     echo -n "$@"
