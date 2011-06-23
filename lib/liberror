@@ -36,12 +36,6 @@ ERR_MSGS=(
           )
 
 #-------------------------------------------------------------------------------
-# Internal definitions - do not use in external/public code!
-#-------------------------------------------------------------------------------
-# error counter -- for internal use only!
-LIBERR_ERRCODE_COUNT=2
-
-#-------------------------------------------------------------------------------
 # Function definitions
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
@@ -57,17 +51,17 @@ LIBERR_ERRCODE_COUNT=2
 function liberror_add_error() {
   local code="$1"
   local msg="$2"
+  local count="${#ERR_MSGS[@]}"
 
   [[ -z "$code" || -z "$msg" ]] && return $ERR_FATAL
 
-  [[ "$LIBERR_ERRCODE_COUNT" -ge 255 ]] && return $ERR_FATAL
+  [[ "$count" -ge 255 ]] && return $ERR_FATAL
 
   # define the error code itself
-  eval "$code"=$LIBERR_ERRCODE_COUNT
+  eval "$code"=$count
 
   # define a corresponding message in the message array
-  ERR_MSGS[$LIBERR_ERRCODE_COUNT]="$msg"
-  ((LIBERR_ERRCODE_COUNT++))
+  ERR_MSGS[$count]="$msg"
 
   return $ERR_OK
 }
