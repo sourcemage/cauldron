@@ -143,14 +143,81 @@ function liberror_die() {
 }
 
 #-------------------------------------------------------------------------------
+## @param error name (optional)
+## @param error information (optional)
 ##
-## Calls liberror_die if current exit status (from a previous command) holds an
-## error. If there's an error, the error is passed to liberror_die. Otherwise,
-## it returns $ERR_OK.
+## Calls liberror_print_error if current exit status (from a previous command)
+## holds an error that is defined. If error name is provided as the first
+## argument, then it will override the value of $? and use the provided error
+## name instead. If error information is provided as an argument, then it will
+## be added to the defined error message as additional information.
+##
+## Note that, while both parameters are optional, the error name must be the
+## first argument, but error information is allowed to be the only argument.
+## Thus, if you wish to override the error name but not provide additional error
+## information, the error name should be given as the first argument and an
+## empty string given as the error information. An example follows.
+##
+##   liberror_check ERR_NAME ""
 ##
 #-------------------------------------------------------------------------------
-function liberror_check_fatal_error() {
-  [[ $? ]] && liberror_die $?
+function liberror_check() {
+  local error="$?"
+  local info=""
+
+  # if we were given two parameters, the first is the error name (override), and
+  # the second is the info message. Otherwise, the first parameter (if given) is
+  # the info message, and error is taken from the $? resulting from whatever
+  # command/function was run before calling the present function.
+  if [[ "$#" -eq 2 ]]
+  then
+    error="$1"
+    info="$2"
+  else
+    info="$1"
+  fi
+
+  [[ "$error" -gt 0 ]] && liberror_print_error "$error" "$info"
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+## @param error name (optional)
+## @param error information (optional)
+##
+## Calls liberror_die if current exit status (from a previous command) holds an
+## error that is defined. If error name is provided as the first argument, then
+## it will override the value of $? and use the provided error name instead. If
+## error information is provided as an argument, then it will be added to the
+## defined error message as additional information.
+##
+## Note that, while both parameters are optional, the error name must be the
+## first argument, but error information is allowed to be the only argument.
+## Thus, if you wish to override the error name but not provide additional error
+## information, the error name should be given as the first argument and an
+## empty string given as the error information. An example follows.
+##
+##   liberror_check_fatal ERR_NAME ""
+##
+#-------------------------------------------------------------------------------
+function liberror_check_fatal() {
+  local error="$?"
+  local info=""
+
+  # if we were given two parameters, the first is the error name (override), and
+  # the second is the info message. Otherwise, the first parameter (if given) is
+  # the info message, and error is taken from the $? resulting from whatever
+  # command/function was run before calling the present function.
+  if [[ "$#" -eq 2 ]]
+  then
+    error="$1"
+    info="$2"
+  else
+    info="$1"
+  fi
+
+  [[ "$error" -gt 0 ]] && liberror_die "$error" "$info"
 
   return $ERR_OK
 }
