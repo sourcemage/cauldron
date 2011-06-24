@@ -24,7 +24,8 @@
 ##
 #-------------------------------------------------------------------------------
 
-ENCHANT_NULL="/dev/null"
+# shorthand and non-hardcoded /dev/null for output dumping
+ENCHANT_NULL="${ENCHANTMENT_NULL:-/dev/null}"
 
 #-------------------------------------------------------------------------------
 ##
