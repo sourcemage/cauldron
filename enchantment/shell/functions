@@ -186,9 +186,9 @@ function enchant_shell_perform_help() {
     then
       libcolor_warn "No installer help for '$1'"
       echo ""
+    else
+      return $ERR_FILE_NOT_FOUND
     fi
-  else
-    return $ERR_FILE_NOT_FOUND
   fi
 
   enchant_shell_header || return $ERR_FILE_NOT_FOUND
