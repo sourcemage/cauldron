@@ -68,7 +68,6 @@ function liberror_add_error() {
 
 #-------------------------------------------------------------------------------
 ## @param error number
-## @param output stream (default is 1 [stdout], 2 for stderr)
 ##
 ## Prints the corresponding error message for the given error type (number,
 ## defined as a variable in an errorcodes file, e.g. $ERR_FATAL) to the given
@@ -79,12 +78,9 @@ function liberror_add_error() {
 ##
 #-------------------------------------------------------------------------------
 function liberror_print_error() {
-  local error=$1
+  local error="$1"
   local errmsg="${ERR_MSGS[${error}]}"
-  local output=$2
-
-  # if no 2nd argument, use STDOUT as default
-  output=${output:=$LIBERR_STDOUT}
+  local output="$LIBERR_STDOUT"
 
   # exit if $errmsg not defined
   [[ -z "$errmsg" ]] && return 1
@@ -123,17 +119,18 @@ function liberror_print_error() {
 ##
 #-------------------------------------------------------------------------------
 function liberror_die() {
-  local error=$1
+  local error="$1"
+  local LIBERR_STDOUT="$LIBERR_STDERR"
 
   # exit if $errmsg not defined
   [[ -z "$error" ]] && return 1
 
   # print the corresponding error message on STDERR
-  liberror_print_error $error $LIBERR_STDERR
+  liberror_print_error "$error"
 
   # die is used for fatal errors, so exit to the parent process rather than
   # returning to the caller
-  exit $error
+  exit "$error"
 }
 
 #-------------------------------------------------------------------------------
