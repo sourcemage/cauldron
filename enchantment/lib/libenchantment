@@ -24,6 +24,10 @@
 ##
 #-------------------------------------------------------------------------------
 
+# set LC_COLLATE to C so we don't get affected by the user's locale
+# when grepping, sorting, etc.
+export LC_COLLATE="C"
+
 # shorthand and non-hardcoded /dev/null for output dumping
 ENCHANT_NULL="${ENCHANTMENT_NULL:-/dev/null}"
 
