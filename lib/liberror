@@ -68,17 +68,20 @@ function liberror_add_error() {
 
 #-------------------------------------------------------------------------------
 ## @param error number
+## @param error information (optional)
 ##
 ## Prints the corresponding error message for the given error type (number,
-## defined as a variable in an errorcodes file, e.g. $ERR_FATAL) to the given
-## output stream (defaults to STDOUT) in the configured error message color.
+## defined as a variable in an errorcodes file, e.g. $ERR_FATAL) to
+## LIBERR_STDOUT. If the optional error information is provided as the second
+## parameter, then it will be appended to the error message before being output.
 ##
 ## If libcolor is sourced and color is not specifically disabled, then the error
-## message will be output in color.
+## message will be output in the configured error message color.
 ##
 #-------------------------------------------------------------------------------
 function liberror_print_error() {
   local error="$1"
+  local info="$2"
   local errmsg="${ERR_MSGS[${error}]}"
   local output="$LIBERR_STDOUT"
 
@@ -97,6 +100,9 @@ function liberror_print_error() {
       eval echo "$errmsg" >&$output
     fi
   else
+    # tack on the error info to the errmsg if defined
+    [[ -n "$info" ]] && errmsg="$errmsg: $info"
+
     # output using libcolor if available
     if [[ "$(type -t libcolor_error)" == "function" ]]
     then
@@ -112,21 +118,24 @@ function liberror_print_error() {
 
 #-------------------------------------------------------------------------------
 ## @param error number
+## @param error information (optional)
 ##
 ## Calls liberror_print_error with the error number passed as the first
-## argument, then exits with the same error number. If no error number was
-## passed in then the function returns with error rather than exiting.
+## argument, and optionally error information as the second argument, then exits
+## with the same error number. If no error number was passed in then the
+## function returns with error rather than exiting.
 ##
 #-------------------------------------------------------------------------------
 function liberror_die() {
   local error="$1"
+  local info="$2"
   local LIBERR_STDOUT="$LIBERR_STDERR"
 
   # exit if $errmsg not defined
   [[ -z "$error" ]] && return 1
 
   # print the corresponding error message on STDERR
-  liberror_print_error "$error"
+  liberror_print_error "$error" "$info"
 
   # die is used for fatal errors, so exit to the parent process rather than
   # returning to the caller
