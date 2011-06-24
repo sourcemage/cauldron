@@ -21,8 +21,10 @@
 # let libenchantment know which installer this is
 ENCHANT_INSTALLER="shell"
 
+CONFIG="${CONFIG:-/etc/enchantment/enchantment.conf}"
+
 # source configs and libenchantment
-. "/etc/enchantment/enchantment.config"
+. "$CONFIG"
 
 # load the main library (which in turn loads sub-libraries)
 if ! . "$ENCHANT_LIBS/libenchantment"
