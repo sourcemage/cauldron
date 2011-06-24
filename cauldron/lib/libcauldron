@@ -67,7 +67,7 @@ function cauldron_load_library() {
   local lib="$1"
 
   . "$CAULDRON_LIBS/$lib" 2>$CAULDRON_NULL
-  liberror_check_fatal
+  liberror_check_fatal "cannot load library $lib"
 }
 
 #-------------------------------------------------------------------------------
