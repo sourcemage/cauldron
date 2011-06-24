@@ -65,7 +65,7 @@ function enchant_shell_command_chroot() {
   # so don't check the number of arguments
 
   enchant_shell_perform_chroot "$@"
-  liberror_check_fatal_error
+  liberror_check_fatal
 
   return $ERR_OK
 }
@@ -74,7 +74,7 @@ function_enchant_shell_command_list() {
   [[ $# -eq 0 ]] || return $ERR_INSTALLER_CMD
 
   enchant_shell_list_modules
-  liberror_check_fatal_error
+  liberror_check_fatal
 
   return $ERR_OK
 }
@@ -83,7 +83,7 @@ function enchant_shell_command_todo() {
   [[ $# -le 1 ]] || return $ERR_INSTALLER_CMD
 
   enchant_shell_perform_todo "$@"
-  liberror_check_fatal_error
+  liberror_check_fatal
 
   return $ERR_OK
 }
@@ -92,7 +92,7 @@ function enchant_shell_command_jump() {
   [[ $# -eq 1 ]] || return $ERR_INSTALLER_CMD
 
   enchant_shell_perform_jump "$@"
-  liberror_check_fatal_error
+  liberror_check_fatal
 
   return $ERR_OK
 }
@@ -101,7 +101,7 @@ function enchant_shell_command_help() {
   [[ $# -le 1 ]] || return $ERR_INSTALLER_CMD
 
   enchant_shell_perform_help "$@"
-  liberror_check_fatal_error
+  liberror_check_fatal
 
   return $ERR_OK
 }
@@ -111,7 +111,7 @@ function enchant_shell_command_init() {
   [[ "$#" -eq 0 ]] || return $ERR_INSTALLER_CMD
 
   enchant_prepare
-  liberror_check_fatal_error
+  liberror_check_fatal
 
   return $ERR_OK
 }
@@ -124,36 +124,36 @@ function enchant_shell_command_install {
     "kernel" )
       [[ $# -ne 3 ]] && return $ERR_INSTALLER_CMD
       enchant_install_kernel "$@"
-      liberror_check_fatal_error
+      liberror_check_fatal
       ;;
     "isokernel" )
       [[ $# -ne 0 ]] && return $ERR_INSTALLER_CMD
       enchant_install_kernel
-      liberror_check_fatal_error
+      liberror_check_fatal
       ;;
     "system" )
       [[ $# -ne 0 ]] && return $ERR_INSTALLER_CMD
       enchant_install_system
-      liberror_check_fatal_error
+      liberror_check_fatal
       ;;
     "spells" )
       [[ $# -ne 0 ]] && return $ERR_INSTALLER_CMD
       enchant_install_spell_sources
-      liberror_check_fatal_error
+      liberror_check_fatal
       enchant_install_spell_caches
-      liberror_check_fatal_error
+      liberror_check_fatal
       ;;
     "sources" )
       # can take either 0 or multiple arguments,
       # so don't check the number of arguments
       enchant_install_sources "$@"
-      liberror_check_fatal_error
+      liberror_check_fatal
       ;;
     "caches" )
       # can take either 0 or multiple arguments,
       # so don't check the number of arguments
       enchant_install_caches "$@"
-      liberror_check_fatal_error
+      liberror_check_fatal
       ;;
     * ) return $ERR_INSTALLER_CMD ;;
   esac
@@ -179,59 +179,59 @@ shift
 case "$command" in
   "keymap" )
     enchant_shell_command_keymap
-    liberror_check_fatal_error
+    liberror_check_fatal
     ;;
   "init" )
     enchant_shell_command_init
-    liberror_check_fatal_error
+    liberror_check_fatal
     ;;
   "prompt" )
     enchant_shell_command_prompt
-    liberror_check_fatal_error
+    liberror_check_fatal
     ;;
   "chroot" )
     enchant_shell_command_chroot "$@"
-    liberror_check_fatal_error
+    liberror_check_fatal
     ;;
   "todo" )
     enchant_shell_command_todo "$@"
-    liberror_check_fatal_error
+    liberror_check_fatal
     ;;
   "list" )
     enchant_shell_command_list_modules "$@"
-    liberror_check_fatal_error
+    liberror_check_fatal
     ;;
   "next" )
     enchant_shell_perform_next
-    liberror_check_fatal_error
+    liberror_check_fatal
     ;;
   "prev" )
     enchant_shell_perform_prev
-    liberror_check_fatal_error
+    liberror_check_fatal
     ;;
   "jump" )
     enchant_shell_command_jump "$@"
-    liberror_check_fatal_error
+    liberror_check_fatal
     ;;
   "welcome" )
     enchant_shell_perform_welcome
-    liberror_check_fatal_error
+    liberror_check_fatal
     ;;
   "install" )
     enchant_shell_command_install "$@"
-    liberror_check_fatal_error
+    liberror_check_fatal
     ;;
   "potion" )
     enchant_shell_command_potion "$@"
-    liberror_check_fatal_error
+    liberror_check_fatal
     ;;
   "help" )
     enchant_shell_command_help "$@"
-    liberror_check_fatal_error
+    liberror_check_fatal
     ;;
   * )
     enchant_shell_command_help
-    liberror_check_fatal_error
+    liberror_check_fatal
     ;;
 esac
 

@@ -53,7 +53,7 @@ unset cauldron_fatal_error
 #-------------------------------------------------------------------------------
 ## @param library name to load (no path, just basename)
 ##
-## Loads the library given as the first argument. liberror_check_fatal_error is
+## Loads the library given as the first argument. liberror_check_fatal is
 ## called to check if there was a problem loading the library, and if there was
 ## it will print a corresponding error message and then exit with the error
 ## $ERR_LOAD_LIBRARY.
@@ -63,7 +63,7 @@ function cauldron_load_library() {
   local lib="$1"
 
   . "$CAULDRON_LIBS/$lib" 2>$CAULDRON_NULL
-  liberror_check_fatal_error
+  liberror_check_fatal
 }
 
 #-------------------------------------------------------------------------------
