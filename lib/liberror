@@ -89,7 +89,7 @@ function liberror_print_error() {
   [[ -z "$errmsg" ]] && return 1
 
   # print an OK message if the "error" is 0, otherwise print an error message
-  if [[ "$error" == 0 ]]
+  if [[ "$error" -eq 0 ]]
   then
     # output using libcolor if available
     if [[ "$(type -t libcolor_notice)" == "function" ]]
