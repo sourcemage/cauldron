@@ -1,11 +1,11 @@
 '\" t
 .\"     Title: enchantment
 .\"    Author: [see the "Authors" section]
-.\"      Date: 07/06/2010
+.\"      Date: 06/26/2011
 .\"    Manual: Enchantment Manual
 .\"  Language: English
 .\"
-.\" Copyright 2010 by the Cauldron Team, Source Mage GNU/Linux
+.\" Copyright 2011 by the Cauldron Team, Source Mage GNU/Linux
 .\" This software is free software; you can redistribute it and/or modify
 .\" it under the terms of the GNU General Public License as published by
 .\" the Free Software Foundation; either version 2 of the License, or
@@ -20,7 +20,7 @@
 .\" along with this software; if not, write to the Free Software
 .\" Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
 .\"
-.TH "ENCHANTMENT" "8" "07/05/2010" "Source Mage GNU/Linux" "enchantment manual"
+.TH "ENCHANTMENT" "8" "06/26/2011" "Source Mage GNU/Linux" "enchantment manual"
 .\" -----------------------------------------------------------------
 .\" * set default formatting
 .\" -----------------------------------------------------------------
@@ -41,7 +41,7 @@
 
 .SH "DESCRIPTION"
 
-Enchantment is a command-line front-end to the enchantment library (which serves as a backend for all the Source Mage GNU/Linux front-ends, including the menu system). All of the installation functions are accessible through this single command-line frontend by passing the desired command as the first parameter to the program, followed by any arguments that command needs.
+Enchantment is a command-line front-end to the enchantment library (which serves as a backend for all the Source Mage GNU/Linux installer front-ends, including the menu system). All of the installation functions are accessible through this single command-line frontend by passing the desired command as the first parameter to the program, followed by any arguments that command needs.
 .SH "ENCHANTMENT COMMANDS"
 A list of acceptable commands is given below. For each command, if it can accept any arguements, they are described in that command's section. Optional arguments are enclosed in square brackets ('[' and ']'), while required arguments are bare (not surrounded by brackets or anything else). The commands are organized by logical function.
 .SS General
@@ -54,7 +54,7 @@ Displays help for a given topic. If no topic is provided, it will display a list
 .PP
 \fBtodo\fR [MODULE]
 .RS 4
-If called without an argument, it displays the necessary procedures to complete the current installation module. If the name of an installation module, as listed by the \fBlist\fR command below, is provided as the only argument, then it displays the necessary procedures for that given module, rather than the current one.
+If called without an argument, it displays the necessary procedures to complete the current installation module. If the name of an installation module, as listed by the \fBlist\fR command below, is provided as an argument, then it displays the necessary procedures for that given module, rather than the current one.
 .RE
 .PP
 \fBlist\fR
@@ -94,10 +94,10 @@ Performs a given installation, according to the supplied SUBCOMMAND, which can b
 .RE
 
 .RS 4
-\fBkernel\fR KERNEL_IMAGE KERNEL_MODULES KERNEL_VERSION
+\fBkernel\fR IMAGE MODULES_PATH VERSION
 .RE
 .RS 8
-Installs the given kernel to the target as specified in \fIENCHANT_TARGET\fR (see the section on \fBENVIRONMENT VARIABLES\fR below). The first argument, KERNEL_IMAGE, must be an absolute path the to kernel image itself (i.e. /boot/vmlinuz), which will be installed to \fIENCHANT_TARGET_KERNEL\fR (see the section on \fBENVIRONMENT VARIABLES\fR below). The second argument, KERNEL_MODULES, must be an aboslute path to the directory where the kernel modules matching the image supplied in KERNEL_IMAGE are to be taken from (e.g. /lib/modules/2.6.32.8). The kernel modules will be installed to \fIENCHANT_TARGET_KMODS\fR (see the section on \fBENVIRONMENT VARIABLES\fR below). Finally, KERNEL_VERSION, the third and last argument, must supply the numbered kernel version associated with the kernel image and modules (e.g. 2.6.32.8).
+Installs the given kernel to the target as specified in \fIENCHANT_TARGET\fR (see the section on \fBENVIRONMENT VARIABLES\fR below). The first argument, IMAGE, must be an absolute path the to kernel image itself (i.e. /boot/vmlinuz), which will be installed to \fIENCHANT_TARGET_KERNEL\fR (see the section on \fBENVIRONMENT VARIABLES\fR below). The second argument, MODULES_PATH, must be an aboslute path to the directory where the kernel modules matching the image supplied in IMAGE are to be taken from (e.g. /lib/modules/2.6.32.8). The kernel modules will be installed to \fIENCHANT_TARGET_KMODS\fR (see the section on \fBENVIRONMENT VARIABLES\fR below). Finally, VERSION, the third and last argument, must supply the numbered kernel version associated with the kernel image and modules (e.g. 2.6.32.8).
 .RE
 .RS 4
 \fBisokernel\fR
@@ -118,13 +118,13 @@ Installs the minimal base system (system.tar.bz2) to the target specified in \fI
 Installs the currently selected spells to the target specified in \fIENCHANT_TARGET\fR (see the section on \fBENVIRONMENT VARIABLES\fR below).
 .RE
 .RS 4
-\fBsources\fR
+\fBsources\fR [SPELL1 [SPELL2] .. ]
 .RE
 .RS 8
 Installs spell sources from \fIENCHANT_SPELL_SOURCES\fR to the target location specified in \fIENCHANT_TARGET_SOURCES\fR (see the section on \fBENVIRONMENT VARIABLES\fR below). If called with no arguments, it installs the currently selected spell sources as given in \fIENCHANT_SOURCES_LIST\fR (see the section on \fBENVIRONMENT VARIABLES\fR below). If called with arguments, each argument is taken as the name of a spell whose sources are to be installed.
 .RE
 .RS 4
-\fBcaches\fR
+\fBcaches\fR [SPELL1 [SPELL2] .. ]
 .RE
 .RS 8
 Installs spell caches from \fIENCHANT_SPELL_CACHES\fR to the target location specified in \fIENCHANT_TARGET_CACHES\fR (see the section on \fBENVIRONMENT VARIABLES\fR below). If called with no arguments, it installs the currently selected spell caches as given in \fIENCHANT_CACHES_LIST\fR (see the section on \fBENVIRONMENT VARIABLES\fR below). If called with arguments, each argument is taken as the name of a spell whose cache is to be installed.
@@ -152,7 +152,7 @@ Package the present installation state into a restorable potion. This can then b
 .PP
 \fBkeymap\fR [/path/to/keymap.file]
 .RS 4
-If called without an argument, presents a menu by which you can select an appropriate keymap to use for the current installation session. If supplied a keymap file (with path) as the only argument, it will directly select that keymap to use for the installation session.
+If called without an argument, presents a menu by which you can select an appropriate keymap to use for the current installation session. If supplied a keymap file (with path) as an argument, it will directly select that keymap to use for the installation session.
 .RE
 .SS "Setup"
 .PP
@@ -221,6 +221,11 @@ Various enchantment commands use the following user-level environment variables.
 This represents where the iso is running from. Unless you know what you are doing and you want to do some really tricky hacking with the installation, it is highly recommended that you leave this at the default setting.
 .RE
 .PP
+\fIENCHANT_TMP\fR [$\fIENCHANT_ISO_PATH\fR/tmp/enchantment]
+.RS 4
+Path to where all the in-process enchantment processing is contained. This is essentially the top-level temp directory enchantment will use to store all the state-tracking information generated during the course of the installation.
+.RE
+.PP
 \fIENCHANT_SPELL_SOURCES\fR [$\fIENCHANT_ISO_PATH\fR/var/spool/sorcery]
 .RS 4
 Path where spell sources should be taken from to install into the target.
@@ -246,17 +251,6 @@ Path where spell sources should be installed to within the target. Normally you 
 .RS 4
 Path where spell caches should be installed to within the target. Normally you should not change this.
 .RE
-.SS "Target Kernel"
-.PP
-\fIENCHANT_TARGET_KERNEL\fR [$\fIENCHANT_TARGET\fR/boot/vmlinuz]
-.RS 4
-Absolute path (including file name) of where the kernel image will be installed to in the target.
-.RE
-.PP
-\fIENCHANT_TARGET_KMODS\fR [$\fIENCHANT_TARGET\fR/lib/modules]
-.RS 4
-Absolute path to the base directory of where the kernel modules will be installed to in the target. You normally shouldn't change this setting unless you have a good reason to and you know what you are doing.
-.RE
 .SS "Source Kernel"
 .PP
 \fIENCHANT_ISO_KVERS\fR [$(uname -r)]
@@ -272,6 +266,17 @@ The kernel image which the installation (not the target) is running.
 \fIENCHANT_ISO_KMODS\fR [$\fIENCHANT_ISO_PATH\fR/lib/modules]
 .RS 4
 The kernel modules which the installation (not the target) is running, corresponding to the kernel image and version given in \fIENCHANT_ISO_KVERS\fR and \fIENCHANT_ISO_KERNEL\fR.
+.RE
+.SS "Target Kernel"
+.PP
+\fIENCHANT_TARGET_KERNEL\fR [$\fIENCHANT_TARGET\fR/boot/vmlinuz]
+.RS 4
+Absolute path (including file name) of where the kernel image will be installed to in the target.
+.RE
+.PP
+\fIENCHANT_TARGET_KMODS\fR [$\fIENCHANT_TARGET\fR/lib/modules]
+.RS 4
+Absolute path to the base directory of where the kernel modules will be installed to in the target. You normally shouldn't change this setting unless you have a good reason to and you know what you are doing.
 .RE
 .SS "Chroot Command"
 .PP
