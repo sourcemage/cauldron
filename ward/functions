@@ -46,7 +46,7 @@ if [[ "$1" == "-n" ]]
 then
   if [[ "$#" -gt 1 ]]
   then
-    LIBCOLOR_NOCOLOR="yes"
+    ward_color "no"
     shift
   else
     ward_usage

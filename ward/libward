@@ -48,8 +48,16 @@ function ward_fatal_error() {
 
 unset ward_fatal_error
 
-# test/set whether color output should be enabled
-[[ $WARD_COLOR != "yes" ]] && LIBCOLOR_NOCOLOR="yes"
+#-------------------------------------------------------------------------------
+## @param color state (yes or no)
+##
+## Wrapper function that handles setting the color state in libcolor. Possible
+## values for the color state parameter are 'yes' or 'no' (without the quotes).
+##
+#-------------------------------------------------------------------------------
+function ward_color() {
+  [ "$1" = "no" ] && LIBCOLOR_NOCOLOR="yes"
+}
 
 #-------------------------------------------------------------------------------
 ## @param library name to load (no path, just basename)

@@ -45,7 +45,7 @@ do
   case "$1" in
     # check if color should be disabled
     "-n")
-      LIBCOLOR_NOCOLOR="yes"
+      ward_color "no"
       ;;
     # check if the user only wants to process cauldron
     "cauldron")
