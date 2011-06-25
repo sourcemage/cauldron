@@ -29,7 +29,7 @@ for tester in "${TESTERS[@]}"
 do
   echo ""
   echo "RUNNING: $tester"
-  $tester
+  $tester "$@"
 done | $PAGER
 
 #-------------------------------------------------------------------------------
