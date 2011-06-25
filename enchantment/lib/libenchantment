@@ -29,7 +29,7 @@
 export LC_COLLATE="C"
 
 # shorthand and non-hardcoded /dev/null for output dumping
-ENCHANT_NULL="${ENCHANTMENT_NULL:-/dev/null}"
+ENCHANT_NULL="${ENCHANT_NULL:-/dev/null}"
 
 #-------------------------------------------------------------------------------
 ##

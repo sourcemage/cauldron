@@ -87,7 +87,7 @@ then
   ward_get_sources "enchantment_sources"
   enchantment="$WARD_PATH/../enchantment"
   e_conf="$enchantment/etc/enchantment.conf"
-  ENCHANTMENT_CONF="$enchantment/config"
+  ENCHANT_CONF="$enchantment/data/config"
 
   # check enchantment files
   libcolor_notice "Checking enchantment config variables"
