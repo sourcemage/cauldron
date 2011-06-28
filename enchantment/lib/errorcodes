@@ -37,10 +37,6 @@ liberror_add_error ERR_SET_CURRENT "could not set current module"
 liberror_add_error ERR_SET_NEXT "could not set next module"
 liberror_add_error ERR_SET_PREV "could not set previous module"
 
-# history
-liberror_add_error ERR_HISTORY_BACK "could not go back in install history"
-liberror_add_error ERR_HISTORY_FORWARD "could not go forward in install history"
-
 # lib.chroot
 liberror_add_error ERR_CHROOT_INIT "could not initialized chroot"
 liberror_add_error ERR_CHROOT_NOT_INIT "chroot not initialized"
@@ -74,6 +70,10 @@ liberror_add_error ERR_MODULE_ENTER "could not process module entry"
 liberror_add_error ERR_MODULE_EXIT "could not process module exit"
 liberror_add_error ERR_MODULE_GET_NUM "could not get number of current module"
 
+# history
+liberror_add_error ERR_HISTORY_BACK "could not go back in install history"
+liberror_add_error ERR_HISTORY_FORWARD "could not go forward in install history"
+
 # lib.potion
 liberror_add_error ERR_POTION_DIR "potion directory not found"
 liberror_add_error ERR_POTION_GET_HASHSUM "could not read hashsum of file"
@@ -102,7 +102,8 @@ liberror_add_error ERR_POTION_UPDATE_CONFS \
   "could not update target system configs"
 liberror_add_error ERR_POTION_UPDATE_FILESYSTEMS "could not update filesystems"
 liberror_add_error ERR_POTION_UPDATE_KERNEL "could not update kernel config"
-liberror_add_error ERR_POTION_UPDATE_MOUNT_POINTS "could not update mount points"
+liberror_add_error ERR_POTION_UPDATE_MOUNT_POINTS \
+  "could not update mount points"
 liberror_add_error ERR_POTION_UPDATE_SOURCES \
   "could not update spell sources selection"
 liberror_add_error ERR_POTION_UPDATE_CACHES \
@@ -111,7 +112,8 @@ liberror_add_error ERR_POTION_UPDATE_PARTITIONS "could not update partitions"
 liberror_add_error ERR_POTION_UPDATE_USERS "could not update user/group config"
 
 # installer
-liberror_add_error ERR_INSTALLER_FUNCS "could not load \$ENCHANT_INSTALLER functions file"
+liberror_add_error ERR_INSTALLER_FUNCS \
+  "could not load \$ENCHANT_INSTALLER functions file"
 liberror_add_error ERR_INSTALLER_CMD "incorrect usage or unrecognized command"
 liberror_add_error ERR_INSTALLER_KEYMAP "could not process keymap list"
 liberror_add_error ERR_INSTALLER_MODULES "could not process module list"
