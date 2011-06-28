@@ -121,6 +121,21 @@ function enchant_cleanup() {
 }
 
 #-------------------------------------------------------------------------------
+## @param color state [yes or no] (optional)
+##
+## Wrapper function that handles setting the color state in libcolor. Possible
+## values for the color state parameter are 'yes' or 'no' (without the quotes).
+## If the parameter isn't supplied, then it defaults to whatever ENCHANT_COLOR
+## is set to.
+##
+#-------------------------------------------------------------------------------
+function enchant_color() {
+  local color="${1:-$ENCHANT_COLOR}"
+
+  [ "$1" = "no" ] && LIBCOLOR_NOCOLOR="yes"
+}
+
+#-------------------------------------------------------------------------------
 ##
 ## Determines and returns the current module in the installation procedure.
 ##
