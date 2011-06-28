@@ -367,7 +367,25 @@ function enchant_potion_update_kernel() {
 #-------------------------------------------------------------------------------
 function enchant_potion_update_spell_sources() {
   local potion="${1:-$ENCHANT_POTION_CURRENT}"
-  local spells="$ENCHANT_TMP/spells"
+  local spells="$ENCHANT_TMP/sources"
+
+  [[ -f "$spells" ]] || return $ERR_FILE_NOT_FOUND
+
+  enchant_potion_cache_file "$spells" "$potion" || return $ERR_POTION_CACHE_FILE
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+## @param potion directory name (relative to $ENCHANT_POTION/) [optional]
+##
+## Checks which optional spell caches the user has chosen to install, and
+## updates the state cache if the list changed.
+##
+#-------------------------------------------------------------------------------
+function enchant_potion_update_spell_caches() {
+  local potion="${1:-$ENCHANT_POTION_CURRENT}"
+  local spells="$ENCHANT_TMP/caches"
 
   [[ -f "$spells" ]] || return $ERR_FILE_NOT_FOUND
 
