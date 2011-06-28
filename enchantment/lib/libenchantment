@@ -162,7 +162,7 @@ function enchant_set_current() {
   echo "$module" >> "$ENCHANT_BACK" || return $ERR_SET_CURRENT
 
   # check the installation state
-  enchant_potion_update || return $ERR_POTION_UPDATE
+  enchant_potion_update || return $?
 
   # set the current module
   echo "$module" > "$ENCHANT_STATUS" || return $ERR_SET_CURRENT
