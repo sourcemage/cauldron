@@ -216,7 +216,7 @@ function enchant_potion_update_partitions() {
   # differs from what we currently have, then store the current set
   if [[ ! -f "$potion_parts" || "$(cat $potion_parts)" != "$(cat $parts)" ]]
   then
-    cp -f "$parts" > "$potion_parts" || return $ERR_POTION_CHK_PARTITIONS
+    cp -f "$parts" > "$potion_parts" || return $ERR_POTION_UPDATE_PARTITIONS
   fi
 
   return $ERR_OK
@@ -265,7 +265,7 @@ function enchant_potion_update_filesystems() {
   # differs from what we currently have, then store the current set
   if [[ ! -f "$potion_fs" || "$(cat $potion_fs)" != "$(cat $fs)" ]]
   then
-    cp -f "$fs" > "$potion_fs" || return $ERR_POTION_CHK_FILESYSTEMS
+    cp -f "$fs" > "$potion_fs" || return $ERR_POTION_UPDATE_FILESYSTEMS
   fi
 
   return $ERR_OK
@@ -315,7 +315,7 @@ function enchant_potion_update_mount_points() {
   # differs from what we currently have, then store the current set
   if [[ ! -f "$potion_mounts" || "$(cat $potion_mounts)" != "$(cat $mounts)" ]]
   then
-    cp -f "$mounts" > "$potion_mounts" || return $ERR_POTION_CHK_MOUNT_POINTS
+    cp -f "$mounts" > "$potion_mounts" || return $ERR_POTION_UPDATE_MOUNT_POINTS
   fi
 
   return $ERR_OK
@@ -334,7 +334,8 @@ function enchant_potion_update_kernel_config() {
 
   [[ -f "$kernel_config" ]] || return $ERR_FILE_NOT_FOUND
 
-  enchant_potion_cache_file "$kernel_config" "$potion" || return $ERR_POTION_CACHE_FILE
+  enchant_potion_cache_file "$kernel_config" "$potion" ||
+    return $ERR_POTION_CACHE_FILE
 
   return $ERR_OK
 }
@@ -388,7 +389,8 @@ function enchant_potion_update_bootloader() {
 
   [[ -f "$bootloaders" ]] || return $ERR_FILE_NOT_FOUND
 
-  enchant_potion_cache_file "$bootloaders" "$potion" || return $ERR_POTION_CACHE_FILE
+  enchant_potion_cache_file "$bootloaders" "$potion" ||
+    return $ERR_POTION_CACHE_FILE
 
   return $ERR_OK
 }
@@ -446,14 +448,24 @@ function enchant_potion_update_users() {
 function enchant_potion_update() {
   local potion="${1:-$ENCHANT_POTION_CURRENT}"
 
-  enchant_potion_update_partitions "$potion" || return $ERR_POTION_CHK_PARTITIONS
-  enchant_potion_update_filesystems "$potion" || return $ERR_POTION_CHK_FILESYSTEMS
-  enchant_potion_update_mount_points "$potion" || return $ERR_POTION_CHK_MOUNT_POINTS
-  enchant_potion_update_opt_spells "$potion" || return $ERR_POTION_CHK_OPT_SPELLS
-  enchant_potion_update_kernel "$potion" || return $ERR_POTION_CHK_KERNEL
-  enchant_potion_update_bootloader "$potion" || return $ERR_POTION_CHK_BOOTLOADER
-  enchant_potion_update_confs "$potion" || return $ERR_POTION_CHK_CONFS
-  enchant_potion_update_users "$potion" || return $ERR_POTION_CHK_USERS
+  enchant_potion_update_partitions "$potion" ||
+    return $ERR_POTION_UPDATE_PARTITIONS
+  enchant_potion_update_filesystems "$potion" ||
+    return $ERR_POTION_UPDATE_FILESYSTEMS
+  enchant_potion_update_mount_points "$potion" ||
+    return $ERR_POTION_UPDATE_MOUNT_POINTS
+  enchant_potion_update_spell_sources "$potion" ||
+    return $ERR_POTION_UPDATE_SOURCES
+  enchant_potion_update_spell_caches "$potion" ||
+    return $ERR_POTION_UPDATE_CACHES
+  enchant_potion_update_kernel "$potion" ||
+    return $ERR_POTION_UPDATE_KERNEL
+  enchant_potion_update_bootloader "$potion" ||
+    return $ERR_POTION_UPDATE_BOOTLOADER
+  enchant_potion_update_confs "$potion" ||
+    return $ERR_POTION_UPDATE_CONFS
+  enchant_potion_update_users "$potion" ||
+    return $ERR_POTION_UPDATE_USERS
 
   return $ERR_OK
 }
