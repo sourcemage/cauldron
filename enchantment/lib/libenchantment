@@ -102,7 +102,7 @@ function enchant_prepare() {
   echo 'init' > "$ENCHANT_STATUS" || return $ERR_PREPARE
 
   # the next lines are to init the history files
-  mkdir -p "$ENCHANT_TMP/history" || return $ERR_PREPARE
+  mkdir -p "$ENCHANT_POTION" || return $ERR_PREPARE
   cat < $ENCHANT_NULL > "$ENCHANT_BACK" || return $ERR_PREPARE
   cat < $ENCHANT_NULL > "$ENCHANT_FORWARD" || return $ERR_PREPARE
 
@@ -153,7 +153,7 @@ function enchant_set_current() {
   enchant_modules_exit || return $ERR_MODULE_EXIT
 
   # if the max history size has been reached, then we drop the oldest item
-  if [[ "$(wc -l < $ENCHANT_BACK)" -ge "$ENCHANT_HISTORY_SIZE" ]]
+  if [[ "$(wc -l < $ENCHANT_BACK)" -ge "$ENCHANT_POTION_BUFFER" ]]
   then
     sed -i '1d' "$ENCHANT_BACK" || return $ERR_SET_CURRENT
   fi
@@ -267,7 +267,7 @@ function enchant_back() {
   [[ "$(wc -l < $ENCHANT_BACK)" -eq 0 ]] && return $ERR_HISTORY_BACK
 
   # if the max forward history size has been reached
-  if [[ "$(wc -l < $ENCHANT_FORWARD)" -ge "$ENCHANT_HISTORY_SIZE" ]]
+  if [[ "$(wc -l < $ENCHANT_FORWARD)" -ge "$ENCHANT_POTION_BUFFER" ]]
   then
     # then we drop the oldest item from the forward history
     sed -i '1d' "$ENCHANT_FORWARD" || return $ERR_HISTORY_BACK
@@ -299,7 +299,7 @@ function enchant_forward() {
   [[ "$(wc -l < $ENCHANT_FORWARD)" -eq 0 ]] && return $ERR_HISTORY_FORWARD
 
   # if the max back history size has been reached
-  if [[ "$(wc -l < $ENCHANT_BACK)" -ge "$ENCHANT_HISTORY_SIZE" ]]
+  if [[ "$(wc -l < $ENCHANT_BACK)" -ge "$ENCHANT_POTION_BUFFER" ]]
   then
     # then we drop the oldest item from the back history
     sed -i '1d' "$ENCHANT_BACK" || return $ERR_HISTORY_FORWARD
