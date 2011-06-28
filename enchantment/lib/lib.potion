@@ -565,6 +565,7 @@ function enchant_potion_quaff() {
   then
     current="0"
   elif [[ "$current" = [a-z]* ]]
+  then
     current="$(grep -n $current $ENCHANT_DATA/modules | cut -d: -f1)"
   fi
 
