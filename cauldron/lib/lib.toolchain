@@ -18,6 +18,137 @@
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
+## @param chroot path (required)
+## @param compiler (optional)
+##
+## Performs a very basic compiler test by creating a C source file that simply
+## exits with 0 (success), attempts to compile it, then runs the output if the
+## compile was successful. A final test for the exit status of the program
+## determins if the compiler can create (at least trivial) programs that
+## actually run correctly in the build environment.
+##
+## The chroot path parameter is the path to the chroot build environment, and
+## defaults to "$CAULDRON_BUILD/baseroot" if not provided. The optional compiler
+## second parameter is the compiler to use (defaults to gcc). Currently the
+## compiler is expected to have the same parameters as gcc (though only the
+## ouput flag [-o] is used).
+##
+#-------------------------------------------------------------------------------
+function cauldron_toolchain_compiler_test() {
+  local chroot="${1:-$CAULDRON_BUILD/baseroot}"
+  local compiler="${2:-gcc}"
+  local comptest="tmp/compiler.test"
+
+
+  # create an extremely simple C source for testing the compiler
+  echo -e "#include <stdlib.h>\nint main(void) { exit(0); }" \
+    > "$chroot/tmp/compiler.test.c"
+
+  cauldron_chroot_init "$chroot" || return $?
+
+  # compile a very simple source file to ensure the compiler works
+  cauldron_chroot "$compiler" -o "/$comptest" "/$comptest.c" ||
+    return $ERR_TOOLCHAIN_COMPILER_TEST
+
+  # run the generated binary to make sure it was properly compiled
+  cauldron_chroot "/$comptest" || return $ERR_TOOLCHAIN_COMPILER_TEST
+
+  cauldron_chroot_done "$chroot" || return $?
+
+  # clean up the temporary files
+  "${CAULDRON_CMD_RM_FORCE[@]}" "$chroot/$comptest.c" "$chroot/$comptest" ||
+    return $ERR_RM_FILES
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+## @param baseroot (optional)
+##
+## Performs basic quality assurance over an acquired basesystem chroot for
+## cauldron purposes. The path to the (unpacked) baseroot directory (which will
+## function as the build chroot hereafter) defaults to
+## "$CAULDRON_BUILD/baseroot" if not provided.
+##
+#-------------------------------------------------------------------------------
+function cauldron_toolchain_baseroot_test() {
+  local chroot="${1:-$CAULDRON_BUILD/baseroot}"
+  local fhs=(
+              bin
+              boot
+              dev
+              home
+              etc
+              lib
+              mnt
+              opt
+              proc
+              root
+              sbin
+              tmp
+              usr/bin
+              usr/sbin
+              var
+            )
+
+  # ensure that a valid chroot was passed in as the first parameter
+  [[ -d "$chroot" ]] || return $ERR_TOOLCHAIN_BASEROOT_TEST
+
+  # ensure the important standard FHS directories are present
+  for dir in "${fhs[@]}"
+  do
+    [[ -d "$chroot/$dir" ]] ||
+      return $ERR_TOOLCHAIN_BASEROOT_TEST
+  done
+
+  cauldron_toolchain_compiler_test "$chroot"
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+## @param baseroot (optional)
+##
+## Sets up a toolchain chroot by acquiring and unpacking an already prepared
+## basesystem chroot rather than generating one using the host system. If the
+## optional parameter baseroot is provided, it will use that instead of
+## downloading a fresh image. The provided baseroot can either be an unpacked
+## directory or a (possibly compressed) archive.
+##
+#-------------------------------------------------------------------------------
+function cauldron_toolchain_baseroot() {
+  local baseroot="${1:-$CAULDRON_BASEROOT}"
+  local baseroot_url="$CAULDRON_BASEROOT_URL"
+  local chroot="$CAULDRON_BUILD/baseroot"
+
+  if [[ -d "$baseroot" ]]
+  then
+    ln -sf "$baseroot" "$chroot" || return "$ERR_TOOLCHAIN_BASEROOT"
+  else
+    # ensure that the target chroot directory exists
+    "${CAULDRON_CMD_MKDIR[@]}" "$chroot" || return $ERR_TOOLCHAIN_BASEROOT
+
+    if [[ ! -f "$baseroot" ]]
+    then
+      # get a fresh basesystem chroot package
+      (
+        cd "$CAULDRON_BUILD"
+        "${CAULDRON_CMD_URL_DL[@]}" "$baseroot_url" ||
+          return $ERR_TOOLCHAIN_BASEROOT
+      )
+    fi
+
+    # unpack it
+    "${CAULDRON_CMD_UNPACK_BASEROOT[@]}" "$baseroot" ||
+      return $ERR_TOOLCHAIN_BASEROOT
+  fi
+
+  # perform basic sanity checking on the chroot
+  # return whatever error code baseroot_test gives back to us
+  cauldron_toolchain_baseroot_test "$chroot" || return $?
+}
+
+#-------------------------------------------------------------------------------
 ##
 ## Scans the sorcery archspec files to find the host triplet.
 ##
