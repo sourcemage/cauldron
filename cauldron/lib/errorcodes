@@ -64,12 +64,11 @@ liberror_add_error ERR_SYS_COMPRESS "could not compress final sys archive"
 liberror_add_error ERR_CHROOT_UNDEF "chroot target is undefined"
 liberror_add_error ERR_CHROOT_INIT "could not init chroot"
 liberror_add_error ERR_CHROOT_DONE "could not close chroot"
-liberror_add_error ERR_CHROOT_NOT_INIT "chroot not initialized"
+liberror_add_error ERR_CHROOT_CURRENT "chroot not current or not defined"
 liberror_add_error ERR_CHROOT_EXEC "could not execute chroot command"
 liberror_add_error ERR_CHROOT_CAST "chroot cast failed"
 liberror_add_error ERR_CHROOT_DISPEL "chroot dispel failed"
 liberror_add_error ERR_CHROOT_REBUILD "chroot rebuild failed"
-liberror_add_error ERR_CHROOT_NEST "chroot already defined"
 
 # lib.init
 liberror_add_error ERR_INIT_INSTALL_RAMFS \

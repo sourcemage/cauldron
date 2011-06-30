@@ -139,6 +139,77 @@ function cauldron_chroot_done() {
 }
 
 #-------------------------------------------------------------------------------
+## @param -q [quiet -- don't output anything, just test] (optional)
+## @param chroot path (optional)
+##
+## Determines the current chroot. If called with no parameters, it will return
+## (echo) the path of the current chroot. If provided the chroot path parameter,
+## it will test whether the provided path matches the current chroot, and will
+## return an error if they don't match.
+##
+#-------------------------------------------------------------------------------
+function cauldron_chroot_current() {
+  local num="${#CAULDRON_CHROOT[*]}"
+  local current=""
+  local target=""
+  local match=0
+  local quiet=0
+
+  # check if we should disable output
+  if [[ "$1" == "-q" ]]
+  then
+    quiet=1
+    shift
+  fi
+  target="$1"
+
+  # use the correct index into the array (indexing starts from 0, but count of
+  # elements starts from 1)
+  [[ "$num" -gt 0 ]] && ((num--))
+  current="${CAULDRON_CHROOT[num]}"
+
+  # if there is no current chroot, then return immediately (no sense testing if
+  # anything matches the currently defined chroot when there is none)
+  [[ -z "$current" ]] && return $ERR_CHROOT_CURRENT
+
+  # make sure that the chroot is also present in LIBCHROOT_PATHS and
+  # LIBCHROOT_USERS
+  for ((index=0; index < "${#LIBCHROOT_PATHS[@]}"; index++))
+  do
+    if [[ "$current" == "${LIBCHROOT_PATHS[index]}" ]]
+    then
+      if [[ "${LIBCHROOT_USERS[index]}" -ge 1 ]]
+      then
+        match=1
+      fi
+    fi
+  done
+
+  # if the currently defined chroot doesn't match a loaded chroot in
+  # LIBCHROOT_PATHS and LIBCHROOT_USERS, then there is something wrong and the
+  # chroot should probably be reloaded
+  [[ "$match" -eq 0 ]] && return $ERR_CHROOT_CURRENT
+
+  if [[ -n "$target" ]]
+  then
+    # test if the target path doesn't match the currently defined chroot command
+    # target path -- if it does match, then we can just do nothing till the end
+    # of the function where we return ERR_OK; if it doesn't match, return error
+    # here
+    if [[ "$target" != "$current" ]]
+    then
+      # the target chroot doesn't match the current chroot
+      return $ERR_CHROOT_CURRENT
+    fi
+  else
+    # output the currently loaded chroot
+    echo "$current"
+  fi
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
 ## @param command plus args to execute inside the chroot
 ##
 ## Executes the command given as the first parameter and any args that follow
@@ -146,11 +217,11 @@ function cauldron_chroot_done() {
 ##
 #-------------------------------------------------------------------------------
 function cauldron_chroot() {
-  if [[ "$CAULDRON_CHROOTINIT" -eq 1 ]]
+  if cauldron_chroot_current -q
   then
     "${CAULDRON_CHROOT[@]}" $* || return $ERR_CHROOT_EXEC
   else
-    return $ERR_CHROOT_NOT_INIT
+    return $ERR_CHROOT_CURRENT
   fi
 
   return $ERR_OK

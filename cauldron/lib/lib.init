@@ -268,8 +268,7 @@ function cauldron_init_fs_busybox() {
     "$build/etc/sorcery/local/busybox.config" ||
       return $ERR_CP_FILE
 
-  cauldron_chroot_init "$build"
-  [[ $? -eq 0 || $? -eq $ERR_CHROOT_NEST ]] || return $ERR_CHROOT_INIT
+  cauldron_chroot_init "$build" || return $ERR_CHROOT_INIT
 
   cauldron_chroot_cast "busybox" || return $ERR_CHROOT_CAST
 

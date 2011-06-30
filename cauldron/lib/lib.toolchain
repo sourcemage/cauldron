@@ -275,8 +275,7 @@ function cauldron_toolchain_cache_cast() {
 
   # make sure we have a chroot accessible
   # default to $CAULDRON_BUILD, unless one is already defined
-  cauldron_chroot_init
-  [[ $? -eq $ERR_OK || $? -eq $ERR_CHROOT_NEST ]] || return $ERR_CHROOT_INIT
+  cauldron_chroot_init || return $ERR_CHROOT_INIT
 
   # generate the caches for the needed spells
   cauldron_chroot_cast_clean "$spells" || return $ERR_TOOLCHAIN_CAST
@@ -421,11 +420,10 @@ function cauldron_toolchain_build_cross() {
 
   # make sure we have a chroot accessible
   # default to $CAULDRON_BUILD, unless one is already defined
-  if [[ "$CAULDRON_CHROOTINIT" -ne 1 ]]
+  if ! cauldron_chroot_current -q
   then
     chroot=1
-    cauldron_chroot_init
-    [[ $? -eq 0 || $? -eq $ERR_CHROOT_NEST ]] || return $ERR_CHROOT_INIT
+    cauldron_chroot_init || return $ERR_CHROOT_INIT
   fi
 
   # build the stage 1 tools

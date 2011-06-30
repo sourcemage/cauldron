@@ -107,7 +107,7 @@ function cauldron_clean_iso_system() {
 
   [[ -z "$cleanfile" ]] && return $ERR_CLEAN_FILE
 
-  [[ -z "$CAULDRON_CHROOT" ]] && return $ERR_CHROOT_INIT
+  cauldron_chroot_current -q || return $ERR_CHROOT_CURRENT
 
   for i in $(sort -r $cleanfile)
   do
