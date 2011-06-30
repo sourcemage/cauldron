@@ -144,6 +144,7 @@ function cauldron_init_fs_dirs() {
   local list="$CAULDRON_DATA/$CAULDRON_ARCH/initfs/dirs"
 
   if [[ -f "$list" ]]
+  then
     for dir in $("${CAULDRON_CMD_CAT[@]}" "$list")
     do
       "${CAULDRON_CMD_MKDIR[@]}" "$initfs/$dir" || return $ERR_MK_DIR
@@ -164,6 +165,7 @@ function cauldron_init_fs_bins() {
   local list="$CAULDRON_DATA/$CAULDRON_ARCH/initfs/binaries"
 
   if [[ -f "$list" ]]
+  then
     for bin in $("${CAULDRON_CMD_CAT[@]}" "$list")
     do
       "${CAULDRON_CMD_CP[@]}" "$bin" "$initfs/bin" || return $ERR_CP_FILE
@@ -184,6 +186,7 @@ function cauldron_init_fs_libs() {
   local list="$CAULDRON_DATA/$CAULDRON_ARCH/initfs/libs"
 
   if [[ -f "$list" ]]
+  then
     for lib in $("${CAULDRON_CMD_CAT[@]}" "$list")
     do
       "${CAULDRON_CMD_CP[@]}" "$lib" "$initfs/lib/" || return $ERR_CP_FILE
@@ -204,6 +207,7 @@ function cauldron_init_fs_mods() {
   local list="$CAULDRON_DATA/$CAULDRON_ARCH/initfs/modules"
 
   if [[ -f "$list" ]]
+  then
     for module in $("${CAULDRON_CMD_CAT[@]}" "$list")
     do
       "${CAULDRON_CMD_CP[@]}" \
