@@ -116,8 +116,12 @@ liberror_add_error ERR_TOOLCHAIN_SORCERY \
   "sorcery not found in toolchain root"
 liberror_add_error ERR_TOOLCHAIN_RESURRECT \
   "could not resurrect spell using sorcery"
+liberror_add_error ERR_TOOLCHAIN_COMPILER_TEST \
+  "could not compile a functioning binary using the chroot compiler"
+liberror_add_error ERR_TOOLCHAIN_BASEROOT_TEST \
+  "the basesystem chroot failed the validity test"
 liberror_add_error ERR_TOOLCHAIN_BASEROOT \
-  "could not acquire and unpack a valid basesystem chroot"
+  "could not acquire and set up a valid basesystem chroot"
 
 #-------------------------------------------------------------------------------
 ##
