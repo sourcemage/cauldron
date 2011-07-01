@@ -27,7 +27,7 @@
 function cauldron_init_setup() {
   mkdir -p "$CAULDRON_ISO/etc" || return $ERR_MK_DIR
 
-  "${CAULDRON_CMD_CP[@]}" \
+  "${CAULDRON_CMD_CP_PRESERVE[@]}" \
     "$CAULDRON_DATA/$CAULDRON_ARCH/inittab" \
     "$CAULDRON_ISO/etc/inittab" ||
       return $ERR_CP_FILE
