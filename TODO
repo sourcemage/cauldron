@@ -1,61 +1,34 @@
-====================================
-Things to do in order to achieve 0.1
-====================================
-
--------------------
---   cauldron    --
--------------------
+==============
+--   0.1    --
+==============
+  - cauldron -
 * finish writing the cauldron script so it actually does the steps needed
-	- setup sorcery in build chroot (ARCHIVE=on, etc.)
+	- initialize build dirs using libcauldron
+	- setup sorcery in build chroot (ARCHIVE=on, etc.) via libcauldron and
+	  lib.sorcerous
+	- process the stages of ISO creation via cauldron libs
 	- extra sanity checks on boot and etc in chroot (add_sauce stuff for
 	  those familiar with the 0.10 series)
-		o this should be done in ward and liberror
-* write code to set up the init process on the ISO
-	- this may need to be sensitive to what installers are present
-* add optional feature to either cast from scratch for the iso/system or pick
-  up where we left off from a previous run (in case of failed spells)
-	- automatic inter-dependency resolution for the different stages of the
-	  ISO generation
+		o this should be done via ward and liberror
+	- finalize and package the ISO using cauldron libs
+	- cleanup build dirs via libcauldron
 * create a man page for the cauldron command explaining how to use it and what
-  files it uses
+  files/env vars it uses
+* finalize code to set up the init process on the ISO (lib.init)
+	- this may need to be sensitive to what installers are present
 
--------------------
---  enchantment  --
--------------------
-* still need the installers themselves to be written
-	- for the shell installer, this is trivial (mostly done)
+  - enchantment -
+* finalize the shell installer (trivial -- mostly done):
 		o implement the hooks to use lib.potion
-		o implement tab completion specific for the installer commands
-		  (no need for a full-blown bash-completion installation, which
-		  would add bloat; implementing tab completion only for the
-		  installer would be pretty small and fast) - see 1.0 below
-	- the menu installer needs to be written
-		~ Not sure if this should really be for 0.1, but a lot of
-		  people have asked for it already.
-		o needs to be implemented via a good abstracted API or not at
-		  all - maintaining a mess of dialog calls with it's plethora
-		  of command-line option requirements is a nightmare
-	- i18n
-		o translate error messages, instructions, etc. and implement an
-		  easy way of calling them based on what language is selected
-		  ($ENCHANT_LANGUAGE in the config file, plus either a file
-		  suffix (errorcodes.en) or a separate dir (en/errorcodes) for
-		  each language supported) - the framework is mostly in place,
-		  now we need translators
-		o display (fonts): fbterm + fontconfig + freetype2
-			> might be too big due to the size of the fonts, but no
-			  other way to really have an internationalized ISO -
-			  maybe have both a "core" ISO that lacks true i18n and
-			  a full i18n ISO as official
-		o input: uim (uim-fep) + m17n-lib + m17n-db
-			> only useful if display is also in place
 
--------------------
---    general    --
--------------------
+  - general -
 * LOTS AND LOTS OF TESTING!
+
+==============
+--   0.2    --
+==============
+  - general -
 * More sanity checks and error testing (use liberror!)
-	- this is done, but could be more complete
 	- currently errors are emitted, but they aren't yet really handled - we
 	  want them handled at higher levels, because how an error is displayed
 	  to the user will partly depend on what installer they are currently
@@ -66,16 +39,68 @@ Things to do in order to achieve 0.1
 	  debug messages - once we determine all this we can start properly
 	  handling, passing, or ignoring errors
 
-===============================
-Things to do for 1.0 (or later)
-===============================
+==============
+--   0.3    --
+==============
+  - cauldron -
+* add optional feature to either cast from scratch for the iso/system or pick
+  up where we left off from a previous run (in case of failed spells)
+	- automatic inter-dependency resolution for the different stages of the
+	  ISO generation
 
-* No (known) bugs
-* cauldron "possess" command for taking possession of a machine under another
+  - enchantment -
+* implement tab completion specific for the enchantment commands/subcommands
+  (no need for a full-blown bash-completion installation, which would add
+  bloat; implementing tab completion only for the installer would be pretty
+  small and fast)
+
+==============
+--   0.4    --
+==============
+  - general -
+* i18n
+	- translate error messages, instructions, etc. and implement an
+	  easy way of calling them based on what language is selected
+	  ($ENCHANT_LANGUAGE in the config file, plus either a file
+	  suffix (errorcodes.en) or a separate dir (en/errorcodes) for
+	  each language supported) - the framework is mostly in place,
+	  now we need translators
+	- display (fonts): fbterm + fontconfig + freetype2
+		> might be too big due to the size of the fonts, but no
+		  other way to really have an internationalized ISO -
+		  maybe have both a "core" ISO that lacks true i18n and
+		  a full i18n ISO as official
+	- input: uim (uim-fep) + m17n-lib + m17n-db
+		> only useful if display is also in place
+
+  - enchantment -
+* net install (tftp, ssh, etc.?) called "voodoo"
+
+
+==============
+--   0.5    --
+==============
+  - enchantment -
+* alternative installer interfaces
+	- menu installer
+		o needs to be implemented via a good abstracted API or not at
+		  all - maintaining a mess of dialog calls with it's plethora
+		  of command-line option requirements is a nightmare
+	- web installer (html)
+	- X installer? (xdirectfb?)
+
+
+==============
+--   0.6    --
+==============
+- cauldron -
+* "possess" command for taking possession of a machine under another
   distro (don't generate install media, since the host system itself will be
   the install media)
-* simple tab-completion for enchantment (CLI) and all its subcommands?
-* web installer (html), X installer? (xdirectfb?)
-* net install (tftp, ssh, etc.?) called "voodoo"
+
+==============
+--   1.0    --
+==============
+* No (known) bugs
 * ???
 
