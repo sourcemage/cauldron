@@ -42,7 +42,7 @@ nano
 ncurses
 net-tools
 nfs-utils
-ntfsprogs
+ntfs-3g
 openssl
 parted
 pciutils
