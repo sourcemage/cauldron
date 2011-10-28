@@ -8,7 +8,6 @@ bison
 bzip2
 coreutils
 cpio
-device-mapper
 dhcpcd
 dialog
 diffutils

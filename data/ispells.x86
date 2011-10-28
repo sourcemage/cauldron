@@ -2,7 +2,6 @@ bash
 bzip2
 coreutils
 cpio
-device-mapper
 dhcpcd
 dialog
 e2fsprogs
