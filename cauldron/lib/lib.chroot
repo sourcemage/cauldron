@@ -81,7 +81,7 @@ function cauldron_chroot_init() {
   then
     # make sure the sorcerous library is loaded
     # which provides cauldron_source_sorcery
-    if [[ -z cauldron_source_sorcery ]]
+    if ! type -t cauldron_source_sorcery > "$CAULDRON_NULL"
     then
       cauldron_load_library lib.sorcerous
     fi

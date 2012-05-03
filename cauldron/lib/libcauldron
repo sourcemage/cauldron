@@ -249,7 +249,7 @@ function cauldron_prepare() {
   cauldron_chroot_init || return $?
 
   # install sorcery into the build dir
-  if [[ -z cauldron_sorcerous_install ]]
+  if ! type -t cauldron_sorcerous_install > "$CAULDRON_NULL"
   then
     cauldron_load_library lib.sorcerous
   fi

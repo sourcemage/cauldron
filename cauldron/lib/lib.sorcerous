@@ -141,7 +141,7 @@ function cauldron_sorcerous_install() {
     return $ERR_SORCEROUS_UNPACK
 
   # make sure the chroot library is loaded so cauldron_chroot is available
-  if [[ -z cauldron_chroot ]]
+  if ! type -t cauldron_chroot > "$CAULDRON_NULL"
   then
     cauldron_load_library lib.chroot
   fi
