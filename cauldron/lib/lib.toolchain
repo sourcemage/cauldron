@@ -3,7 +3,7 @@
 ##
 ##=head1 SYNOPSIS
 ##
-##  lib.hostcache provides functions for generating spell caches from what's
+##  lib.toolchain provides functions for generating spell caches from what's
 ##                available on the HOST system - only to be used for the initial
 ##                build toolchain
 ##
@@ -28,14 +28,14 @@
 ## actually run correctly in the build environment.
 ##
 ## The chroot path parameter is the path to the chroot build environment, and
-## defaults to "$CAULDRON_BUILD/baseroot" if not provided. The optional compiler
+## defaults to "$CAULDRON_BUILD" if not provided. The optional compiler
 ## second parameter is the compiler to use (defaults to gcc). Currently the
 ## compiler is expected to have the same parameters as gcc (though only the
 ## ouput flag [-o] is used).
 ##
 #-------------------------------------------------------------------------------
 function cauldron_toolchain_compiler_test() {
-  local chroot="${1:-$CAULDRON_BUILD/baseroot}"
+  local chroot="${1:-$CAULDRON_BUILD}"
   local compiler="${2:-gcc}"
   local comptest="tmp/compiler.test"
 
@@ -68,11 +68,11 @@ function cauldron_toolchain_compiler_test() {
 ## Performs basic quality assurance over an acquired basesystem chroot for
 ## cauldron purposes. The path to the (unpacked) baseroot directory (which will
 ## function as the build chroot hereafter) defaults to
-## "$CAULDRON_BUILD/baseroot" if not provided.
+## "$CAULDRON_BUILD" if not provided.
 ##
 #-------------------------------------------------------------------------------
 function cauldron_toolchain_baseroot_test() {
-  local chroot="${1:-$CAULDRON_BUILD/baseroot}"
+  local chroot="${1:-$CAULDRON_BUILD}"
   local fhs=(
               bin
               boot
@@ -119,7 +119,7 @@ function cauldron_toolchain_baseroot_test() {
 function cauldron_toolchain_baseroot() {
   local baseroot="${1:-$CAULDRON_BASEROOT}"
   local baseroot_url="$CAULDRON_BASEROOT_URL"
-  local chroot="$CAULDRON_BUILD/baseroot"
+  local chroot="$CAULDRON_BUILD"
 
   if [[ -d "$baseroot" ]]
   then
@@ -128,18 +128,18 @@ function cauldron_toolchain_baseroot() {
     # ensure that the target chroot directory exists
     "${CAULDRON_CMD_MKDIR[@]}" "$chroot" || return $ERR_TOOLCHAIN_BASEROOT
 
-    if [[ ! -f "$baseroot" ]]
+    if [[ ! -f "$CAULDRON_TMP/$baseroot" ]]
     then
       # get a fresh basesystem chroot package
       (
-        cd "$CAULDRON_BUILD"
+        cd "$CAULDRON_TMP"
         "${CAULDRON_CMD_URL_DL[@]}" "$baseroot_url" ||
           return $ERR_TOOLCHAIN_BASEROOT
       )
     fi
 
     # unpack it
-    "${CAULDRON_CMD_UNPACK_BASEROOT[@]}" "$baseroot" ||
+    "${CAULDRON_CMD_UNPACK_BUILD[@]}" "$CAULDRON_TMP/$baseroot" ||
       return $ERR_TOOLCHAIN_BASEROOT
   fi
 
@@ -190,7 +190,7 @@ function cauldron_toolchain_host_get() {
 
 #-------------------------------------------------------------------------------
 ## @param spell
-## @param install_log_path
+## @param install_log_path (optional)
 ##
 ## Builds a cache file from the information provided by the install log for the
 ## spell passed as an argument using sorcery's create_cache_archive. It expects
@@ -202,9 +202,11 @@ function cauldron_toolchain_cache_resurrect() {
   local install_logs="${2:-$CAULDRON_HOST/var/log/sorcery/install}"
   local cache="$CAULDRON_HOST_CACHE_PATH/$spell.tar"
 
-  if [[ -z create_cache_archive ]]
+  if ! declare -Fl create_cache_archive
   then
-    . "$CAULDRON_HSORCERY_LIBS/libstate" 2>$CAULDRON_NULL ||
+    debug() { :; }
+    message() { :; }
+    . "$CAULDRON_HSORCERY_LIBS/libtrack" 2>$CAULDRON_NULL ||
       liberror_die $ERR_SORCEROUS_HOST
   fi
 
@@ -218,7 +220,7 @@ function cauldron_toolchain_cache_resurrect() {
 #-------------------------------------------------------------------------------
 ## @param spell_name
 ## @param spell_version
-## @param install_log_path
+## @param install_log_path (optional)
 ##
 ## Generates a spell cache by manually copying files from the spell's install
 ## log and packaging them. Assumes that the spell's install log exists and is
@@ -287,17 +289,19 @@ function cauldron_toolchain_cache_cast() {
 }
 
 #-------------------------------------------------------------------------------
-## @param spell
+## @param list of spells (optional)
 ##
-## Generates a cache file for the given spell. It will try to use information
-## from an already installed/cast spell (in the case of the host system having
-## sorcery configured to not generate the caches), and, failing that, will cast
-## the spell and then dispel it (the second step only being performed if
-## aggressive is true).
+## Generates a cache file for the toolchain spells. It will try to use
+## information from an already installed/cast spell (in the case of the host
+## system having sorcery configured to not generate the caches), and, failing
+## that, will cast the spell and then dispel it (the second step only being
+## performed if aggressive is true). If the spell parameter is provided, it will
+## only generate the cache for the given spell. Otherwise it will generate
+## caches for all spells defined in $CAULDRON_TOOLCHAIN.
 ##
 #-------------------------------------------------------------------------------
 function cauldron_toolchain_cache_make() {
-  local spell="$1"
+  local spells=("${@:-$CAULDRON_TOOLCHAIN}")
   local config="$CAULDRON_ISORCERY_CONFIG"
   local lconfig="$CAULDRON_ISORCERY_LCONFIG"
   local install_logs="$CAULDRON_HOST/var/log/sorcery/install"
@@ -416,41 +420,32 @@ function cauldron_toolchain_build_host() {
 ##
 #-------------------------------------------------------------------------------
 function cauldron_toolchain_build_cross() {
-  local chroot=0
-
   # make sure we have a chroot accessible
   # default to $CAULDRON_BUILD, unless one is already defined
-  if ! cauldron_chroot_current -q
-  then
-    chroot=1
-    cauldron_chroot_init || return $ERR_CHROOT_INIT
-  fi
+  cauldron_chroot_init || return $ERR_CHROOT_INIT
 
   # build the stage 1 tools
-  cauldron_sorcerous_configure 1 || return $ERR_TOOLCHAIN_STAGE1
+  cauldron_sorcerous_cross_configure 1 || return $ERR_TOOLCHAIN_STAGE1
   cauldron_chroot "$CAULDRON_CMD_CAST" "binutils" || return $ERR_CHROOT_CAST
   cauldron_chroot "$CAULDRON_CMD_CAST" "gcc" || return $ERR_CHROOT_CAST
 
   # build glibc (stage 2)
-  cauldron_sorcerous_configure 2 || return $ERR_TOOLCHAIN_STAGE2
+  cauldron_sorcerous_cross_configure 2 || return $ERR_TOOLCHAIN_STAGE2
   cauldron_chroot "$CAULDRON_CMD_CAST" "glibc" || return $ERR_CHROOT_CAST
 
   # rebuild gcc (still stage 1, but this time linked against the
   # cross-glibc
-  cauldron_sorcerous_configure 1 || return $ERR_TOOLCHAIN_STAGE1
+  cauldron_sorcerous_cross_configure 1 || return $ERR_TOOLCHAIN_STAGE1
   cauldron_chroot "$CAULDRON_CMD_CAST" "gcc" || return $ERR_CHROOT_CAST
 
   # do a sorcery rebuild inside the BUILD dir to
   # generate the cross-compile tool-chain (stage 3)
-  cauldron_sorcerous_configure 3 || return $ERR_TOOLCHAIN_STAGE3
+  cauldron_sorcerous_cross_configure 3 || return $ERR_TOOLCHAIN_STAGE3
   cauldron_chroot "$CAULDRON_CMD_REBUILD" || return $ERR_CHROOT_REBUILD
 
   # if we had to initialize a default chroot
   # clean up by shutting it down
-  if [[ "$chroot" -eq 1 ]]
-  then
-    cauldron_chroot_done || return $ERR_CHROOT_DONE
-  fi
+  cauldron_chroot_done || return $ERR_CHROOT_DONE
 }
 
 #-------------------------------------------------------------------------------

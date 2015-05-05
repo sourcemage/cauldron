@@ -51,7 +51,7 @@ function cauldron_chroot_init() {
   # counts
   if $(echo "${LIBCHROOT_PATHS[@]}" | grep -q "$target")
   then
-    for((path=0; path < num; path++))
+    for ((path=0; path < num; path++))
     do
       if [[ "$target" == "${LIBCHROOT_PATHS[path]}" ]]
       then
@@ -149,7 +149,7 @@ function cauldron_chroot_done() {
 ##
 #-------------------------------------------------------------------------------
 function cauldron_chroot_current() {
-  local num="${#CAULDRON_CHROOT[*]}"
+  local num="${#LIBCHROOT_PATHS[*]}"
   local current=""
   local target=""
   local match=0
@@ -166,7 +166,7 @@ function cauldron_chroot_current() {
   # use the correct index into the array (indexing starts from 0, but count of
   # elements starts from 1)
   [[ "$num" -gt 0 ]] && ((num--))
-  current="${CAULDRON_CHROOT[num]}"
+  current="${LIBCHROOT_PATHS[num]}"
 
   # if there is no current chroot, then return immediately (no sense testing if
   # anything matches the currently defined chroot when there is none)

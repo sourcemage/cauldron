@@ -23,7 +23,7 @@ an automated way, or haven't had the foresight to account for ahead of time.
 The basic toolchain can/should be gotten from the running host system if
 possible. This can be accomplished by using binary caches from
 /var/cache/sorcery. If the cache file for a given toolchain spell does not
-exist, it should NOT be taken from a repository somewhere, or from a basesystem
+exist, it should not be taken from a repository somewhere, or from a basesystem
 tarball, unless absolutely necessary (see next paragraph). Nor should the iso
 builder have to re-cast one of the tool-chain components in order to generate
 the cache file for use. Rather, it should be taken from the already existing
@@ -33,11 +33,11 @@ had by grabbing files from the installwatch logs (/var/state/sorcery?) and
 rolling those into a tarball. (I believe devel sorcery handles this situation.)
 
 In the event that the host system does not have a build toolchain itself (an
-embedded system, for example, a system geared for security), then a basesystem
-tarball will be needed. This will also be the case if cauldron is being run
-from a non-SMGL host system. However, for the intents and purposes of Cauldron,
-that basesystem will then be considered the host system, so the same discussion
-as above still applies.
+embedded system, for example, or a system geared for security), then a
+basesystem tarball will be needed. This may also be the case if cauldron is
+being run from a non-SMGL host system. However, for the intents and purposes of
+Cauldron, that basesystem will then be considered the host system, so the same
+discussion as above still applies.
 
 Once the basic tool-chain tarball is generated/found/copied, it can be unpacked
 inside of the build directory. This, along with a copy of sorcery, should

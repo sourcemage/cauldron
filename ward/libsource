@@ -482,6 +482,9 @@ function ward_functions() {
     # for each called function, check prefix by prefix
     for function in "${list[@]}"
     do
+      # reset the matched variable
+      matched="no"
+
       # check if the function is defined somewhere in the file it came from
       grep -q "^function $function() {" "$file" && continue
 
@@ -516,7 +519,7 @@ function ward_functions() {
       done
 
       # if the function isn't defined in the corresponding file, warn the user
-      if [[ -z "$matched" ]]
+      if [[ "$matched" != "yes" ]]
       then
         echo "$(libcolor_file $file): $(libcolor_warn $function)"
       fi

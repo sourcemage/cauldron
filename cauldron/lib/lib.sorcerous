@@ -63,7 +63,7 @@ function cauldron_sorcerous_cross_configure() {
   local hostarch="$CAULDRON_HOST_ARCH"
   local arch="$CAULDRON_ARCH"
 
-  if [[ -z modify_config ]]
+  if ! declare -lF modify_config
   then
     . "$CAULDRON_HSORCERY_LIBS/libtrack" 2> $CAULDRON_NULL ||
       liberror_die $ERR_SORCEROUS_HOST
@@ -99,6 +99,7 @@ function cauldron_sorcerous_cross_configure() {
 #-------------------------------------------------------------------------------
 function cauldron_sorcerous_download() {
   local spool="${1:-$CAULDRON_BUILD/var/spool/sorcery}"
+  local sorcery="${CAULDRON_SORCERY_PKG}"
   local sorcery_url="${CAULDRON_SORCERY_URL}"
   local url_get=( "${CAULDRON_CMD_URL_DL[@]}" )
 
@@ -109,13 +110,16 @@ function cauldron_sorcerous_download() {
   # then get the source tarball and place it in CAULDRON_BUILD
   if [[ ! -e "$spool/$sorcery" || "$CAULDRON_FORCE_DOWNLOAD" == "yes" ]]
   then
+    # make sure any existing file is removed
+    "${CAULDRON_CMD_RM_FORCE[@]}" "$spool/$sorcery"
+
     # run in a subshell as an easy way of not messing with the working directory
     (
       cd "$spool"
       "${url_get[@]}" "$sorcery_url" ||
         return $ERR_SORCEROUS_DOWNLOAD
     )
-  fi &&
+  fi
 
   return $ERR_OK
 }

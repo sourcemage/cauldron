@@ -31,9 +31,10 @@ function ward_print_usage() {
   cat << EndUsage
 Usage: $(basename $0) [-n]
 
-Calls the global_variables delinter to check whether there are error codes used
-in the known cauldron and enchantment source files that aren't defined in the
-respective errorcodes files. If passed -n, color output is disabled.
+Calls the global_variables delinter to check whether there are configuration
+variables (global environment variables) used in the known cauldron and
+enchantment source files that aren't defined in the respective config files. If
+passed -n, color output is disabled.
 EndUsage
 }
 
@@ -76,7 +77,7 @@ then
   CAULDRON_CONF="$cauldron/data/config"
 
   # check cauldron files
-  libcolor_notice "Checking cauldron config variables"
+  libcolor_notice "Checking cauldron for undefined config variables..."
   echo ""
   ward_global_variables -p "$cauldron" "$c_conf" "${sources[@]}" | \
     grep -v '[^A-Z_]ERR_[A-Z_]*'
@@ -90,7 +91,7 @@ then
   ENCHANT_CONF="$enchantment/data/config"
 
   # check enchantment files
-  libcolor_notice "Checking enchantment config variables"
+  libcolor_notice "Checking enchantment for undefined config variables..."
   echo ""
   ward_global_variables -p "$enchantment" "$e_conf" "${sources[@]}" | \
     grep -v '[^A-Z_]ERR_[A-Z_]*'

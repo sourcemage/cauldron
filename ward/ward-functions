@@ -87,7 +87,7 @@ then
   cauldron="$WARD_PATH/../cauldron"
 
   # check cauldron files
-  libcolor_notice "Checking cauldron functions"
+  libcolor_notice "Checking for undefined cauldron functions..."
   echo ""
   ward_functions -p "$cauldron" -l "$cauldron/lib" "${sources[@]}"
 fi
@@ -98,7 +98,7 @@ then
   enchantment="$WARD_PATH/../enchantment"
 
   # check enchantment files
-  libcolor_notice "Checking enchantment functions"
+  libcolor_notice "Checking for undefined enchantment functions..."
   echo ""
   ward_functions -p "$enchantment" -l "$enchantment/lib" "${sources[@]}"
 fi

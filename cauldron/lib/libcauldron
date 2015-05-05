@@ -253,7 +253,8 @@ function cauldron_prepare() {
   then
     cauldron_load_library lib.sorcerous
   fi
-  cauldron_sorcerous_install "$CAULDRON_BUILD" || return $ERR_SORCEROUS_INSTALL
+  cauldron_sorcerous_download || return $ERR_SORCEROUS_INSTALL
+  cauldron_sorcerous_install || return $ERR_SORCEROUS_INSTALL
 
   # cauldron is a spell
   # there is a spoon
