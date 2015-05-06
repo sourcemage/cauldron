@@ -495,7 +495,23 @@ function ward_functions() {
       while $(echo $mangle | grep -q '^[a-z]\+_[a-z_]\+')
       do
         prefix="${mangle%%_*}"
+
+        # adjustment for libenchantment prefixes
         [[ "$prefix" == "enchant" ]] && prefix="enchantment"
+
+        # special checks for the common libs (liberror, libcolor)
+        case "$prefix" in
+          "libcolor" | "liberror" )
+            if [[ -f "$lpath/../../lib/$prefix" ]]
+            then
+              if grep -q "^function $function() {" "$lpath/../../lib/$prefix"
+              then
+                matched="yes"
+                break
+              fi
+            fi
+            ;;
+        esac
 
         # check for the function in a library file matching the prefix
         if [[ -f "$lpath/lib$prefix" ]]
