@@ -468,6 +468,13 @@ function ward_functions() {
     liberror_die $ERR_FATAL
   fi
 
+  local az="[[:lower:]]"
+  local num="[[:digit:]]"
+  local aznum="[[:alnum:]]"
+  local az_num="[[:alnum:]_]"
+  local space="[[:space:]]"
+  #local needle="^${space}*${az}${aznum}_${az_num}\+\b[^[:punct:]]\?"
+  local needle="^${space}*${az}${aznum}\+_${az_num}\+$space\+"
   while [[ $# -gt 0 ]]
   do
     file="$1"
@@ -478,7 +485,7 @@ function ward_functions() {
 
     [[ -f "$file" ]] || continue
 
-    list=($(grep -o "^[ ]*[a-z]\+_[a-z_]\+" "$file" | sed 's/^ *//' | sort -u))
+    list=($(sed 's/^\(.*\)$/\1 /' "$file" | grep -o "$needle" | sed 's/ //g' | sort -u))
     # for each called function, check prefix by prefix
     for function in "${list[@]}"
     do
@@ -486,13 +493,13 @@ function ward_functions() {
       matched="no"
 
       # check if the function is defined somewhere in the file it came from
-      grep -q "^function $function() {" "$file" && continue
+      grep -q "^function $function[ ]\?()[ ]*{" "$file" && continue
 
       # seed the defines variable for the loop below
       local mangle="$function"
 
       # check against the prefixes, one at a time
-      while $(echo $mangle | grep -q '^[a-z]\+_[a-z_]\+')
+      while $(echo $mangle | grep -q '^[a-z][a-z0-9]*_[a-z0-9_]\+')
       do
         prefix="${mangle%%_*}"
 
@@ -533,6 +540,17 @@ function ward_functions() {
         # no match yet, strip the prefix and repeat
         mangle="${mangle#*_}"
       done
+
+      if [[ "$matched" != "yes" ]]
+      then
+        if [[ -f "$lpath/lib.${function#*_}" ]]
+        then
+          if grep -q "^function $function() {" "$lpath/lib.${function#*_}"
+          then
+            matched="yes"
+          fi
+        fi
+      fi
 
       # if the function isn't defined in the corresponding file, warn the user
       if [[ "$matched" != "yes" ]]
