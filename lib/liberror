@@ -88,6 +88,25 @@ function liberror_print_error() {
   # exit if $errmsg not defined
   [[ -z "$errmsg" ]] && return 1
 
+  # get the name of the calling function
+  local caller=""
+  local lineno=""
+  local bashsrc=""
+  for ((i=0; i < "${#FUNCNAME[@]}"; i++))
+  do
+    if [[ "${FUNCNAME[i]}" != liberror* ]]
+    then
+      caller="${FUNCNAME[i]}"
+      lineno="${BASH_LINENO[i-1]}"
+      bashsrc="${BASH_SOURCE[i]}"
+      break
+    fi
+  done
+
+  # inject the calling function's name and source line number
+  # into the error message for tracing purposes
+  errmsg="$caller\(${bashsrc##*/}:$lineno\): $errmsg"
+
   # print an OK message if the "error" is 0, otherwise print an error message
   if [[ "$error" -eq 0 ]]
   then
