@@ -179,7 +179,9 @@ function liberror_check() {
 
   [[ "$error" -gt 0 ]] && liberror_print_error "$error" "$info"
 
-  return $ERR_OK
+  # return the same error back so that we don't modify the return value
+  # environment
+  return $error
 }
 
 #-------------------------------------------------------------------------------
