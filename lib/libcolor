@@ -37,7 +37,8 @@ LIBCOLOR_NOTICE_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_BLUE}"
 LIBCOLOR_WARN_COLOR="${LIBCOLOR_NORMAL}${LIBCOLOR_CYAN}"
 LIBCOLOR_ERROR_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_RED}"
 LIBCOLOR_QUERY_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_YELLOW}"
-LIBCOLOR_FILE_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_GREEN}"
+LIBCOLOR_FILE_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_WHITE}"
+LIBCOLOR_DIR_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_GREEN}"
 LIBCOLOR_SYMLINK_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_CYAN}"
 
 #-------------------------------------------------------------------------------
@@ -133,6 +134,27 @@ function libcolor_query() {
 function libcolor_file() {
   local normal="$LIBCOLOR_NORMAL_COLOR"
   local color="$LIBCOLOR_FILE_COLOR"
+  local LIBCOLOR_NORMAL_COLOR="$color"
+
+  if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
+  then
+    echo -n "$@"
+  else
+    echo -ne "$color"
+    echo -n "$@"
+    echo -ne "$normal"
+  fi
+}
+
+#-------------------------------------------------------------------------------
+## @param directory name
+##
+## Prints the given directory name in "dir" color.
+##
+#-------------------------------------------------------------------------------
+function libcolor_dir() {
+  local normal="$LIBCOLOR_NORMAL_COLOR"
+  local color="$LIBCOLOR_DIR_COLOR"
   local LIBCOLOR_NORMAL_COLOR="$color"
 
   if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
