@@ -47,13 +47,17 @@ LIBCOLOR_SYMLINK_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_CYAN}"
 ##
 #-------------------------------------------------------------------------------
 function libcolor_notice() {
+  local normal="$LIBCOLOR_NORMAL_COLOR"
+  local color="$LIBCOLOR_NOTICE_COLOR"
+  local LIBCOLOR_NORMAL_COLOR="$color"
+
   if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
   then
     echo -n "$@"
   else
-    echo -ne "$LIBCOLOR_NOTICE_COLOR"
+    echo -ne "$color"
     echo -n "$@"
-    echo -ne "$LIBCOLOR_NORMAL_COLOR"
+    echo -ne "$normal"
   fi
 }
 
@@ -64,13 +68,17 @@ function libcolor_notice() {
 ##
 #-------------------------------------------------------------------------------
 function libcolor_warn() {
+  local normal="$LIBCOLOR_NORMAL_COLOR"
+  local color="$LIBCOLOR_WARN_COLOR"
+  local LIBCOLOR_NORMAL_COLOR="$color"
+
   if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
   then
     echo -n "$@"
   else
-    echo -ne "$LIBCOLOR_WARN_COLOR"
+    echo -ne "$color"
     echo -n "$@"
-    echo -ne "$LIBCOLOR_NORMAL_COLOR"
+    echo -ne "$normal"
   fi
 }
 
@@ -81,13 +89,17 @@ function libcolor_warn() {
 ##
 #-------------------------------------------------------------------------------
 function libcolor_error() {
+  local normal="$LIBCOLOR_NORMAL_COLOR"
+  local color="$LIBCOLOR_ERROR_COLOR"
+  local LIBCOLOR_NORMAL_COLOR="$color"
+
   if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
   then
     echo -n "$@"
   else
-    echo -ne "$LIBCOLOR_ERROR_COLOR"
+    echo -ne "$color"
     echo -n "$@"
-    echo -ne "$LIBCOLOR_NORMAL_COLOR"
+    echo -ne "$normal"
   fi
 }
 
@@ -98,13 +110,17 @@ function libcolor_error() {
 ##
 #-------------------------------------------------------------------------------
 function libcolor_query() {
+  local normal="$LIBCOLOR_NORMAL_COLOR"
+  local color="$LIBCOLOR_QUERY_COLOR"
+  local LIBCOLOR_NORMAL_COLOR="$color"
+
   if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
   then
     echo -n "$@"
   else
-    echo -ne "$LIBCOLOR_QUERY_COLOR"
+    echo -ne "$color"
     echo -n "$@"
-    echo -ne "$LIBCOLOR_NORMAL_COLOR"
+    echo -ne "$normal"
   fi
 }
 
@@ -115,13 +131,17 @@ function libcolor_query() {
 ##
 #-------------------------------------------------------------------------------
 function libcolor_file() {
+  local normal="$LIBCOLOR_NORMAL_COLOR"
+  local color="$LIBCOLOR_FILE_COLOR"
+  local LIBCOLOR_NORMAL_COLOR="$color"
+
   if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
   then
     echo -n "$@"
   else
-    echo -ne "$LIBCOLOR_FILE_COLOR"
+    echo -ne "$color"
     echo -n "$@"
-    echo -ne "$LIBCOLOR_NORMAL_COLOR"
+    echo -ne "$normal"
   fi
 }
 
@@ -132,13 +152,17 @@ function libcolor_file() {
 ##
 #-------------------------------------------------------------------------------
 function libcolor_symlink() {
+  local normal="$LIBCOLOR_NORMAL_COLOR"
+  local color="$LIBCOLOR_SYMLINK_COLOR"
+  local LIBCOLOR_NORMAL_COLOR="$color"
+
   if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
   then
     echo -n "$@"
   else
-    echo -ne "$LIBCOLOR_SYMLINK_COLOR"
+    echo -ne "$color"
     echo -n "$@"
-    echo -ne "$LIBCOLOR_NORMAL_COLOR"
+    echo -ne "$normal"
   fi
 }
 
