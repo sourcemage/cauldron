@@ -19,6 +19,8 @@
 WARD_PATH="$(dirname $0)"
 PATH="$WARD_PATH:$PATH"
 
+PAGER="${PAGER:-less -R}"
+
 TESTERS=(
         "ward-configvars"
         "ward-errorcodes"
