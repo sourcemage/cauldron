@@ -42,6 +42,24 @@ LIBCOLOR_DIR_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_GREEN}"
 LIBCOLOR_SYMLINK_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_CYAN}"
 
 #-------------------------------------------------------------------------------
+## @param facility (notice, warn, error, symlink, ...)
+## @param message
+##
+## Prints the given message in the facility color. The facility must be one of
+## the libcolor message color functions
+##
+#-------------------------------------------------------------------------------
+function libcolor_msg() {
+  local func="$1"
+
+  [[ -n "$func" ]] || return $?
+
+  shift
+  eval libcolor_${func} "$@"
+  echo
+}
+
+#-------------------------------------------------------------------------------
 ## @param notice message
 ##
 ## Prints the given message in "notice" color.
@@ -186,6 +204,23 @@ function libcolor_symlink() {
     echo -n "$@"
     echo -ne "$normal"
   fi
+}
+
+#-------------------------------------------------------------------------------
+## @param colors (RED, BLUE, BOLD, etc., ...)
+##
+## Prints the control code(s) for the given color(s). This is an internal
+## function that should only be used when absolutely necessary for specialized
+## output. Use the message functions above unless you have a *really* good
+## reason for using this one instead.
+##
+#-------------------------------------------------------------------------------
+function libcolor_color() {
+  while [[ "$#" -gt 0 ]]
+  do
+    eval echo -n "\$LIBCOLOR_$1"
+    shift
+  done
 }
 
 #-------------------------------------------------------------------------------
