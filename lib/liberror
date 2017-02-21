@@ -92,7 +92,7 @@ function liberror_print_error() {
   if [[ "$error" -eq 0 ]]
   then
     # output using libcolor if available
-    if [[ "$(type -t libcolor_notice)" == "function" ]]
+    if declare -lF libcolor_notice
     then
       eval libcolor_notice "$errmsg" >&$output
       echo "" >&$output
@@ -104,7 +104,7 @@ function liberror_print_error() {
     [[ -n "$info" ]] && errmsg="$errmsg: $info"
 
     # output using libcolor if available
-    if [[ "$(type -t libcolor_error)" == "function" ]]
+    if declare -lF libcolor_error
     then
       eval libcolor_error "$errmsg" >&$output
       echo "" >&$output
