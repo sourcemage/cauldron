@@ -109,7 +109,8 @@ function cauldron_init_make_ramfs() {
 
   "${CAULDRON_CMD_MKDIR[@]}" "$ramdir" || return $ERR_MK_DIR
 
-  cauldron_init_fs_make "$ramdir" || return $ERR_INIT_MAKE_FS
+  cauldron_init_fs_make "$ramdir"
+  liberror_check || return $ERR_INIT_MAKE_FS
 
   (
     cd "$ramdir"
@@ -128,7 +129,8 @@ function cauldron_init_make_ramfs() {
 function cauldron_init_install_ramfs() {
   local ramfs="$CAULDRON_TMP/initram.cpio.gz"
 
-  cauldron_init_img_install "$ramfs" || return $ERR_INIT_INSTALL_RAMFS
+  cauldron_init_img_install "$ramfs"
+  liberror_check || return $ERR_INIT_INSTALL_RAMFS
 
   return $ERR_OK
 }
@@ -268,16 +270,20 @@ function cauldron_init_fs_busybox() {
     "$build/etc/sorcery/local/busybox.config" ||
       return $ERR_CP_FILE
 
-  cauldron_chroot_init "$build" || return $ERR_CHROOT_INIT
+  cauldron_chroot_init "$build"
+  liberror_check || return $?
 
-  cauldron_chroot_cast "busybox" || return $ERR_CHROOT_CAST
+  cauldron_chroot_cast "$util"
+  liberror_check || return $?
 
   "${CAULDRON_CMD_CP[@]}" "$build/sbin/busybox" "$initfs/sbin/busybox" ||
     return $ERR_CP_FILE
 
-  cauldron_chroot_dispel "busybox" || return $ERR_CHROOT_DISPEL
+  cauldron_chroot_dispel "busybox"
+  liberror_check || return $?
 
-  cauldorn_chroot_done "$build" || return $ERR_CHROOT_DONE
+  cauldron_chroot_done "$build"
+  liberror_check || return $?
 
   return $ERR_OK
 }
@@ -294,14 +300,19 @@ function cauldron_init_fs_make() {
 
   [[ -d "$initfs" ]] || return $ERR_DIR_NOT_FOUND
 
-  cauldron_init_fs_busybox "$initfs" &&
-  cauldron_init_fs_dirs "$initfs" &&
-  cauldron_init_fs_bins "$initfs" &&
-  cauldron_init_fs_libs "$initfs" &&
-  cauldron_init_fs_mods "$initfs" &&
+  cauldron_init_fs_dirs "$initfs"
+  liberror_check || return $ERR_INIT_MAKE_FS
+  cauldron_init_fs_busybox "$initfs"
+  liberror_check || return $ERR_INIT_MAKE_FS
+  cauldron_init_fs_bins "$initfs"
+  liberror_check || return $ERR_INIT_MAKE_FS
+  cauldron_init_fs_libs "$initfs"
+  liberror_check || return $ERR_INIT_MAKE_FS
+  cauldron_init_fs_mods "$initfs"
+  liberror_check || return $ERR_INIT_MAKE_FS
   cauldron_init_fs_init "$initfs"
+  liberror_check || return $ERR_INIT_MAKE_FS
 
-  [[ "$?" -gt 0 ]] && return $ERR_INIT_MAKE_FS
 
   return $ERR_OK
 }

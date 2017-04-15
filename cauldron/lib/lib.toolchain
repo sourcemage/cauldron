@@ -44,16 +44,19 @@ function cauldron_toolchain_compiler_test() {
   echo -e "#include <stdlib.h>\nint main(void) { exit(0); }" \
     > "$chroot/tmp/compiler.test.c"
 
-  cauldron_chroot_init "$chroot" || return $?
+  cauldron_chroot_init "$chroot"
+  liberror_check || return $?
 
   # compile a very simple source file to ensure the compiler works
-  cauldron_chroot "$compiler" -o "/$comptest" "/$comptest.c" ||
-    return $ERR_TOOLCHAIN_COMPILER_TEST
+  cauldron_chroot "$compiler" -o "/$comptest" "/$comptest.c"
+  liberror_check "compile $comptest.c using $compiler" || return $?
 
   # run the generated binary to make sure it was properly compiled
-  cauldron_chroot "/$comptest" || return $ERR_TOOLCHAIN_COMPILER_TEST
+  cauldron_chroot "/$comptest"
+  liberror_check "execute $comptest" || return $?
 
-  cauldron_chroot_done "$chroot" || return $?
+  cauldron_chroot_done "$chroot"
+  liberror_check || return $?
 
   # clean up the temporary files
   "${CAULDRON_CMD_RM_FORCE[@]}" "$chroot/$comptest.c" "$chroot/$comptest" ||
@@ -145,7 +148,10 @@ function cauldron_toolchain_baseroot() {
 
   # perform basic sanity checking on the chroot
   # return whatever error code baseroot_test gives back to us
-  cauldron_toolchain_baseroot_test "$chroot" || return $?
+  cauldron_toolchain_baseroot_test "$chroot"
+  liberror_check || return $?
+
+  return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------

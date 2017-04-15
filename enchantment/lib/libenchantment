@@ -165,7 +165,8 @@ function enchant_set_current() {
     return $ERR_SET_CURRENT
   fi
 
-  enchant_modules_exit || return $ERR_MODULE_EXIT
+  enchant_modules_exit
+  liberror_check || return $ERR_MODULE_EXIT
 
   # if the max history size has been reached, then we drop the oldest item
   if [[ "$(wc -l < $ENCHANT_BACK)" -ge "$ENCHANT_POTION_BUFFER" ]]
@@ -177,12 +178,14 @@ function enchant_set_current() {
   echo "$module" >> "$ENCHANT_BACK" || return $ERR_SET_CURRENT
 
   # check the installation state
-  enchant_potion_update || return $?
+  enchant_potion_update
+  liberror_check || return $?
 
   # set the current module
   echo "$module" > "$ENCHANT_STATUS" || return $ERR_SET_CURRENT
 
-  enchant_modules_enter || return $ERR_MODULE_ENTER
+  enchant_modules_enter
+  liberror_check || return $ERR_MODULE_ENTER
 
   return $ERR_OK
 }
@@ -218,11 +221,13 @@ function enchant_get_next() {
 function enchant_set_next() {
   local module
 
-  # get next step
-  module="$(enchant_get_next)" || return $ERR_SET_NEXT
+  # get next module
+  module="$(enchant_get_next)"
+  liberror_check || return $ERR_SET_NEXT
 
   # save new status
-  enchant_set_step "$module" || return $ERR_SET_NEXT
+  enchant_set_step "$module"
+  liberror_check || return $ERR_SET_NEXT
 
   return $ERR_OK
 }
@@ -261,10 +266,12 @@ function enchant_get_prev() {
 function enchant_set_prev() {
   local module
 
-  # get the current step
-  module="$(enchant_get_prev)" || return $ERR_SET_PREV
+  # get the current module
+  module="$(enchant_get_prev)"
+  liberror_check || return $ERR_SET_PREV
 
-  enchant_set_current "$module" || return $ERR_SET_PREV
+  enchant_set_current "$module"
+  liberror_check || return $ERR_SET_PREV
 
   return $ERR_OK
 }
@@ -290,7 +297,8 @@ function enchant_back() {
 
   # copy the current status to the forward history, so we can go forward to
   # where we are after we jump back
-  enchant_get_current >> "$ENCHANT_FORWARD" || return $ERR_HISTORY_BACK
+  enchant_get_current >> "$ENCHANT_FORWARD"
+  liberror_check || return $ERR_HISTORY_BACK
 
   # set the current step to be the one we are jumping to
   tail -n 1 "$ENCHANT_BACK" > "$ENCHANT_STATUS" || return $ERR_HISTORY_BACK
@@ -322,7 +330,8 @@ function enchant_forward() {
 
   # copy the current status to the back history, so we can go back to where we
   # are after we jump forward
-  enchant_get_current >> "$ENCHANT_BACK" || return $ERR_HISTORY_FORWARD
+  enchant_get_current >> "$ENCHANT_BACK"
+  liberror_check || return $ERR_HISTORY_FORWARD
 
   # set the current step to be the one we are jumping to
   tail -n 1 "$ENCHANT_FORWARD" > "$ENCHANT_STATUS" || return $ERR_HISTORY_FORWARD
