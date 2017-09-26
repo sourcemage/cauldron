@@ -68,28 +68,28 @@ function enchant_i18n_keymap_input_get() {
 ##
 #-------------------------------------------------------------------------------
 function enchant_i18n_keymap_make_list {
-  local prefix="${1:-$ENCHANT_ISO_PATH/usr/share/keymaps}"
+  local prefix="${1:-$ENCHANT_KEYMAPDIR}"
   local list=()
   local result=()
   local i=""
 
   [[ -d "$prefix" ]] || return $ERR_DIR_ACCESS
 
-  list=( $(find "$prefix"/* -maxdepth 0 -type d -not -name include) )
+  list=( $("${ENCHANT_CMD_FIND[@]}" "$prefix"/* -maxdepth 0 -type d -not -name include) )
 
   if [[ "${#list[*]}" -eq 0 ]]
   then
-    list=( $(find "$prefix"/* -type f -name *.map.gz) )
+    list=( $("${ENCHANT_CMD_FIND[@]}" "$prefix"/* -type f -name *.map.gz) )
   fi
 
   [[ "${#list[*]}" -eq 0 ]] && return $ERR_KEYMAP_LIST
 
   for ((i=0; i < "${#list[*]}"; i++))
   do
-    result=( "$result" "${list[i]##*/}" )
+    result=( "${result[@]}" "${list[i]##*/}" )
   done
 
-  echo "${result[*]}"
+  echo "${result[@]}"
 
   return $ERR_OK
 }
@@ -100,7 +100,7 @@ function enchant_i18n_keymap_make_list {
 ##
 #-------------------------------------------------------------------------------
 function enchant_i18n_keymap_get() {
-  cat "$ENCHANT_KEYMAP" || return $ERR_KEYMAP_GET
+  "${ENCHANT_CMD_CAT[@]}" "$ENCHANT_KEYMAP" || return $ERR_KEYMAP_GET
 
   return $ERR_OK
 }
@@ -117,7 +117,7 @@ function enchant_i18n_keymap_set() {
 
   [[ -f "$keymap" ]] || return $ERR_FILE_ACCESS
 
-  loadkeys "$keymap" || return $ERR_KEYMAP_LOAD
+  "${ENCHANT_CMD_LOAD_KEYMAP[@]}" "$keymap" || return $ERR_KEYMAP_LOAD
 
   # store the selected keymap for later use by enchantment (e.g., for potions)
   echo "${keymap%.*map.*}" > "$ENCHANT_KEYMAP" ||
@@ -135,7 +135,7 @@ function enchant_i18n_keymap_set() {
 ##
 #-------------------------------------------------------------------------------
 function enchant_i18n_keymap_input_handler() {
-  local prefix="${1:-$ENCHANT_ISO_PATH/usr/share/keymaps}"
+  local prefix="${1:-$ENCHANT_KEYMAPDIR}"
   local max="$2"
   local input=""
   local rc=""
@@ -159,7 +159,7 @@ function enchant_i18n_keymap_input_handler() {
   then
     # only go up a level if we aren't at the beginning
     # (don't go lower than the floor)
-    [[ "$prefix" != "$ENCHANT_ISO_PATH/usr/share/keymaps" ]] &&
+    [[ "$prefix" != "$ENCHANT_KEYMAPDIR" ]] &&
       prefix="${prefix%/[^/]*}"
   else
     # get the menu item, adjusting for array indexed from 0
