@@ -93,8 +93,17 @@ function enchant_potion_get_current() {
 #-------------------------------------------------------------------------------
 function enchant_potion_set_current() {
   local potion="$1"
+  local pdir="$ENCHANT_POTION"
 
-  [[ -d "$potion" ]] || return $ERR_DIR_NOT_FOUND
+  if ! [[ -d "$potion" ]]
+  then
+    if [[ -d "$pdir/$potion" ]]
+    then
+      potion="$pdir/$potion"
+    else
+      return $ERR_DIR_ACCESS
+    fi
+  fi
 
   $ENCHANT_POTION_CURRENT="$potion"
 
@@ -109,13 +118,19 @@ function enchant_potion_set_current() {
 ##
 #-------------------------------------------------------------------------------
 function enchant_potion_get_hashsum() {
-  local hashfunc="$ENCHANT_HASHFUNC"
   local file="$1"
   local potion="${2:-$ENCHANT_POTION_CURRENT}"
+  local pfile="$ENCHANT_POTION/$potion/${file##*/}"
+  local hashname="${ENCHANT_POTION_HASHFUNC##*/}"
 
-  [[ -f "$file" ]] || return $ERR_FILE_NOT_FOUND
+  if [[ ! -f "$pfile" ]] && [[ ! -f "${pfile}.${hashname}" ]]
+  then
+    # the file hasn't yet been cached
+    echo ""
+    return $ERR_OK
+  fi
 
-  cut -d' ' -f1 "$ENCHANT_POTION/$potion/${file##*/}.${hashfunc##*/}" ||
+  cut -d' ' -f1 "$ENCHANT_POTION/$potion/${pfile}.${hashname}" ||
     return $ERR_POTION_GET_HASHSUM
 
   return $ERR_OK
@@ -135,7 +150,7 @@ function enchant_potion_set_hashsum() {
   local file="$1"
   local potion="${2:-$ENCHANT_POTION_CURRENT}"
 
-  [[ -f "$file" ]] || return $ERR_FILE_NOT_FOUND
+  [[ -d "$potion" ]] || return $ERR_DIR_ACCESS
 
   "$hashfunc" "$file" > "$ENCHANT_POTION/$potion/${file##*/}.${hashfunc##*/}" ||
     return $ERR_POTION_SET_HASHSUM
@@ -156,7 +171,7 @@ function enchant_potion_cache_file() {
   local potion="${2:-$ENCHANT_POTION_CURRENT}"
   local sum=""
 
-  [[ -f "$file" ]] || return $ERR_FILE_NOT_FOUND
+  [[ -f "$file" ]] || return $ERR_FILE_ACCESS
 
   sum="$($ENCHANT_HASHFUNC $file | cut -d' ' -f1)"
 
@@ -334,8 +349,6 @@ function enchant_potion_update_kernel_config() {
   local potion="${1:-$ENCHANT_POTION_CURRENT}"
   local kernel_config="$ENCHANT_TARGET/usr/src/linux/.config"
 
-  [[ -f "$kernel_config" ]] || return $ERR_FILE_NOT_FOUND
-
   enchant_potion_cache_file "$kernel_config" "$potion"
   liberror_check "$kernel_config" || return $ERR_POTION_CACHE_FILE
 
@@ -352,8 +365,6 @@ function enchant_potion_update_kernel_config() {
 function enchant_potion_update_kernel() {
   local potion="${1:-$ENCHANT_POTION_CURRENT}"
   local kernels="$ENCHANT_TMP/kernels"
-
-  [[ -f "$kernels" ]] || return $ERR_FILE_NOT_FOUND
 
   enchant_potion_cache_file "$kernels" "$potion"
   liberror_check "$kernel" || return $ERR_POTION_CACHE_FILE
@@ -372,8 +383,6 @@ function enchant_potion_update_spell_sources() {
   local potion="${1:-$ENCHANT_POTION_CURRENT}"
   local spells="$ENCHANT_TMP/sources"
 
-  [[ -f "$spells" ]] || return $ERR_FILE_NOT_FOUND
-
   enchant_potion_cache_file "$spells" "$potion"
   liberror_check "$spells" || return $ERR_POTION_CACHE_FILE
 
@@ -391,8 +400,6 @@ function enchant_potion_update_spell_caches() {
   local potion="${1:-$ENCHANT_POTION_CURRENT}"
   local spells="$ENCHANT_TMP/caches"
 
-  [[ -f "$spells" ]] || return $ERR_FILE_NOT_FOUND
-
   enchant_potion_cache_file "$spells" "$potion"
   liberror_check "$spells" || return $ERR_POTION_CACHE_FILE
 
@@ -409,8 +416,6 @@ function enchant_potion_update_spell_caches() {
 function enchant_potion_update_bootloader() {
   local potion="${1:-$ENCHANT_POTION_CURRENT}"
   local bootloaders="$ENCHANT_TMP/bootloaders"
-
-  [[ -f "$bootloaders" ]] || return $ERR_FILE_NOT_FOUND
 
   enchant_potion_cache_file "$bootloaders" "$potion"
   liberror_check "$bootloaders" || return $ERR_POTION_CACHE_FILE
@@ -432,7 +437,6 @@ function enchant_potion_update_confs() {
   for conf in $ENCHANT_POTION_CONFS
   do
     conf="$ENCHANT_TARGET/$conf"
-    [[ -f "$file" ]] || return $ERR_FILE_NOT_FOUND
 
     enchant_potion_cache_file "$conf" "$potion"
     liberror_check "$conf" || return $ERR_POTION_CACHE_FILE
@@ -455,7 +459,6 @@ function enchant_potion_update_users() {
   for file in etc/passwd etc/group etc/shadow etc/gshadow
   do
     file="$ENCHANT_TARGET/$file"
-    [[ -f "$file" ]] || return $ERR_FILE_NOT_FOUND
 
     enchant_potion_cache_file "$file" "$potion"
     liberror_check "$file" || return $ERR_POTION_CACHE_FILE
@@ -507,7 +510,7 @@ function enchant_potion_bottle() {
   local potion="${1:-$ENCHANT_POTION_CURRENT}"
   local output="$ENCHANT_POTION/potion"
 
-  [[ -d "$potion" ]] || return $ERR_DIR_NOT_FOUND
+  [[ -d "$potion" ]] || return $ERR_DIR_ACCESS
 
   # package the potion into a compressed archive
   case "$ENCHANT_ARCHIVE" in

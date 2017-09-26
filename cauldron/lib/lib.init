@@ -298,7 +298,7 @@ function cauldron_init_fs_busybox() {
 function cauldron_init_fs_make() {
   local initfs="$1"
 
-  [[ -d "$initfs" ]] || return $ERR_DIR_NOT_FOUND
+  [[ -d "$initfs" ]] || return $ERR_DIR_ACCESS
 
   cauldron_init_fs_dirs "$initfs"
   liberror_check || return $ERR_INIT_MAKE_FS

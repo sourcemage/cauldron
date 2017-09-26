@@ -151,7 +151,7 @@ function enchant_modules_potion() {
   local potion="$1"
   local script=""
 
-  [[ -d "$potion" ]] || $ERR_DIR_NOT_FOUND
+  [[ -d "$potion" ]] || $ERR_DIR_ACCESS
 
   for script in "$ENCHANT_MODULES/$module/potion"/*
   do

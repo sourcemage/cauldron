@@ -22,8 +22,8 @@
 # base error codes
 liberror_add_error ERR_MK_DIR "could not make directory"
 liberror_add_error ERR_DIR_EXISTS "directory already exists"
-liberror_add_error ERR_FILE_NOT_FOUND "requested file not found"
-liberror_add_error ERR_DIR_NOT_FOUND "requested directory not found"
+liberror_add_error ERR_FILE_ACCESS "file not accessible"
+liberror_add_error ERR_DIR_ACCESS "directory not accessible"
 liberror_add_error ERR_CP_FILE "could not copy file"
 liberror_add_error ERR_CHMOD_FILE "could not chmod file"
 liberror_add_error ERR_RM_FILES "could not remove files"

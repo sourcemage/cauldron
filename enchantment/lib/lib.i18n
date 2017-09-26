@@ -73,7 +73,7 @@ function enchant_i18n_keymap_make_list {
   local result=()
   local i=""
 
-  [[ -d "$prefix" ]] || return $ERR_DIR_NOT_FOUND
+  [[ -d "$prefix" ]] || return $ERR_DIR_ACCESS
 
   list=( $(find "$prefix"/* -maxdepth 0 -type d -not -name include) )
 
@@ -115,7 +115,7 @@ function enchant_i18n_keymap_get() {
 function enchant_i18n_keymap_set() {
   local keymap="$1"
 
-  [[ -f "$keymap" ]] || return $ERR_FILE_NOT_FOUND
+  [[ -f "$keymap" ]] || return $ERR_FILE_ACCESS
 
   loadkeys "$keymap" || return $ERR_KEYMAP_LOAD
 
