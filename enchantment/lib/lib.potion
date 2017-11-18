@@ -146,7 +146,7 @@ function enchant_potion_get_hashsum() {
 ##
 #-------------------------------------------------------------------------------
 function enchant_potion_set_hashsum() {
-  local hashfunc="$ENCHANT_HASHFUNC"
+  local hashfunc="$ENCHANT_POTION_HASHFUNC"
   local file="$1"
   local potion="${2:-$ENCHANT_POTION_CURRENT}"
 
@@ -173,7 +173,7 @@ function enchant_potion_cache_file() {
 
   [[ -f "$file" ]] || return $ERR_FILE_ACCESS
 
-  sum="$($ENCHANT_HASHFUNC $file | cut -d' ' -f1)"
+  sum="$($ENCHANT_POTION_HASHFUNC $file | cut -d' ' -f1)"
 
   # only update if the checksums differ or we don't already have the hashsum
   if [[ "$sum" != "$(enchant_potion_get_hashsum $file $potion)" ]]
@@ -513,18 +513,27 @@ function enchant_potion_bottle() {
   [[ -d "$potion" ]] || return $ERR_DIR_ACCESS
 
   # package the potion into a compressed archive
-  case "$ENCHANT_ARCHIVE" in
+  case "$ENCHANT_POTION_ARCHIVE" in
     "tar" )
-      tar cf "${output}.tar" "$ENCHANT_POTION/$potion"/* || return $ERR_POTION_ARCHIVE
-      [[ -n "$ENCHANT_COMPRESS" ]] && "$ENCHANT_COMPRESS" "${output}.tar" ||
-        return $ERR_POTION_COMPRESS
+      tar cf "${output}.tar" "$ENCHANT_POTION/$potion"/* ||
+        return $ERR_POTION_ARCHIVE
+      if [[ -n "$ENCHANT_POTION_COMPRESS" ]]
+      then
+        "$ENCHANT_POTION_COMPRESS" "${output}.tar" ||
+          return $ERR_POTION_COMPRESS
+      fi
       ;;
     "cpio" )
       (
         cd "$potion"
-        find * | cpio -H newc -o > "${output}.io" || return $ERR_POTION_ARCHIVE
-        [[ -n "$ENCHANT_COMPRESS" ]] && "$ENCHANT_COMPRESS" "${output}.io" ||
-          return $ERR_POTION_COMPRESS
+        find * | cpio -H newc -o > "${output}.io" ||
+          return $ERR_POTION_ARCHIVE
+
+        if [[ -n "$ENCHANT_POTION_COMPRESS" ]]
+        then
+          "$ENCHANT_POTION_COMPRESS" "${output}.io" ||
+            return $ERR_POTION_COMPRESS
+        fi
       )
       ;;
     * )
