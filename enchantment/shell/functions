@@ -22,9 +22,7 @@
 # if given a filename for an argument, it will print the contents of the file
 # after the header
 function enchant_shell_header() {
-  echo ""
-  echo ""
-  echo ""
+  printf "\n\n\n"
 
   # if arg1 supplied, cat it
   if [[ -n "$1" ]]
@@ -68,6 +66,8 @@ function enchant_shell_print() {
 function enchant_shell_modules() {
   local list=""
   local module=""
+  local padded=""
+  local file=""
   local col_width="0"
 
   # get the list of modules
@@ -87,13 +87,25 @@ function enchant_shell_modules() {
   for module in ${list[*]}
   do
     # pad the output to align the columns
-    while [[ "${#module}" -lt "$col_width" ]]
+    padded="$module"
+    while [[ "${#padded}" -lt "$col_width" ]]
     do
-      module="$module "
+      padded="$padded "
     done
 
-    # output name and info in columns
-    echo "$module" | paste - "$ENCHANT_MODULES/$module/${module}.info"
+    file="$ENCHANT_MODULES/${module}/${module}.info"
+    if [[ -r "$file" ]]
+    then
+      # output name and info in columns
+      "${ENCHANT_CMD_OUTPUT[@]}" "$padded" |
+        "${ENCHANT_CMD_PASTE[@]}" - "$file" ||
+          return $ERR_OUTPUT
+    else
+      # module exists but its description data is missing
+      "${ENCHANT_CMD_OUTPUT[@]}" -e \
+        "$padded\t$(libcolor_error \(description not available\))" ||
+          return $ERR_OUTPUT
+    fi
   done
 
   return $ERR_OK
@@ -270,9 +282,8 @@ function enchant_shell_keymap_info() {
 
 function enchant_shell_keymap_prompt() {
   # print an indented prompt
-  echo ""
-  printf "\t$(libcolor_notice Please enter a number (0 to go back, * to exit):)"
-  echo " "
+  printf "\n\t"
+  libcolor_notice "Please enter a number (0 to go back, * to exit): "
 }
 
 function enchant_shell_peform_keymap() {
