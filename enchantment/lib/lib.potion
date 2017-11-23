@@ -25,36 +25,6 @@
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
-# global variables
-#-------------------------------------------------------------------------------
-# current potion dir - used with the enchant history functions to keep separate
-# state for each level of history
-ENCHANT_POTION_CURRENT=""
-
-# list of config files (e.g., /etc) for which to keep state information on
-# do not include a preceding '/' as the list will be relative to the target
-# system directory (by default /mnt/root)
-ENCHANT_POTION_CONFS=(
-  etc/timezone
-  etc/hostname
-  etc/sysconfig/*
-  )
-
-# list of ISO mounts to exclude from partition/filesystem/mount_point listings
-# each match is exact, so subdirectories need to be explicitly listed separately
-ENCHANT_POTION_MOUNT_EXCLUDES=(
-  /
-  /dev
-  /dev/pts
-  /dev/shm
-  /proc
-  /sys
-  /tmp
-  /var
-  /var/tmp
-  )
-
-#-------------------------------------------------------------------------------
 # function definitions
 #-------------------------------------------------------------------------------
 #-------------------------------------------------------------------------------
