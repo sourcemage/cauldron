@@ -81,7 +81,8 @@ function enchant_shell_modules() {
     [[ "${#col}" -gt "$col_width" ]] && col_width="${#col}"
   done
 
-  enchant_shell_header || return $ERR_FILE_NOT_FOUND
+  enchant_shell_header
+  liberror_check || return $?
 
   for module in ${list[*]}
   do
@@ -104,45 +105,53 @@ function enchant_shell_perform_todo() {
   [[ -z "$curstep" ]] && return $ERR_GET_CURRENT
 
   # output the header
-  enchant_shell_header || return $ERR_FILE_NOT_FOUND
+  enchant_shell_header
+  liberror_check || return $?
 
   # output the current module's instructions
-  enchant_shell_print "$ENCHANT_MODULES/$curstep/$curstep" ||
-    return $ERR_FILE_NOT_FOUND
+  enchant_shell_print "$ENCHANT_MODULES/$curstep/$curstep"
+  liberror_check || return $?
 
   return $ERR_OK
 }
 
 function enchant_shell_perform_next() {
-  enchant_set_next || return $ERR_SET_NEXT
+  enchant_set_next
+  liberror_check || return $?
 
-  todo || return $ERR_FILE_NOT_FOUND
+  enchant_shell_perform_todo
+  liberror_check || return $?
 
   return $ERR_OK
 }
 
 function enchant_shell_perform_prev() {
-  enchant_set_prev || return $ERR_SET_PREV
+  enchant_set_prev
+  liberror_check || return $?
 
-  todo || return $ERR_FILE_NOT_FOUND
+  enchant_shell_perform_todo
+  liberror_check || return $?
 
   return $ERR_OK
 }
 
 function enchant_shell_perform_back() {
-  enchant_back || return $ERR_HISTORY_BACK
+  enchant_back
+  liberror_check || return $?
 
   return $ERR_OK
 }
 
 function enchant_shell_perform_forward() {
-  enchant_forward || return $ERR_HISTORY_FORWARD
+  enchant_forward
+  liberror_check || return $?
 
   return $ERR_OK
 }
 
 function enchant_shell_perform_list_modules() {
-  enchant_shell_modules || return $ERR_INSTALLER_MODULES
+  enchant_shell_modules
+  liberror_check || return $?
 
   return $ERR_OK
 }
@@ -152,29 +161,21 @@ function enchant_shell_perform_jump() {
 
   enchant_set_current $*
   rc="$?"
+  liberror_check "$rc" "'$@'"
 
-  if [[ "$rc" -gt 0 ]]
+  if [[ "$rc" -eq $ERR_SET_CURRENT ]]
   then
-    echo ""
-    libcolor_error "'$@': error: "
-    liberror_print_error "$rc"
-
-    if [[ "$rc" == $ERR_SET_CURRENT ]]
-    then
-      echo "Type $(libcolor_notice enchantment list) to see a list of steps."
-    fi
+    "${ENCHANT_CMD_OUTPUT[@]}" \
+      "Type $(libcolor_notice enchantment list) to see a list of steps." ||
+        return $ERR_OUTPUT
   fi
 
-  return $ERR_OK
+  return $rc
 }
 
 function enchant_shell_perform_welcome() {
-  enchant_shell_header || return $ERR_FILE_NOT_FOUND
-
-  enchant_shell_print "$ENCHANT_MODULES/welcome/welcome" ||
-    return $ERR_FILE_NOT_FOUND
-
-  return $ERR_OK
+  enchant_shell_perform_todo "welcome"
+  liberror_check || return $?
 }
 
 function enchant_shell_perform_help() {
@@ -184,22 +185,23 @@ function enchant_shell_perform_help() {
   then
     if [[ -n "$1" ]]
     then
-      libcolor_warn "No installer help for '$1'"
-      echo ""
+      libcolor_msg warn "No installer help for '$1'"
     else
       return $ERR_FILE_NOT_FOUND
     fi
   fi
 
-  enchant_shell_header || return $ERR_FILE_NOT_FOUND
-  enchant_shell_print "$helpfile" ||
-    return $ERR_FILE_NOT_FOUND
+  enchant_shell_header
+  liberror_check || return $?
+  enchant_shell_print "$helpfile"
+  liberror_check || return $?
 
   return $ERR_OK
 }
 
 function enchant_shell_perform_chroot() {
-  enchant_chroot_init || return $ERR_CHROOT_INIT
+  enchant_chroot_init
+  liberror_check || return $?
 
   # set the prompt to let the user know
   # we are entering... the Chroot Zone
@@ -209,9 +211,11 @@ function enchant_shell_perform_chroot() {
   PS1="${PS1}\n\u \w\$ "
   export PS1
 
-  enchant_chroot "$@" || return $ERR_CHROOT_EXEC
+  enchant_chroot "$@"
+  liberror_check || return $?
 
-  enchant_chroot_done || return $ERR_CHROOT_DONE
+  enchant_chroot_done
+  liberror_check || return $?
 
   return $ERR_OK
 }
@@ -312,7 +316,7 @@ function enchant_shell_peform_keymap() {
           ;;
         * )
           # return any errors which weren't explicitly handled above
-          return $rc
+          liberror_check || return $rc
           ;;
       esac
     fi
