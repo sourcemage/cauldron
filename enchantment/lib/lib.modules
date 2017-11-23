@@ -63,15 +63,25 @@ function enchant_modules_list() {
 ## implementation of the shell installer for an example).
 ##
 #-------------------------------------------------------------------------------
-function enchant_modules_number() {
-  local num="$(grep -n -m1 \"^$(enchant_get_current):\" $ENCHANT_INSTALLER/modules)"
+function enchant_modules_number_current() {
+  local list=
+  local current=
+  local num=0
 
-  if [[ -z "$num" ]]
-  then
-    return $ERR_MODULE_GET_NUM
-  fi
+  list=( $(enchant_modules_list) )
+  liberror_check || return $ERR_MODULE_GET_NUM
 
-  echo "$num" | cut -d: -f1 || return $ERR_MODULE_GET_NUM
+  current=$(enchant_get_current)
+  liberror_check || return $ERR_MODULE_GET_NUM
+
+  for ((i=0; i < "${#list[@]}" ; i++))
+  do
+    [[ "${list[i]}" == "$current" ]] && num="$((i+1))"
+  done
+
+  [[ "$num" -gt 0 ]] || return $ERR_MODULE_GET_NUM
+
+  echo "$num"
 
   return $ERR_OK
 }
@@ -81,8 +91,12 @@ function enchant_modules_number() {
 ## Returns the total number of modules to perform during the installation
 ##
 #-------------------------------------------------------------------------------
-function enchant_modules_total() {
-  local total="$(enchant_modules_list | wc -l)"
+function enchant_modules_number_total() {
+  local total=
+
+  total=( $(enchant_modules_list) )
+  liberror_check || return $ERR_MODULE_NONE
+  total="${#total[@]}"
 
   if [[ "$total" -eq 0 || -z "$total" ]]
   then
