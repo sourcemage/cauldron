@@ -74,13 +74,26 @@ function enchant_install_dir() {
 ##
 #-------------------------------------------------------------------------------
 function enchant_install_sources() {
-  local sources=( "${@:-$(cat $ENCHANT_SOURCES_LIST)}" )
+  local sources=( "$@" )
   local dst="$ENCHANT_TARGET_SOURCES"
 
-  for spell in $sources
+  # if no spells were passed in directly, load via the env var
+  [[ -n "$sources" ]] || sources=( "${ENCHANT_SOURCES_LIST[@]}" )
+
+  for spell in "${sources[@]}"
   do
-    enchant_install_file "$ENCHANT_SPELL_SOURCES/$spell" "$dst/" ||
-      return $ERR_INSTALL_SOURCES
+    # if the spells are specified via a file, read the file
+    if [[ -r "$spell" ]]
+    then
+      while read s
+      do
+        enchant_install_file "$ENCHANT_SPELL_SOURCES/$s" "$dst/" ||
+          return $ERR_INSTALL_SOURCES
+      done < "$spell"
+    else
+      enchant_install_file "$ENCHANT_SPELL_SOURCES/$spell" "$dst/" ||
+        return $ERR_INSTALL_SOURCES
+    fi
   done
 
   return $ERR_OK
@@ -90,19 +103,32 @@ function enchant_install_sources() {
 ##
 ## @param caches_list
 ##
-## Copies the selected spell caches into the target. If caches_list is empty
+## Installs the selected spell caches into the target. If caches_list is empty
 ## (no caches were passed as arguments), it reads the list of caches to
-## install from $ENCHANT_SOURCES_LIST.
+## install from $ENCHANT_CACHES_LIST.
 ##
 #-------------------------------------------------------------------------------
 function enchant_install_caches() {
-  local caches=( "${@:-$(cat $ENCHANT_CACHES_LIST)}" )
+  local caches=( "$@" )
   local dst="$ENCHANT_TARGET_CACHES"
+
+  # if no spells were passed in directly, load via the env var
+  [[ -n "$caches" ]] || caches=( "${ENCHANT_CACHES_LIST[@]}" )
 
   for spell in $caches
   do
-    enchant_install_file "$ENCHANT_SPELL_SOURCES/spell" "$dst/" ||
-      return $ERR_INSTALL_CACHES
+    # if the spells are specified via a file, read the file
+    if [[ -r "$spell" ]]
+    then
+      while read s
+      do
+        "${ENCHANT_CMD_TAR[@]}" -C "$target" -xf "$ENCHANT_SPELL_CACHES/$s" ||
+          return $ERR_INSTALL_CACHES
+      done < "$spell"
+    else
+      "${ENCHANT_CMD_TAR[@]}" -C "$target" -xf "$ENCHANT_SPELL_CACHES/$spell" ||
+        return $ERR_INSTALL_CACHES
+    fi
   done
 
   return $ERR_OK
