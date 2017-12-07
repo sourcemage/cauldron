@@ -66,12 +66,12 @@ function cauldron_toolchain_compiler_test() {
 }
 
 #-------------------------------------------------------------------------------
-## @param baseroot (optional)
+## @param baseroot_dir (optional)
 ##
 ## Performs basic quality assurance over an acquired basesystem chroot for
-## cauldron purposes. The path to the (unpacked) baseroot directory (which will
-## function as the build chroot hereafter) defaults to
-## "$CAULDRON_BUILD" if not provided.
+## cauldron purposes. The path to the (unpacked) baseroot_dir directory (which
+## will function as the build chroot hereafter) defaults to "$CAULDRON_BUILD" if
+## not provided.
 ##
 #-------------------------------------------------------------------------------
 function cauldron_toolchain_baseroot_test() {
