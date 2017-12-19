@@ -226,42 +226,53 @@ function cauldron_add_installers() {
 
 #-------------------------------------------------------------------------------
 ##
-## This creates the CAULDRON_BUILD directory, and copies sorcery and
-## cauldron files into it. It also configures the CAULDRON_BUILD
-## sorcery as necessary (i.e. ensures that CLEAN_SOURCE="off") for
-## sanity purposes
+## This prepares the CAULDRON_BUILD directory for cauldron work by copying
+## sorcery and cauldron files into it. It also configures the CAULDRON_BUILD
+## sorcery as necessary (i.e. ensures that CLEAN_SOURCE="off"), as well as
+## adding grimoires.
 ##
 #-------------------------------------------------------------------------------
 function cauldron_prepare() {
-  # ensure that the build dir exists
-  "${CAULDRON_CMD_MKDIR[@]}" "$CAULDRON_BUILD"
+  local target="${1:-$CAULDRON_BUILD}"
 
-  # ensure CAULDRON_BUILD/etc exists
-  "${CAULDRON_CMD_MKDIR[@]}" "$CAULDRON_BUILD/etc"
+  # ensure that the build dir exists
+  [[ -d "$target" ]] || "${CAULDRON_CMD_MKDIR[@]}" "$target"
+  liberror_check || return $?
+
+  # ensure necessary directories exist in the CAULDRON_BUILD chroot
+  for dir in "${CAULDRON_FHS_DIRS[@]}"
+  do
+    if [[ ! -d "$target/$dir" ]]
+    then
+      "${CAULDRON_CMD_MKDIR[@]}" "$target/$dir"
+      liberror_check || return $?
+    fi
+  done
 
   # copy the host's resolv.conf in order to dl sources from the net
   "${CAULDRON_CMD_CP[@]}" \
     "$CAULDRON_RESOLV" \
-    "$CAULDRON_BUILD/etc/resolv.conf" ||
-      return $ERR_RESOLV
+    "$CAULDRON_BUILD/etc/resolv.conf"
+  liberror_check || return $ERR_RESOLV
 
-  # prepare chroots to $CAULDRON_BUILD
-  cauldron_chroot_init || return $?
+  # prepare chroots to target, used in turn by functions called below
+  cauldron_chroot_init "$target"
+  liberror_check || return $?
 
-  # install sorcery into the build dir
-  if ! type -t cauldron_sorcerous_install > "$CAULDRON_NULL"
+  if ! declare -lF cauldron_sorcerous_install
   then
     cauldron_load_library lib.sorcerous
   fi
-  cauldron_sorcerous_download || return $ERR_SORCEROUS_INSTALL
-  cauldron_sorcerous_install || return $ERR_SORCEROUS_INSTALL
 
-  # cauldron is a spell
-  # there is a spoon
-  cauldron_chroot "${CAULDRON_CMD_CAST[@]}" cauldron || return $ERR_CHROOT_CAST
+  # install sorcery into the build dir
+  cauldron_sorcerous_download
+  liberror_check || return $?
+  cauldron_sorcerous_install
+  liberror_check || return $?
 
   # clean up the chroot
-  cauldron_chroot_done || return $?
+  cauldron_chroot_done "$target"
+  liberror_check || return $?
 
   return $ERR_OK
 }
