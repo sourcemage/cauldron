@@ -93,7 +93,7 @@ function enchant_shell_modules() {
       padded="$padded "
     done
 
-    file="$ENCHANT_MODULES/${module}/${module}.info"
+    file="$ENCHANT_MODULES/${module}/description"
     if [[ -r "$file" ]]
     then
       # output name and info in columns
@@ -121,7 +121,7 @@ function enchant_shell_perform_todo() {
   liberror_check || return $?
 
   # output the current module's instructions
-  enchant_shell_print "$ENCHANT_MODULES/$curstep/$curstep"
+  enchant_shell_print "$ENCHANT_MODULES/$curstep/instructions"
   liberror_check || return $?
 
   return $ERR_OK
