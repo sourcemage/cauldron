@@ -15,8 +15,7 @@ system, and you can set up networking by editing the
 @[/mnt/root/etc/network/interfaces] file.
 
 Finally, you can choose to set your timezone by doing the following:
-@[ smgl-chroot]
-@[ ln -sf /usr/share/zoneinfo/SOME/TIMEZONE /etc/localtime]
+  @[enchantment chroot ln -sf /usr/share/zoneinfo/SOME/TIMEZONE /etc/localtime]
 
 Just remember to replace "SOME/TIMEZONE" with your actual timezone.
 

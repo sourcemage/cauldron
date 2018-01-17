@@ -4,9 +4,11 @@ so mount the filesystem that will be / onto /mnt/root. The partitions given are
 only examples. Replace them with the partitions you used in @[disk-format].
 
 Examples:
-@[ mount -t ext2 /dev/sda1 /mnt/root]
-@[ mount -t reiserfs /dev/sda1 /mnt/root]
-@[ mount -t xfs /dev/sda1 /mnt/root]
+  @[mount -t xfs /dev/sda1 $ENCHANT_TARGET]
+  @[mkdir $ENCHANT_TARGET/boot $ENCHANT_TARGET/usr]
+  @[mount -t ext2 /dev/sda2 $ENCHANT_TARGET/boot]
+  @[mount -t reiserfs /dev/sda3 $ENCHANT_TARGET/usr]
+  @[mount -t ext3 /dev/sda3 $ENCHANT_TARGET/var]
 
 Then mount any other partitions you made at the proper subdirectories.
 You'll probably need to make directories for the other mount points first

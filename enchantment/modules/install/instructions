@@ -4,16 +4,16 @@ you can do this: manually, and using the @[smgl-enchant] script. Note
 that system.tar.bz2 is @[required] for a new install.
 
 manual method:
-@[ tar xjvf /system.tar.bz2 -C /mnt/root]
-@[ cd /var/cache/sorcery]
-@[ tar jxf SPELL -C /mnt/root ]
+  @[tar -C $ENCHANT_TARGET -xjvf /system.tar.bz2]
+  @[cd /var/cache/sorcery]
+  @[tar -C $ENCHANT_TARGET -xvjf SPELL]
 
 Remember to replace "SPELL" with the filename of the spell cache to install. As
 an example, to install lilo:
 @[ tar jxf /var/cache/sorcery/lilo-22.8-i486-pc-linux-gnu.tar.bz2 -C /mnt/root]
 
-enchant method (uses /tmp/spells):
-@[ smgl-enchant]
+enchantment method (uses $ENCHANT_TMP/spells):
+  @[enchantment install spells]
 
 Enchant can also take a command-line argument to a cache file with a specified
 path. This enables you to run enchant on any cache file you choose, from any

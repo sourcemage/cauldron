@@ -5,18 +5,18 @@ the kernel and kernel modules over to your new system. You can do this with a
 script we provide, or manually. Remember to modify your bootloader
 configuration to use the kernel you install if you wish to boot it!
 
-using smgl-kernel:
-@[ smgl-kernel]
+using enchantment:
+  @[enchantment install iso-kernel]
 
 manually:
-copy the kernel itself:
-@[ cp /boot/config-$(uname -r) /mnt/root/boot/]
-@[ cp /boot/linux /mnt/root/boot/vmlinuz-$(uname -r)]
+ copy the kernel itself:
+  @[cp /boot/config-$(uname -r) $ENCHANT_TARGET/boot/]
+  @[cp /boot/kernel $ENCHANT_TARGET/boot/vmlinuz-$(uname -r)]
 
-copy all the kernel modules:
-@[ cp -a /lib/modules/$(uname -r) /mnt/root/lib/modules/]
+ copy all the kernel modules:
+  @[cp -a /lib/modules/$(uname -r) $ENCHANT_TARGET/lib/modules/]
 
-you'll probably also want the modprobe blacklist:
-@[ cp /etc/modprobe.d/blacklist /mnt/root/etc/modprobe.d/blacklist]
+ you'll probably also want the modprobe blacklist:
+  @[cp /etc/modprobe.d/blacklist $ENCHANT_TARGET/etc/modprobe.d/blacklist]
 
 Type @[next] to go to the next step.

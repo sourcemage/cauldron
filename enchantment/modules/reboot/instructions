@@ -2,7 +2,7 @@
 You should be all done with the installation! Congratulations! Time to reboot
 into your installed system! Just type:
 
-@[ reboot]
+  @[reboot]
 
 If you installed @[smgl-setup] (installed by default unless changed), be sure to
 run @[man smgl-setup] when first logging in. It will provide you with

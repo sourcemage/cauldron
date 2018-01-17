@@ -4,20 +4,20 @@ spell or compiling and installing manually. Remember to update your bootloader
 configuration to use your new kernel if you wish to boot it!
 
 chroot into your system:
-@[ smgl-chroot]
+  @[enchantment chroot]
 
 spell install:
-@[ cast -r linux]
+  @[cast -r linux]
 
 manual install (change VERSION to what you have):
-@[ cd /usr/src && tar jxvf linux-VERSION]
-@[ ln -sf /usr/src/linux-VERSION /usr/src/linux && cd /usr/src/linux]
-@[ make menuconfig && make && make modules_install]
-@[ cp -f arch/i386/boot/bzImage /boot/vmlinuz-VERSION]
-@[ cp -f .config /boot/config-VERSION]
-@[ cp -f System.map /boot/System.map-VERSION]
+  @[cd /usr/src && tar -xvf linux-VERSION]
+  @[ln -sf /usr/src/linux-VERSION /usr/src/linux && cd /usr/src/linux]
+  @[make menuconfig && make && make modules_install]
+  @[cp -f arch/x86/boot/bzImage /boot/vmlinuz-VERSION]
+  @[cp -f .config /boot/config-VERSION]
+  @[cp -f System.map /boot/System.map-VERSION]
 
 Exit the chroot:
-@[exit]
+  @[exit]
 
 Type @[next] to go to the next step.

@@ -4,14 +4,13 @@ of example commands for the different types of filesystems supported on this
 ISO. The partitions given are examples. Be sure to format all the partitions
 you need.
 
-@[ mke2fs /dev/sda1]
-@[ mkfs.ext3 /dev/sda1]
-@[ mkreiserfs /dev/sda1]
-@[ mkfs.jfs /dev/sda1]
-@[ mkfs.xfs /dev/sda1]
+  @[mkfs.xfs /dev/sda1]
+  @[mke2fs /dev/sda2]
+  @[mkreiserfs /dev/sda3]
+  @[mkfs.ext3 /dev/sda4]
 
 You probably want a swap partition:
-@[ mkswap /dev/sda2]
+  @[mkswap /dev/sda5]
 
 The reiser4 tools are provided on the ISO. However, the ISO kernel does not
 yet support reiser4, so although you can create reiser4 filesystems and

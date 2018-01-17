@@ -7,14 +7,14 @@ To run lilo properly, it needs to be chroot'ed into the new system. This needs
 some directories (/dev, /proc), so we provide a wrapper to set those up for
 you and clean them up again when you're done.
 
-Run the script to get a shell inside the installed system:
-@[ smgl-chroot]
+chroot into the installed system:
+  @[enchantment chroot]
 
-Then run lilo so it updates the boot record:
-@[ /sbin/lilo]
+run lilo so it installs to the boot record:
+  @[/sbin/lilo]
 
-Exit the chroot:
-@[ exit]
+exit the chroot:
+  @[ exit]
 
 Unless you got an error message when you were installing the boot loader,
 you should be done with this step. Type @[next] to go to the next step.
