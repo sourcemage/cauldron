@@ -56,7 +56,7 @@ function libcolor_msg() {
 
   shift
   eval libcolor_${func} "$@"
-  echo
+  printf "\n"
 }
 
 #-------------------------------------------------------------------------------
@@ -72,11 +72,9 @@ function libcolor_notice() {
 
   if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
   then
-    echo -n "$@"
+    printf "$*"
   else
-    echo -ne "$color"
-    echo -n "$@"
-    echo -ne "$normal"
+    printf "$color$*$normal"
   fi
 }
 
@@ -93,11 +91,9 @@ function libcolor_warn() {
 
   if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
   then
-    echo -n "$@"
+    printf "$*"
   else
-    echo -ne "$color"
-    echo -n "$@"
-    echo -ne "$normal"
+    printf "$color$*$normal"
   fi
 }
 
@@ -114,11 +110,9 @@ function libcolor_error() {
 
   if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
   then
-    echo -n "$@"
+    printf "$*"
   else
-    echo -ne "$color"
-    echo -n "$@"
-    echo -ne "$normal"
+    printf "$color$*$normal"
   fi
 }
 
@@ -135,11 +129,9 @@ function libcolor_query() {
 
   if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
   then
-    echo -n "$@"
+    printf "$*"
   else
-    echo -ne "$color"
-    echo -n "$@"
-    echo -ne "$normal"
+    printf "$color$*$normal"
   fi
 }
 
@@ -156,11 +148,9 @@ function libcolor_file() {
 
   if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
   then
-    echo -n "$@"
+    printf "$*"
   else
-    echo -ne "$color"
-    echo -n "$@"
-    echo -ne "$normal"
+    printf "$color$*$normal"
   fi
 }
 
@@ -177,11 +167,9 @@ function libcolor_dir() {
 
   if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
   then
-    echo -n "$@"
+    printf "$*"
   else
-    echo -ne "$color"
-    echo -n "$@"
-    echo -ne "$normal"
+    printf "$color$*$normal"
   fi
 }
 
@@ -198,11 +186,9 @@ function libcolor_symlink() {
 
   if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
   then
-    echo -n "$@"
+    printf "$*"
   else
-    echo -ne "$color"
-    echo -n "$@"
-    echo -ne "$normal"
+    printf "$color$*$normal"
   fi
 }
 
@@ -218,7 +204,8 @@ function libcolor_symlink() {
 function libcolor_color() {
   while [[ "$#" -gt 0 ]]
   do
-    eval echo -n "\$LIBCOLOR_$1"
+    eval [[ -n "\$LIBCOLOR_$1" ]] &&
+      eval printf "\$LIBCOLOR_$1"
     shift
   done
 }
