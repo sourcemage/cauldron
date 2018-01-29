@@ -138,6 +138,89 @@ function enchant_color() {
 }
 
 #-------------------------------------------------------------------------------
+## @param history file (back or forward)
+##
+## Gets the current total number of history "back" entries
+##
+#-------------------------------------------------------------------------------
+function enchant_history_total() {
+  local histfile=
+
+  case "$1" in
+    back) histfile="$ENCHANT_BACK" ;;
+    forward) histfile="$ENCHANT_FORWARD" ;;
+    *) return $ERR_TARGET ;;
+  esac
+
+  "${ENCHANT_CMD_WC[@]}" -l < "$histfile" || return $ERR_FILE_ACCESS
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+## @param history file (back or forward)
+##
+## Adds an entry to the given history file.
+##
+#-------------------------------------------------------------------------------
+function enchant_history_push() {
+  local histfile=
+
+  case "$1" in
+    back) histfile="$ENCHANT_BACK" ;;
+    forward) histfile="$ENCHANT_FORWARD" ;;
+    *) return $ERR_TARGET ;;
+  esac
+
+  enchant_get_current >> "$histfile" || return $ERR_FILE_ACCESS
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+## @param history file (back or forward)
+## @param entry index number (optional)
+##
+## Drops an entry from the given history file. By default it pops the most
+## recent entry.
+##
+#-------------------------------------------------------------------------------
+function enchant_history_pop() {
+  local entry="${2:-$}"
+  local histfile=
+
+  case "$1" in
+    back) histfile="$ENCHANT_BACK" ;;
+    forward) histfile="$ENCHANT_FORWARD" ;;
+    *) return $ERR_TARGET ;;
+  esac
+
+  "${ENCHANT_CMD_SEDFILE[@]}" "${entry}d" "$histfile" || return $ERR_FILE_ACCESS
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+## @param history file (back or forward)
+##
+## Gets the current (most recent) history entry for the given history file.
+##
+#-------------------------------------------------------------------------------
+function enchant_history_current() {
+  local histfile=
+
+  case "$1" in
+    back) histfile="$ENCHANT_BACK" ;;
+    forward) histfile="$ENCHANT_FORWARD" ;;
+    *) return $ERR_TARGET ;;
+  esac
+
+  "${ENCHANT_CMD_TAIL[@]}" -n 1 "$histfile" || return $ERR_FILE_ACCESS
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
 ##
 ## Determines and returns the current module in the installation procedure.
 ##
@@ -171,9 +254,10 @@ function enchant_set_current() {
   liberror_check || return $ERR_MODULE_EXIT
 
   # if the max history size has been reached, then we drop the oldest item
-  if [[ "$(wc -l < $ENCHANT_BACK)" -ge "$ENCHANT_POTION_BUFFER" ]]
+  if [[ "$(enchant_history_total back)" -ge "$ENCHANT_POTION_BUFFER" ]]
   then
-    "${ENCHANT_CMD_SEDFILE[@]}" '1d' "$ENCHANT_BACK" || return $ERR_SET_CURRENT
+    enchant_history_pop back 1
+    liberror_check || return $ERR_SET_CURRENT
   fi
 
   # copy the current module to the back history
@@ -287,15 +371,20 @@ function enchant_set_prev() {
 ##
 #-------------------------------------------------------------------------------
 function enchant_back() {
+  local nback=
+  local nforw=
+
   # if the back history is empty, then we can't go back
-  [[ "$(wc -l < $ENCHANT_BACK)" -eq 0 ]] && return $ERR_HISTORY_BACK
+  nback="$(enchant_history_total back)" || return $ERR_HISTORY_BACK
+  [[ "$nback" -eq 0 ]] && return $ERR_HISTORY_BACK
 
   # if the max forward history size has been reached
-  if [[ "$(wc -l < $ENCHANT_FORWARD)" -ge "$ENCHANT_POTION_BUFFER" ]]
+  nforw="$(enchant_history_total forward)" || return $ERR_HISTORY_FORWARD
+  if [[ "$nforw" -ge "$ENCHANT_POTION_BUFFER" ]]
   then
     # then we drop the oldest item from the forward history
-    "${ENCHANT_CMD_SEDFILE[@]}" '1d' "$ENCHANT_FORWARD" ||
-      return $ERR_HISTORY_BACK
+    enchant_history_pop forward 1
+    liberror_check || return $ERR_HISTORY_BACK
   fi
 
   # copy the current status to the forward history, so we can go forward to
@@ -304,12 +393,12 @@ function enchant_back() {
   liberror_check || return $ERR_HISTORY_BACK
 
   # set the current step to be the one we are jumping to
-  "${ENCHANT_CMD_TAIL[@]}" -n 1 "$ENCHANT_BACK" > "$ENCHANT_STATUS" ||
-    return $ERR_HISTORY_BACK
+  enchant_history_current back > "$ENCHANT_STATUS"
+  liberror_check || return $ERR_HISTORY_BACK
 
   # remove the step we jumped to from the back history
-  "${ENCHANT_CMD_SEDFILE[@]}" '$d' "$ENCHANT_BACK" ||
-    return $ERR_HISTORY_BACK
+  enchant_history_pop back
+  liberror_check || return $ERR_HISTORY_BACK
 
   return $ERR_OK
 }
@@ -323,14 +412,20 @@ function enchant_back() {
 ##
 #-------------------------------------------------------------------------------
 function enchant_forward() {
+  local nback=
+  local nforw=
+
   # if the forward history is empty, then we can't go forward
-  [[ "$(wc -l < $ENCHANT_FORWARD)" -eq 0 ]] && return $ERR_HISTORY_FORWARD
+  nforw="$(enchant_history_total forward)" || return $ERR_HISTORY_FORWARD
+  [[ "$nforw" -eq 0 ]] && return $ERR_HISTORY_FORWARD
 
   # if the max back history size has been reached
-  if [[ "$(wc -l < $ENCHANT_BACK)" -ge "$ENCHANT_POTION_BUFFER" ]]
+  nback="$(enchant_history_total back)" || return $ERR_HISTORY_BACK
+  if [[ "$nback" -ge "$ENCHANT_POTION_BUFFER" ]]
   then
     # then we drop the oldest item from the back history
-    sed -i '1d' "$ENCHANT_BACK" || return $ERR_HISTORY_FORWARD
+    enchant_history_pop back 1
+    liberror_check || return $ERR_HISTORY_BACK
   fi
 
   # copy the current status to the back history, so we can go back to where we
@@ -339,12 +434,12 @@ function enchant_forward() {
   liberror_check || return $ERR_HISTORY_FORWARD
 
   # set the current step to be the one we are jumping to
-  "${ENCHANT_CMD_TAIL[@]}" -n 1 "$ENCHANT_FORWARD" > "$ENCHANT_STATUS" ||
-    return $ERR_HISTORY_FORWARD
+  enchant_history_current forward > "$ENCHANT_STATUS"
+  liberror_check || return $ERR_HISTORY_FORWARD
 
   # remove the step we jumped to from the forward history
-  "${ENCHANT_CMD_SEDFILE[@]}" '$d' "$ENCHANT_FORWARD" ||
-    return $ERR_HISTORY_FORWARD
+  enchant_history_pop forward
+  liberror_check || return $ERR_HISTORY_FORWARD
 
   return $ERR_OK
 }
