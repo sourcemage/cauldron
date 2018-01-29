@@ -21,25 +21,26 @@ LIBCOLOR_NOCOLOR="no"
 #-------------------------------------------------------------------------------
 # Message Color Definitions
 #-------------------------------------------------------------------------------
-LIBCOLOR_NORMAL="[0m"
-LIBCOLOR_BOLD="[1m"
-LIBCOLOR_BLACK="[30m"
-LIBCOLOR_RED="[31m"
-LIBCOLOR_GREEN="[32m"
-LIBCOLOR_YELLOW="[33m"
-LIBCOLOR_BLUE="[34m"
-LIBCOLOR_VIOLET="[35m"
-LIBCOLOR_CYAN="[36m"
-LIBCOLOR_WHITE="[37m"
+: "${LIBCOLOR_NORMAL:=[0m}"
+: "${LIBCOLOR_BOLD:=[1m}"
+: "${LIBCOLOR_BLACK:=[30m}"
+: "${LIBCOLOR_RED:=[31m}"
+: "${LIBCOLOR_GREEN:=[32m}"
+: "${LIBCOLOR_YELLOW:=[33m}"
+: "${LIBCOLOR_BLUE:=[34m}"
+: "${LIBCOLOR_VIOLET:=[35m}"
+: "${LIBCOLOR_CYAN:=[36m}"
+: "${LIBCOLOR_WHITE:=[37m}"
 
-LIBCOLOR_NORMAL_COLOR="${LIBCOLOR_NORMAL}${LIBCOLOR_WHITE}"
-LIBCOLOR_NOTICE_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_BLUE}"
-LIBCOLOR_WARN_COLOR="${LIBCOLOR_NORMAL}${LIBCOLOR_CYAN}"
-LIBCOLOR_ERROR_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_RED}"
-LIBCOLOR_QUERY_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_YELLOW}"
-LIBCOLOR_FILE_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_WHITE}"
-LIBCOLOR_DIR_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_GREEN}"
-LIBCOLOR_SYMLINK_COLOR="${LIBCOLOR_BOLD}${LIBCOLOR_CYAN}"
+: "${LIBCOLOR_NORMAL_COLOR:=${LIBCOLOR_NORMAL}${LIBCOLOR_WHITE}}"
+: "${LIBCOLOR_NOTICE_COLOR:=${LIBCOLOR_BOLD}${LIBCOLOR_VIOLET}}"
+: "${LIBCOLOR_OK_COLOR:=${LIBCOLOR_BOLD}${LIBCOLOR_GREEN}}"
+: "${LIBCOLOR_ERROR_COLOR:=${LIBCOLOR_BOLD}${LIBCOLOR_RED}}"
+: "${LIBCOLOR_WARN_COLOR:=${LIBCOLOR_BOLD}${LIBCOLOR_YELLOW}}"
+: "${LIBCOLOR_QUERY_COLOR:=${LIBCOLOR_NORMAL}${LIBCOLOR_CYAN}}"
+: "${LIBCOLOR_FILE_COLOR:=${LIBCOLOR_BOLD}${LIBCOLOR_WHITE}}"
+: "${LIBCOLOR_DIR_COLOR:=${LIBCOLOR_BOLD}${LIBCOLOR_BLUE}}"
+: "${LIBCOLOR_SYMLINK_COLOR:=${LIBCOLOR_BOLD}${LIBCOLOR_CYAN}}"
 
 #-------------------------------------------------------------------------------
 ## @param facility (notice, warn, error, symlink, ...)
@@ -59,24 +60,35 @@ function libcolor_msg() {
   printf "\n"
 }
 
+
+#-------------------------------------------------------------------------------
+## @param color
+## @param message
+##
+## Prints the given message in the given color.
+##
+#-------------------------------------------------------------------------------
+libcolor_printf() {
+  local reset="${color:-$LIBCOLOR_NORMAL_COLOR}"
+  local color="$1"
+  shift 1
+
+  if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
+  then
+    printf "%s" "$*"
+    return "$?"
+  fi
+
+  printf "%b%s%b" "$color" "$*" "${reset:-$LIBCOLOR_NORMAL_COLOR}"
+}
+
 #-------------------------------------------------------------------------------
 ## @param notice message
 ##
 ## Prints the given message in "notice" color.
 ##
 #-------------------------------------------------------------------------------
-function libcolor_notice() {
-  local normal="$LIBCOLOR_NORMAL_COLOR"
-  local color="$LIBCOLOR_NOTICE_COLOR"
-  local LIBCOLOR_NORMAL_COLOR="$color"
-
-  if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
-  then
-    printf "$*"
-  else
-    printf "$color$*$normal"
-  fi
-}
+function libcolor_notice() { libcolor_printf "$LIBCOLOR_NOTICE_COLOR" "$@" ;}
 
 #-------------------------------------------------------------------------------
 ## @param warning message
@@ -84,18 +96,7 @@ function libcolor_notice() {
 ## Prints the given message in "warn" color.
 ##
 #-------------------------------------------------------------------------------
-function libcolor_warn() {
-  local normal="$LIBCOLOR_NORMAL_COLOR"
-  local color="$LIBCOLOR_WARN_COLOR"
-  local LIBCOLOR_NORMAL_COLOR="$color"
-
-  if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
-  then
-    printf "$*"
-  else
-    printf "$color$*$normal"
-  fi
-}
+function libcolor_warn() { libcolor_printf "$LIBCOLOR_WARN_COLOR" "$@" ;}
 
 #-------------------------------------------------------------------------------
 ## @param error message
@@ -103,18 +104,7 @@ function libcolor_warn() {
 ## Prints the given error message in "error" color.
 ##
 #-------------------------------------------------------------------------------
-function libcolor_error() {
-  local normal="$LIBCOLOR_NORMAL_COLOR"
-  local color="$LIBCOLOR_ERROR_COLOR"
-  local LIBCOLOR_NORMAL_COLOR="$color"
-
-  if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
-  then
-    printf "$*"
-  else
-    printf "$color$*$normal"
-  fi
-}
+function libcolor_error() { libcolor_printf "$LIBCOLOR_ERROR_COLOR" "$@" ;}
 
 #-------------------------------------------------------------------------------
 ## @param query message
@@ -122,18 +112,7 @@ function libcolor_error() {
 ## Prints the given query message in "query" color.
 ##
 #-------------------------------------------------------------------------------
-function libcolor_query() {
-  local normal="$LIBCOLOR_NORMAL_COLOR"
-  local color="$LIBCOLOR_QUERY_COLOR"
-  local LIBCOLOR_NORMAL_COLOR="$color"
-
-  if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
-  then
-    printf "$*"
-  else
-    printf "$color$*$normal"
-  fi
-}
+function libcolor_query() { libcolor_printf "$LIBCOLOR_QUERY_COLOR" "$@" ;}
 
 #-------------------------------------------------------------------------------
 ## @param file name
@@ -141,18 +120,7 @@ function libcolor_query() {
 ## Prints the given file name in "file" color.
 ##
 #-------------------------------------------------------------------------------
-function libcolor_file() {
-  local normal="$LIBCOLOR_NORMAL_COLOR"
-  local color="$LIBCOLOR_FILE_COLOR"
-  local LIBCOLOR_NORMAL_COLOR="$color"
-
-  if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
-  then
-    printf "$*"
-  else
-    printf "$color$*$normal"
-  fi
-}
+function libcolor_file() { libcolor_printf "$LIBCOLOR_FILE_COLOR" "$@" ;}
 
 #-------------------------------------------------------------------------------
 ## @param directory name
@@ -160,18 +128,7 @@ function libcolor_file() {
 ## Prints the given directory name in "dir" color.
 ##
 #-------------------------------------------------------------------------------
-function libcolor_dir() {
-  local normal="$LIBCOLOR_NORMAL_COLOR"
-  local color="$LIBCOLOR_DIR_COLOR"
-  local LIBCOLOR_NORMAL_COLOR="$color"
-
-  if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
-  then
-    printf "$*"
-  else
-    printf "$color$*$normal"
-  fi
-}
+function libcolor_dir() { libcolor_printf "$LIBCOLOR_DIR_COLOR" "$@" ;}
 
 #-------------------------------------------------------------------------------
 ## @param symlink name
@@ -179,18 +136,7 @@ function libcolor_dir() {
 ## Prints the given symlink name in "symlink" color.
 ##
 #-------------------------------------------------------------------------------
-function libcolor_symlink() {
-  local normal="$LIBCOLOR_NORMAL_COLOR"
-  local color="$LIBCOLOR_SYMLINK_COLOR"
-  local LIBCOLOR_NORMAL_COLOR="$color"
-
-  if [[ "$LIBCOLOR_NOCOLOR" = "yes" ]]
-  then
-    printf "$*"
-  else
-    printf "$color$*$normal"
-  fi
-}
+function libcolor_symlink() { libcolor_printf "$LIBCOLOR_SYMLINK_COLOR" "$@" ;}
 
 #-------------------------------------------------------------------------------
 ## @param colors (RED, BLUE, BOLD, etc., ...)
@@ -202,10 +148,13 @@ function libcolor_symlink() {
 ##
 #-------------------------------------------------------------------------------
 function libcolor_color() {
+  local color=
+
   while [[ "$#" -gt 0 ]]
   do
-    eval [[ -n "\$LIBCOLOR_$1" ]] &&
-      eval printf "\$LIBCOLOR_$1"
+    eval color="\$LIBCOLOR_$1"
+    [[ -n "$color" ]] &&
+      printf "%b" "$color"
     shift
   done
 }
