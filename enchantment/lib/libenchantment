@@ -98,13 +98,15 @@ enchant_load_library "lib.potion"
 #-------------------------------------------------------------------------------
 function enchant_prepare() {
   # this initializes the file which holds the current step
-  mkdir -p "$ENCHANT_TMP" || return $ERR_PREPARE
+  "${ENCHANT_CMD_MKDIR[@]}" "$ENCHANT_TMP" || return $ERR_PREPARE
   echo 'init' > "$ENCHANT_STATUS" || return $ERR_PREPARE
 
   # the next lines are to init the history files
-  mkdir -p "$ENCHANT_POTION" || return $ERR_PREPARE
-  cat < $ENCHANT_NULL > "$ENCHANT_BACK" || return $ERR_PREPARE
-  cat < $ENCHANT_NULL > "$ENCHANT_FORWARD" || return $ERR_PREPARE
+  "${ENCHANT_CMD_MKDIR[@]}" "$ENCHANT_POTION" || return $ERR_PREPARE
+  "${ENCHANT_CMD_CAT[@]}" < "$ENCHANT_NULL" > "$ENCHANT_BACK" ||
+    return $ERR_PREPARE
+  "${ENCHANT_CMD_CAT[@]}" < "$ENCHANT_NULL" > "$ENCHANT_FORWARD" ||
+    return $ERR_PREPARE
 
   return $ERR_OK
 }
@@ -115,7 +117,7 @@ function enchant_prepare() {
 ##
 #-------------------------------------------------------------------------------
 function enchant_cleanup() {
-  rm -fr "$ENCHANT_TMP" || return $ERR_CLEANUP
+  "${ENCHANT_CMD_RM_RECURSE[@]}" "$ENCHANT_TMP" || return $ERR_CLEANUP
 
   return $ERR_OK
 }
@@ -143,7 +145,7 @@ function enchant_color() {
 function enchant_get_current() {
   [[ -z "$ENCHANT_STATUS" ]] && return $ERR_GET_CURRENT
 
-  cat "$ENCHANT_STATUS" || return $ERR_GET_CURRENT
+  "${ENCHANT_CMD_CAT[@]}" "$ENCHANT_STATUS" || return $ERR_GET_CURRENT
 
   return $ERR_OK
 }
@@ -171,7 +173,7 @@ function enchant_set_current() {
   # if the max history size has been reached, then we drop the oldest item
   if [[ "$(wc -l < $ENCHANT_BACK)" -ge "$ENCHANT_POTION_BUFFER" ]]
   then
-    sed -i '1d' "$ENCHANT_BACK" || return $ERR_SET_CURRENT
+    "${ENCHANT_CMD_SEDFILE[@]}" '1d' "$ENCHANT_BACK" || return $ERR_SET_CURRENT
   fi
 
   # copy the current module to the back history
@@ -292,7 +294,8 @@ function enchant_back() {
   if [[ "$(wc -l < $ENCHANT_FORWARD)" -ge "$ENCHANT_POTION_BUFFER" ]]
   then
     # then we drop the oldest item from the forward history
-    sed -i '1d' "$ENCHANT_FORWARD" || return $ERR_HISTORY_BACK
+    "${ENCHANT_CMD_SEDFILE[@]}" '1d' "$ENCHANT_FORWARD" ||
+      return $ERR_HISTORY_BACK
   fi
 
   # copy the current status to the forward history, so we can go forward to
@@ -301,10 +304,12 @@ function enchant_back() {
   liberror_check || return $ERR_HISTORY_BACK
 
   # set the current step to be the one we are jumping to
-  tail -n 1 "$ENCHANT_BACK" > "$ENCHANT_STATUS" || return $ERR_HISTORY_BACK
+  "${ENCHANT_CMD_TAIL[@]}" -n 1 "$ENCHANT_BACK" > "$ENCHANT_STATUS" ||
+    return $ERR_HISTORY_BACK
 
   # remove the step we jumped to from the back history
-  sed -i '$d' "$ENCHANT_BACK" || return $ERR_HISTORY_BACK
+  "${ENCHANT_CMD_SEDFILE[@]}" '$d' "$ENCHANT_BACK" ||
+    return $ERR_HISTORY_BACK
 
   return $ERR_OK
 }
@@ -334,10 +339,12 @@ function enchant_forward() {
   liberror_check || return $ERR_HISTORY_FORWARD
 
   # set the current step to be the one we are jumping to
-  tail -n 1 "$ENCHANT_FORWARD" > "$ENCHANT_STATUS" || return $ERR_HISTORY_FORWARD
+  "${ENCHANT_CMD_TAIL[@]}" -n 1 "$ENCHANT_FORWARD" > "$ENCHANT_STATUS" ||
+    return $ERR_HISTORY_FORWARD
 
   # remove the step we jumped to from the forward history
-  sed -i '$d' "$ENCHANT_FORWARD" || return $ERR_HISTORY_FORWARD
+  "${ENCHANT_CMD_SEDFILE[@]}" '$d' "$ENCHANT_FORWARD" ||
+    return $ERR_HISTORY_FORWARD
 
   return $ERR_OK
 }
