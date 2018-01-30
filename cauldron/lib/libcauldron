@@ -94,6 +94,49 @@ function cauldron_color() {
 }
 
 #-------------------------------------------------------------------------------
+## @param messages
+##
+## Prints informational messages to the console, but only if CAULDRON_VERBOSE
+## is enabled.
+##
+#-------------------------------------------------------------------------------
+function cauldron_verbose() {
+  [[ "$CAULDRON_VERBOSE" == "yes" ]] &&
+    libcolor_msg notice "$@"
+}
+
+#-------------------------------------------------------------------------------
+## @param messages
+##
+## Prints error messages to the console, but only if CAULDRON_VERBOSE is
+## enabled.
+##
+#-------------------------------------------------------------------------------
+function cauldron_verbose_error() {
+  [[ "$CAULDRON_VERBOSE" == "yes" ]] &&
+    libcolor_msg error "$@"
+}
+
+#-------------------------------------------------------------------------------
+## @param VARIABLE
+##
+## Prints the current value of the specified VARIABLE. If VARIABLE is an array,
+## it returns the full array as a single string.
+##
+#-------------------------------------------------------------------------------
+function cauldron_get_variable() {
+  for var in "$@"
+  do
+    [[ -n "$var" ]] || return $ERR_TARGET
+
+    var=$(declare -p "$var")
+    printf "%s\n" "${var##*$1=}"
+  done
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
 ## @param cleanfile
 ##
 ## Cleans out unneeded files that were used to generate the ISO, but should

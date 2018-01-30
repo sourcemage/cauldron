@@ -27,6 +27,7 @@ liberror_add_error ERR_DIR_ACCESS "directory not accessible"
 liberror_add_error ERR_CP_FILE "could not copy file"
 liberror_add_error ERR_CHMOD_FILE "could not chmod file"
 liberror_add_error ERR_RM_FILES "could not remove files"
+liberror_add_error ERR_TARGET "invalid target parameter"
 
 # libcauldron base
 liberror_add_error ERR_LOAD_LIBRARY "problem loading library"
