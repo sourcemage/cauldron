@@ -168,6 +168,66 @@ function cauldron_clean_iso_system() {
 }
 
 #-------------------------------------------------------------------------------
+## @param target chroot directory
+##
+## Ensures the existence of basic FHS directories, dev nodes, etc. in the target
+## chroot directory. If the target chroot parameter isn't given, it defaults to
+## CAULDRON_BUILD.
+##
+#-------------------------------------------------------------------------------
+function cauldron_fs_bootstrap() {
+  local target="${1:-$CAULDRON_BUILD}"
+  local dir=
+
+  [[ -d "$target" ]] || return $ERR_TARGET
+
+  # guarantee the existence of necessary basic directories
+  for dir in "${CAULDRON_FHS_DIRS[@]}"
+  do
+    cauldron_verbose "Attempting mkdir $target/$dir ..."
+
+    "${CAULDRON_CMD_MKDIR[@]}" "$target/$dir"
+    liberror_check "$target/$dir" || return $ERR_MK_DIR
+  done
+  for dir in tmp var/tmp
+  do
+    "${CAULDRON_CMD_CHMOD[@]}" 1777 "$target/$dir"
+    liberror_check "$target/$dir" || return $ERR_CHMOD_FILE
+  done
+  "${CAULDRON_CMD_CHMOD[@]}" 0750 "$target/root"
+  liberror_check "$target/root" || return $ERR_CHMOD_FILE
+
+  cauldron_chroot_init "$target"
+  liberror_check || return $?
+
+  # run ldconfig in the target to ensure proper library links
+  (
+    # set _everything_ in locale to "C" first
+    export LANG=C
+    export LC_ALL=C
+    cauldron_chroot ldconfig
+  )
+  liberror_check || return $ERR_LDCONFIG
+
+  # guarantee that static dev nodes exist in /dev in the chroot
+  echo 'cd /dev && /sbin/MAKEDEV generic' > "$target/tmp/makedevs"
+  liberror_check "$target/tmp/makedevs" || return $ERR_MK_FILE
+  cauldron_chroot sh "/tmp/makedevs"
+  liberror_check || return $?
+  cauldron_chroot rm "/tmp/makedevs"
+  liberror_check || return $?
+
+  # guarantee the existence of /dev/initctl in the chroot
+  cauldron_chroot mkfifo -m 0660 "/dev/initctl"
+  liberror_check || return $?
+
+  cauldron_chroot_done "$target"
+  liberror_check || return $?
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
 ##
 ## Packages the sys directory into a compressed tarball to be placed in the iso
 ## filesystem as system.tar.bz2. Relies on the fact that

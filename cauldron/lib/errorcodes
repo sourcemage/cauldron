@@ -42,6 +42,7 @@ liberror_add_error ERR_RM_CACHE \
 liberror_add_error ERR_HOST_TRIPLE "could not get host triple for builds"
 liberror_add_error ERR_BUILD_SPOOL "build directory sorcery spool does not exist"
 liberror_add_error ERR_RESOLV "resolv.conf missing in the build directory"
+liberror_add_error ERR_LDCONFIG "could not build library symlinks"
 
 # libcauldron cleaner files
 liberror_add_error ERR_CLEAN_CLEANER "cleaner files could not be found"
