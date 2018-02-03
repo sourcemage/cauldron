@@ -15,6 +15,13 @@
 ##
 #-------------------------------------------------------------------------------
 
+# guarantee that CAULDRON_NULL is defined
+: "${CAULDRON_NULL:=/dev/null}"
+
+# set LC_COLLATE to C so we (including the loaded sorcery) don't get affected by
+# the user's locale when grepping, sorting, etc.
+export LC_COLLATE="C"
+
 #-------------------------------------------------------------------------------
 ## @param path to the sorcery config to load
 ##
@@ -30,8 +37,9 @@
 ##
 #-------------------------------------------------------------------------------
 function cauldron_sorcerous_load() {
-  local config="${1:-$CAULDRON_ISORCERY_CONFIG}"
-  local local_config="${2:-$CAULDRON_ISORCERY_LCONFIG}"
+  local target="${1:-$CAULDRON_BUILD}"
+  local config="$target/etc/sorcery/config"
+  local local_config="$target/etc/sorcery/local/config"
 
   # source the main config file
   source "$config" || return $ERR_SORCEROUS_TARGET
@@ -99,8 +107,8 @@ function cauldron_sorcerous_cross_configure() {
 #-------------------------------------------------------------------------------
 function cauldron_sorcerous_download() {
   local spool="${1:-$CAULDRON_BUILD/var/spool/sorcery}"
-  local sorcery="${CAULDRON_SORCERY_PKG}"
-  local sorcery_url="${CAULDRON_SORCERY_URL}"
+  local sorcery="$CAULDRON_SORCERY_PKG"
+  local sorcery_url="$CAULDRON_SORCERY_URL"
   local url_get=( "${CAULDRON_CMD_URL_DL[@]}" )
 
   # ensure the spool dir exists for getting spell sources
@@ -125,33 +133,422 @@ function cauldron_sorcerous_download() {
 }
 
 #-------------------------------------------------------------------------------
-## @param spool_path
+## @param chroot_path (optional)
+## @param spool_path (optional: relative to chroot_path)
 ##
-## Installs sorcery into the build directory. The download_path parameter
-## (optional) indicates where the sorcery source tarball to install from is
-## stored. If spool_path is not supplied, the tarball is assumed to be in
-## the CAULDRON_BUILD/var/spool/sorcery directory.
+## Installs sorcery into the given chroot directory. If the chroot_path
+## parameter is not specified, it defaults to CAULDRON_BUILD. The spool_path
+## parameter (optional) indicates where the sorcery source tarball to install
+## from is stored. If spool_path is not supplied, it defaults to
+## /var/spool/sorcery.
 ##
 #-------------------------------------------------------------------------------
 function cauldron_sorcerous_install() {
-  local spool="${1:-$CAULDRON_BUILD/var/spool/sorcery}"
+  local target="${1:-$CAULDRON_BUILD}"
+  local spool="${2:-/var/spool/sorcery}"
   local sorcery="$CAULDRON_SORCERY_PKG"
 
-  # unpack the source tarball
-  "${CAULDRON_CMD_UNPACK_SORCERY[@]}" "$spool/$sorcery" ||
-    return $ERR_SORCEROUS_UNPACK
+  [[ -d "$target/${spool#/}" ]] || return $ERR_SORCEROUS_INSTALL
 
-  [[ -x "$CAULDRON_BUILD/usr/src/sorcery/install" ]] ||
+  # unpack the source tarball
+  "${CAULDRON_CMD_UNPACK_SORCERY[@]/TARGETDIR/$target}" \
+    "${target}/${spool#/}/$sorcery" ||
+      return $ERR_SORCEROUS_UNPACK
+
+  [[ -x "$target/usr/src/sorcery/install" ]] ||
     return $ERR_SORCEROUS_UNPACK
 
   # make sure the chroot library is loaded so cauldron_chroot is available
-  if ! type -t cauldron_chroot > "$CAULDRON_NULL"
+  if ! declare -lF cauldron_chroot
   then
     cauldron_load_library lib.chroot
+    liberror_check || return $?
   fi
-  # install the source tarball, relative to CAULDRON_BUILD
-  "$CAULDRON_BUILD/usr/src/sorcery/install" "$CAULDRON_BUILD" ||
-    return $ERR_SORCEROUS_INSTALL
+
+  cauldron_chroot_init "$target"
+  liberror_check || return $?
+
+  # ugly workaround for the broken sorcery install
+  local installer="tmp/install_sorcery"
+  "${CAULDRON_CMD_CAT[@]}" > "$target/$installer" <<SORCERY
+#!/bin/sh
+cd /usr/src/sorcery &&
+./install
+SORCERY
+  liberror_check || return $ERR_SORCEROUS_INSTALL
+  [[ -f "$target/$installer" ]] || return $ERR_SORCEROUS_INSTALL
+  echo "DEBUG: $target/bin/sh $target/$installer"
+  cauldron_chroot "/bin/sh" "/$installer"
+  liberror_check || return $?
+  cauldron_chroot rm "/$installer"
+  liberror_check || return $?
+
+  #cauldron_chroot sh -c "cd /usr/src/sorcery && ./install"
+  #liberror_check || return $?
+
+  [[ -x "$target/usr/sbin/cast" ]] || return $ERR_SORCEROUS_INSTALL
+
+  cauldron_chroot_done "$target"
+  liberror_check || return $?
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+## @param target dir to remove sorcery from (optional, default: CAULDRON_BUILD)
+##
+## Thoroughly removes traces of sorcery from the target directory. If the
+## directory isn't specified as the first argument to the function, it defaults
+## to CAULDRON_BUILD.
+##
+#-------------------------------------------------------------------------------
+function cauldron_sorcerous_clean() {
+  local target="${1:-$CAULDRON_BUILD}"
+
+  [[ -d "$target" ]] || return $ERR_SORCEROUS_UNINSTALL
+
+  cauldron_chroot_init "$target"
+  liberror_check || return $?
+
+  #cauldron_chroot_check -q "$target"
+  #liberror_check || return $ERR_SORCEROUS_UNINSTALL
+
+  if [[ -f "$target/etc/sorcery/install.log" &&
+    -x "$target/usr/src/sorcery/uninstall" ]]
+  then
+    cauldron_chroot "/usr/src/sorcery/uninstall"
+    liberror_check || return $ERR_SORCEROUS_UNINSTALL
+  fi
+
+  # forcefully remove /etc/sorcery to ensure nothing is left
+  cauldron_chroot /bin/rm -fr "/etc/sorcery"
+  liberror_check || return $ERR_SORCEROUS_UNINSTALL
+
+  # additionally forcefully wipe out var/{lib,log,state}/sorcery in the chroot
+  # since some state files may not be removed by sorcery uninstall
+  cauldron_chroot /bin/rm -fr "/var/lib/sorcery"
+  liberror_check || return $ERR_SORCEROUS_UNINSTALL
+  cauldron_chroot /bin/rm -fr "/var/log/sorcery"
+  liberror_check || return $ERR_SORCEROUS_UNINSTALL
+  cauldron_chroot /bin/rm -fr "/var/state/sorcery"
+  liberror_check || return $ERR_SORCEROUS_UNINSTALL
+
+  cauldron_chroot_done "$target"
+  liberror_check || return $?
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+## @param chroot path (optional, default: CAULDRON_BUILD)
+##
+## Updates sorcery itself in the given chroot path.
+##
+#-------------------------------------------------------------------------------
+function cauldron_sorcerous_update() {
+  local target="${1:-$CAULDRON_BUILD}"
+
+  # make sure the chroot library is loaded so cauldron_chroot is available
+  if ! declare -lF cauldron_chroot
+  then
+    cauldron_load_library lib.chroot
+    liberror_check || return $?
+  fi
+
+  cauldron_chroot_init "$target"
+  liberror_check || return $?
+
+  cauldron_chroot sorcery update
+  liberror_check || return $?
+
+  cauldron_chroot_done "$target"
+  liberror_check || return $?
+}
+
+#-------------------------------------------------------------------------------
+## @param chroot path (optional, default: CAULDRON_BUILD)
+##
+## Configures sorcery in the given chroot to use the grimoires indicated. The
+## grimoires to use will come from the CAULDRON_SORCERY_GRIMOIRES cauldron
+## config variable, which should be an ordered list (array) of all desired
+## grimoires. The order of the grimoires in the target sorcery will be set to
+## match the order in CAULDRON_SORCERY_GRIMOIRES.
+##
+#-------------------------------------------------------------------------------
+function cauldron_sorcerous_set_grimoires() {
+  local target="${1:-$CAULDRON_BUILD}"
+  local grimoires=( "${CAULDRON_SORCERY_GRIMOIRES[@]}" )
+
+  # ensure a sorcery local config directory exists in the chroot
+  if [[ ! -d "$target/etc/sorcery/local" ]]
+  then
+    "${CAULDRON_CMD_MKDIR[@]}" "$target/etc/sorcery/local" ||
+      return $ERR_MK_DIR
+  fi
+
+  # flush any existing grimoires from the chroot sorcery config
+  "${CAULDRON_CMD_CAT[@]}" "/dev/null" \
+    > "$target/etc/sorcery/local/grimoire" ||
+      return $ERR_WRITE_FILE
+
+  # populate the chroot sorcery config with the desired grimoires
+  for ((i=0;i<"${#grimoires[@]}";i++))
+  do
+    echo "GRIMOIRE_DIR[$i]=/var/lib/sorcery/codex/${grimoires[i]}" \
+      >> "$target/etc/sorcery/local/grimoire" ||
+        return $ERR_WRITE_FILE
+  done
+}
+
+#-------------------------------------------------------------------------------
+## @param chroot path (optional, default: CAULDRON_BUILD)
+##
+## Updates the grimoires defined in CAULDRON_SORCERY_GRIMOIRES by running scribe
+## update in the given chroot path.
+##
+#-------------------------------------------------------------------------------
+function cauldron_sorcerous_update_grimoires() {
+  local target="${1:-$CAULDRON_BUILD}"
+  local grimoires=( "${CAULDRON_SORCERY_GRIMOIRES[@]}" )
+  local codex="/var/lib/sorcery/codex"
+  local grimurl="$CAULDRON_SORCERY_GRIMOIRE_URL"
+  local grimtype="$CAULDRON_SORCERY_GRIMOIRE_TYPE"
+  local grimoire=
+
+  # make sure the chroot library is loaded so cauldron_chroot is available
+  if ! declare -lF cauldron_chroot
+  then
+    cauldron_load_library lib.chroot
+    liberror_check || return $?
+  fi
+
+  cauldron_chroot_init "$target"
+  liberror_check || return $?
+
+  # update and unpack each grimoire into the chroot environment
+  for grimoire in "${grimoires[@]}"
+  do
+    cauldron_verbose "Updating and unpacking grimoire: $grimoire"
+
+    # remove any stale instances of the grimoire if found
+    cauldron_chroot \
+      "${CAULDRON_CMD_RM_RECURSE_FORCE[@]}" \
+      "$target/$codex/$grimoire"
+    liberror_check || return $?
+    cauldron_chroot "${CAULDRON_CMD_RM_FORCE[@]}" "/tmp/${grimoire}.$grimtype"
+    liberror_check || return $?
+
+    # download the grimoire to be unpacked
+    (
+      cd "$target/tmp" &&
+      "${CAULDRON_CMD_URL_DL[@]}" "$grimurl/${grimoire}.${grimtype}" ||
+        return $ERR_URL_DL
+    )
+    liberror_check "$grimurl/${grimoire}.$grimtype" || return $?
+
+    # unpack the grimoire
+    cauldron_chroot "${CAULDRON_CMD_MKDIR[@]}" "$codex"
+    liberror_check "mkdir $codex" || return $?
+    cauldron_chroot \
+      "${CAULDRON_CMD_UNPACK_TARGETDIR[@]/TARGETDIR/$codex}" \
+      "/tmp/${grimoire}.${grimtype}"
+    liberror_check "unpack $grimoire" || return $?
+
+    # remove the downloaded grimoire tarball after successfully unpacking
+    cauldron_chroot "${CAULDRON_CMD_RM_FORCE[@]}" "/tmp/${grimoire}.$grimtype"
+    liberror_check || return $?
+  done
+
+  # reindex all available grimoires
+  cauldron_chroot scribe reindex
+  liberror_check || return $?
+
+  cauldron_chroot_done "$target"
+  liberror_check || return $?
+}
+
+#-------------------------------------------------------------------------------
+## @param spell
+## @param sorcery spell cache directory (optional)
+##
+## Looks up the given spell in the CAULDRON_BUILD chroot, then returns any valid
+## spell caches found matching the spell name, version, and
+## CAULDRON_SORCERY_ARCH setting in the spell cache directory.
+##
+#-------------------------------------------------------------------------------
+function cauldron_sorcerous_spell_cache() {
+  local build="$CAULDRON_BUILD"
+  local spell="$1"
+  local cachedir="${2:-$build/var/cache/sorcery}"
+  local version=
+  local cache=
+
+  [[ -n "$spell" ]] || return $ERR_SORCEROUS_SPELL_CACHE
+
+  version=$(grep "^$spell:" "$state")
+  version="${version##*:}"
+  if [[ -z "$version" ]]
+  then
+    # the spell couldn't be found in sorcery's list of installed spells, so try
+    # getting the version from gaze
+    cauldron_chroot_init
+    liberror_check || return $?
+    version=$(cauldron_chroot -q gaze DETAILS "$spell" | \
+      grep 'VERSION=' | \
+      cut -d= -f2)
+    #cauldron_chroot -q gaze -q where -p "$spell"
+    liberror_check || return $?
+    cauldron_chroot_done
+    liberror_check || return $?
+    #version=$(grep "VERSION=" "$grimoire/$version/$spell/DETAILS" | cut -d= -f2)
+    [[ -n "$version" ]] || return $ERR_SORCEROUS_SPELL_CACHE
+  fi
+
+  cache="$(${CAULDRON_CMD_READLINK[@]} $cachedir/$spell-$version-$CAULDRON_SORCERY_ARCH*)"
+  [[ -n "$cache" ]] || return $ERR_SORCEROUS_SPELL_CACHE
+
+  echo "$cache"
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##
+## Modifies the sorcery in the given chroot to conform to the settings needed
+## by cauldron for its builds. Uses CAULDRON_BUILD as the base location.
+##
+#-------------------------------------------------------------------------------
+function cauldron_sorcerous_cauldron_defaults() {
+  local target="$CAULDRON_BUILD"
+  local confdir="$target/etc/sorcery/local"
+  local config="$confdir/config"
+  local grimoire="$target/var/lib/sorcery/codex/stable"
+  local sorcery_settings="$CAULDRON_SORCERY_SETTINGS"
+  local architecture="$CAULDRON_SORCERY_ARCH"
+  local njobs="$CAULDRON_BUILD_JOBS"
+
+  # make sure we have an architecture setting
+  [[ -n "$architecture" ]] || return $ERR_SORCERY_ARCH
+
+  # ensure the etc/sorcery/local directory exists
+  if ! [[ -d "$chroot_sorcery_confdir" ]]
+  then
+    "${CAULDRON_CMD_MKDIR[@]}" "$confdir" ||
+      return $ERR_MK_DIR
+  fi
+
+  # make sure we have settings to copy before attempting
+  if [[ -f "$sorcery_settings" ]]
+  then
+    # populate sorcery with general cauldron settings
+    "${CAULDRON_CMD_CAT[@]}" "$sorcery_settings" \
+      > "$config" 2> "$CAULDRON_NULL" ||
+        return $ERR_SORCEROUS_DEFAULT_SETTINGS
+  fi
+
+  # set the machine architecture to compile for
+  echo "ARCHITECTURE=\"$architecture\"" >> "$config" ||
+    return $ERR_SORCEROUS_DEFAULT_SETTINGS
+
+  if [[ "$CAULDRON_BUILD_VOYEUR" == "yes" ]]
+  then
+    echo "VOYEUR=\"on\"" >> "$config" ||
+      return $ERR_SORCEROUS_DEFAULT_SETTINGS
+  fi
+
+  if [[ "$njobs" -ge 1 ]]
+  then
+    echo "MAKE_NJOBS=\"$njobs\"" >> "$config" ||
+      return $ERR_SORCEROUS_DEFAULT_SETTINGS
+  fi
+
+  if [[ "$1" == "nostaging" ]]
+  then
+    echo "STAGED_INSTALL=\"off\"" >> "$config" ||
+      return $ERR_SORCEROUS_DEFAULT_SETTINGS
+  fi
+
+  # fixes for base spells until the patches hit stable
+  for patch in "$CAULDRON_CONFIG"/toolchain/grimoire_hacks/*/*.patch
+  do
+    local spell="${patch##*/}"
+    spell="${spell%.patch}"
+
+    cauldron_verbose "Patching grimoire spell $spell ..."
+
+    "${CAULDRON_CMD_PATCH[@]}" -Nt -d "$target" -p0 < "$patch" ||
+      return $ERR_TOOLCHAIN_PATCH
+  done
+
+  # make sure the chroot library is loaded so cauldron_chroot is available
+  if ! declare -lF cauldron_chroot
+  then
+    cauldron_load_library lib.chroot
+    liberror_check || return $?
+  fi
+
+  cauldron_chroot_init
+  liberror_check || return $?
+
+  # temporary fix for choosing xz-utils over deprecated lzma-utils
+  cauldron_chroot sorcery default add xz-utils LZMA "on"
+  liberror_check || return $?
+
+  # temporary fix for choosing kbd over deprecated console-tools
+  cauldron_chroot sorcery default add kbd CONSOLE-TOOLS "on"
+  liberror_check || return $?
+
+  cauldron_chroot_done
+  liberror_check || return $?
+
+  # install all spell pre-configurations
+  cauldron_verbose "installing cauldron-specific spell defaults"
+
+  "${CAULDRON_CMD_MKDIR[@]}" "$confdir/depends" ||
+    return $ERR_SORCEROUS_DEFAULT_SETTINGS
+  for spellconfig in "$CAULDRON_CONFIG/toolchain/sorcery/depends/"*
+  do
+    local spell="${spellconfig##*/}"
+
+    touch "$confdir/depends/$spell" || return $ERR_SORCEROUS_DEFAULT_SETTINGS
+
+    "${CAULDRON_CMD_CP_FORCE[@]}" \
+      "$spellconfig" \
+      "$confdir/depends/${spell}.p" ||
+        return $ERR_SORCEROUS_DEFAULT_SETTINGS
+  done
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+## @param chroot_path
+##
+## Modifies the sorcery in the given chroot to conform to the settings needed
+## by cauldron for sys filesystems. The chroot_path parameter is a path to
+## the chroot in which the sorcery to purify is installed. If not supplied, the
+## parameter defaults to $CAULDRON_SYS.
+##
+#-------------------------------------------------------------------------------
+function cauldron_sorcerous_sys_defaults() {
+  local target="${1:-$CAULDRON_SYS}"
+  local sorcery_confdir="$target/etc/sorcery/local"
+  local sorcery_config="$sorcery_confdir/config"
+  local arch="$CAULDRON_SORCERY_ARCH"
+
+  # make sure we have an architecture setting
+  [[ -n "$arch" ]] || return $ERR_SORCERY_ARCH
+
+  # ensure the etc/sorcery/local directory exists
+  if ! [[ -d "$sorcery_confdir" ]]
+  then
+    "${CAULDRON_CMD_MKDIR[@]}" "$sorcery_confdir" ||
+      return $ERR_MK_DIR
+  fi
+
+  # set the machine architecture to compile for
+  echo "ARCHITECTURE=\"$arch\"" >> "$sorcery_config" ||
+    return $ERR_WRITE_FILE
 
   return $ERR_OK
 }

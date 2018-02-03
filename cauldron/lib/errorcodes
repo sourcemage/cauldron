@@ -94,7 +94,15 @@ liberror_add_error ERR_SORCEROUS_DOWNLOAD "could not download sorcery"
 liberror_add_error ERR_SORCEROUS_UNPACK \
   "could not unpack a valid sorcery install"
 liberror_add_error ERR_SORCEROUS_INSTALL \
-  "could not install sorcery into build directory"
+  "could not install sorcery into target directory"
+liberror_add_error ERR_SORCEROUS_UNINSTALL \
+  "could not uninstall sorcery from target directory"
+liberror_add_error ERR_SORCERY_ARCH \
+  "sorcery architecture (CAULDRON_SORCERY_ARCH) not set"
+liberror_add_error ERR_SORCEROUS_DEFAULT_SETTINGS \
+  "could not configure sorcery with cauldron settings"
+liberror_add_error ERR_SORCEROUS_SPELL_CACHE \
+  "could not determine spell\'s cache file"
 
 # lib.toolchain
 liberror_add_error ERR_TOOLCHAIN_CP_CACHE \
