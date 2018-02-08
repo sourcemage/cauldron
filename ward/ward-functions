@@ -84,7 +84,7 @@ PROCESS_ENCHANTMENT="${PROCESS_ENCHANTMENT:-yes}"
 if [[ "$PROCESS_CAULDRON" == "yes" ]]
 then
   ward_get_sources "cauldron_sources"
-  cauldron="$WARD_PATH/../cauldron"
+  cauldron=$(readlink -f "$WARD_PATH/../cauldron")
 
   # check cauldron files
   libcolor_notice "Checking for undefined cauldron functions..."
@@ -95,7 +95,7 @@ fi
 if [[ "$PROCESS_ENCHANTMENT" == "yes" ]]
 then
   ward_get_sources "enchantment_sources"
-  enchantment="$WARD_PATH/../enchantment"
+  enchantment=$(readlink -f "$WARD_PATH/../enchantment")
   enchanter="shell"
 
   # check enchantment files

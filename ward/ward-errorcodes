@@ -70,7 +70,7 @@ PROCESS_ENCHANTMENT="${PROCESS_ENCHANTMENT:-yes}"
 if [[ "$PROCESS_CAULDRON" == "yes" ]]
 then
   ward_get_sources "cauldron_sources"
-  cauldron="$WARD_PATH/../cauldron"
+  cauldron=$(readlink -f "$WARD_PATH/../cauldron")
   c_codes="$cauldron/lib/errorcodes"
 
   libcolor_notice "Checking cauldron errorcodes for internal consistency"
@@ -88,7 +88,7 @@ fi
 if [[ "$PROCESS_ENCHANTMENT" == "yes" ]]
 then
   ward_get_sources "enchantment_sources"
-  enchantment="$WARD_PATH/../enchantment"
+  enchantment=$(readlink -f "$WARD_PATH/../enchantment")
   e_codes="$enchantment/lib/errorcodes"
 
   libcolor_notice "Checking enchantment errorcodes for internal consistency"

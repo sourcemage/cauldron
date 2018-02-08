@@ -72,7 +72,7 @@ PROCESS_ENCHANTMENT="${PROCESS_ENCHANTMENT:-yes}"
 if [[ "$PROCESS_CAULDRON" == "yes" ]]
 then
   ward_get_sources "cauldron_sources"
-  cauldron="$WARD_PATH/../cauldron"
+  cauldron=$(readlink -f "$WARD_PATH/../cauldron")
   c_conf="$cauldron/etc/cauldron.conf"
   CAULDRON_CONF="$cauldron/config"
 
@@ -86,9 +86,9 @@ fi
 if [[ "$PROCESS_ENCHANTMENT" == "yes" ]]
 then
   ward_get_sources "enchantment_sources"
-  enchantment="$WARD_PATH/../enchantment"
+  enchantment=$(readlink -f "$WARD_PATH/../enchantment")
+  ENCHANT_CONFIGS="$enchantment/config"
   e_conf="$enchantment/etc/enchantment.conf"
-  ENCHANT_CONF="$enchantment/config"
 
   # check enchantment files
   libcolor_notice "Checking enchantment for undefined config variables..."
