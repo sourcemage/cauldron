@@ -421,6 +421,7 @@ function ward_error_variables() {
 function ward_functions() {
   local fpath="."
   local lpath="."
+  local epath=""
   local file=""
   local prefix=""
   local list=""
@@ -443,6 +444,10 @@ function ward_functions() {
         ;;
       "l")
         lpath="${2%/}"
+        shift 2
+        ;;
+      "e")
+        epath="${2%/}"
         shift 2
         ;;
       *)
@@ -530,6 +535,13 @@ function ward_functions() {
         elif [[ -f "$lpath/lib.$prefix" ]]
         then
           if grep -q "^function $function() {" "$lpath/lib.$prefix"
+          then
+            matched="yes"
+            break
+          fi
+        elif [[ -f "${epath:+$epath/functions}" ]]
+        then
+          if grep -q "^function $function() {" "$epath/functions"
           then
             matched="yes"
             break

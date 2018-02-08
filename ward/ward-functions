@@ -96,11 +96,12 @@ if [[ "$PROCESS_ENCHANTMENT" == "yes" ]]
 then
   ward_get_sources "enchantment_sources"
   enchantment="$WARD_PATH/../enchantment"
+  enchanter="shell"
 
   # check enchantment files
   libcolor_notice "Checking for undefined enchantment functions..."
   echo ""
-  ward_functions -p "$enchantment" -l "$enchantment/lib" "${sources[@]}"
+  ward_functions -p "$enchantment" -l "$enchantment/lib" -e "$enchantment/$enchanter" "${sources[@]}"
 fi
 
 #-------------------------------------------------------------------------------
