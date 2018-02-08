@@ -32,8 +32,8 @@ function ward_get_sources() {
   # process any optional parameters
   while [[ "${1:0:1}" == "-" ]]
   do
-    case "$1" in
-      "-p")
+    case "${1#?}" in
+      "p")
         path="${2%/}"
         shift 2
         ;;
@@ -139,12 +139,12 @@ function ward_global_variables() {
   # process any optional parameters
   while [[ "${1:0:1}" == "-" ]]
   do
-    case "$1" in
-      "-p")
+    case "${1#?}" in
+      "p")
         fpath="${2%/}"
         shift 2
         ;;
-      "-d")
+      "d")
         dpath="${2%/}"
         shift 2
         ;;
@@ -188,12 +188,11 @@ function ward_global_variables() {
   # include/source
   for inc in "${defines[@]}"
   do
-    #eval defines=( "${defines[@]}" $(ward_descend_includes "$inc") )
     defines=( "${defines[@]}" $(ward_descend_includes "$inc") )
   done
-  # pass the data to sort so it can sort and remove duplicates
+  # sort the data and remove duplicates
   defines=(
-    "$(echo ${defines[@]} | gawk '{for(i=1;i<=NF;i++){print $i}}' | sort -u)"
+    $(printf '%s\n' "${defines[@]}" | sort -u)
     )
 
   # get a list of all variables defined in the definition file(s)
@@ -204,7 +203,7 @@ function ward_global_variables() {
   done
   # pass the data to sort so it can sort and remove duplicates
   vars=(
-    "$(echo ${vars[@]} | gawk '{for(i=1;i<=NF;i++){print $i}}' | sort -u)"
+    $(printf '%s\n' "${vars[@]}" | sort -u)
     )
 
   while [[ $# -gt 0 ]]
@@ -252,8 +251,8 @@ function ward_error_codes() {
   # process any optional parameters
   while [[ "${1:0:1}" == "-" ]]
   do
-    case "$1" in
-      "-p")
+    case "${1#?}" in
+      "p")
         path="${2%/}"
         shift 2
         ;;
@@ -334,12 +333,12 @@ function ward_error_variables() {
   # process any optional parameters
   while [[ "${1:0:1}" == "-" ]]
   do
-    case "$1" in
-      "-p")
+    case "${1#?}" in
+      "p")
         fpath="${2%/}"
         shift 2
         ;;
-      "-d")
+      "d")
         epath="${2%/}"
         shift 2
         ;;
@@ -437,12 +436,12 @@ function ward_functions() {
   # process any optional parameters
   while [[ "${1:0:1}" == "-" ]]
   do
-    case "$1" in
-      "-p")
+    case "${1#?}" in
+      "p")
         fpath="${2%/}"
         shift 2
         ;;
-      "-l")
+      "l")
         lpath="${2%/}"
         shift 2
         ;;
