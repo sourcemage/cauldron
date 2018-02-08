@@ -409,13 +409,16 @@ function ward_error_variables() {
 #-------------------------------------------------------------------------------
 ## @param -p base path to sources (optional)
 ## @param -l base path to libraries (optional)
+## @param -e path to enchanter functions (optional)
 ## @param source1 [source2 source3...] (required)
 ##
 ## Tests whether any functions used in source1 (source2, source3, etc.) are
 ## defined. Any functions that are used but not defined in the corresponding
 ## definition file are output via libcolor_warn, preceded by the file they were
 ## found in via libcolor_file. Both base paths default to the current working
-## directory if not supplied.
+## directory if not supplied. Enchanter-specific functions are tested against
+## the corresponding enchanter functions file, if supplied as an argument to the
+## -e option.
 ##
 #-------------------------------------------------------------------------------
 function ward_functions() {
