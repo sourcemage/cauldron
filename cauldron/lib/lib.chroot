@@ -19,37 +19,46 @@
 LIBCHROOT_PATHS=()
 LIBCHROOT_USERS=()
 
+# guarantee that CAULDRON_NULL is defined
+: "${CAULDRON_NULL:=/dev/null}"
+# guarantee that CAULDRON_STDOUT is defined
+: "${CAULDRON_STDOUT:=/dev/stdout}"
+
+# set LC_COLLATE to C so we don't get affected by the user's locale
+# when grepping, sorting, etc.
+export LC_COLLATE="C"
+
 #-------------------------------------------------------------------------------
 ## @param target dir to chroot into (optional)
-## @param target sorcery config (optional)
-## @param target sorcery local config (optional)
 ##
 ## Prepares a chroot environment and exports necessary variables. For every
 ## target dir to chroot into, there should be one
 ## [cauldron_chroot_init ... cauldron_chroot_done] pair.
 ##
-## If supplied, the second and third parameters should be file paths to the
-## sorcery config and local config inside the chroot target (the first
-## parameter). They will default to etc/sorcery/config and
-## etc/sorcery/local/config relative to the chroot target, respectively.
-##
 #-------------------------------------------------------------------------------
 function cauldron_chroot_init() {
   local target="${1:-$CAULDRON_BUILD}"
   local num="${#LIBCHROOT_PATHS[@]}"
-  local sconfig="${2:-$target/etc/sorcery/config}"
-  local slconfig="${3:-$target/etc/sorcery/local/config}"
 
-  # if target is somehow null, return an error
-  if [[ -z "$target" ]]
-  then
-    return $ERR_CHROOT_UNDEF
-  fi
+  # ensure a direct and absolute path
+  target=$("${CAULDRON_CMD_READLINK[@]}" "$target") ||
+    return $ERR_CHROOT_INVALID
+
+  # if target is either null or not a valid directory, return an error
+  [[ -d "$target" ]] || return $ERR_CHROOT_INVALID
+
+  # if target matches the root directory, return an error
+  [[ "$target" == "/" ]] && return $ERR_CHROOT_ISROOT
 
   # test if the target path is already loaded as a chroot -- if it is, just
-  # increase the count, but if it isn't do the bind mounts and set up the
-  # counts
-  if $(echo "${LIBCHROOT_PATHS[@]}" | grep -q "$target")
+  # increase the count, but if it isn't mount subtrees and increment the path
+  # and user counts
+  local already_loaded=0
+  for p in "${LIBCHROOT_PATHS[@]}"
+  do
+    [[ "$p" == "$target" ]] && already_loaded=1
+  done
+  if [[ "$already_loaded" -eq 1 ]]
   then
     for ((path=0; path < num; path++))
     do
@@ -59,14 +68,20 @@ function cauldron_chroot_init() {
       fi
     done
   else
-    # bind the needed mounts in order
-    for bind in dev dev/pts proc
-    do
-      "${CAULDRON_CMD_MOUNT_BIND[@]}" \
-        "$CAULDRON_HOST/$bind" \
-        "$target/$bind" ||
-          return $ERR_CHROOT_INIT
-    done
+    # bind mount the dev tree
+    "${CAULDRON_CMD_MOUNT_BIND[@]}" \
+      "$CAULDRON_HOST/dev" \
+      "$target/dev" ||
+        return $ERR_CHROOT_INIT
+    # mount procfs
+    "${CAULDRON_CMD_MOUNT[@]}" -t procfs proc "$target/proc" ||
+      return $ERR_CHROOT_INIT
+    # mount sysfs
+    "${CAULDRON_CMD_MOUNT[@]}" -t sysfs sys "$target/sys" ||
+      return $ERR_CHROOT_INIT
+    # mount runfs
+    "${CAULDRON_CMD_MOUNT[@]}" -t tmpfs run "$target/run" ||
+      return $ERR_CHROOT_INIT
 
     # add the target path to the list of chrooted paths
     LIBCHROOT_PATHS[num]="$target"
@@ -76,18 +91,9 @@ function cauldron_chroot_init() {
 
   # test if the target path matches the currently defined chroot command target
   # path -- if it doesn't, we need to set the chroot command
-  if [[ "${#CAULDRON_CHROOT[@]}" -eq 0 ||
-    "$target" == "${CAULDRON_CHROOT[${#CAULDRON_CHROOT[*]}-1]}" ]]
+  if [[ "$num" -eq 0 ||
+    "$target" == "${CAULDRON_CHROOT[${num}-1]}" ]]
   then
-    # make sure the sorcerous library is loaded
-    # which provides cauldron_source_sorcery
-    if ! type -t cauldron_source_sorcery > "$CAULDRON_NULL"
-    then
-      cauldron_load_library lib.sorcerous
-    fi
-    # source the target sorcery, so we have access to its functions
-    cauldron_sorcerous_load $sconfig $slconfig || return $ERR_SORCEROUS_TARGET
-
     # everything went OK, so export the chroot definitions
     CAULDRON_CHROOT=( "${CAULDRON_CMD_CHROOT[@]}" "$target" )
   fi
@@ -96,7 +102,7 @@ function cauldron_chroot_init() {
 }
 
 #-------------------------------------------------------------------------------
-## @param target dir to chroot into
+## @param target chroot dir
 ##
 ## Cleans up the chroot environment after it is no longer needed.
 ##
@@ -105,11 +111,11 @@ function cauldron_chroot_done() {
   local target="${1:-$CAULDRON_BUILD}"
   local index=""
 
-  # if target is somehow null, return an error
-  if [[ -z "$target" ]]
-  then
-    return $ERR_CHROOT_UNDEF
-  fi
+  # ensure an existing absolute path
+  target=$("${CAULDRON_CMD_READLINK[@]}" "$target") || return $ERR_TARGET
+
+  # if target doesn't point to a valid directory, return an error
+  [[ -d "$target" ]] || return $ERR_CHROOT_INVALID
 
   for ((index=0; index < "${#LIBCHROOT_PATHS[@]}"; index++))
   do
@@ -121,11 +127,9 @@ function cauldron_chroot_done() {
       then
         LIBCHROOT_USERS[index]=$((LIBCHROOT_USERS[index]-1))
       else
-        # unmount the bind mounts
-        for bind in proc dev/pts dev
-        do
-          "${CAULDRON_CMD_UNMOUNT[@]}" "$target/$bind" || return $ERR_CHROOT_DONE
-        done
+        # unmount the chroot mount points
+        "${CAULDRON_CMD_UNMOUNT_RECURSIVE[@]}" "$target"/* ||
+          return $ERR_CHROOT_DONE
 
         # clear the chroot definitions
         unset CAULDRON_CHROOT
@@ -134,6 +138,30 @@ function cauldron_chroot_done() {
       fi
     fi
   done
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##
+## Forcefully cleans up all known chroot paths
+## ONLY TO BE USED BEFORE A FORCED EXIT DUE TO NON-RECOVERABLE ERROR CONDITIONS
+##
+#-------------------------------------------------------------------------------
+function cauldron_chroot_cleanup() {
+  local target=
+
+  for target in "${LIBCHROOT_PATHS[@]}"
+  do
+    # unmount the chroot mount points
+    "${CAULDRON_CMD_UNMOUNT_RECURSIVE[@]}" "$path"/* ||
+      return $ERR_CHROOT_DONE
+  done
+
+  # clear the chroot definitions
+  unset LIBCHROOT_USERS
+  unset LIBCHROOT_PATHS
+  unset CAULDRON_CHROOT
 
   return $ERR_OK
 }
@@ -172,39 +200,20 @@ function cauldron_chroot_current() {
   # anything matches the currently defined chroot when there is none)
   [[ -z "$current" ]] && return $ERR_CHROOT_CURRENT
 
-  # make sure that the chroot is also present in LIBCHROOT_PATHS and
-  # LIBCHROOT_USERS
-  for ((index=0; index < "${#LIBCHROOT_PATHS[@]}"; index++))
-  do
-    if [[ "$current" == "${LIBCHROOT_PATHS[index]}" ]]
-    then
-      if [[ "${LIBCHROOT_USERS[index]}" -ge 1 ]]
-      then
-        match=1
-      fi
-    fi
-  done
-
-  # if the currently defined chroot doesn't match a loaded chroot in
-  # LIBCHROOT_PATHS and LIBCHROOT_USERS, then there is something wrong and the
-  # chroot should probably be reloaded
-  [[ "$match" -eq 0 ]] && return $ERR_CHROOT_CURRENT
+  # ensure that the chroot is also present in LIBCHROOT_USERS
+  # if it is not present in LIBCHROOT_USERS, then there is something wrong and
+  # the chroot should probably be reloaded
+  [[ "${LIBCHROOT_USERS[num]}" -ge 1 ]] || return $ERR_CHROOT_CURRENT
 
   if [[ -n "$target" ]]
   then
     # test if the target path doesn't match the currently defined chroot command
-    # target path -- if it does match, then we can just do nothing till the end
-    # of the function where we return ERR_OK; if it doesn't match, return error
-    # here
-    if [[ "$target" != "$current" ]]
-    then
-      # the target chroot doesn't match the current chroot
-      return $ERR_CHROOT_CURRENT
-    fi
-  else
-    # output the currently loaded chroot
-    echo "$current"
+    # target path -- if it doesn't match, return an error
+    [[ "$target" != "$current" ]] || return $ERR_CHROOT_CURRENT
   fi
+
+  # output the current chroot path if not quieted
+  [[ "$quiet" -ne 1 ]] && echo "$current"
 
   return $ERR_OK
 }
@@ -213,25 +222,40 @@ function cauldron_chroot_current() {
 ## @param command plus args to execute inside the chroot
 ##
 ## Executes the command given as the first parameter and any args that follow
-## inside the cauldron chroot defined by cauldron_chroot_init.
+## inside the cauldron chroot defined by cauldron_chroot_init. Also accepts
+## optional switches (as first parameters) to disable output.
 ##
 #-------------------------------------------------------------------------------
 function cauldron_chroot() {
-  if cauldron_chroot_current -q
-  then
-    "${CAULDRON_CHROOT[@]}" $* || return $ERR_CHROOT_EXEC
-  else
-    return $ERR_CHROOT_CURRENT
-  fi
+  local stdout="$CAULDRON_STDOUT"
+
+  case "$1" in
+    -q )
+      verbose="no"
+      shift
+      ;;
+    -s )
+      verbose="no"
+      stdout="$CAULDRON_NULL"
+      shift
+      ;;
+  esac
+
+  cauldron_chroot_current -q || return $ERR_CHROOT_CURRENT
+
+  cauldron_verbose "${CAULDRON_CHROOT[@]} $@"
+
+  PATH="/sbin:/bin:/usr/sbin:/usr/bin"
+  "${CAULDRON_CHROOT[@]}" "$@" &> "$stdout" || return $ERR_CHROOT_EXEC
 
   return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
-## @param target_spells
+## @param target spells to cast
 ##
 ## Performs cast on the list of spells needed for installation to the target
-## system. "target_spells" can either be a list of spells passed as arguments or
+## system. "target spells" can either be a list of spells passed as arguments or
 ## a file which contains such a list. The members of the spell list can be
 ## separated by anything IFS will recognize (typically any whitespace).
 ##
@@ -255,28 +279,40 @@ function cauldron_chroot_cast() {
 }
 
 #-------------------------------------------------------------------------------
-## @param target_spells
+## @param target spells to dispel
 ##
 ## Performs dispel on the list of spells needed for installation to the target
-## system. "target_spells" can either be a list of spells passed as arguments or
+## system. "target spells" can either be a list of spells passed as arguments or
 ## a file which contains such a list. The members of the spell list can be
 ## separated by anything IFS will recognize (typically any whitespace).
 ##
 #-------------------------------------------------------------------------------
 function cauldron_chroot_dispel() {
   local target_spells=( "$@" )
+  local sustained="$CAULDRON_BUILD/var/lib/sorcery/sustained"
   local spell=""
 
   # if a file that lists spells to cast is passed in, get the list of spells
   # from the file
   [[ -f "$target_spells" ]] && target_spells=( $(< "$target_spells") )
 
+  # don't attempt to dispel any spells that are sustained
+  for ((i=0; i < ${#target_spells[@]}; i++))
+  do
+    grep -q "${target_spells[i]}" "$sustained" &&
+      target_spells[i]=""
+  done
+
   # make sure we have a valid chroot of where we will cast
-  [[ -z "$CAULDRON_CHROOT" ]] && return $ERR_CHROOT_INIT
+  cauldron_chroot_init
+  liberror_check || return $?
 
   # dispel all the spells in the list in one shot for better efficiency
   cauldron_chroot "${CAULDRON_CMD_DISPEL[@]}" "${target_spells[@]}" ||
     return $ERR_CHROOT_DISPEL
+
+  cauldron_chroot_done
+  liberror_check || return $?
 
   return $ERR_OK
 }
@@ -284,13 +320,13 @@ function cauldron_chroot_dispel() {
 #-------------------------------------------------------------------------------
 ## @param target_spells
 ##
-## Performs cast and immediate dispel on the each spell in the list of spells
-## to ensure that each spell is cast "cleanly" (meaning that no idle
-## dependencies are laying about in the build tree to get inadvertently picked
-## up by arguably broken spell builds). "target_spells" can either be a list of
-## spells passed as arguments or a file which contains such a list. The members
-## of the spell list can be separated by anything IFS will recognize (typically
-## any whitespace).
+## Performs cast and immediate dispel on each spell in the list of spells to
+## ensure that each spell is cast "cleanly" (meaning that no idle dependencies
+## are laying about in the build tree to get inadvertently picked up by arguably
+## broken spell builds). "target_spells" can either be a list of spells passed
+## as arguments or a file which contains such a list. The members of the spell
+## list can be separated by anything IFS will recognize (typically any
+## whitespace).
 ##
 #-------------------------------------------------------------------------------
 function cauldron_chroot_cast_clean() {
@@ -300,16 +336,6 @@ function cauldron_chroot_cast_clean() {
   # if a file that lists spells to cast is passed in, get the list of spells
   # from the file
   [[ -f "$target_spells" ]] && target_spells=( $(< "$target_spells") )
-
-  # Since we will be installing from the running ISO system instead of a giant
-  # tarball, for each spell we only need to make sure that the cache file is
-  # available. This will require that the ISO sorcery has caching enabled. The
-  # caching should really be turned on from the very beginning though...
-  if [[ -z "$ARCHIVE" ]]
-  then
-    cauldron_sorcerous_load || return $ERR_SORCEROUS_TARGET
-  fi
-  [[ "$ARCHIVE" == "off" ]] && return $ERR_SORCEROUS_ARCHIVE
 
   # make sure we have a valid chroot of where we will cast
   [[ -z "$CAULDRON_CHROOT" ]] && return $ERR_CHROOT_INIT

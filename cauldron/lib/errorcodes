@@ -63,7 +63,8 @@ liberror_add_error ERR_SYS_PACKAGE "could not package final sys file"
 liberror_add_error ERR_SYS_COMPRESS "could not compress final sys archive"
 
 # lib.chroot
-liberror_add_error ERR_CHROOT_UNDEF "chroot target is undefined"
+liberror_add_error ERR_CHROOT_INVALID "chroot target is undefined or invalid"
+liberror_add_error ERR_CHROOT_ISROOT "chroot target equals the host root fs"
 liberror_add_error ERR_CHROOT_INIT "could not init chroot"
 liberror_add_error ERR_CHROOT_DONE "could not close chroot"
 liberror_add_error ERR_CHROOT_CURRENT "chroot not current or not defined"
