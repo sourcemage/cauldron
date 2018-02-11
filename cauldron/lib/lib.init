@@ -417,6 +417,9 @@ function cauldron_init_fs_make() {
   cauldron_init_fs_init "$initfs"
   liberror_check || return $ERR_INIT_MAKE_FS
 
+  # create an empty var/log/dmesg in the initfs so dmesg will function properly
+  "${CAULDRON_CMD_CAT[@]}" /dev/null > "$initfs/var/log/dmesg" ||
+    return $ERR_WRITE_FILE
 
   return $ERR_OK
 }
