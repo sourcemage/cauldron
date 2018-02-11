@@ -349,13 +349,17 @@ function cauldron_init_fs_sysutils() {
   local build="${2:-$CAULDRON_BUILD}"
   local util="$CAULDRON_SYSUTILS"
   local utilconf="$CAULDRON_SYSUTILS_CONF"
+  local sorcery="etc/sorcery/local"
+
+  [[ -d "$initfs" ]] || return $ERR_TARGET
+  shift
 
   if [[ ! -d "$build" ]]
   then
     mkdir -p "$build" || return $ERR_MK_DIR
   fi
 
-  "${CAULDRON_CMD_MKDIR[@]}" "$build/etc/sorcery/local" || return $ERR_MK_DIR
+  "${CAULDRON_CMD_MKDIR[@]}" "$build/$sorcery" || return $ERR_MK_DIR
 
   "${CAULDRON_CMD_CP_FORCE[@]}" \
     "$utilconf" \
