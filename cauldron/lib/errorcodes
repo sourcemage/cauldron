@@ -21,12 +21,13 @@
 
 # base error codes
 liberror_add_error ERR_MK_DIR "could not make directory"
+liberror_add_error ERR_WRITE_FILE "could not write file"
 liberror_add_error ERR_DIR_EXISTS "directory already exists"
 liberror_add_error ERR_FILE_ACCESS "file not accessible"
 liberror_add_error ERR_DIR_ACCESS "directory not accessible"
 liberror_add_error ERR_CP_FILE "could not copy file"
 liberror_add_error ERR_CHMOD_FILE "could not chmod file"
-liberror_add_error ERR_RM_FILES "could not remove files"
+liberror_add_error ERR_RM_FILE "could not remove file"
 liberror_add_error ERR_URL_DL "could not download from url"
 liberror_add_error ERR_TARGET "invalid target parameter"
 
@@ -43,6 +44,7 @@ liberror_add_error ERR_RM_CACHE \
 liberror_add_error ERR_HOST_TRIPLE "could not get host triple for builds"
 liberror_add_error ERR_BUILD_SPOOL "build directory sorcery spool does not exist"
 liberror_add_error ERR_RESOLV "resolv.conf missing in the build directory"
+liberror_add_error ERR_KERNEL "could not determine kernel"
 liberror_add_error ERR_LDCONFIG "could not build library symlinks"
 
 # libcauldron cleaner files
@@ -107,10 +109,6 @@ liberror_add_error ERR_SORCEROUS_SPELL_CACHE \
   "could not determine spell\'s cache file"
 
 # lib.toolchain
-liberror_add_error ERR_TOOLCHAIN_CP_CACHE \
-  "could not copy toolchain spell cache from host system into build directory"
-liberror_add_error ERR_TOOLCHAIN_BUILD_CACHE \
-  "could not build toolchain cache file from spell install info"
 liberror_add_error ERR_TOOLCHAIN_STAGE1 \
   "cross-toolchain stage 1 failed"
 liberror_add_error ERR_TOOLCHAIN_STAGE2 \
@@ -121,18 +119,21 @@ liberror_add_error ERR_TOOLCHAIN_CAST \
   "could not cast toolchain spell cache"
 liberror_add_error ERR_TOOLCHAIN_DISPEL \
   "could not dispel toolchain spell cache"
-liberror_add_error ERR_TOOLCHAIN_GATHER \
-  "could not generate toolchain spell cache"
-liberror_add_error ERR_TOOLCHAIN_SORCERY \
-  "sorcery not found in toolchain root"
-liberror_add_error ERR_TOOLCHAIN_RESURRECT \
-  "could not resurrect spell using sorcery"
 liberror_add_error ERR_TOOLCHAIN_COMPILER_TEST \
   "could not compile a functioning binary using the chroot compiler"
 liberror_add_error ERR_TOOLCHAIN_BASEROOT_TEST \
   "the basesystem chroot failed the validity test"
 liberror_add_error ERR_TOOLCHAIN_BASEROOT \
   "could not acquire and set up a valid basesystem chroot"
+liberror_add_error ERR_TOOLCHAIN_KSRC "could not acquire kernel source"
+liberror_add_error ERR_TOOLCHAIN_SOURCES "could not acquire toolchain sources"
+liberror_add_error ERR_TOOLCHAIN_UNPACK \
+  "could not unpack toolchain component sources"
+liberror_add_error ERR_TOOLCHAIN_CONFIGURE \
+  "could not configure toolchain component"
+liberror_add_error ERR_TOOLCHAIN_COMPONENT "could not build toolchain component"
+liberror_add_error ERR_TOOLCHAIN_BUILD "could not build toolchain"
+liberror_add_error ERR_TOOLCHAIN_PATCH "could not patch toolchain grimoire"
 
 #-------------------------------------------------------------------------------
 ##

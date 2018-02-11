@@ -17,6 +17,13 @@
 ##
 #-------------------------------------------------------------------------------
 
+# guarantee that CAULDRON_NULL is defined
+: "${CAULDRON_NULL:=/dev/null}"
+
+# set LC_COLLATE to C so we don't get affected by the user's locale
+# when grepping, sorting, etc.
+export LC_COLLATE="C"
+
 #-------------------------------------------------------------------------------
 ## @param chroot path (required)
 ## @param compiler (optional)
@@ -36,13 +43,14 @@
 #-------------------------------------------------------------------------------
 function cauldron_toolchain_compiler_test() {
   local chroot="${1:-$CAULDRON_BUILD}"
-  local compiler="${2:-gcc}"
+  local compiler="${2:-$CAULDRON_COMPILER}"
   local comptest="tmp/compiler.test"
 
 
   # create an extremely simple C source for testing the compiler
   echo -e "#include <stdlib.h>\nint main(void) { exit(0); }" \
-    > "$chroot/tmp/compiler.test.c"
+    > "$chroot/$comptest.c" ||
+      return $ERR_WRITE_FILE
 
   cauldron_chroot_init "$chroot"
   liberror_check || return $?
@@ -60,7 +68,7 @@ function cauldron_toolchain_compiler_test() {
 
   # clean up the temporary files
   "${CAULDRON_CMD_RM_FORCE[@]}" "$chroot/$comptest.c" "$chroot/$comptest" ||
-    return $ERR_RM_FILES
+    return $ERR_RM_FILE
 
   return $ERR_OK
 }
@@ -76,35 +84,22 @@ function cauldron_toolchain_compiler_test() {
 #-------------------------------------------------------------------------------
 function cauldron_toolchain_baseroot_test() {
   local chroot="${1:-$CAULDRON_BUILD}"
-  local fhs=(
-              bin
-              boot
-              dev
-              home
-              etc
-              lib
-              mnt
-              opt
-              proc
-              root
-              sbin
-              tmp
-              usr/bin
-              usr/sbin
-              var
-            )
 
   # ensure that a valid chroot was passed in as the first parameter
   [[ -d "$chroot" ]] || return $ERR_TOOLCHAIN_BASEROOT_TEST
 
-  # ensure the important standard FHS directories are present
-  for dir in "${fhs[@]}"
+  # ensure important standard directories are present
+  for dir in "${CAULDRON_FHS_DIRS[@]}"
   do
-    [[ -d "$chroot/$dir" ]] ||
-      return $ERR_TOOLCHAIN_BASEROOT_TEST
+    if [[ ! -d "$chroot/$dir" ]]
+    then
+      "${CAULDRON_CMD_MKDIR[@]}" "$chroot/$dir" ||
+        return $ERR_TOOLCHAIN_BASEROOT_TEST
+    fi
   done
 
   cauldron_toolchain_compiler_test "$chroot"
+  liberror_check || return $ERR_TOOLCHAIN_BASEROOT_TEST
 
   return $ERR_OK
 }
@@ -122,27 +117,44 @@ function cauldron_toolchain_baseroot_test() {
 function cauldron_toolchain_baseroot() {
   local baseroot="${1:-$CAULDRON_BASEROOT}"
   local baseroot_url="$CAULDRON_BASEROOT_URL"
+  local baseroot_sig="$CAULDRON_BASEROOT_SIGN_URL"
   local chroot="$CAULDRON_BUILD"
+  local baseroot_path=$("${CAULDRON_CMD_READLINK[@]}" "$baseroot")
 
-  if [[ -d "$baseroot" ]]
+  if [[ -d "$baseroot_path" ]]
   then
-    ln -sf "$baseroot" "$chroot" || return "$ERR_TOOLCHAIN_BASEROOT"
+    if [[ "$baseroot_path" != "$chroot" ]]
+    then
+      if [[ -d "$chroot" ]]
+      then
+        rmdir "$chroot" || return "$ERR_TOOLCHAIN_BASEROOT"
+      fi
+      ln -sf "$baseroot_path" "$chroot" || return "$ERR_TOOLCHAIN_BASEROOT"
+    fi
   else
     # ensure that the target chroot directory exists
     "${CAULDRON_CMD_MKDIR[@]}" "$chroot" || return $ERR_TOOLCHAIN_BASEROOT
 
-    if [[ ! -f "$CAULDRON_TMP/$baseroot" ]]
+    [[ "${baseroot%%[^/]*}" == "/" ]] || baseroot="$CAULDRON_TMP/$baseroot"
+    if [[ ! -f "$baseroot" ]]
     then
       # get a fresh basesystem chroot package
       (
         cd "$CAULDRON_TMP"
-        "${CAULDRON_CMD_URL_DL[@]}" "$baseroot_url" ||
-          return $ERR_TOOLCHAIN_BASEROOT
+        "${CAULDRON_CMD_URL_DL[@]}" "$baseroot_url"
+          liberror_check $ERR_TOOLCHAIN_BASEROOT \
+            "could not acquire baseroot image file" ||
+              return $ERR_TOOLCHAIN_BASEROOT
+        "${CAULDRON_CMD_URL_DL[@]}" "$baseroot_sig"
+          liberror_check $ERR_TOOLCHAIN_BASEROOT \
+            "could not acquire baseroot signature file" ||
+              return $ERR_TOOLCHAIN_BASEROOT
       )
+      liberror_check || return $?
     fi
 
     # unpack it
-    "${CAULDRON_CMD_UNPACK_BUILD[@]}" "$CAULDRON_TMP/$baseroot" ||
+    "${CAULDRON_CMD_UNPACK_BUILD[@]}" "$baseroot" ||
       return $ERR_TOOLCHAIN_BASEROOT
   fi
 
@@ -155,131 +167,20 @@ function cauldron_toolchain_baseroot() {
 }
 
 #-------------------------------------------------------------------------------
-##
-## Scans the sorcery archspec files to find the host triplet.
-##
-## Later, this will be used to set the value of HOST_TRIPLE in
-## /etc/cauldron/config after the code to write the config file is in place.
-##
-#-------------------------------------------------------------------------------
-function cauldron_toolchain_host_get() {
-  local specs="${CAULDRON_HOST_ARCH_PATH//\"/}"
-  local search="-perm 400 -type f -name $CAULDRON_HOST_ARCH"
-  local cmd_grep="${CAULDRON_CMD_GREP[@]}"
-  local cmd_grep_quiet="${CAULDRON_CMD_GREP_QUIET[@]}"
-  local cmd_find="${CAULDRON_CMD_FIND[@]}"
-  local cmd_cut="${CAULDRON_CMD_CUT[@]}"
-  local arch_spec=
-  local host_triple=
-
-  # get the value for the HOST triplet from sorcery archspecs
-
-  if $("$cmd_find" --version | "$cmd_grep" 'version 4\.1\(\.\|$\)')
-  then
-    arch_spec="$($cmd_find $spec $search -print 2>$CAULDRON_NULL)"
-  else
-    arch_spec="$($cmd_find -L $spec $search -print 2>$CAULDRON_NULL)"
-  fi
-
-  # no matching arch spec found
-  [[ -z "$arch_spec" ]] && return $ERR_HOST_TRIPLE
-
-  host_triple="$($cmd_grep 'HOST=' $arch_spec | $cmd_cut -d = -f 2)"
-
-  # no matching host definition
-  [[ -z "$host_triple" ]] && return $ERR_HOST_TRIPLE
-
-  "${CAULDRON_CMD_OUTPUT[@]}" "$host_triple"
-
-  return $ERR_OK
-}
-
-#-------------------------------------------------------------------------------
-## @param spell
-## @param install_log_path (optional)
-##
-## Builds a cache file from the information provided by the install log for the
-## spell passed as an argument using sorcery's create_cache_archive. It expects
-## the provided spell to include the version as a suffix (i.e. bash-3.2).
-##
-#-------------------------------------------------------------------------------
-function cauldron_toolchain_cache_resurrect() {
-  local spell="$1"
-  local install_logs="${2:-$CAULDRON_HOST/var/log/sorcery/install}"
-  local cache="$CAULDRON_HOST_CACHE_PATH/$spell.tar"
-
-  if ! declare -Fl create_cache_archive
-  then
-    debug() { :; }
-    message() { :; }
-    . "$CAULDRON_HSORCERY_LIBS/libtrack" 2>$CAULDRON_NULL ||
-      liberror_die $ERR_SORCEROUS_HOST
-  fi
-
-  # generate the missing cache file using sorcery
-  create_cache_archive "$install_logs/$spell" "$cache" "${cache}${EXTENSION}" ||
-    return $ERR_TOOLCHAIN_RESURRECT
-
-  return $ERR_OK
-}
-
-#-------------------------------------------------------------------------------
-## @param spell_name
-## @param spell_version
-## @param install_log_path (optional)
-##
-## Generates a spell cache by manually copying files from the spell's install
-## log and packaging them. Assumes that the spell's install log exists and is
-## intact.
-##
-#-------------------------------------------------------------------------------
-function cauldron_toolchain_cache_gather() {
-  local spell="$1"
-  local version="$2"
-  local install_logs="${3:-$CAULDRON_HOST/var/log/sorcery/install}"
-  local gather="$CAULDRON_TMP/gather"
-
-  [[ -d "$install_logs" ]] || return $ERR_TOOLCHAIN_GATHER
-
-  [[ -z "$spell" ]] && return $ERR_TOOLCHAIN_GATHER
-  [[ -z "$version" ]] && return $ERR_TOOLCHAIN_GATHER
-
-  # make sure the gather path is clean
-  # completely wipe it out and recreate it
-  "${CAULDRON_CMD_RM_RECURSE_FORCE[@]}" "$gather" || return $ERR_RM_FILES
-  "${CAULDRON_CMD_MKDIR[@]}" "$gather" || return $ERR_MK_DIR
-
-  # find all the files installed by the given spell
-  for file in "$install_logs/${spell}-${version}"/*
-  do
-    # copy all files from the sorcery install log
-    "${CAULDRON_CMD_CP_EXACT[@]}" "$file" "$gather/" ||
-      return $ERR_TOOLCHAIN_GATHER
-  done
-
-  # package the collection of files from the install log as a cache file
-  "${CAULDRON_CMD_TAR[@]}" jcf "${spell}-${version}.tar.bz2" \
-    --transform "s#$gather/##" \
-    "$gather"/* ||
-      return $ERR_TOOLCHAIN_GATHER
-
-  # if the packaging was successful, wipe out the gather dir
-  "${CAULDRON_CMD_RM_RECURSE_FORCE[@]}" "$gather"
-
-  return $ERR_OK
-}
-
-#-------------------------------------------------------------------------------
-## @param spell
+## @param list of spells (optional)
 ##
 ## Generates a spell cache by casting the spell and then dispelling it. This
 ## assumes that ARCHIVE is already set to "yes" in the chroot's sorcery config.
 ##
 #-------------------------------------------------------------------------------
 function cauldron_toolchain_cache_cast() {
-  local spells="$CAULDRON_SYS_SPELLS"
+  local spells=("${@:-$CAULDRON_TOOLCHAIN}")
 
-  [[ -f "$spells" ]] || return $ERR_TOOLCHAIN_CAST
+  # if $spells points to a file, replace it with the contents of the file as an
+  # array
+  [[ -f "$spells" ]] && spells=($(<"$spells"))
+
+  [[ -n "$spells" ]] || return $ERR_TOOLCHAIN_CAST
 
   # make sure we have a chroot accessible
   # default to $CAULDRON_BUILD, unless one is already defined
@@ -290,132 +191,6 @@ function cauldron_toolchain_cache_cast() {
 
   # clean up the chroot
   cauldron_chroot_done || return $ERR_CHROOT_DONE
-
-  return $ERR_OK
-}
-
-#-------------------------------------------------------------------------------
-## @param list of spells (optional)
-##
-## Generates a cache file for the toolchain spells. It will try to use
-## information from an already installed/cast spell (in the case of the host
-## system having sorcery configured to not generate the caches), and, failing
-## that, will cast the spell and then dispel it (the second step only being
-## performed if aggressive is true). If the spell parameter is provided, it will
-## only generate the cache for the given spell. Otherwise it will generate
-## caches for all spells defined in $CAULDRON_TOOLCHAIN.
-##
-#-------------------------------------------------------------------------------
-function cauldron_toolchain_cache_make() {
-  local spells=("${@:-$CAULDRON_TOOLCHAIN}")
-  local config="$CAULDRON_ISORCERY_CONFIG"
-  local lconfig="$CAULDRON_ISORCERY_LCONFIG"
-  local install_logs="$CAULDRON_HOST/var/log/sorcery/install"
-  local version=""
-  local packages="$CAULDRON_HSORCERY_PACKAGES"
-  local cmd_grep="${CAULDRON_CMD_GREP[@]}"
-  local cmd_cut="${CAULDRON_CMD_CUT[@]}"
-
-  # First check to see if the spell was installed, but no cache exists.
-  if "${CAULDRON_CMD_GAZE_INSTALLED}" "$spell" > $CAULDRON_NULL
-  then
-    # use sorcery to generate a cache file using the install log
-    # this is the least intensive of the three options
-    version="$($cmd_grep ^$spell $packages | $cmd_cut -d: -f4)"
-
-    if ! cauldron_toolchain_cache_resurrect "${spell}-${version}"
-    then
-      # Only do this part if the caller wants us to be aggressive in building the
-      # cache.
-      if [[ "$CAULDRON_AGGRESSIVE" == yes ]]
-      then
-        if [[ -e "$install_logs/${spell}-${version}" ]]
-        then
-          # try making a cache from the install logs manually
-          cauldron_toolchain_cache_gather "$install_logs" "$spell" "$version"
-        fi
-      fi
-    fi
-
-  # otherwise, there's no install logs so we will need to cast the spell
-  elif [[ "$CAULDRON_AGGRESSIVE" == "yes" ]]
-  then
-    # make sure sorcery is in the build chroot
-    [[ -f "$config" ]] || return $ERR_TOOLCHAIN_SORCERY
-
-    # sorcery defaults to archiving, but can be overridden in a local config
-    # check for the local config
-    if [[ -f "$lconfig" ]]
-    then
-      archive=$($cmd_grep '[^#]*ARCHIVE=' "$config" | $cmd_cut -d= -f2)
-
-      # if archiving is off in the local config, turn it on
-      if [[ "$archive" != "on" ]]
-      then
-        sed -i 's/ARCHIVE=.*/ARCHIVE="on"/' "$config" ||
-          return $ERR_SORCEROUS_ARCHIVE
-      fi
-    fi
-
-    # get the cache by manually casting/dispelling
-    # this is the most resource intensive of the three options
-    cauldron_toolchain_cache_cast "$spell" || return $ERR_TOOLCHAIN_CAST
-  fi
-
-  return $ERR_OK
-}
-
-#-------------------------------------------------------------------------------
-##
-## Generates the base toolchain using the HOST information. This is
-## done by unpacking the cache file for each spell required for the
-## toolchain if it exists. If it does not exist, this may be because
-## caching is disabled on the host machine, or perhaps the cache file
-## was deleted by accident. Otherwise the spell must be cast within
-## a chroot environment in the CAULDRON_BUILD directory.
-##
-#-------------------------------------------------------------------------------
-function cauldron_toolchain_build_host() {
-  local spell=""
-  local version=""
-  local spell_cache=""
-  local host_triple=""
-  local ext="$CAULDRON_CACHE_EXTENSION"
-  local packages="$CAULDRON_HSORCERY_PACKAGES"
-  local cmd_grep="${CAULDRON_CMD_GREP[@]}"
-  local cmd_cut="${CAULDRON_CMD_CUT[@]}"
-
-  # get the value for HOST_TRIPLE
-  host_triple="$(cauldron_toolchain_host_get)"
-
-  [[ -z "$host_triple" ]] && return $ERR_HOST_TRIPLE
-
-  # grab the list of spells needed as the base tool-chain which will be
-  # used to create the cross-compile tool-chain
-  for spell in "$CAULDRON_TOOLCHAIN"
-  do
-    # grab the version for the spell from sorcery's state info
-    # on what's installed
-    version="$($cmd_grep \"^$spell\" $packages | $cmd_cut -d: -f4)"
-
-    # check if spell found on the system
-    if [[ -n "$version" ]]
-    then
-      # set SPELL_CACHE as shorthand for SPELL-VERSION-HOST_TRIPLE.tar.bz2
-      spell_cache="${spell}-${version}-${host_triple}.tar${ext}"
-
-      # unpack the cache file, effectively installing
-      # the spell into the BUILD dir
-      # the unpacking is done against the BUILD dir as the root dir, so
-      # this should not touch the HOST filesystem at all
-      "${CAULDRON_CMD_UNPACK_BUILD[@]}" "$CAULDRON_BUILD/$spell_cache"
-        return $ERR_UNPACK_CACHE
-
-      # if the tar was successful, then remove the temporary file
-      "${CAULDRON_CMD_RM[@]}" "$CAULDRON_BUILD/$spell_cache" ||
-        return $ERR_RM_CACHE
-    fi
-  done
 
   return $ERR_OK
 }
@@ -432,27 +207,419 @@ function cauldron_toolchain_build_cross() {
 
   # build the stage 1 tools
   cauldron_sorcerous_cross_configure 1 || return $ERR_TOOLCHAIN_STAGE1
-  cauldron_chroot "$CAULDRON_CMD_CAST" "binutils" || return $ERR_CHROOT_CAST
-  cauldron_chroot "$CAULDRON_CMD_CAST" "gcc" || return $ERR_CHROOT_CAST
+  cauldron_chroot_cast "binutils" || return $ERR_CHROOT_CAST
+  cauldron_chroot_cast "gcc" || return $ERR_CHROOT_CAST
 
   # build glibc (stage 2)
   cauldron_sorcerous_cross_configure 2 || return $ERR_TOOLCHAIN_STAGE2
-  cauldron_chroot "$CAULDRON_CMD_CAST" "glibc" || return $ERR_CHROOT_CAST
+  cauldron_chroot_cast "glibc" || return $ERR_CHROOT_CAST
 
   # rebuild gcc (still stage 1, but this time linked against the
   # cross-glibc
   cauldron_sorcerous_cross_configure 1 || return $ERR_TOOLCHAIN_STAGE1
-  cauldron_chroot "$CAULDRON_CMD_CAST" "gcc" || return $ERR_CHROOT_CAST
+  cauldron_chroot_cast "gcc" || return $ERR_CHROOT_CAST
 
   # do a sorcery rebuild inside the BUILD dir to
   # generate the cross-compile tool-chain (stage 3)
   cauldron_sorcerous_cross_configure 3 || return $ERR_TOOLCHAIN_STAGE3
-  cauldron_chroot "$CAULDRON_CMD_REBUILD" || return $ERR_CHROOT_REBUILD
+  cauldron_chroot "${CAULDRON_CMD_REBUILD[@]}" || return $ERR_CHROOT_REBUILD
 
   # if we had to initialize a default chroot
   # clean up by shutting it down
   cauldron_chroot_done || return $ERR_CHROOT_DONE
 }
+
+
+#-------------------------------------------------------------------------------
+##
+## Download the linux kernel sources from the net
+##
+#-------------------------------------------------------------------------------
+function cauldron_toolchain_kernel_source() {
+  local spool="$CAULDRON_BUILD/var/spool/sorcery"
+  srcfile="$spool/${CAULDRON_KERNEL_URL##*/}"
+  sigfile="$spool/${CAULDRON_KERNEL_SIGN_URL##*/}"
+
+  [[ -f "$srcfile" ]] && return $ERR_OK
+
+  if [[ ! -d "$spool" ]]
+  then
+    "${CAULDRON_CMD_MKDIR[@]}" "$spool"
+    liberror_check || return $?
+  fi
+
+  (
+    cd "$spool"
+
+    "${CAULDRON_CMD_URL_DL[@]}" "$CAULDRON_KERNEL_URL"
+    liberror_check "kernel source url: $CAULDRON_KERNEL_URL" ||
+      return $ERR_TOOLCHAIN_KSRC
+    liberror_check "kernel source url: $CAULDRON_KERNEL_SIGN_URL" ||
+      return $ERR_TOOLCHAIN_KSRC
+  )
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##
+## Download the toolchain suite sources from the net
+##
+#-------------------------------------------------------------------------------
+function cauldron_toolchain_sources() {
+  local force="$1"
+  local urls=(
+              "$CAULDRON_SYSUTILS_URL"
+              "$CAULDRON_COMPILER_URL"
+              "$CAULDRON_LIBC_URL"
+              "$CAULDRON_AUTOCONF_URL"
+              "$CAULDRON_AUTOMAKE_URL"
+              "$CAULDRON_MAKE_URL"
+              "$CAULDRON_PERL_URL"
+             )
+  local sigs=(
+              "$CAULDRON_SYSUTILS_SIGN_URL"
+              "$CAULDRON_COMPILER_SIGN_URL"
+              "$CAULDRON_LIBC_SIGN_URL"
+              "$CAULDRON_AUTOCONF_SIGN_URL"
+              "$CAULDRON_AUTOMAKE_SIGN_URL"
+              "$CAULDRON_MAKE_SIGN_URL"
+              "$CAULDRON_PERL_SIGN_URL"
+             )
+
+  if [[ ! -d "$CAULDRON_BUILD/var/spool/sorcery" ]]
+  then
+    "${CAULDRON_CMD_MKDIR[@]}" "$CAULDRON_BUILD/var/spool/sorcery"
+    liberror_check || return $?
+  fi
+
+  (
+    cd "$CAULDRON_BUILD/var/spool/sorcery"
+    liberror_check || return $?
+
+    for ((i=0; i<"${#urls[@]}"; i++))
+    do
+      url="${urls[i]}"
+      sig="${sigs[i]}"
+      if [[ -f "${url##*/}" ]]
+      then
+        if [[ -n "$force" ]]
+        then
+          "${CAULDRON_CMD_RM_FORCE[@]}" "${url##*/}"
+        else
+          continue
+        fi
+      fi
+
+      "${CAULDRON_CMD_URL_DL[@]}" "$url"
+      liberror_check "$url" || return $ERR_TOOLCHAIN_SOURCES
+      "${CAULDRON_CMD_URL_DL[@]}" "$sig"
+      liberror_check "$sig" || return $ERR_TOOLCHAIN_SOURCES
+    done
+  )
+
+  return $ERR_OK
+}
+
+function cauldron_toolchain_unpack() {
+  local target="$1"
+  local archive=
+
+  [[ -n "$target" ]] || return $ERR_TOOLCHAIN_UNPACK
+
+  if [[ ! -d "$CAULDRON_BUILD/usr/src" ]]
+  then
+    "${CAULDRON_CMD_MKDIR[@]}" "$CAULDRON_BUILD/usr/src"
+    liberror_check || return $?
+  fi
+
+  if [[ -d "$CAULDRON_BUILD/var/spool/sorcery" ]]
+  then
+    "${CAULDRON_CMD_MKDIR[@]}" "$CAULDRON_BUILD/var/spool/sorcery" ||
+      return $ERR_TOOLCHAIN_UNPACK
+  fi
+
+  eval target="\$CAULDRON_$target-\$CAULDRON_${target}_VERS"
+
+  archive=( $(ls "$CAULDRON_BUILD/var/spool/sorcery/$target"*) )
+  archive="${archive[0]}"
+
+  [[ -n "$archive" ]] || return $ERR_TOOLCHAIN_UNPACK
+
+  cauldron_verbose "Unpacking toolchain source: $target"
+
+  "${CAULDRON_CMD_UNPACK_BUILD_SRC[@]}" "$archive" ||
+    return $?
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+## @param component to configure
+##
+## Configures the specified component for building. This assumes that the
+## relevant sources are already available under the chroot's /usr/src directory.
+##
+#-------------------------------------------------------------------------------
+function cauldron_toolchain_configure_component() {
+  local component="$1"
+  local srcdir="$CAULDRON_BUILD/usr/src"
+  local config=
+  local targetdir=
+  local targetconf=
+
+  [[ -n "$component" ]] || return $ERR_TOOLCHAIN_CONFIGURE
+
+  case "$component" in
+    kernel)
+      case "$CAULDRON_KERNEL" in
+        linux)
+          config="$CAULDRON_KERNEL_CONF"
+          targetdir="$srcdir/$CAULDRON_KERNEL-$CAULDRON_KERNEL_VERS"
+          targetconf="$targetdir/.config"
+          ;;
+      esac
+      ;;
+    sysutils)
+      case "$CAULDRON_SYSUTILS" in
+        busybox)
+          config="$CAULDRON_SYSUTILS_CONF"
+          targetdir="$srcdir/$CAULDRON_SYSUTILS-$CAULDRON_SYSUTILS_VERS"
+          targetconf="$targetdir/.config"
+          ;;
+      esac
+      ;;
+  esac
+
+  if [[ ! -f "$config" ]]
+  then
+    cauldron_verbose_error "kernel config file $config not found"
+    return $ERR_TOOLCHAIN_CONFIGURE
+  fi
+
+  [[ -d "$targetdir" ]] || return $ERR_TOOLCHAIN_CONFIGURE
+
+
+  "${CAULDRON_CMD_CAT[@]}" "$config" > "$targetconf"
+  liberror_check "component: $component" || return $ERR_TOOLCHAIN_CONFIGURE
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##
+## Extracts and installs the kernel headers for userland in the build chroot.
+## Assumes that the kernel sources are already available and configured.
+##
+#-------------------------------------------------------------------------------
+function cauldron_toolchain_kernel_headers() {
+  local kern="$CAULDRON_KERNEL"
+  local vers="$CAULDRON_KERNEL_VERS"
+  local karch="$CAULDRON_ARCH"
+
+  [[ -n "$kern" ]] || return $ERR_KERNEL
+  [[ -n "$vers" ]] || return $ERR_KERNEL
+
+  cauldron_chroot_init
+  liberror_check || return $?
+
+  # adjust the arch for linux if x86_64
+  if [[ "$kern" == "linux" ]]
+  then
+    case "$karch" in
+      x86_64 )
+        #karch="x86"
+        true
+        ;;
+    esac
+  fi
+
+  case "$CAULDRON_KERNEL" in
+    linux)
+      cauldron_chroot make -C "/usr/src/$kern-$vers" \
+        INSTALL_HDR_PATH="/usr" \
+        ARCH="$karch" \
+        headers_install
+      liberror_check || return $?
+      ;;
+  esac
+
+  cauldron_chroot_done
+  liberror_check || return $?
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##
+## Unpacks the kernel sources and copies the cauldron configuration for the
+## kernel into the kernel source directory.
+##
+#-------------------------------------------------------------------------------
+function cauldron_toolchain_kernel_prepare() {
+  local kern="$CAULDRON_KERNEL"
+  local vers="$CAULDRON_KERNEL_VERS"
+  local conf="$CAULDRON_KERNEL_CONF"
+  local target="$CAULDRON_BUILD/usr/src/$kern-$vers"
+
+  cauldron_toolchain_unpack "KERNEL"
+  liberror_check "kernel source" || return $?
+
+  case "$kern" in
+    linux )
+      target="$target/.config"
+      ;;
+    * )
+      target=""
+  esac
+
+  if [[ -n "$target" ]]
+  then
+    "${CAULDRON_CMD_CP[@]}" "$conf" "$target" ||
+      return $ERR_CP_FILE
+  fi
+}
+
+#-------------------------------------------------------------------------------
+##
+## Does any work necessary to bootstrap a working compiler inside the toolchain
+## chroot before it can be used for building sys and iso packages
+##
+#-------------------------------------------------------------------------------
+function cauldron_toolchain_compiler_bootstrap() {
+  # prepare chroots to $CAULDRON_BUILD
+  cauldron_chroot_init
+  liberror_check || return $?
+
+  case "$CAULDRON_COMPILER" in
+    gcc )
+      # retool gcc
+      cauldron_chroot sorcery unhold gmp mpfr libmpc
+      cauldron_chroot cast -c gmp mpfr libmpc
+      liberror_check || return $?
+      cauldron_chroot_cast -c gcc
+      liberror_check || return $?
+      cauldron_toolchain_compiler_test
+      liberror_check || return $?
+      ;;
+    * )
+      ;;
+  esac
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##
+## Builds all the necessary toolchain components. This will attempt to download
+## any sources that can't already be found.
+##
+#-------------------------------------------------------------------------------
+function cauldron_toolchain_build() {
+  # ensure that the toolchain kernel headers are available for building the
+  # toolchain against -- this kernel will be built and added to the iso later,
+  # and the sources will be available for sys
+  cauldron_toolchain_kernel_prepare
+  liberror_check "kernel prepare" || return $?
+  cauldron_toolchain_kernel_headers
+  liberror_check "kernel headers" || return $?
+
+  # build the toolchain suite components (compiler, libc, make, autotools,
+  # etc.) -- only those needed for basic compilation from source for core
+  # software
+  for unit in compiler libc make automake autoconf sysutils #perl
+  do
+    cauldron_toolchain_build_component "$unit"
+    liberror_check "toolchain component: $unit" || return $ERR_TOOLCHAIN_BUILD
+  done
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+## @param component to build
+##
+## Builds the specified toolchain component in the toolchain chroot. This
+## assumes that the relevant sources are already unpacked and available under
+## the chroot's usr/src directory.
+##
+#-------------------------------------------------------------------------------
+function cauldron_toolchain_build_component() {
+  local component="$1"
+  local srcdir="$CAULDRON_BUILD/usr/src"
+  local target=
+
+  case "$component" in
+    compiler)
+      target="$CAULDRON_COMPILER-$CAULDRON_COMPILER_VERS"
+      ;;
+    libc)
+      target="$CAULDRON_LIBC-$CAULDRON_LIBC_VERS"
+      ;;
+    kernel)
+      target="$CAULDRON_KERNEL-$CAULDRON_KERNEL_VERS"
+      ;;
+    binutils)
+      target="binutils-$CAULDRON_BINUTILS_VERS"
+      ;;
+    make)
+      target="make-$CAULDRON_MAKE_VERS"
+      ;;
+    automake)
+      target="automake-$CAULDRON_AUTOMAKE_VERS"
+      ;;
+    autoconf)
+      target="autoconf-$CAULDRON_AUTOCONF_VERS"
+      ;;
+    perl)
+      target="perl-$CAULDRON_PERL_VERS"
+      ;;
+    sysutils)
+      target="$CAULDRON_SYSUTILS-$CAULDRON_SYSUTILS_VERS"
+      ;;
+    *) return $ERR_TOOLCHAIN_COMPONENT ;;
+  esac
+
+  cauldron_toolchain_unpack "$target"
+  liberror_check "$component" || return $?
+
+  # for components that need a particular configuration, copy over the
+  # preconfigured file before starting the build
+  if [[ -n "$config" ]]
+  then
+    cauldron_toolchain_configure_component "$component" "$srcdir/$target"
+    liberror_check || return $?
+  fi
+
+  cauldron_chroot_init
+  liberror_check || return $?
+
+  # run autotools as necessary
+  if [[ -x "$srcdir/$target/configure" ]]
+  then
+    cauldron_chroot sh -c "cd /usr/src/$target && configure"
+    liberror_check || return $?
+  fi
+
+  # build and install
+  cauldron_chroot sh -c "cd /usr/src/$target && make && make install"
+  liberror_check || return $?
+
+  if [[ "$component" == "linux" ]]
+  then
+    cauldron_chroot sh -c "cd /usr/src/$target && make modules_install"
+    liberror_check || return $?
+  fi
+
+  # clean up after a successful build
+  cauldron_chroot rm -r "/usr/src/$target"
+
+  cauldron_chroot_done
+  liberror_check || return $?
+
+  return $ERR_OK
+}
+
 
 #-------------------------------------------------------------------------------
 ##
