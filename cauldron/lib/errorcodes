@@ -85,6 +85,8 @@ liberror_add_error ERR_INIT_MAKE_RAMFS "could not build initramfs"
 liberror_add_error ERR_INIT_MAKE_RD "could not build initramdisk"
 liberror_add_error ERR_INIT_MAKE_FS \
   "could not make filesystem for initramfs/ramdisk"
+liberror_add_error ERR_INIT_DIRS \
+  "could not determine directories to add to initramfs/ramdisk"
 
 # lib.sorcerous
 liberror_add_error ERR_SORCEROUS_ARCHIVE \

@@ -137,85 +137,176 @@ function cauldron_init_ramfs_install() {
 
 #-------------------------------------------------------------------------------
 ## @param path_to_initfs (required)
+## @param list of directories (optional)
 ##
-## Sets up the basic directories that will be needed on the initfs
+## Sets up the basic directories that will be needed on the initfs. If the list
+## of directories aren't passed in as function parameters, the list defaults to
+## that found in the config file CAULDRON_CONFIG/CAULDRON_ARCH/initfs/dirs.
 ##
 #-------------------------------------------------------------------------------
 function cauldron_init_fs_dirs() {
   local initfs="$1"
-  local list="$CAULDRON_CONFIG/$CAULDRON_ARCH/initfs/dirs"
+  local file="$CAULDRON_CONFIG/$CAULDRON_ARCH/initfs/dirs"
+  local list=
 
-  if [[ -f "$list" ]]
+  [[ -d "$initfs" ]] || return $ERR_TARGET
+  shift
+
+  if [[ $# -ge 1 ]]
   then
-    for dir in $("${CAULDRON_CMD_CAT[@]}" "$list")
-    do
-      "${CAULDRON_CMD_MKDIR[@]}" "$initfs/$dir" || return $ERR_MK_DIR
-    done
+    list=( "$@" )
+  else
+    [[ -f "$file" ]] && list=( $(< "$file") )
   fi
+  [[ -n "$list" ]] || return $ERR_INIT_DIRS
+
+
+  for dir in "${list[@]}"
+  do
+    "${CAULDRON_CMD_MKDIR[@]}" "$initfs/$dir" ||
+      return $ERR_MK_DIR
+  done
 
   return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
 ## @param path_to_initfs (required)
+## @param list of binaries (optional)
 ##
-## Gathers and copies the necessary binaries into the initfs
+## Gathers and copies the necessary binaries into the initfs. If the list of
+## binaries aren't passed in as function parameters, the list defaults to that
+## found in the config file CAULDRON_CONFIG/CAULDRON_ARCH/initfs/binaries.
 ##
 #-------------------------------------------------------------------------------
 function cauldron_init_fs_bins() {
   local initfs="$1"
-  local list="$CAULDRON_CONFIG/$CAULDRON_ARCH/initfs/binaries"
+  local file="$CAULDRON_CONFIG/$CAULDRON_ARCH/initfs/binaries"
+  local list=
 
-  if [[ -f "$list" ]]
+  [[ -d "$initfs" ]] || return $ERR_TARGET
+  shift
+
+  if [[ $# -ge 1 ]]
   then
-    for bin in $("${CAULDRON_CMD_CAT[@]}" "$list")
-    do
-      "${CAULDRON_CMD_CP[@]}" "$bin" "$initfs/bin" || return $ERR_CP_FILE
-    done
+    list=( "$@" )
+  else
+    [[ -f "$file" ]] && list=( $(< "$file") )
   fi
+
+  for bin in "${list[@]}"
+  do
+    "${CAULDRON_CMD_CP[@]}" "$CAULDRON_BUILD/$bin" "$initfs/bin/" ||
+      return $ERR_CP_FILE
+    "${CAULDRON_CMD_CHMOD[@]}" 0755 "$initfs/bin/$bin" ||
+      return $ERR_CHMOD_FILE
+  done
 
   return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
 ## @param path_to_initfs (required)
+## @param list of libraries (optional)
 ##
-## Gathers and copies the necessary libraries into the initfs
+## Gathers and copies the necessary libraries into the initfs. If the list of
+## libraries aren't passed in as function parameters, the list defaults to that
+## found in the config file CAULDRON_CONFIG/CAULDRON_ARCH/initfs/libs.
 ##
 #-------------------------------------------------------------------------------
 function cauldron_init_fs_libs() {
   local initfs="$1"
-  local list="$CAULDRON_CONFIG/$CAULDRON_ARCH/initfs/libs"
+  local file="$CAULDRON_CONFIG/$CAULDRON_ARCH/initfs/libs"
+  local list=
 
-  if [[ -f "$list" ]]
+  [[ -d "$initfs" ]] || return $ERR_TARGET
+  shift
+
+  if [[ $# -ge 1 ]]
   then
-    for lib in $("${CAULDRON_CMD_CAT[@]}" "$list")
-    do
-      "${CAULDRON_CMD_CP[@]}" "$lib" "$initfs/lib/" || return $ERR_CP_FILE
-    done
+    list=( "$@" )
+  else
+    [[ -f "$file" ]] && list=( $(< "$file") )
   fi
+
+  for lib in "${list[@]}"
+  do
+    "${CAULDRON_CMD_CP[@]}" "$CAULDRON_BUILD/$lib" "$initfs/lib/" ||
+      return $ERR_CP_FILE
+    "${CAULDRON_CMD_CHMOD[@]}" 0644 "$initfs/lib/$lib" ||
+      return $ERR_CHMOD_FILE
+  done
 
   return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
 ## @param path_to_initfs (required)
+## @param list of libraries (optional)
 ##
-## Copies over any required kernel modules into the initfs
+## Copies over any required kernel modules into the initfs. If the list of
+## modules aren't passed in as function parameters, the list defaults to that
+## found in the config file CAULDRON_CONFIG/CAULDRON_ARCH/initfs/modules.
 ##
 #-------------------------------------------------------------------------------
 function cauldron_init_fs_mods() {
   local initfs="$1"
-  local list="$CAULDRON_CONFIG/$CAULDRON_ARCH/initfs/modules"
+  local iso="$CAULDRON_ISO"
+  local file="$CAULDRON_CONFIG/$CAULDRON_ARCH/initfs/modules"
+  local modpath="lib/modules/$CAULDRON_KERNEL_VERS"
+  local list=
 
-  if [[ -f "$list" ]]
+  # alter the target if a compressed fs is desired
+  [[ "$CAULDRON_ISO_SQUASH" == "yes" ]] &&
+    iso="$CAULDRON_ISO_SQUASHFS"
+
+  [[ -d "$initfs" ]] || return $ERR_TARGET
+  [[ -d "$iso" ]] || return $ERR_DIR_ACCESS
+  shift
+
+  if [[ $# -ge 1 ]]
   then
-    for module in $("${CAULDRON_CMD_CAT[@]}" "$list")
+    list=( "$@" )
+  else
+    [[ -f "$file" ]] && list=( $(< "$file") )
+  fi
+
+  # adding extra modules to the initfs is optional, so make sure the user wants
+  # to add something
+  if [[ -n "$list" ]]
+  then
+    # make sure the module path exists in the initfs
+    "${CAULDRON_CMD_MKDIR[@]}" "$initfs/$modpath"
+
+    cauldron_verbose "Copying kernel modules to initfs..."
+
+    # copy all desired modules
+    for module in "${list[@]}"
     do
-      "${CAULDRON_CMD_CP[@]}" \
-        "$module" \
-        "$initfs/lib/modules/$CAULDRON_KVERS" ||
+      path="$initfs/$modpath/kernel/${module%/*}"
+
+      "${CAULDRON_CMD_MKDIR[@]}" "$path"
+
+      "${CAULDRON_CMD_CP_RECURSE[@]}" \
+        "$iso/$modpath/kernel/$module" \
+        "$path/" ||
           return $ERR_CP_FILE
+    done
+
+    cauldron_verbose "Copying kernel modules.dep and related files"\
+        "to initfs..."
+
+    # copy modules.dep, modules.alias, etc. from the source modules dir
+    # files only (no hierarchies)
+    for file in "$iso/$modpath/"*
+    do
+      if [[ -f "$file" ]]
+      then
+        "${CAULDRON_CMD_MKDIR[@]}" "$initfs/$modpath" ||
+          return $ERR_MK_DIR
+        "${CAULDRON_CMD_CP[@]}" "$file" "$initfs/$modpath/" ||
+          return $ERR_CP_FILE
+      fi
     done
   fi
 
