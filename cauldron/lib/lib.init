@@ -18,24 +18,6 @@
 #-------------------------------------------------------------------------------
 
 #-------------------------------------------------------------------------------
-##
-## Handles setting up the init process on the ISO. The ISO init is
-## responsible for detecting hardware, loading device drivers, setting
-## console fonts, etc.
-##
-#-------------------------------------------------------------------------------
-function cauldron_init_setup() {
-  mkdir -p "$CAULDRON_ISO/etc" || return $ERR_MK_DIR
-
-  "${CAULDRON_CMD_CP_PRESERVE[@]}" \
-    "$CAULDRON_DATA/$CAULDRON_ARCH/inittab" \
-    "$CAULDRON_ISO/etc/inittab" ||
-      return $ERR_CP_FILE
-
-  return $ERR_OK
-}
-
-#-------------------------------------------------------------------------------
 ## @param init ramdisk/ramfs image (required)
 ##
 ## Copies the image passed as first parameter into the ISO run-time filesystem
