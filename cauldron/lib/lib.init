@@ -26,10 +26,11 @@
 #-------------------------------------------------------------------------------
 function cauldron_init_img_install() {
   local img="$1"
+  local target="$CAULDRON_ISO/boot"
 
-  "${CAULDRON_CMD_MKDIR[@]}" "$CAULDRON_ISO/boot" || return $ERR_MK_DIR
+  "${CAULDRON_CMD_MKDIR[@]}" "$target" || return $ERR_MK_DIR
 
-  "${CAULDRON_CMD_CP[@]}" "$img" "$CAULDRON_ISO/boot/$img" ||
+  "${CAULDRON_CMD_CP[@]}" "$img" "$target/${img##*/}" ||
     return $ERR_CP_FILE
 
   return $ERR_OK
