@@ -21,6 +21,7 @@
 
 # base error codes
 liberror_add_error ERR_MK_DIR "could not make directory"
+liberror_add_error ERR_MK_FILE "could not create file"
 liberror_add_error ERR_WRITE_FILE "could not write file"
 liberror_add_error ERR_DIR_EXISTS "directory already exists"
 liberror_add_error ERR_FILE_ACCESS "file not accessible"
@@ -28,6 +29,7 @@ liberror_add_error ERR_DIR_ACCESS "directory not accessible"
 liberror_add_error ERR_CP_FILE "could not copy file"
 liberror_add_error ERR_CHMOD_FILE "could not chmod file"
 liberror_add_error ERR_RM_FILE "could not remove file"
+liberror_add_error ERR_LINK_FILE "could not symlink file"
 liberror_add_error ERR_URL_DL "could not download from url"
 liberror_add_error ERR_TARGET "invalid target parameter"
 
@@ -37,31 +39,41 @@ liberror_add_error ERR_CLEANUP_BUILD "could not clean up build directory"
 liberror_add_error ERR_CLEANUP_TMP "could not clean up temporary directory"
 
 # libcauldron build
+liberror_add_error ERR_CAULDRON_ARCH \
+  "build architecture (config var CAULDRON_ARCH) not set"
 liberror_add_error ERR_UNPACK_CACHE \
-  "could not unpack spell cache inside build directory"
+  "could not unpack spell cache"
 liberror_add_error ERR_RM_CACHE \
-  "could not remove spell cache after unpacking in build"
+  "could not remove spell cache after unpacking"
 liberror_add_error ERR_HOST_TRIPLE "could not get host triple for builds"
-liberror_add_error ERR_BUILD_SPOOL "build directory sorcery spool does not exist"
-liberror_add_error ERR_RESOLV "resolv.conf missing in the build directory"
+liberror_add_error ERR_BUILD_SPOOL \
+  "build directory sorcery spool does not exist"
+liberror_add_error ERR_RESOLV "resolv.conf missing in target directory"
 liberror_add_error ERR_KERNEL "could not determine kernel"
 liberror_add_error ERR_LDCONFIG "could not build library symlinks"
 
 # libcauldron cleaner files
 liberror_add_error ERR_CLEAN_CLEANER "cleaner files could not be found"
-liberror_add_error ERR_CLEAN_DIR "failed to clean directory from iso"
-liberror_add_error ERR_CLEAN_FILE "failed to clean file from iso"
+liberror_add_error ERR_CLEAN_DIR "target dir to clean not found"
+liberror_add_error ERR_CLEAN_FILE "cleaner file not found"
 
 # libcauldron enchantment
+liberror_add_error ERR_ENCHANT_SRC "could not access enchantment sources"
 liberror_add_error ERR_ENCHANT_CONFIG "could not source enchant config"
-liberror_add_error ERR_INSTALLER_DIR \
-  "could not create the iso installer directory"
-liberror_add_error ERR_COPY_INSTALLER "could not copy installer to iso"
-liberror_add_error ERR_LINK_INSTALLER "could not link installer in iso"
+liberror_add_error ERR_ENCHANT_ISO "could not enchant iso"
+liberror_add_error ERR_ENCHANT_DIR \
+  "could not create the iso enchantment directory"
+liberror_add_error ERR_COPY_ENCHANTER "could not copy enchanter to iso"
+liberror_add_error ERR_LINK_ENCHANTER "could not link enchanter in iso"
 
 # libcauldron final product
-liberror_add_error ERR_ISO_PACKAGE "could not create final iso file"
-liberror_add_error ERR_ISO_COMPRESS "could not compress final iso file"
+liberror_add_error ERR_ISO_CREATE "could not create iso filesystem"
+liberror_add_error ERR_ISO_PACKAGE "could not create final iso image"
+liberror_add_error ERR_ISO_COMPRESS "could not compress final iso image"
+liberror_add_error ERR_ISO_COMPRESSFS \
+  "could not create compressed iso runtime image"
+liberror_add_error ERR_ISO_LOADER "could not set up iso bootloader"
+liberror_add_error ERR_SYS_CREATE "could not create sys filesystem"
 liberror_add_error ERR_SYS_PACKAGE "could not package final sys file"
 liberror_add_error ERR_SYS_COMPRESS "could not compress final sys archive"
 
