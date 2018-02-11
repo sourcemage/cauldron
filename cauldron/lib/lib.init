@@ -375,6 +375,9 @@ function cauldron_init_fs_sysutils() {
   "${CAULDRON_CMD_CP[@]}" "$build/sbin/$util" "$initfs/sbin/$util" ||
     return $ERR_CP_FILE
 
+  "${CAULDRON_CMD_SYMLINK_FORCE[@]}" "/sbin/$util" "$initfs/bin/sh" ||
+    return $ERR_LINK_FILE
+
   cauldron_chroot_dispel "$util"
   liberror_check || return $?
 
