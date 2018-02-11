@@ -297,13 +297,19 @@ function cauldron_init_fs_mods() {
 
 #-------------------------------------------------------------------------------
 ## @param path_to_initfs (required)
+## @param init script (optional)
 ##
 ## Sets up the "init" in the initfs (AKA linuxrc in ramdisks)
 ##
 #-------------------------------------------------------------------------------
 function cauldron_init_fs_init() {
   local initfs="$1"
-  local init_script="$CAULDRON_CONFIG/$CAULDRON_ARCH/initfs/init"
+  local init_script="${2:-$CAULDRON_CONFIG/$CAULDRON_ARCH/initfs/init}"
+
+  [[ -d "$initfs" ]] || return $ERR_TARGET
+  shift
+
+  [[ -r "$init_script" ]] || return $ERR_FILE_ACCESS
 
   # copy the init script to /init in the init filesystem, because /init is
   # *requried* by init ramfs and an init ramdisk can be configured to use
