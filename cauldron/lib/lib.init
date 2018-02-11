@@ -305,6 +305,8 @@ function cauldron_init_fs_mods() {
 function cauldron_init_fs_init() {
   local initfs="$1"
   local init_script="${2:-$CAULDRON_CONFIG/$CAULDRON_ARCH/initfs/init}"
+  local isoid="/etc/enchantment/enchantment.conf"
+  local isofs=""
 
   [[ -d "$initfs" ]] || return $ERR_TARGET
   shift
@@ -319,6 +321,20 @@ function cauldron_init_fs_init() {
 
   # make sure the init script is executable
   "${CAULDRON_CMD_CHMOD}" 0755 "$initfs/init" || return $ERR_CHMOD_FILE
+
+  # modify the SMGL_ISOFS and SMGL_ID to match defined variables
+  "${CAULDRON_CMD_SEDFILE[@]}" \
+    "s,^SMGL_ID=.*,SMGL_ID=\"$isoid\"," \
+    "$initfs/init" ||
+      return $ERR_WRITE_FILE
+
+  [[ "$CAULDRON_ISO_SQUASH" == "yes" ]] &&
+    isofs="${CAULDRON_ISO_SQUASHIMG##*/}"
+
+  "${CAULDRON_CMD_SEDFILE[@]}" \
+    "s,^SMGL_ISOFS=.*,SMGL_ISOFS=\"$isofs\"," \
+    "$initfs/init" ||
+      return $ERR_WRITE_FILE
 
   return $ERR_OK
 }
