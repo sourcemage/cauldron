@@ -1,0 +1,862 @@
+#!/bin/sh
+# vim:ai:tw=80:tabstop=2:softtabstop=2:shiftwidth=2:expandtab
+
+# set script options here
+
+SMGL_DEVMGR="mdev"
+SMGL_OVERLAY="/overlay"
+SMGL_MOUNT="/mnt"
+SMGL_PREFIX=""
+SMGL_ISOFS="isofs.img"
+SMGL_ISOMNT="/iso"
+SMGL_ID="/etc/enchantment/enchantment.conf"
+
+
+# Setup a color prompt to use for the shell-out
+PSNORMAL="\[\e[0m\]"
+PSRED="\[\e[1;31m\]"
+PSGREEN="\[\e[1;32m\]"
+PSYELLOW="\[\e[1;33m\]"
+PSBLUE="\[\e[1;34m\]"
+PSPURPLE="\[\e[1;35m\]"
+PSWHITE="\[\e[1;36m\]"
+
+NORMAL="[0m"
+BOLD="[1m"
+BLACK="[30m"
+RED="[31m"
+GREEN="[32m"
+YELLOW="[33m"
+BLUE="[34m"
+VIOLET="[35m"
+CYAN="[36m"
+WHITE="[37m"
+
+COLOR_PROMPT="blue"
+COLOR_INFO="yellow"
+COLOR_SUCCESS="green"
+COLOR_WARN="purple"
+COLOR_ERROR="red"
+COLOR_DEBUG="cyan"
+
+export PS1="${PSRED}SMGL${PSNORMAL} ${PSWHITE}[${PSBLUE}\w${PSWHITE}]${PSNORMAL}# "
+
+
+# ensure a sane PATH
+export PATH="/sbin:/bin:/usr/sbin:/usr/bin"
+
+# clear/declare variables we will use in the script
+TRYBOOT="choice_auto"
+INITOPTS=
+SMGL_INIT=
+SMGL_ISOPATH=
+
+
+shell() {
+  msg "Press CTRL-D or type exit to return"
+  ( setsid sh -c 'exec sh </dev/tty1 >/dev/tty1 2>&1' )
+}
+
+msg() {
+  local color="$WHITE"
+  local n=
+
+  [ -z "$1" ] && shift
+
+  if [ "$1" = "-n" ] ;then
+    n="-n"
+    shift
+  fi
+
+  if [ "$1" = "-c" ] ;then
+    shift
+    case "$1" in
+      red )
+        color="$BOLD$RED"
+        ;;
+      yellow )
+        color="$BOLD$YELLOW"
+        ;;
+      green )
+        color="$BOLD$GREEN"
+        ;;
+      cyan )
+        color="$BOLD$CYAN"
+        ;;
+      blue )
+        color="$BOLD$BLUE"
+        ;;
+      purple )
+        color="$BOLD$VIOLET"
+        ;;
+      white )
+        color="$BOLD$WHITE"
+        ;;
+      normal )
+        color="$NORMAL"
+        ;;
+    esac
+    shift
+  fi
+  echo -e "$n" "$color$@$NORMAL"
+}
+
+msgerr() {
+  local n=
+
+  if [ "$1" = "-n" ] ;then
+    n="$1"
+    shift
+  fi
+
+  msg "$n" -c "$COLOR_ERROR" "ERROR: $@"
+}
+
+msgwarn() {
+  local n=
+
+  if [ "$1" = "-n" ] ;then
+    n="$1"
+    shift
+  fi
+
+  msg "$n" -c "$COLOR_WARN" "WARNING: $@"
+}
+
+msggood() {
+  local n=
+
+  if [ "$1" = "-n" ] ;then
+    n="$1"
+    shift
+  fi
+
+  msg "$n" -c "$COLOR_SUCCESS" "SUCCESS: $@"
+}
+
+msginfo() {
+  local n=
+
+  if [ "$1" = "-n" ] ;then
+    n="$1"
+    shift
+  fi
+
+  msg "$n" -c "$COLOR_INFO" "INFO: $@"
+}
+
+msgprompt() {
+  local n=
+
+  if [ "$1" = "-n" ] ;then
+    n="$1"
+    shift
+  fi
+
+  msg "$n" -c "$COLOR_PROMPT" "$@"
+}
+
+msgdebug() {
+  local n=
+
+  if [ "$1" = "-n" ] ;then
+    n="$1"
+    shift
+  fi
+
+  msg "$n" -c "$COLOR_DEBUG" "DEBUG: $@"
+}
+
+device_manager_start() {
+  case "$SMGL_DEVMGR" in
+    udevd )
+      udevd --daemon
+      udevadm trigger &>/dev/null
+      udevadm settle --timeout=60 &>/dev/null
+      ;;
+    mdev )
+      echo /sbin/mdev > /proc/sys/kernel/hotplug &&
+      /sbin/mdev -s
+      ;;
+    * )
+      msgerr "unknown device manager"
+      ;;
+  esac
+}
+
+device_manager_stop() {
+  local devpid=
+
+  case "$SMGL_DEVMGR" in
+    udevd )
+      devpid="$(pidof $SMGL_DEVMGR)"
+      ;;
+    mdev )
+      devpid="$(pidof $SMGL_DEVMGR)"
+      ;;
+  esac
+  if [ -n "$DEVPID" ] ;then
+    msginfo "Killing initramfs $SMGL_DEVMGR ..."
+    echo "" > /proc/sys/kernel/hotplug
+    if ! kill "$DEVPID" ;then
+      msgerr "Error killing $SMGL_DEVMGR!"
+      msgprompt -n "  [a]bort to shell or [c]ontinue? (a or c): "
+      read choice
+      if [ "$choice" = a ] ;then
+        shell
+      fi
+    fi
+  fi
+}
+
+load_modules() {
+  local sys="/sys/devices"
+  local modalias=
+
+  modalias=$(find "$sys" -iname modalias -exec cat '{}' +)
+  for mod in $modalias ;do
+    modprobe "$mod" &>/dev/null
+  done
+}
+
+load_all_fs_modules() {
+  # attempt to load all fs modules we can find
+  # doing so enables mounting without specifying fs-type
+  for mod in /lib/modules/*/kernel/fs/*/*.ko ;do
+    insmod "$mod" 2>&1 /dev/null
+  done
+}
+
+mount_squashfs() {
+  local srcdir="${1:-$SMGL_ISOPATH}"
+  local srcimg="${2:-$SMGL_ISOFS}"
+  local target="${3:-$SMGL_ISOMNT}"
+
+  # ensure we have a functional srcdir
+  if ! [ -d "$mnt" ] ;then
+    msgerr "$mnt not a directory"
+    return 1
+  fi
+
+  # ensure we have a an isofs file
+  if ! [ -f "$srcdir/$srcimg" ] ;then
+    msgerr "$srcimg not found at $srcdir/$srcimg"
+    return 1
+  fi
+
+  # ensure we can read/access the isofs file
+  if ! [ -r "$srcdir/$srcimg" ] ;then
+    msgerr "$srcimg found at $srcdir/$srcimg but cannot be accessed"
+    return 1
+  fi
+
+  # ensure we have a functional target
+  if ! mkdir -p "$target" ;then
+    msgerr "could not mkdir $target"
+    return 1
+  fi
+
+  if ! mount -t squashfs -o loop "$srcdir/$srcimg" "$target" ;then
+    msgerr "could not mount $srcdir/$srcimg squashfs image"
+    return 1
+  fi
+
+  SMGL_ISOPATH="$target"
+
+  msggood "mounted $srcdir/$srcimg on $target"
+}
+
+mount_iso() {
+  local fs="$1"
+  local src="$2"
+  local dst="$3"
+  local opts="$4"
+
+  [ -n "$fs" ] && fs="-t $fs"
+
+  if [ -n "$opts" ] ;then
+    if [ "${opts:0:2}" != "-o" ] ;then
+      opts="-o $opts"
+    fi
+  fi
+
+  if ! mount $fs $opts "$src" "$dst" ;then
+    return 1
+  fi
+
+  SMGL_ISOPATH="$dst/$SMGL_PREFIX"
+  SMGL_ISOPATH="${SMGL_ISOPATH%/}"
+
+  msggood "mounted $src to $dst (ISOPATH: $SMGL_ISOPATH, ISOIMG: $SMGL_ISOFS)"
+
+  if [ -f "$SMGL_ISOPATH/$SMGL_ISOFS" ] ;then
+    msginfo "Attempting to loopmount $SMGL_ISOFS"
+    mount_squashfs
+    return $?
+  fi
+
+  return 0
+}
+
+try_mount() {
+  local fsdev="$1"
+  local fsmnt="$2"
+  local fstype="$3"
+  local fsopts="$4"
+  local alttype="$5"
+
+  if [ -z "$fstype" ] ;then
+    msgerror "please supply a filesystem type to mount with"
+    return 1
+  fi
+
+  if [ -n "$fsopts" ] ;then
+    fsopts="-o $fsopts"
+  fi
+
+  case "$fstype" in
+    udf )
+      typelist="$fstype $alttype vfat iso9660"
+      ;;
+    vfat )
+      typelist="$fstype $alttype udf iso9660"
+      ;;
+    iso9660 )
+      typelist="$fstype $alttype udf vfat"
+      ;;
+    * )
+      typelist="$fstype $alttype udf"
+      ;;
+  esac
+
+  for try_type in $typelist ;do
+    msginfo "Attempting to mount $fsdev to $fsmnt as type $try_type ..."
+
+    mount_iso "$try_type" "$fsdev" "$fsmnt" "$fsopts" &&
+      return 0
+  done
+
+  msgerr "unable to mount $fsdev to $fsmnt"
+
+  return 1
+}
+
+test_mount() {
+  local dev="$1"
+  local fstype="$2"
+  local mnt="${3:-$SMGL_MOUNT}"
+  local found=1
+
+  msginfo "Trying: $dev"
+
+  if try_mount "$dev" "$mnt" "$fstype" ;then
+    if [ -f "$SMGL_ISOPATH/$SMGL_ID" ] ;then
+      msggood "SMGL iso accessible at $SMGL_ISOPATH"
+      found=0
+    else
+      msgerr "SMGL iso file not found: $SMGL_ISOPATH/$SMGL_ID"
+    fi
+  else
+    msgerr "couldn't mount $device at $mnt"
+  fi
+
+  return $found
+}
+
+scan_cdrom()  {
+  local fstype="iso9660"
+  local device=""
+
+  # load modules to attempt the mount
+  modprobe udf &> /dev/null
+  modprobe isofs &> /dev/null
+
+  msginfo "Trying to find the SMGL cdrom via /sys ..."
+  for handler in /sys/block/*/removable ;do
+    if [ $(cat "$handler") -eq 1 ]
+    then
+      handler="${handler%/removable}"
+      device="/dev/${handler##*/}"
+
+      # skip loop devices
+      [ "${device##*/}" = "loop" ] && continue
+
+      if test_mount "$device" "$fstype" ;then
+        msggood "SMGL cdrom found!"
+        return 0
+      fi
+    fi
+  done
+
+  msginfo "Trying to find the SMGL cdrom via /proc/partitions ..."
+  # Next try: look at all /proc/partitions stuff, make devices if neccessary
+  local major minor blocks name
+  while read major minor blocks name ;do
+    (( major )) 2>/dev/null || continue # Don't process non-numeric lines
+
+    device="/dev/$name"
+
+    if [ ! -b "$device" ] ;then
+      mknod "$device" b "$major" "$minor"
+    fi
+
+    if test_mount "$device" ;then
+      msggood "SMGL cdrom found!"
+      return 0
+    fi
+  done < /proc/partitions
+
+  return 1
+}
+
+scan_usb() {
+  local fstype="vfat"
+  local device=""
+
+  # load modules to attempt the mount
+  modprobe udf &> /dev/null
+  modprobe vfat &> /dev/null
+  modprobe usb-storage &> /dev/null
+
+  msg "Trying to find the SMGL usb via /sys ..."
+  for handler in /sys/block/*/removable ;do
+    if [ $(cat $handler) -eq 1 ]
+    then
+      handler=${handler%/removable}
+      device=/dev/${handler##*/}
+
+      # a usb device may have various partitions, so try each partition in turn
+      for part in "$device"* ;do
+        if test_mount "$part" "$fstype" ;then
+          msggood "SMGL usb found!"
+          return 0
+        fi
+      done
+    fi
+  done
+
+  return 1
+}
+
+try_media() {
+  local media="$1"
+  local error=0
+  local device=""
+  local fstype=""
+
+  case "$media" in
+    cdrom )
+      scan_cdrom || error=1
+      ;;
+    usb )
+      scan_usb || error=1
+      ;;
+    * )
+      msg "Invalid media type"
+      return 1
+      ;;
+  esac
+
+  if [ "$error" -eq 0 ] ;then
+    device="$(mount | grep "$SMGL_MOUNT" | cut -d' ' -f1)"
+    fstype="$(mount | grep "$SMGL_MOUNT" | cut -d' ' -f5)"
+
+    msggood "SMGL $media found: $device ($fstype)"
+    return 0
+  fi
+
+  msgwarn "  Unable to find the SMGL $media in anything remotely looking like a"
+  msgwarn "  $media device that I can see right now. Please load appropriate"
+  msgwarn "  driver modules, or explicitly specify a device to boot from."
+  return 1
+}
+
+test_init() {
+  local path="${1:-$SMGL_ISOPATH}"
+  local init="${2:-$SMGL_INIT}"
+
+  msginfo "Testing for init..."
+
+  # make the init path relative to the iso path
+  init="$path/${init#/}"
+
+  if [ -x "$init" ]; then
+    msggood "$init found"
+    return 0
+  fi
+
+  if [ -f "$path/${init#/}" ]; then
+    msgerr "$init not executable"
+    return 1
+  fi
+
+  msgerr "$init not found"
+  return 1
+}
+
+base_mount() {
+  for dir in proc sys dev dev/pts ;do
+    mkdir -p "$dir"
+  done
+
+  mount -t proc procfs /proc &> /dev/null
+  mount -t sysfs sysfs /sys &> /dev/null
+  mount -t devtmpfs devtmpfs /dev &> /dev/null
+  mount -t devpts devpts /dev/pts &> /dev/null
+}
+
+base_umount() {
+  umount /sys
+  umount /dev/pts
+  umount /dev
+  umount /proc
+}
+
+prepare() {
+  base_mount
+  device_manager_start
+}
+
+cleanup() {
+  device_manager_stop
+  base_umount
+}
+
+try_overlay() {
+  local mnt="${1:-$SMGL_ISOPATH}"
+  local overlay="$SMGL_OVERLAY"
+  local ovltmp="/.ovltmp"
+  local upper="$ovltmp/upper"
+  local work="$ovltmp/work"
+  local ovlhidden="$overlay/.overlay"
+
+  msginfo "Mounting overlayfs on $overlay using $mnt ..."
+  mkdir -p "$ovltmp" || return 1
+  if ! mount -t tmpfs tmpfs "$ovltmp" ;then
+    msgerr "couldn't mount tmpfs on $ovltmp"
+    return 1
+  fi
+  mkdir -p "$upper" || return 1
+  mkdir -p "$work" || return 1
+
+  mkdir -p "$overlay" || return 1
+  if ! mount -t overlay overlay "$overlay" \
+    -o rw,lowerdir="$mnt",upperdir="$upper",workdir="$work" ;then
+    msgerr "failed to mount $overlay, aborting"
+    return 1
+  fi
+
+  mkdir -p "$ovlhidden/lower" || return 1
+  mkdir -p "$ovlhidden/upper" || return 1
+  mount --move "$ovltmp" "$ovlhidden/upper" || return 1
+  mount --move "$mnt" "$ovlhidden/lower" || return 1
+
+  # make sure necessary directories exists in the overlay
+  if ! mkdir -p "$overlay/dev" "$overlay/proc" "$overlay/sys" ;then
+    msgerr "failed to mkdir dev in $overlay, aborting"
+    return 1
+  fi
+
+  ## attempt to mount a dev tree in the overlay
+  if ! mount -t devtmpfs devtmpfs "$overlay/dev" ;then
+    msgerr "failed to mount a dev tree in $overlay, aborting"
+    return 1
+  fi
+
+  msggood "mounted overlayfs on $overlay"
+}
+
+try_switch_root() {
+  local mnt="${1:-$SMGL_ISOPATH}"
+  local ovl="${2:-$SMGL_OVERLAY}"
+  local init="${3:-$SMGL_INIT}"
+
+  # try running ldconfig via a chroot in the overlay to ensure things are working properly
+  msginfo "Attempting chroot ldconfig in $ovl..."
+  if ! chroot "$ovl" ldconfig ;then
+    msgerr "failed to execute chroot ldconfig in $ovl, aborting"
+    return 1
+  fi
+
+  msginfo "Attempting switch_root to $ovl..."
+
+  cleanup
+
+  msgdebug "\tswitch_root -c /dev/console $ovl $init $INITOPTS"
+  exec switch_root -c /dev/console "$ovl" "$init" "$INITOPTS"
+}
+
+user_modules() {
+  local modules=
+
+  msgprompt "Please enter any modules to load before proceeding"
+  echo -n "modules: "
+  read modules
+
+  if [ -n "$modules" ] ;then
+    msginfo "Loading requested modules..."
+    for mod in $modules ;do
+      if [ -f "$mod" ] ;then
+        insmod "$mod" ||
+          msgerr "failed to load module $mod"
+      else
+        modprobe "$mod" ||
+          msgerr "failed to load module $mod"
+      fi
+    done
+  fi
+
+  echo ""
+}
+
+choice_cdrom() {
+  local mnt="$SMGL_MOUNT/$SMGL_PREFIX"
+  local iso="${SMGL_ISOPATH%/}"
+
+  mnt="${mnt%/}"
+  try_media cdrom || return 1
+  if ! test_init ;then
+    if [ "$iso" != "$mnt" ] ;then
+      msginfo "Unmounting $iso ..."
+      umount "$iso"
+    fi
+    msginfo "Unmounting $SMGL_MOUNT ..."
+    umount "$SMGL_MOUNT"
+    return 1
+  fi
+  try_overlay || return 1
+  try_switch_root
+}
+
+choice_usb() {
+  try_media usb || return 1
+  if ! test_init ;then
+    msginfo "Unmounting $SMGL_MOUNT..."
+    umount "$SMGL_MOUNT"
+    return 1
+  fi
+  try_overlay || return 1
+  try_switch_root
+}
+
+choice_manual() {
+  local path="$SMGL_ISOPATH"
+  local fsdev=
+  local fstype=
+
+  msgprompt -n "Please enter your boot device: "
+  read fsdev
+  msgprompt -n "Please enter your boot device's filesystem type: "
+  read fstype
+
+  [ "${fsdev:0:4}" != "/dev" ] && fsdev="/dev/$fsdev"
+
+  test_mount "$fsdev" "$fstype" || return 1
+
+  msgprompt -n "Please enter the path to try to init from (default $path): "
+  read path
+  [ -n "$path" ] && SMGL_ISOPATH="$path"
+
+  test_init "$path" || return 1
+  try_overlay || return 1
+  try_switch_root "$path"
+}
+
+choice_prefix() {
+  local path="$SMGL_PREFIX"
+
+  msgprompt "Please enter the path relative to the mount point to load Source Mage from."
+  msgprompt -n "(current: '$path'): "
+  read path
+  [ -n "$path" ] && SMGL_PREFIX="$path"
+}
+
+choice_init() {
+  local path="$SMGL_ISOPATH"
+
+  msgprompt "Please enter the path to attempt to init from."
+  msgprompt -n "(current: '$path'): "
+  read path
+  [ -n "$path" ] && SMGL_ISOPATH="$path"
+
+  test_init "$upath" || return 1
+  try_switch_root "$upath"
+}
+
+choice_overlay() {
+  local path="$SMGL_ISOPATH"
+
+  msgprompt "Please enter the path for the lower mount of the overlayfs."
+  msgprompt -n "(current: '$path'): "
+  read path
+  [ -n "$path" ] && SMGL_ISOPATH="$path"
+
+  try_overlay "$path"
+}
+
+choice_execshell() {
+  msgerr "\tWARNING: if you exit this new shell, you will kill init (PID 1)"
+  msgerr "\tthe kernel will panic, and you will have to reboot manually"
+  exec setsid sh -c 'exec sh </dev/tty1 >/dev/tty1 2>&1'
+}
+
+choice_shell() {
+  shell
+}
+
+choice_modules() {
+  # ask the user if they want to load any modules before proceeding
+  user_modules
+}
+
+choice_auto() {
+  msginfo "Looking for boot device via cdrom/dvdrom..."
+  choice_cdrom
+  msginfo "Looking for boot device via usb..."
+  choice_usb
+}
+
+menu() {
+  local menu_cdrom=1
+  local menu_usb=2
+  local menu_prefix=3
+  local menu_manual=4
+  local menu_modules=5
+  local menu_overlay=6
+  local menu_init=7
+  local menu_shell=8
+  local menu_exec=9
+  local lead="\t"
+  local ic="$BOLD$CYAN"
+  local mc="$BOLD$WHITE"
+  local nc="$NORMAL"
+
+  msginfo "----------------------------------------"
+  msginfo "-  Please choose among the following:  -"
+  msginfo "----------------------------------------"
+  msg "$lead" "$ic$menu_cdrom"   "$nc)"  "$lead${mc}scan cdroms/dvdroms/blurays for boot device"
+  msg "$lead" "$ic$menu_usb"     "$nc)"  "$lead${mc}scan usb sticks/hard drives for boot device"
+  msg "$lead" "$ic$menu_prefix"  "$nc)"  "$lead${mc}specify path relative to mount point to load Source Mage from"
+  msg "$lead" "$ic$menu_manual"  "$nc)"  "$lead${mc}specify boot device and init path manually"
+  msg "$lead" "$ic$menu_modules" "$nc)"  "$lead${mc}specify kernel modules to load"
+  msg "$lead" "$ic$menu_overlay" "$nc)"  "$lead${mc}mount an overlayfs using a given path as the lower directory"
+  msg "$lead" "$ic$menu_init"    "$nc)"  "$lead${mc}attempt to init from a given path"
+  msg "$lead" "$ic$menu_shell"   "$nc)"  "$lead${mc}spawn a shell"
+  msg "$lead" "$ic$menu_exec"    "$nc)"  "$lead${mc}exec a shell (PID 1)"
+  msgprompt -n " choice: "
+  read choice
+  case "$choice" in
+    $menu_cdrom   ) choice="cdrom"      ;;
+    $menu_usb     ) choice="usb"        ;;
+    $menu_prefix  ) choice="prefix"     ;;
+    $menu_manual  ) choice="manual"     ;;
+    $menu_modules ) choice="modules"    ;;
+    $menu_overlay ) choice="overlay"    ;;
+    $menu_init    ) choice="init"       ;;
+    $menu_shell   ) choice="shell"      ;;
+    $menu_exec    ) choice="execshell"  ;;
+      * ) choice="" ;;
+  esac
+}
+
+user_choice() {
+  while true ;do
+    local choice=""
+
+    menu
+    case "$choice" in
+      cdrom )
+        "choice_$choice"
+        ;;
+      usb )
+        "choice_$choice"
+        ;;
+      prefix )
+        "choice_$choice"
+        ;;
+      manual )
+        "choice_$choice"
+        ;;
+      modules )
+        "choice_$choice"
+        ;;
+      overlay )
+        "choice_$choice"
+        ;;
+      init )
+        "choice_$choice"
+        ;;
+      shell )
+        "choice_$choice"
+        ;;
+      execshell)
+        "choice_$choice"
+        ;;
+    esac
+  done
+}
+
+# here is the real start of this shell script
+/sbin/busybox --install -s
+
+# prepare essential pseudo-fs mountpoints and other necessities
+prepare
+
+# ensure sane kernel console log output by setting it to log error or worse
+# only change the log level of the "current" setting, and only change it once
+echo "3" > "/proc/sys/kernel/printk"
+
+# attempt to autoload modules
+load_modules
+
+echo ""
+echo ""
+
+# Process init options directed at us
+while [ "$#" -gt 0 ] ;do
+  case "$1" in
+    bootcdrom )
+      TRYBOOT="choice_${1#boot}"
+      ;;
+    bootusb )
+      TRYBOOT="choice_${1#boot}"
+      ;;
+    bootmenu )
+      TRYBOOT="menu"
+      ;;
+    bootauto )
+      TRYBOOT="choice_${1#boot}"
+      ;;
+    bootshell )
+      TRYBOOT="choice_${1#boot}"
+      ;;
+    shell )
+      TRYBOOT="choice_$1"
+      ;;
+    * )
+      # INITOPTS should take only the last arg, so always replace
+      INITOPTS="$1"
+      ;;
+  esac
+  shift
+done
+
+SMGL_INIT="$(awk '/.*init=/ {sub(/.*init=/,""); sub(/[ ].*/,""); print}' /proc/cmdline)"
+SMGL_INIT="${SMGL_INIT:-/sbin/init}"
+
+# try any requested boot modes first
+[ "${TRYBOOT:0:7}" = "choice_" ] && "$TRYBOOT"
+
+# we haven't booted yet, so present a menu and let the user figure out how to boot
+while true ;do
+  user_choice
+done
+
+# we shouldn't be here
+msgerr "\tERROR!!"
+msgerr "\tSomething went horribly wrong and the initramfs init script ended"
+msgerr "\twithout booting the real system!"
+msgerr "\tBailing out and execing a new interactive shell as PID 1"
+msgerr "\t\tWARNING: if you exit this new shell, you will kill init (PID 1),"
+msgerr "\t\tthe kernel will panic, and you will have to reboot manually"
+exec /bin/sh

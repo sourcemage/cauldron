@@ -1,0 +1,2 @@
+USE_PEER_DNS="y"
+HAVE_CBCP="n"

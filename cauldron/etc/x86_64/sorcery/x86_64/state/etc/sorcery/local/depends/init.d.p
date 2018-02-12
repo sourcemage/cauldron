@@ -1,0 +1,5 @@
+INIT_INSTALLED="devices smgl-misc hostname.sh mountall.sh keymap.sh single smgl-default-remote-fs smgl-suspend-single"
+INIT_NOT_INSTALLED=""
+INIT_ENABLED="devices smgl-misc hostname.sh mountall.sh keymap.sh single smgl-default-remote-fs smgl-suspend-single"
+INIT_DISABLED=""
+INIT_PROVIDES="mountall.sh:local_fs smgl-default-remote-fs:remote_fs"

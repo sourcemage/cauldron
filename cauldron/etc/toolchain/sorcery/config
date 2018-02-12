@@ -1,0 +1,4 @@
+ARCHIVE="on"
+CLEAN_SOURCE="on"
+PROMPT_DELAY="0"
+TMPFS="off"

@@ -1,0 +1,5 @@
+NFS_UTILS_NFSV3="--enable-nfsv3"
+INIT_INSTALLED="nfs nfslock"
+INIT_NOT_INSTALLED=""
+INIT_ENABLED=""
+INIT_DISABLED="nfs nfslock"

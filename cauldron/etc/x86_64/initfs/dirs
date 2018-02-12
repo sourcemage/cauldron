@@ -1,0 +1,13 @@
+bin
+dev/pts
+etc
+lib/modules
+mnt
+proc
+sbin
+sys
+tmp
+usr/bin
+usr/sbin
+var/log
+var/tmp

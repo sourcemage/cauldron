@@ -1,0 +1,413 @@
+diff -u var/lib/sorcery/codex/stable/libs/glibc/BUILD glibc/BUILD
+--- var/lib/sorcery/codex/stable/libs/glibc/BUILD	2015-03-01 18:40:41.000000000 +0900
++++ glibc/BUILD	2015-12-09 12:22:02.000000000 +0900
+@@ -19,35 +19,19 @@
+ #
+ 
+ local ADDONS
+-if  [  "$GLIBC_NPTL"  =  "y"  ];  then
+-  #
+-  # Enable IDN?
+-  #
+-  if  [  "$GLIBC_USEIDN" = "y"  ];  then
+-    ADDONS="$ADDONS libidn"
+-  fi  &&
+-
+-  OPTS="$OPTS  --with-tls             \
+-               --enable-kernel=2.6"
+-else
+-  ADDONS="linuxthreads"        &&
+-  OPTS="$OPTS  --without-__thread     \
+-               --enable-kernel=2.4"
++#
++# Enable IDN?
++#
++if  [  "$GLIBC_USEIDN" = "y"  ];  then
++  ADDONS="$ADDONS libidn"
+ fi  &&
+ 
++OPTS="$OPTS --with-tls" &&
+ OPTS="$OPTS --enable-add-ons=${ADDONS/ /,}"  &&
+ 
+-if [ "$GLIBC_NPTL" = "y" ]
+-then
+ # minimise optimisation level
+-  CFLAGS=$(echo ${CFLAGS} | sed -r "s;-O([0-9]|fast);;g") &&
+-  CFLAGS="-O2 ${CFLAGS//-Os/}"
+-else
+-  #
+-  # Fixes Bug #8595
+-  #
+-  CFLAGS="-Os $CFLAGS"
+-fi &&
++CFLAGS=$(echo ${CFLAGS} | sed -r "s;-O([0-9]|fast);;g") &&
++CFLAGS="-O2 ${CFLAGS//-Os/}"
+ 
+ export  CFLAGS="${CFLAGS/-ffast-math/}"  &&
+ export  CC=gcc                           &&
+@@ -57,25 +41,6 @@
+ #
+ unset  LD_LIBRARY_PATH  &&
+ 
+-#
+-# Setup sanitised glibc-kernel-headers for the glibc compile
+-# ...as well as other arch-dependend specialties
+-#
+-if [[ ${GLIBC_NPTL} == y ]]; then
+-  cd ${GLIBC_HEADERS_DIR} &&
+-  GL_ARCH=${SMGL_COMPAT_ARCHS[1]}  &&
+-  if [[ ${SMGL_COMPAT_ARCHS[0]} == 64 ]];then
+-    if [[ ${SMGL_COMPAT_ARCHS[1]} == sparc ]]; then
+-      GL_ARCH=sparc64
+-    fi
+-  else
+-    if [[ ${SMGL_COMPAT_ARCHS[1]} == ia32 ]]; then
+-     GL_ARCH=i386
+-    fi
+-  fi &&
+-  make ARCH=$GL_ARCH INSTALL_HDR_PATH=usr headers_install
+-fi
+-
+ if [[ ${SMGL_COMPAT_ARCHS[0]} == 64 && ${SMGL_COMPAT_ARCHS[1]} == sparc ]]; then
+   #
+   # If we're not compiling for 64-bit SPARC then we need to use the sparc
+@@ -119,10 +84,7 @@
+ 
+ # CPPFLAGS setting is needed so the check for cpp works on boxes that don't
+ # have any kernel headers in /usr/include yet
+-export CPPFLAGS="$CPPFLAGS -I$GLIBC_HEADERS_DIR/usr/include"  &&
+-#
+-# End sanitised glibc-kernel-headers setup
+-#
++export CPPFLAGS="$CPPFLAGS -IGLIBC_KHDRS"  &&
+ 
+ # this is weird but nscd needs this header from libcap but not the rest of
+ # the standard includes so doing this will make nscd pick it up
+@@ -155,7 +117,8 @@
+                              --with-elf                         \
+                            --enable-shared                      \
+                           --disable-profile                     \
+-                     --with-headers=$GLIBC_HEADERS_DIR/usr/include  \
++                     --with-headers="$GLIBC_KHDRS"              \
++                    --enable-kernel="$GLIBC_KVERS"              \
+                           --disable-multi-arch                  \
+                            --enable-obsolete-rpc                \
+                                     $OPTS                       &&
+diff -u var/lib/sorcery/codex/stable/libs/glibc/CONFIGURE glibc/CONFIGURE
+--- var/lib/sorcery/codex/stable/libs/glibc/CONFIGURE	2015-02-12 00:14:50.000000000 +0900
++++ glibc/CONFIGURE	2015-12-09 12:22:02.000000000 +0900
+@@ -1,4 +1,10 @@
+ if list_find "$LDFLAGS" "-s"; then
+   message "${PROBLEM_COLOR}WARNING: \$LDFLAGS containing strip (-s) option detected.${DEFAULT_COLOR}" &&
+-  config_query GLIBC_DEBUG "Enable debug build of $SPELL (required for debugging programs with Valgrind)?" y
+-fi
++  config_query GLIBC_DEBUG "Enable debug build of $SPELL (required for debugging programs with Valgrind)?" n
++fi &&
++
++config_query_string GLIBC_KVERS "minimal linux kernel version to support?" 2.6 &&
++
++config_query_string GLIBC_KHDRS "location of kernel headers to build against?" "/usr/include" &&
++
++config_query  GLIBC_USEIDN  "Would you like to compile glibc with libidn support?" y
+diff -u var/lib/sorcery/codex/stable/libs/glibc/DETAILS glibc/DETAILS
+--- var/lib/sorcery/codex/stable/libs/glibc/DETAILS	2015-03-01 18:40:41.000000000 +0900
++++ glibc/DETAILS	2015-12-09 12:22:02.000000000 +0900
+diff -u var/lib/sorcery/codex/stable/libs/glibc/INSTALL glibc/INSTALL
+@@ -1,111 +1,25 @@
+ . "$GRIMOIRE/FUNCTIONS"
+            SPELL=glibc
+            TMPFS=off
+-if  [  "$GLIBC_NPTL"  =  "n"  ];  then
+-         VERSION=2.3.6
+- HEADERS_VERSION=2.4.24
+-          SOURCE=$SPELL-$VERSION.tar.bz2
+-SOURCE_DIRECTORY=$BUILD_DIRECTORY/$SPELL-$VERSION
+-         SOURCE2=$SOURCE.sig
+-         SOURCE3=glibc-linuxthreads-$VERSION.tar.bz2
+-         SOURCE4=$SOURCE3.sig
+-         SOURCE5=$HEADERS_VERSION-kernel-headers.tar.bz2
+-   SOURCE_URL[0]=$GNU_URL/$SPELL/$SOURCE
+-  SOURCE2_URL[0]=${SOURCE_URL[0]}.sig
+-  SOURCE3_URL[0]=$GNU_URL/$SPELL/$SOURCE3
+-  SOURCE4_URL[0]=${SOURCE3_URL[0]}.sig
+-  SOURCE5_URL[0]=http://download.sourcemage.org/mirror/$SOURCE5
+-      SOURCE_GPG=gnu.gpg:$SOURCE.sig:UPSTREAM_KEY
+-  SOURCE2_IGNORE=signature
+-     SOURCE3_GPG=gnu.gpg:$SOURCE3.sig:UPSTREAM_KEY
+-  SOURCE4_IGNORE=signature
+-    SOURCE5_HASH=sha512:c1931495915c8461de97e4156c9d0edd7b44e4b48cbce2d4c3a52b83d331a9ce48f3c7abb7dd787ed897f1e7d0e81c5cdb4eb3986bc24a5e2788708427e2dcb1
+-else
+-  if [[ "${GLIBC_BRANCH}" == "scm" ]]; then
++if [[ "${GLIBC_BRANCH}" == "scm" ]]; then
+          VERSION=$(get_scm_version)
+   FORCE_DOWNLOAD=on
+-          SOURCE=$SPELL-git.tar.bz2
+-SOURCE_DIRECTORY=$BUILD_DIRECTORY/$SPELL-git
++          SOURCE="$SPELL-git.tar.bz2"
++SOURCE_DIRECTORY="$BUILD_DIRECTORY/$SPELL-git"
+       SOURCE_URL="git://sourceware.org/git/glibc.git:$SPELL-git"
+    SOURCE_IGNORE=volatile
+-  else
++else
+          VERSION=2.22
+-         SOURCE=$SPELL-$VERSION.tar.xz
+-SOURCE_DIRECTORY=$BUILD_DIRECTORY/$SPELL-$VERSION
+-         SOURCE2=$SOURCE.sig
+-   SOURCE_URL[0]=$GNU_URL/$SPELL/$SOURCE
+-  SOURCE2_URL[0]=${SOURCE_URL[0]}.sig
+-      SOURCE_GPG=glibc.gpg:$SOURCE.sig:UPSTREAM_KEY
++          SOURCE="$SPELL-$VERSION.tar.xz"
++SOURCE_DIRECTORY="$BUILD_DIRECTORY/$SPELL-$VERSION"
++         SOURCE2="$SOURCE.sig"
++   SOURCE_URL[0]="$GNU_URL/$SPELL/$SOURCE"
++  SOURCE2_URL[0]="${SOURCE_URL[0]}.sig"
++      SOURCE_GPG=glibc.gpg:"$SOURCE.sig":UPSTREAM_KEY
+   SOURCE2_IGNORE=signature
+   SECURITY_PATCH=5
+-  fi
+-  if [[ $GLIBC_SANITIZE_HEADERS == n ]]; then
+- HEADERS_VERSION=3.17.4
+-         SOURCE3=linux-${HEADERS_VERSION}.tar.xz
+-         SOURCE6=linux-${HEADERS_VERSION}.tar.sign
+-  SOURCE6_IGNORE=signature
+-     SOURCE3_GPG="kernel.gpg:${SOURCE6}:ESTABLISHED_UPSTREAM_KEY"
+-  SOURCE3_URL[0]="$KERNEL_URL/pub/linux/kernel/v3.x/$SOURCE3"
+-  SOURCE6_URL[0]="$KERNEL_URL/pub/linux/kernel/v3.x/$SOURCE6"
+-  else
+-    local LINUX_DIRECTORY
+- LINUX_DIRECTORY=$(gaze where -path linux | sed "s/linux -> //")
+-    . $LINUX_DIRECTORY/latest.defaults
+-
+-    case $(uname -r) in
+-       2.*)
+- HEADERS_VERSION=$(echo $LATEST_maintenance_patches | sed "s/patch-//")
+- HEADERS_VERSION=${HEADERS_VERSION:-$LATEST_2_6}
+-         SOURCE3=linux-${LATEST_2_6}.tar.bz2
+-         SOURCE6="${SOURCE3}.sign"
+-    HEADERS_VDIR=v2.6
+-         ;;
+-       3.*)
+- HEADERS_VERSION=$(echo $LATEST_maintenance_patches_3 | sed "s/patch-//")
+- HEADERS_VERSION=${HEADERS_VERSION:-$LATEST_3}
+-         SOURCE3=linux-${LATEST_3}.tar.xz
+-      if [[ $HEADERS_VERSION = 3.0* ]]; then
+-         SOURCE6="${SOURCE3}.sign"
+-      else
+-         SOURCE6="linux-${LATEST_3}.tar.sign"
+-      fi
+-    HEADERS_VDIR=v3.x
+-      if [[ ${HEADERS_VERSION} != $LATEST_3 ]]; then
+-         SOURCE7=patch-${HEADERS_VERSION}.xz
+-        if [[ ${HEADERS_VERSION} > 3.0.4 ]]; then
+-         SOURCE8="patch-${HEADERS_VERSION}.sign"
+-        else
+-         SOURCE8="${SOURCE7}.sign"
+-        fi
+-      fi
+-         ;;
+-       4.*)
+- HEADERS_VERSION=$(echo $LATEST_maintenance_patches_4 | sed "s/patch-//")
+- HEADERS_VERSION=${HEADERS_VERSION:-$LATEST_4}
+-         SOURCE3=linux-${LATEST_4}.tar.xz
+-         SOURCE6="linux-${LATEST_4}.tar.sign"
+-    HEADERS_VDIR=v4.x
+-      if [[ ${HEADERS_VERSION} != $LATEST_4 ]]; then
+-         SOURCE7=patch-${HEADERS_VERSION}.xz
+-         SOURCE8="patch-${HEADERS_VERSION}.sign"
+-      fi
+-         ;;
+-    esac
+-
+-     SOURCE3_GPG="kernel.gpg:${SOURCE6}:ESTABLISHED_UPSTREAM_KEY"
+-     SOURCE3_URL="${KERNEL_URL}/pub/linux/kernel/$HEADERS_VDIR/${SOURCE3}"
+-  SOURCE6_IGNORE=signature
+-     SOURCE6_URL="${KERNEL_URL}/pub/linux/kernel/$HEADERS_VDIR/${SOURCE6}"
+-
+-    if [[ -n $SOURCE7 ]]; then
+-     SOURCE7_GPG="kernel.gpg:${SOURCE8}:ESTABLISHED_UPSTREAM_KEY"
+-     SOURCE7_URL="${KERNEL_URL}/pub/linux/kernel/$HEADERS_VDIR/${SOURCE7}"
+-  SOURCE8_IGNORE=signature
+-     SOURCE8_URL="${KERNEL_URL}/pub/linux/kernel/$HEADERS_VDIR/${SOURCE8}"
+-    fi
+-  fi
+ fi
+-        WEB_SITE=http://www.gnu.org/software/libc
++        WEB_SITE="http://www.gnu.org/software/libc"
+       LICENSE[0]=LGPL
+       LICENSE[1]=LGPL
+       LICENSE[2]=GPL
+--- var/lib/sorcery/codex/stable/libs/glibc/INSTALL	2011-07-14 17:11:43.000000000 +0900
++++ glibc/INSTALL	2015-12-09 12:22:02.000000000 +0900
+@@ -1,23 +1,3 @@
+-#
+-# install kernel headers first so that gcc doesn't fail to find them if
+-# glibc decides to compile stuff during 'make install', which it does in 2.4
+-#
+-install  -d  ${INSTALL_ROOT}/usr/include  &&
+-cd  $GLIBC_HEADERS_DIR/usr/include        &&
+-
+-if [  !  "$GLIBC_NPTL"  =  "y"  ];  then
+-  echo  "installing asm-generic headers"                &&
+-  install  -d  ${INSTALL_ROOT}/usr/include/asm-generic  &&
+-  cp  -fa  asm-generic/*  ${INSTALL_ROOT}/usr/include/asm-generic
+-fi  &&
+-
+-echo  "installing glibc linux headers"               &&
+-for dir in *
+-do
+-  install  -d  ${INSTALL_ROOT}/usr/include/$dir       &&
+-  cp  -fa  $dir/*  ${INSTALL_ROOT}/usr/include/$dir 
+-done
+-
+ cd $SOURCE_DIRECTORY.bld  &&
+ 
+ #
+diff -u var/lib/sorcery/codex/stable/libs/glibc/PREPARE glibc/PREPARE
+--- var/lib/sorcery/codex/stable/libs/glibc/PREPARE	2015-03-01 18:40:41.000000000 +0900
++++ glibc/PREPARE	2015-12-09 12:22:02.000000000 +0900
+@@ -1,16 +1,2 @@
+ . ${GRIMOIRE}/FUNCTIONS &&
+-if     [[  $(uname -r)  =  2.6.*  ]] \
+-    || [[  $(uname -r)  =  3.*  ]] \
+-    || [[  $(uname -r)  =  4.*  ]];  then
+-  if  test  "$HOST" == "i386-pc-linux-gnu"; then
+-    message "[[ ${QUERY_COLOR}Not building with NPTL as that's unsupported on i386; use i486 or higher.${DEFAULT} ]]" &&
+-    config_set_option GLIBC_NPTL n
+-  else
+-    config_query  GLIBC_NPTL  "As you are running a $(uname -r | cut -f1,2 -d.) kernel, would you like to use the new nptl (Native Posix Thread Libary)?" y &&
+-    if [[ "$GLIBC_NPTL" == "y" ]]; then
+-      prepare_select_branch stable scm
+-    fi &&
+-    config_query  GLIBC_USEIDN  "Would you like to compile glibc with libidn support?" y &&
+-    config_query GLIBC_SANITIZE_HEADERS "Do you want to use sanitized linux kernel headers from the latest stable release" n
+-  fi
+-fi
++prepare_select_branch stable scm
+diff -u var/lib/sorcery/codex/stable/libs/glibc/PRE_BUILD glibc/PRE_BUILD
+--- var/lib/sorcery/codex/stable/libs/glibc/PRE_BUILD	2015-03-01 18:40:41.000000000 +0900
++++ glibc/PRE_BUILD	2015-12-09 12:22:02.000000000 +0900
+@@ -1,99 +1,20 @@
+ default_pre_build  &&
+ 
+ # seems perl script scripts/test-installation.pl is broken now
+-sed -i 's:CC="$(CC)" $(PERL) scripts/test-installation.pl $(common-objpfx)::' $SOURCE_DIRECTORY/Makefile &&
+-
+-if  [  "$GLIBC_NPTL"  =  "y"  ];  then
+-  cd      $SOURCE_DIRECTORY                  &&
+-  #
+-  # Unpack glibc-kernel-headers
+-  #
+-  #
+-  # Set GLIBC_HEADERS_DIR for use later
+-  #
+-  persistent_add  GLIBC_HEADERS_DIR                        &&
+-
+-  case ${HEADERS_VERSION} in
+-    2.*|3.0*)
+-            GLIBC_HEADERS_DIR=$SOURCE_DIRECTORY/${SOURCE3/.tar.bz2}
+-            unpack_file 3 || return 1
+-            ;;
+-           *)
+-            GLIBC_HEADERS_DIR=$SOURCE_DIRECTORY/${SOURCE3/.tar.xz}
+-            message "${MESSAGE_COLOR}xz -d $SOURCE_CACHE/$SOURCE3${DEFAULT_COLOR}"
+-            xz -d -k $SOURCE_CACHE/$SOURCE3
+-            SOURCE3_ORI=$SOURCE3
+-            SOURCE3=${SOURCE3/.xz}
+-            unpack_file 3 || return 1
+-            message "${MESSAGE_COLOR}rm $SOURCE_CACHE/$SOURCE3${DEFAULT_COLOR}"
+-            rm $SOURCE_CACHE/$SOURCE3
+-            SOURCE3=$SOURCE3_ORI
+-            ;;
+-  esac
+-    cd  $GLIBC_HEADERS_DIR &&
+-    if [[ -n $SOURCE7 ]]; then
+-      if [[ ${HEADERS_VERSION} > 3.0.4 ]]; then
+-        message "${MESSAGE_COLOR}xz -d $SOURCE_CACHE/$SOURCE7${DEFAULT_COLOR}"
+-        xz -d -k ${SOURCE_CACHE}/$SOURCE7 &&
+-        SOURCE7_ORI=${SOURCE7}
+-        SOURCE7=${SOURCE7/.xz}
+-        echo $SOURCE7_GPG
+-        verify_file 7 || return 1
+-        message "${MESSAGE_COLOR}rm $SOURCE_CACHE/$SOURCE7${DEFAULT_COLOR}"
+-        rm $SOURCE_CACHE/$SOURCE7
+-        SOURCE7=${SOURCE7_ORI}
+-      else
+-        verify_file 7 || return 1
+-      fi
+-      xzcat ${SOURCE_CACHE}/$SOURCE7 > ${SOURCE7/.xz}
+-      message "${MESSAGE_COLOR}Patching ${!patch}${DEFAULT_COLOR}" &&
+-      patch -p1 < ${SOURCE7/.xz} &&
+-      if [[ $? != 0 ]]; then
+-        message "${PROBLEM_COLOR}Patch ${!patch} failed${DEFAULT_COLOR}" &&
+-        return 1
+-      fi
+-    fi &&
+-    make mrproper
+-else
+-  cd      $SOURCE_DIRECTORY                         &&
+-  #
+-  # Now unpack the rest of glibc fixes in the normal location
+-  #
+-  unpack_file 3                       &&
+-  #
+-  # Unpack glibc-kernel-headers
+-  #
+-  #
+-  # Set GLIBC_HEADERS_DIR for use later
+-  #
+-  persistent_add  GLIBC_HEADERS_DIR                   &&
+-  GLIBC_HEADERS_DIR=$SOURCE_DIRECTORY/kernel-headers  &&
+-  mkdir  -p  $GLIBC_HEADERS_DIR/usr/include         &&
+-  cd  $GLIBC_HEADERS_DIR/usr/include                &&
+-  unpack_file 5
+-fi  &&
+-
+-#
+-# Remove kernel DRM headers
+-# Fixes Bug #15547
+-#
+-sed -i '/^header-y += drm\//d' $GLIBC_HEADERS_DIR/include/Kbuild &&
+-rm -rf $GLIBC_HEADERS_DIR/include/drm &&
+-
+-
++sed -i 's:CC="$(CC)" $(PERL) scripts/test-installation.pl $(common-objpfx)::' "$SOURCE_DIRECTORY/Makefile" &&
+ 
+ #
+ # Now fixup the normal glibc
+ #
+-cd  $SOURCE_DIRECTORY                           &&
+-patch -p0 < $SPELL_DIRECTORY/Makefile.patch     &&
++cd "$SOURCE_DIRECTORY" &&
++patch -p0 < "$SPELL_DIRECTORY/Makefile.patch" &&
+ # no idea why or how this is missing from configure
+-patch -p0 < $SPELL_DIRECTORY/as_fn_executable_p.patch &&
++patch -p0 < "$SPELL_DIRECTORY/as_fn_executable_p.patch" &&
+ 
+-patch -p1 < $SPELL_DIRECTORY/00_all_0005-reload-etc-resolv.conf-when-it-has-changed.patch    &&
+-patch -p1 < $SPELL_DIRECTORY/00_all_0007-rtld-do-not-ignore-arch-specific-CFLAGS.patch       &&
+-patch -p1 < $SPELL_DIRECTORY/10_all_glibc-CVE-2015-7547.patch                                &&
+-patch -p1 < $SPELL_DIRECTORY/glibc-2.20-fhs-1.patch                                          &&
++patch -p1 < "$SPELL_DIRECTORY/00_all_0005-reload-etc-resolv.conf-when-it-has-changed.patch" &&
++patch -p1 < "$SPELL_DIRECTORY/00_all_0007-rtld-do-not-ignore-arch-specific-CFLAGS.patch" &&
++patch -p1 < "$SPELL_DIRECTORY/10_all_glibc-CVE-2015-7547.patch" &&
++patch -p1 < "$SPELL_DIRECTORY/glibc-2.20-fhs-1.patch" &&
+ 
+ # disabled libgd detection/building memusagestat for now until a better
+ # fix has been found, bug #8277
+@@ -102,10 +23,10 @@
+ #
+ # Create the build directory
+ #
+-mk_source_dir  $SOURCE_DIRECTORY.bld &&
++mk_source_dir "$SOURCE_DIRECTORY.bld" &&
+ 
+ # fix #11832 - linking in /tmp doesn't work with grsecurity so do it elsewhere
+-local test_path=$SOURCE_DIRECTORY.bld/test-installation &&
+-mkdir $test_path &&
++local test_path="$SOURCE_DIRECTORY.bld/test-installation" &&
++mkdir "$test_path" &&
+ sed -i "s,/tmp,$test_path,g" scripts/test-installation.pl &&
+ sed -i 's/ot \$/ot:\n\ttouch $@\n$/' manual/Makefile
+ 
+ 
+Common subdirectories: var/lib/sorcery/codex/stable/libs/glibc/init.d and var/lib/sorcery/codex/stable/libs/glibc/init.d
