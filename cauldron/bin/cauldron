@@ -16,7 +16,7 @@
 ##
 ##=head1 COPYRIGHT
 ##
-##  Copyright 2009 by the Cauldron Team
+##  Copyright 2012 by the Cauldron Team
 ##
 ##=head1 FUNCTIONS
 ##
@@ -24,169 +24,1181 @@
 ##
 #---------------------------------------------------------------------
 
-function help() {
+config="${CONFIG_FILE:-/etc/cauldron/cauldron.conf}"
 
-  cat << EOF
+function check_fatal() {
+  local rc="${1:-$?}"
 
-Cauldron is the menu system used for setting options for iso building,
-and for managing installers.
+  if [[ "$rc" -ne "$ERR_OK" ]]
+  then
+    cauldron_chroot_cleanup
+    liberror_die $ERR_FATAL ""
+  fi
+}
 
-EOF
+#$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+#$$$
+#$$  CORE FUNCTIONALITY
+#$$$
+#$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
 
-  exit 1
+#-------------------------------------------------------------------------------
+##
+## Help message displayed when the user inputs an incorrect/unknown command or
+## requests help directly
+##
+#-------------------------------------------------------------------------------
+function help_iso() {
+  cat << EndUsage
+${0##*/} iso
+      runtime
+          (re-)builds and installs only the packages needed for the iso runtime
+      caches
+          (re-)generates only the cache files for recommended install
+      build
+          builds needed packages (runtime+caches) and generates the initial iso
+	        filesystem directory using the built runtime+caches
+      sources
+          (re-)downloads sources needed for optional install
+      populate [type]
+          populate the iso directory with the packages from the build stage. By
+          default, populates all types possible. Types are:
+
+          runtime
+              unpacks spell caches (built packages) into the isofs and performs
+              post-processing
+          caches
+              copies spell caches (built packages) into the isofs
+          sources
+              copies spell sources (package sources) into the isofs
+      kernel
+          builds the iso kernel image (and modules, if any) and installs the
+          kernel into the iso for loading by the iso bootloader
+      purify
+          removes unnecessary files from the iso and does some basic sanity
+          checking
+      enchant
+          (re-)installs selected installer interfaces into the iso structure
+      ramfs
+          (re-)generates an initramfs for the iso
+      package
+          (re-)installs and sets up the iso bootloader, and generates the
+          finalized form of the installation media
+      update
+          updates the packages in an already existing iso build directory
+EndUsage
+}
+
+function help_sys() {
+  cat << EndUsage
+${0##*/} sys
+      build
+          builds the minimal set of packages needed for the target install
+          system (these are all _required_ packages)
+      populate
+          populate the sys directory with the packages from the build stage
+      purify
+          removes unnecessary files from the sys structure and does some basic
+          sanity checking
+      package
+          archives and compresses the sys structure to be included in the root
+          of the iso structure
+      update
+          updates the packages in an already existing sys build directory
+EndUsage
+}
+
+function help_toolchain() {
+  cat << EndUsage
+${0##*/} toolchain
+      chroot [CHROOT]
+          uses an already prepared chroot toolchain. If CHROOT is a regular
+          file, then it is assumed to be a (possibly compressed) archive file,
+          and is first unpacked. If CHROOT is a directory, it is assumed to be
+          an already functional chroot. Otherwise it is assumed to be a url from
+          which to download a chroot archive file, which will then be unpacked.
+          If CHROOT isn't given, it will use the definition of environment
+          variable CAULDRON_BASEROOT (i.e. from the config files).
+      build
+          creates an initial toolchain by casting spells inside a prepared
+          chroot
+      cross
+          create an initial cross-building toolchain inside a prepared chroot
+      prepare
+          prepares an existing toolchain chroot with necessary cauldron and
+          sorcery settings, as well as setting up the kernel and kernel sources
+EndUsage
+}
+
+function help_what() {
+  cat << EndUsage
+${0##*/} is a front-end to libcauldron, a collection of script functions for
+generating initial system objects (ISOs). At their simplest, ISOs are just built
+system chroots which can be packaged into different image formats for
+initializing a system, but they are typically installable media such as cdrom
+iso9660 filesystem images or usb key images. They can also be live images, such
+as a live cd or live usb, a virtual machine image, or even a plain tar archive.
+EndUsage
+}
+
+function help_main() {
+  local subhelp
+
+  if [[ "$#" -ge 1 ]]
+  then
+    eval help_"$1"
+    return $?
+  fi
+
+  cat << EndUsage
+Usage: ${0##*/} [-h | --help] [-v | --version] [-f FILE | --config FILE]
+                [COMMAND [SUBCOMMAND ...]]
+OPTIONS
+  -f FILE
+  --config FILE
+          use config file FILE, overriding any value of the CONFIG_FILE
+          env var
+  -h
+  --help
+          displays the present help/usage information
+  -v
+  --version
+          displays the current version of ${0##*/}
+
+MAIN COMMANDS
+  brew
+          performs all needed steps to generate installation media from
+          start to finish using values from the cauldron config file
+  config VARIABLE [ VARIABLE2 [ VARIABLE 3 ... ] ]
+          show the value of enchantment environment variable VARIABLE for each
+          variable name passed as arguments (defaults to all cauldron variables)
+  chroot [COMMAND]
+          runs COMMAND in a chroot in the CAULDRON_BUILD for manual
+          testing/processing (runs a shell by default)
+          if no COMMAND is given, it will drop to a chroot shell
+  cleanse
+          cleans up any temp/build directories from the host system
+  help [COMMAND]
+          displays help/usage information
+  iso [SUBCOMMAND]
+          commands to generate iso material (see ${0##*/} help iso for
+          more information)
+          if no SUBCOMMAND is given, a default run will be attempted
+  shell
+          invoke a cauldron command subshell
+  sys [SUBCOMMAND]
+          commands to generate sys material (see ${0##*/} help sys for
+          more information)
+          if no SUBCOMMAND is given, a default run will be attempted
+  toolchain [SUBCOMMAND]
+          commands to generate a build toolchain (see ${0##*/} help toolchain
+          for more information).
+          if no SUBCOMMAND is given, a default run will be attempted
+  version
+          displays current version information
+  what
+          displays a description on what ${0##*/} is and what it is used
+          for
+EndUsage
 }
 
 #-------------------------------------------------------------------------------
 ##
-## The brew command calls the necessary functions to generate a complete ISO
-## using the settings configured for cauldron.
+## Builds the host toolchain, which can either be used directly (when building
+## for a target which is the same architecture as the host), or can be used to
+## generate an intermediary cross-compiler.
 ##
 #-------------------------------------------------------------------------------
-function cauldron_brew () {
-  # set up basic tool-chain needed for building everything else.
-  cauldron_base_toolchain
-  liberror_check_fatal
+# set up a tool-chain that matches the arch of the host system
+function build_toolchain_host() {
+  cauldron_toolchain_cache_make
+  liberror_check || return $?
+  cauldron_toolchain_build_host
+  liberror_check
+}
 
-  # set up chroot for building inside $CAULDRON_BUILD
-  cauldron_chroot_init
-  liberror_check_fatal
+#-------------------------------------------------------------------------------
+##
+## Uses a host compiler to generate an intermediary cross-compiler, for building
+## targets which are a different architecture than the host.
+##
+#-------------------------------------------------------------------------------
+# set up cross-compile tool-chain
+function build_toolchain_cross() {
+  cauldron_toolchain_cross
+  liberror_check
+}
 
-  # build the cross-compile tool-chain targeted for the target sys
-  if [ "$CAULDRON_ARCH" != "$CAULDRON_HOST_ARCH" ]
+#-------------------------------------------------------------------------------
+##
+## Generates a build toolchain used to create the necessary spell caches used in
+## both the sys and iso directory structures. This will build or unpack host
+## and/or cross-compiler toolchains as directed/necessary.
+##
+#-------------------------------------------------------------------------------
+# set up a basic toolchain needed for building everything else (iso, system)
+function toolchain() {
+  cauldron_chroot_init "$CAULDRON_BUILD"
+  liberror_check || return $?
+
+  # build the initial toolchain
+  build_toolchain_host
+  liberror_check || return $?
+
+  # if the iso arch doesn't match the host arch,
+  # build a cross toolchain
+  if [[ "$CAULDRON_ARCH" != "$CAULDRON_HOST_ARCH" ]]
   then
-    cauldron_chroot cauldron_cross_toolchain
-    liberror_check_fatal
+    build_toolchain_cross
+    liberror_check || return $?
   fi
 
-  # use the cross-compile tool-chain to cast all spells needed for
-  # the iso system
-  cauldron_chroot cauldron_build_iso_system "$CAULDRON_SPELLS"
-  liberror_check_fatal
+  cauldron_chroot_done "$CAULDRON_BUILD"
+  liberror_check
+}
 
-  # configure the iso init system, initrd/initramfs, etc.
-  cauldron_chroot cauldron_iso_init
-  liberror_check_fatal
+#-------------------------------------------------------------------------------
+##
+## Builds cache files for all spells passed as parameters
+##
+## The caches should not have runtime build dependencies (where a dependency is
+## pulled into the build if present in the filesystem, even if we request the
+## package not to use it), so it should be safe to do a mass build followed by a
+## mass dispel. If this functionality proves unsafe in the future, then
+## cauldron_chroot_cast && cauldron_chroot_dispel should be replaced by
+## cauldron_chroot_cast_clean.
+##
+#-------------------------------------------------------------------------------
+function build_spells() {
+  local spells=( "$@" )
 
-  # build/create/copy/whatever installer system/data into the iso
-  for installer in $(cat "$CAULDRON_SPELLS")
+  [[ -f "$spells" ]] && spells=( $(< "$spells") )
+
+  # remove spells from the list if their caches already exist
+  local count="${#spells[@]}"
+  for ((i=0; i < count ; i++))
   do
-    cauldron_chroot cauldron_add_installer "${installer##*/}"
+    local spell="${spells[i]}"
+    if cauldron_sorcerous_spell_cache "$spell" &> "$CAULDRON_NULL"
+    then
+      unset spells[i]
+    fi
   done
-  liberror_check_fatal
+
+  # leave if nothing to process
+  [[ "${#spells[@]}" -lt 1 ]] && return $ERR_OK
+
+  cauldron_chroot_init "$CAULDRON_BUILD"
+  liberror_check || return $?
+
+  # cast spells needed for iso, then dispel them, leaving the caches
+  cauldron_chroot_cast "${spells[@]}"
+  liberror_check || return $?
+
+  cauldron_chroot_dispel "${spells[@]}"
+  liberror_check || return $?
+
+  cauldron_chroot_done "$CAULDRON_BUILD"
+  liberror_check
+}
+
+#-------------------------------------------------------------------------------
+##
+## Builds cache files for all required sys spells (compiler toolchain, bash,
+## etc. -- essentially the basesystem profile)
+##
+#-------------------------------------------------------------------------------
+function build_sys() {
+  # cast spells needed for sys, then dispel them, leaving the caches
+  build_spells "${CAULDRON_SYS_SPELLS[@]}"
+  liberror_check || return $?
+}
+
+#-------------------------------------------------------------------------------
+##
+## Populates the sys directory using the spell caches and sources from the build
+## stage.
+##
+#-------------------------------------------------------------------------------
+function populate_sys() {
+  cauldron_populate_sys
+  liberror_check
+}
+
+#-------------------------------------------------------------------------------
+##
+## Cleans out any leftover files/dirs that aren't really needed to slim down the
+## final packaged iso as much as possible. Also runs sanity/security/QA checks on
+## the relevant files.
+##
+#-------------------------------------------------------------------------------
+function purify_sys() {
+  local target="$CAULDRON_SYS"
+
+  # we'll be cleaning the sys filesystem, so chroots are relative to the sys
+  # filespace
+  cauldron_chroot_init "$target"
+  liberror_check || return $?
+
+  # remove unnecessary files from sys and free up space
+  # this needs to have error-checking added in later
+  # only process cleaner files specifically for the sys filesystem
+  for cleaner in "$CAULDRON_DATA/cleaners/sys/"*
+  do
+    cauldron_clean_fs "$cleaner" "$target"
+    liberror_check || return $?
+  done
+
+  # ensure a clean, fresh sorcery install in sys
+  cauldron_sorcerous_download "$target/var/spool/sorcery"
+  liberror_check || return $?
+
+  # clean any existing sorcery instances from sys
+  cauldron_sorcerous_clean "$target"
+  liberror_check || return $?
+
+  # add a working sorcery local config, which includes CAULDRON_SORCERY_ARCH
+  cauldron_sorcerous_sys_defaults
+  liberror_check || return $?
+
+  # install sorcery into the sys dir
+  cauldron_sorcerous_install "$target" "/var/spool/sorcery"
+  liberror_check || return $?
+
+  # set and install grimoires into the sys dir
+  cauldron_sorcerous_set_grimoires "$target"
+  liberror_check || return $?
+  cauldron_sorcerous_update_grimoires "$target"
+  liberror_check || return $?
+
+  # finished chrooting to the sys filespace
+  cauldron_chroot_done "$target"
+  liberror_check
+}
+
+#-------------------------------------------------------------------------------
+##
+## Creates the finalized form of the installation system, which is typically a
+## compressed archive file containing the content of the sys directory
+## structure.
+##
+#-------------------------------------------------------------------------------
+function package_sys() {
+  # create the compressed sys archive from the build dir
+  cauldron_package_sys
+  liberror_check
+}
+
+#-------------------------------------------------------------------------------
+##
+## Builds cache files for all installable iso spells (the spell caches to
+## install to the target system when using the iso).
+##
+#-------------------------------------------------------------------------------
+function build_iso_caches() {
+  # cast spells needed for iso, then dispel them, leaving the caches
+  build_spells "${CAULDRON_ISO_CACHES[@]}"
+  liberror_check || return $?
+}
+
+#-------------------------------------------------------------------------------
+##
+## Builds cache files for all iso runtime spells (the spell caches that will
+## create the actual iso runtime environment, which is what boots when one boots
+## the iso).
+##
+#-------------------------------------------------------------------------------
+function build_iso_runtime() {
+  # cast spells needed for iso, then dispel them, leaving the caches
+  build_spells "${CAULDRON_ISO_RUNTIME[@]}"
+  liberror_check || return $?
+}
+
+#-------------------------------------------------------------------------------
+##
+## Builds cache files for any spells/packages necessary for packaging the iso,
+## such as bootloaders, iso filesystem tools, etc.
+##
+#-------------------------------------------------------------------------------
+function build_iso_packagers() {
+  build_spells "${CAULDRON_ISO_PACKAGE[@]}"
+  liberror_check || return $?
+}
+
+#-------------------------------------------------------------------------------
+##
+## Builds cache files for all required iso spells (the iso runtime, as well as
+## recommended install caches), then builds all spells needed for packaging the
+## iso fs (bootloaders, filesystem utilities, etc.).
+##
+#-------------------------------------------------------------------------------
+function build_iso() {
+  case "$1" in
+    runtime )
+      build_iso_runtime
+      liberror_check
+      return $?
+      ;;
+    caches )
+      build_iso_caches
+      liberror_check
+      return $?
+      ;;
+    packagers )
+      build_iso_packagers
+      liberror_check
+      return $?
+      ;;
+  esac
+
+  build_iso_runtime
+  liberror_check || return $?
+
+  build_iso_caches
+  liberror_check || return $?
+
+  build_iso_packagers
+  liberror_check || return $?
+}
+
+#-------------------------------------------------------------------------------
+##
+## Populates the iso directory using the spell caches and sources from the build
+## stage.
+##
+#-------------------------------------------------------------------------------
+function populate_iso() {
+  case "$1" in
+    runtime)
+      cauldron_iso_install_runtime
+      liberror_check
+      return $?
+      ;;
+    caches)
+      cauldron_iso_install_caches
+      liberror_check
+      return $?
+      ;;
+    sources)
+      cauldron_iso_install_sources
+      liberror_check
+      return $?
+      ;;
+  esac
+
+  cauldron_iso_install_runtime
+  liberror_check || return $?
+
+  cauldron_iso_install_caches
+  liberror_check || return $?
+
+  cauldron_iso_install_sources
+  liberror_check || return $?
+}
+
+#-------------------------------------------------------------------------------
+##
+## Builds the kernel image (and modules, if any) to be used in the iso runtime
+## and sets it up in the iso for loading by the iso bootloader.
+##
+#-------------------------------------------------------------------------------
+function iso_kernel() {
+  cauldron_iso_kernel
+  liberror_check
+}
+
+#-------------------------------------------------------------------------------
+##
+## Generates the initramfs to be used to boot the installation media. Depending
+## on the purpose of the final installation media, this may not actually be
+## required (for example, if one were to generate installation media to be run
+## directly from the hard disk, such as if the install content were on a
+## separate partitition from the target of the install).
+##
+#-------------------------------------------------------------------------------
+function iso_ramfs() {
+  cauldron_init_ramfs_make
+  liberror_check || return $?
+
+  cauldron_init_ramfs_install
+  liberror_check
+}
+
+#-------------------------------------------------------------------------------
+##
+## Installs the selected installers into their appropriate locations in the iso
+## directory structure.
+##
+#-------------------------------------------------------------------------------
+# enchant the iso with the selected installers
+function enchant_iso() {
+  # build/create/copy/whatever installer system/data into the iso
+  cauldron_enchant
+  liberror_check
+}
+
+#-------------------------------------------------------------------------------
+##
+## Cleans out any leftover files/dirs that aren't really needed to slim down the
+## final packaged iso as much as possible. Also runs sanity/security/QA checks on
+## the relevant files.
+##
+#-------------------------------------------------------------------------------
+function purify_iso() {
+  local target="$CAULDRON_ISO"
+
+  # alter the target if a compressed fs is desired
+  [[ "$CAULDRON_ISO_SQUASH" == "yes" ]] &&
+    target="$CAULDRON_ISO_SQUASHFS"
+
+  # we'll be cleaning the iso filesystem, so chroots are relative to the iso
+  # filespace
+  cauldron_chroot_init "$target"
+  liberror_check || return $?
 
   # remove unnecessary files from iso and free up space
   # this needs to have error-checking added in later
-  for cleaner in "$CAULDRON_BASE/cleaners"/iso_* ;
+  # only process cleaner files specifically for the iso filesystem
+  for cleaner in "$CAULDRON_DATA/cleaners/iso/"*
   do
-    cp "$cleaner" "$CAULDRON_BUILD/"
-    cauldron_chroot cauldron_clean_iso_system "/${cleaner##*/}"
-    cauldron_chroot rm "/${cleaner##*/}"
+    # TODO: add cleaner file(s) for wiping out usr/include/* and other such
+    # "nonsense", *unless* building a live iso in which case /usr/include may be
+    # needed (unless unpacking system.tar.xz over the iso during runtime)
+    cauldron_clean_fs "$cleaner" "$target"
+    liberror_check || return $?
   done
-  liberror_check_fatal
 
-  # finished with iso building, clean up from chroot setup
-  cauldron_chroot_done
-  liberror_check_fatal
+  if [[ "$CAULDRON_ISO_WIPE_SORCERY" == "yes" ]]
+  then
+    cauldron_sorcerous_clean "$target"
+    liberror_check || return $?
+  fi
+
+  # finished chrooting to the iso filespace
+  cauldron_chroot_done "$target"
+  liberror_check
+}
+
+#-------------------------------------------------------------------------------
+##
+## Installs sorcery to the iso runtime. This is useful if you want to make a
+## live iso instead of one purely for installing.
+##
+#-------------------------------------------------------------------------------
+function iso_sorcery() {
+  local target="$CAULDRON_ISO"
+
+  # alter the target if a compressed fs is desired
+  [[ "$CAULDRON_ISO_SQUASH" == "yes" ]] &&
+    target="$CAULDRON_ISO_SQUASHFS"
+
+  cauldron_chroot_init "$target"
+  liberror_check || return $?
+  cauldron_sorcerous_download "$target" "/var/spool/sorcery"
+  liberror_check || return $?
+  cauldron_sorcerous_clean "$target"
+  liberror_check || return $?
+  cauldron_sorcerous_install "$target" "/var/spool/sorcery"
+  liberror_check || return $?
+  cauldron_sorcerous_set_grimoires "$target"
+  liberror_check || return $?
+  cauldron_sorcerous_update_grimoires "$target"
+  liberror_check || return $?
+  cauldron_chroot_done "$target"
+  liberror_check
+}
+
+#-------------------------------------------------------------------------------
+##
+## Creates the finalized form of the installation media, which is typically a
+## compressed iso9660 file containing the content of the iso directory
+## structure.
+##
+#-------------------------------------------------------------------------------
+function package_iso() {
+  cauldron_chroot_init "$CAULDRON_BUILD"
+  liberror_check || return $?
+
+  # cast spells needed for iso, then dispel them, leaving the caches
+  cauldron_chroot_cast "${CAULDRON_ISO_PACKAGE[@]}"
+  liberror_check || return $?
+
+  cauldron_chroot_done "$CAULDRON_BUILD"
+  liberror_check || return $?
+
+  # create a compressed filesystem of the iso runtime if desired
+  if [[ "$CAULDRON_ISO_SQUASH" == "yes" ]]
+  then
+    cauldron_iso_compressedfs
+    liberror_check || return $?
+  fi
 
   # create the iso fs from the build dir
-  cauldron_mkisofs
-  liberror_check_fatal
+  cauldron_package_iso
+  liberror_check || return $?
+
+  cauldron_chroot_init "$CAULDRON_BUILD"
+  liberror_check || return $?
+
+  # dispel the cast spells, but leave the caches
+  cauldron_chroot_dispel "${CAULDRON_ISO_PACKAGE[@]}"
+  liberror_check || return $?
+
+  cauldron_chroot_done "$CAULDRON_BUILD"
+  liberror_check || return $?
 }
 
-function cauldron_modify_local_config() {
+#-------------------------------------------------------------------------------
+##
+## Cleans up all temporary files/etc. after finishing the production of an iso.
+##
+#-------------------------------------------------------------------------------
+function cleanse() {
+  cauldron_cleanup
+  liberror_check
 }
 
-function cauldron_menu_main() {
-  local CAULDRON_B_HELP="Build directory location"
-  local CAULDRON_OK="Select"
-  local CAULDRON_CANCEL="Exit"
+#-------------------------------------------------------------------------------
+##
+## The brew command calls the necessary functions to generate a complete iso
+## using the settings configured for cauldron.
+##
+#-------------------------------------------------------------------------------
+function brew() {
+  process_toolchain
+  liberror_check || return $?
+  process_sys
+  liberror_check || return $?
+  process_iso
+  liberror_check || return $?
+  cleanse
+  liberror_check
+}
 
-  while
-    CAULDRON_COMMAND=$(eval ${DIALOG} ' --title "Main Menu"       \
-                            --item-help                           \
-                            --ok-label                            \
-                            "${CAULDRON_OK}"                      \
-                            --cancel-label                        \
-                            "${CAULDRON_CANCEL}"                  \
-                            --menu                                \
-                            "Cauldron Version                     \
-                            ${CAULDRON_VERSION}"                  \
-                            0 0 0                                 \
-                            "B" "Build  Menu"                     \
-                            "${CAULDRON_B_HELP}"'                 )
+function update_sys_caches() {
+:
+}
+
+function update_sys() {
+:
+}
+
+function update_iso_caches() {
+:
+}
+
+function update_ramfs() {
+:
+}
+
+function update_iso() {
+:
+}
+
+#-------------------------------------------------------------------------------
+##
+## The shell command provides a dedicated command subshell where each input
+## "command" is run as a subcommand to the cauldron command. I.e., inputting
+## "help" results in "cauldron help" being called. The only commands that are
+## not run as a cauldron subcommands are "exit" and "quit", which are used to
+## exit the command shell.
+##
+#-------------------------------------------------------------------------------
+function command_shell() {
+  local path="${0%/*}"
+  local cmd="${0##*/}"
+  local prefix="$USER@cauldron"
+  local suffix="> "
+  local input=""
+
+  [[ -n "$path" ]] && PATH="$path:$PATH"
+
+  function reload() {
+    # load main config file - required
+    source "$config" || exit 1
+
+    # load the main cauldron library, which loads needed sub-libraries
+    source "$CAULDRON_LIBS/libcauldron" || exit 1
+  }
+
+  #while [[ "$input" != "exit" && "$input" != "quit" ]]
+  while read -e -p "$prefix $PWD $suffix" -r input
   do
-    case ${CAULDRON_COMMAND} in
-      B) cauldron_menu_build;;
-    esac
+    [[ "$input" == "exit" || "$input" == "quit" ]] && break
+
+    if [[ -n "$input" ]]
+    then
+      local escaped="${input#$CAULDRON_SHELL_ESCAPE}"
+      if [[ "$input" != "$escaped" ]]
+      then
+        # attempt running the command through the regular shell
+        $escaped
+        input=""
+        continue
+      fi
+
+      if ! get_command -t "$input"
+      then
+        # attempt to run the command through the regular shell as a backup
+        $input
+        input=""
+        continue
+      fi
+
+      # run the command in a subshell in order to catch fatal errors
+      (run_command $input)
+    fi
+    #read -e -p "$prefix $PWD $suffix" -r input
   done
 }
 
-function cauldron_menu_build() {
-  local CAULDRON_OK="Commit"
-  local CAULDRON_CANCEL="Cancel"
+#-------------------------------------------------------------------------------
+## @param -t flag (optional)
+## @param command_name to test
+##
+## Tests whether the given command name matches an existing sub-command/function
+## that can be run. Returns true if the command exists, false otherwise. If the
+## flag -t is not present, then it also returns (via echo) the name of the real
+## command, mapped from the passed in simple command name.
+##
+#-------------------------------------------------------------------------------
+function get_command() {
+  local output="yes"
 
-  if CAULDRON_BUILD=$(eval ${DIALOG} ' --ok-label                 \
-                          ${CAULDRON_OK}                          \
-                          --cancel-label ${CAULDRON_CANCEL}       \
-                          --input-menu                            \
-                          "Enter the path to the dir where        \
-                          Cauldron should build your ISOs."       \
-                          0 0                                     \
-                          ${CAULDRON_BUILD}'                      )
+  if [[ "$1" == "-t" ]]
   then
-    cauldron_modify_local_config "CAULDRON_BUILD" "${CAULDRON_BUILD}"
+    output=""
+    shift
   fi
+
+  local name="${1%% *}"
+  local cmd="process_$name"
+
+  if [[ -z "$name" ]]
+  then
+    return 1
+  fi
+
+  if ! declare -lF "$cmd"
+  then
+    return 1
+  fi
+
+  if [[ "$output" == "yes" ]]
+  then
+    echo "$cmd"
+  fi
+
+  return 0
 }
 
-function cauldron_main() {
-  if [[ -z "$1" ]]
+#$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+#$$$
+#$$  TEST FUNCTIONS
+#$$$
+#$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+function test_init() {
+  [[ -d "$CAULDRON_BUILD" ]] || return 1
+
+  return 0
+}
+
+function test_toolchain() {
+  return 0
+}
+
+function test_build_sys_caches() {
+  return 0
+}
+
+function test_build_iso_caches() {
+  return 0
+}
+
+function test_build_sys() {
+  return 0
+}
+
+function test_build_iso() {
+  return 0
+}
+
+function test_ramfs() {
+  [[ -f "$CAULDRON_ISO/boot/initrd.gz" ]] || return 1
+
+  return 0
+}
+
+function test_enchant() {
+  return 0
+}
+
+function test_purify_sys() {
+  return 0
+}
+
+function test_purify_iso() {
+  return 0
+}
+
+function test_package_iso() {
+  ls "$CAULDRON_TMP/$CAULDRON_ISO_NAME".* &> "$CAULDRON_NULL" || return 1
+
+  return 0
+}
+
+function test_cleanse() {
+  [[ -d "$CAULDRON_TMP" ]] && return 1
+
+  return 0
+}
+
+
+#$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+#$$$
+#$$  INPUT PROCESSING
+#$$$
+#$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+function process_toolchain() {
+  local methods=( "${CAULDRON_TOOLCHAIN_METHODS[@]}" )
+  local call="$1"
+  local rc=
+
+  # drop the first arg, it's saved in the call variable
+  shift
+
+  # a specific command was passed, so only process what is being requested
+  if [[ "$methods" == *"$call"* ]]
   then
-    cauldron_menu_main
-  else
-    case $1 in
-      -b|--brew|brew) cauldron_brew  ;;
-      -h|--help|help) help  ;;
-      *) help     ;;
+    methods=( "${methods[@]#$call}" )
+  fi
+
+  # always push explicit method requests to the front of the list
+  methods=( "$call" "${methods[@]}" )
+
+  for method in ${methods[@]}
+  do
+    case "$method" in
+      chroot )
+        cauldron_verbose "Attempting toolchain method: $method ..."
+        cauldron_toolchain_baseroot "$@"
+        rc=$?
+        ;;
+      build )
+        cauldron_verbose "Attempting toolchain method: $method ..."
+        build_toolchain_host
+        rc=$?
+        ;;
+      cross )
+        cauldron_verbose "Attempting toolchain method: $method ..."
+        build_toolchain_cross
+        rc=$?
+        ;;
+      prepare )
+        # prepare is always run after all toolchain steps, so this command can
+        # be done as a no-op and just fall through to the prepare call at the
+        # end
+        true
+        rc=$?
+        break
+        ;;
+      * )
+        help_toolchain
+        cauldron_chroot_cleanup
+        exit 1
+        ;;
     esac
+    if [[ "$CAULDRON_VERBOSE" == "yes" ]]
+    then
+      liberror_check "$rc" "" || break
+    else
+      [[ "$rc" -eq $ERR_OK ]] || break
+    fi
+  done
+  check_fatal "$rc"
+
+  # ensure that our new toolchain is properly configured for cauldron work
+  cauldron_prepare
+  check_fatal
+}
+
+function process_sys() {
+  # a specific command was passed, so only process what is being requested
+  if [[ $# -ge 1 ]]
+  then
+    case $1 in
+      build )
+        build_sys
+        ;;
+      populate )
+        populate_sys
+        ;;
+      purify )
+        purify_sys
+        ;;
+      package )
+        package_sys
+        ;;
+      update )
+        update_sys
+        ;;
+      * )
+        help_sys
+        exit 1
+        ;;
+    esac
+    check_fatal
+
+    return
+  fi
+
+  # no argument passed, so run the whole (default) gambit
+  build_sys
+  check_fatal
+  populate_sys
+  check_fatal
+  purify_sys
+  check_fatal
+  package_sys
+  check_fatal
+}
+
+function process_iso() {
+  # a specific command was passed, so only process what is being requested
+  if [[ $# -ge 1 ]]
+  then
+    case "$1" in
+      build )
+        shift
+        build_iso "$@"
+        ;;
+      populate )
+        shift
+        populate_iso "$@"
+        ;;
+      purify )
+        purify_iso
+        ;;
+      kernel )
+        iso_kernel
+        ;;
+      ramfs )
+        iso_ramfs
+        ;;
+      enchant )
+        enchant_iso
+        ;;
+      package )
+        package_iso
+        ;;
+      update )
+        update_iso
+        ;;
+      sorcery )
+        iso_sorcery
+        ;;
+      * )
+        help_iso
+        exit 1
+        ;;
+    esac
+    check_fatal
+
+    return
+  fi
+
+  # no argument passed, so run the whole gambit
+  build_iso
+  check_fatal
+  populate_iso
+  check_fatal
+  iso_kernel
+  check_fatal
+  purify_iso
+  check_fatal
+  iso_ramfs
+  check_fatal
+  enchant_iso
+  check_fatal
+  package_iso
+  check_fatal
+}
+
+function process_enchant() {
+  enchant
+  check_fatal
+}
+
+function process_brew() {
+  brew
+  check_fatal
+}
+
+function process_cleanse() {
+  cleanse
+  check_fatal
+}
+
+function process_help() {
+  help_main "$@"
+  return "$?"
+}
+
+function process_what() {
+  help_what
+  return "$?"
+}
+
+function process_config() {
+  local list="$@"
+  local pager=( $PAGER )
+  local var=
+  local value=
+  local llist=
+
+  [[ "$#" -eq 0 ]] && list=( ${!CAULDRON_*} )
+
+  [[ "${#pager[*]}" -eq 0 ]] && pager=( "${CAULDRON_CMD_CAT[@]}" )
+
+  for var in "${list[@]}"
+  do
+    # check for user-desired globbing
+    if [[ "${var:$((${#var}-1)):1}" == "*" ]]
+    then
+      eval llist=( \${!${var}} )
+      for i in "${llist[@]}"
+      do
+        value=$(cauldron_get_variable "$var")
+        liberror_check || return $?
+
+        libcolor_msg notice "$var: $value"
+      done
+    else
+      value=$(cauldron_get_variable "$var")
+      liberror_check || return $?
+
+      libcolor_msg notice "$var: $value"
+    fi
+  done | "${pager[@]}" || return $ERR_OUTPUT
+
+  return $ERR_OK
+}
+
+function process_version() {
+  local version="${VERSION_FILE:-/etc/cauldron/version}"
+  if [[ -r "$version" ]]
+  then
+    cat "$version"
+    return "$?"
+  else
+    echo "$version not accessible (cauldron not installed to the system?)"
+    return 1
   fi
 }
+
+function process_chroot() {
+  local target="$CAULDRON_BUILD"
+
+  if [[ "$1" == "-d" ]]
+  then
+    target="$2"
+    shift 2
+  fi
+
+  cauldron_chroot_init "$target"
+  check_fatal
+  cauldron_chroot "$@"
+  check_fatal
+  cauldron_chroot_done "$target"
+  check_fatal
+}
+
+function process_shell() {
+  if [[ "$CAULDRON_SHELL" -eq 1 ]]
+  then
+    echo "cauldron shell already running"
+    return
+  fi
+
+  local CAULDRON_SHELL=1
+  command_shell "$@"
+}
+
+function run_command() {
+  local cmdname="${1:-help}"
+  local cmd=$(get_command "$cmdname")
+  shift
+  if [[ -n "$cmd" ]]
+  then
+    "$cmd" "$@"
+  else
+    echo "command not recognized: $cmd"
+    return 1
+  fi
+}
+
+#$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+#$$$
+#$$  MAIN EXECUTION
+#$$$
+#$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$$
+
+# process options first
+while [[ "$1" == -* ]]
+do
+  case "$1" in
+    -f | --config )
+      CONFIG_FILE="$2"
+      config="$2"
+      shift 2
+      ;;
+    -h | --help )
+      shift
+      process_help "$@"
+      ;;
+    -v | --version )
+      shift
+      process_version
+      ;;
+    -- )
+      break
+      ;;
+    * )
+      shift
+      ;;
+  esac
+done
+
+[[ "$1" == "help" ]] && shift && process_help "$@"
+[[ "$1" == "version" ]] && shift && process_version "$@"
+
+if [[ ! -r "$config" ]]
+then
+  echo "could not access config file: $config" >&2
+  echo "please create a config file for cauldron" >&2
+  echo "the default config file can be overridden by setting and exporting the"\
+    "environment variable CONFIG_FILE" >&2
+  exit 1
+fi
 
 # load main config file - required
-. /etc/cauldron/config || exit 1
+source "$config" || exit 1
 
-# load secondary (custom config file) - required if present
-if [[ -e /etc/cauldron/local/config ]]
-then
-  . /etc/cauldron/local/config || exit 1
-fi
+# load the main cauldron library, which loads needed sub-libraries
+source "$CAULDRON_LIBS/libcauldron" || exit 1
 
-# load the main cauldron library
-. "$CAULDRON_LIBS"/libcauldron || exit 1
+#if [[ "$UID" != "$(id -u $CAULDRON_USER)" && "$1" != "help" ]]
+#then
+#  echo "Please enter the password for $CAULDRON_USER."
+#  CAULDRON_PARAMS="$@"
+#  su -c "$0 $CAULDRON_PARAMS" "$CAULDRON_USER"
+#fi
 
-if [[ $UID == 0 ]]
-then
-  DIALOG='$DIALOG_PROG                                            \
-          --backtitle                                             \
-          "Cauldron ISO builder and installer management utility" \
-          --stdout'
+trap 'check_fatal' "${CAULDRON_TRAP_SIGNALS[@]}"
 
-  CAULDRON_VERSION=$(cat /etc/cauldron/version)
-  cauldron_main "$@"
-  CAULDRON_STATUS="$?"
-  exit ${CAULDRON_STATUS}
-else
-  if [[ $1 == -h ]] || [[ $1 == --help ]] || [[ $1 == help ]]
-  then
-    cauldron_help
-  elif [[ $1 == -v ]] || [[ $1 == --version ]] || [[ $1 == version ]]
-  then
-    echo $(cat /etc/cauldron/version)
-  else
-    echo "Please enter the root password."
-    CAULDRON_PARAMS=$@
-    su -c "$0 ${CAULDRON_PARAMS}" root
-  fi
-fi
+run_command "$@"
+exit "$?"
 
 #---------------------------------------------------------------------
 ##=back
