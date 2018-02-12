@@ -1,0 +1,316 @@
+'\" t
+.\"     Title: enchantment
+.\"    Author: [see the "Authors" section]
+.\"      Date: 07/06/2010
+.\"    Manual: Enchantment Manual
+.\"  Language: English
+.\"
+.\" Copyright 2010 by the Cauldron Team, Source Mage GNU/Linux
+.\" This software is free software; you can redistribute it and/or modify
+.\" it under the terms of the GNU General Public License as published by
+.\" the Free Software Foundation; either version 2 of the License, or
+.\" (at your option) any later version.
+.\"
+.\" This software is distributed in the hope that it will be useful,
+.\" but WITHOUT ANY WARRANTY; without even the implied warranty of
+.\" MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+.\" GNU General Public License for more details.
+.\"
+.\" You should have received a copy of the GNU General Public License
+.\" along with this software; if not, write to the Free Software
+.\" Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
+.\"
+.TH CAULDRON 8 "12 February 2018" "Source Mage GNU/Linux" "System Administration"
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+\fBcauldron\fR \- automated installation media creation utility
+.SH "SYNOPSIS"
+
+.nf
+\fBcauldron\fR [COMMAND [ARGS]]
+.fi
+
+.SH "DESCRIPTION"
+
+Cauldron can either be invoked without any arguments, in which case it will run as a menu-driven program, or with the name of an action to execute, in which case it operates as a command-line program. It uses sorcery (also from the Source Mage GNU/Linux project) to generate the content which will populate the installation media.
+
+Cauldron will support building for the same architecture as the host machine, as well as cross-compilation builds (so you can use one machine to generate installation media for multiple architectures. The cross-compilation support is currently alpha at best, but will be improved upon in future releases.
+
+All configuration variables are defined in \fI/etc/cauldron/cauldron.conf\fR. Configuration variables are standard bash variables, so they can take any definition that bash variables can take. Although you can redefine any of the variables you choose, the more user-level variables/definitions are at the top of the config file, with more low-level variables defined towards the bottom.
+
+Cauldron generates installation media under the following general procedure.
+.nr step 1
+.IP \n[step]. 4
+Generate a base toolchain used to build all the packages for the installation (both the content to install to the new system and the installer runtime environment).
+.nr step +1
+.IP \n[step].
+Build the content to install to the new system (henceforth \fIsystem\fP) and package it into a compressed tarball.
+.nr step +1
+.IP \n[step].
+Build the installation runtime environment (henceforth \fIiso\fP) and copy the \fIsystem\fP tarball into it.
+.nr step +1
+.IP \n[step].
+Package the \fIiso\fP (which includes the packaged \fIsystem\fP) into the final installation media format (typically an ISO filesystem to be burned onto a CD) and compress it.
+
+.SH "CAULDRON USER-LEVEL COMMANDS"
+A list of user-level commands is given below. User-level commands have dependency ordering, and ensure that dependencies are met before performing their own functions. For each command, if it can accept any arguements, they are described in that commands section. The commands are organized by logical function.
+.SS "General"
+.PP
+\fBhelp\fR [TOPIC]
+.RS 4
+Displays help for a given topic. If no topic is provided, it will display a list of topics available.
+.RE
+.SS "Components"
+.PP
+\fBiso\fR COMMAND
+.RS 4
+Performs the given COMMAND respective to the iso component. The following commands are accepted.
+.RE
+
+.RS 4
+\fBbuild\fR
+.RE
+.RS 8
+Builds the entire iso component. This depends on the system component being built, as well as the spell caches for the iso component being generated. If the system hasn't been built, or if the caches aren't present for the iso spells, it will first generate them before building the iso. In other words, it will automatically run \fBcauldron system build\fR and \fBcauldron iso caches\fR first, if needed.
+.RE
+
+.RS 4
+\fBupdate\fR
+.RE
+.RS 8
+Updates the entire iso component, but only the iso component. Thus, although it has the same dependencies as \fBcauldron iso build\fR, it will re-run any iso-specific dependencies (like \fBcauldron iso caches\fR), but it will not re-run any other dependencies.
+.RE
+.PP
+\fBsystem\fR COMMAND
+.RS 4
+Performs the given COMMAND respective to the system component. The following commands are accepted.
+.RE
+
+.RS 4
+\fBbuild\fR
+.RE
+.RS 8
+Builds the entire system component. This depends on the the spell caches for the system component being generated. If the caches aren't present for the system spells, it will first generate them before building the system. In other words, it will automatically run \fBcauldron system caches\fR first, if needed.
+.RE
+
+.RS 4
+\fBupdate\fR
+.RE
+.RS 8
+Updates the entire system component, but only the system component. Thus, although it has the same dependencies as \fBcauldron system build\fR, it will re-run any system-specific dependencies (like \fBcauldron system caches\fR), but it will not re-run any other dependencies.
+.RE
+.SS "Generation"
+.PP
+\fBbrew\fR
+.RS 4
+Builds an iso product (typically a compressed iso9660 filesystem to be burned on a cdrom and used as an install disk). This is dependent on all other components being completed. If they are not present and complete, it will call the necessary functions to generate them first.
+.RE
+.SH "CAULDRON LOW-LEVEL COMMANDS"
+A list of low-level commands is given below. Low-level commands do not have dependency ordering, so it is up to the user to ensure that the dependencies are met first. The commands do perform error-checking, though, so they will report that a dependency is missing if that is the case. For each command, if it can accept any arguements, they are described in that commands section. The commands are organized by logical function.
+.SS "Setup"
+.PP
+\fBinit\fR
+.RS 4
+
+.RE
+.PP
+\fBpurge\fR
+.RS 4
+
+.RE
+.SS "Building"
+.PP
+\fBtoolchain\fR
+.RS 4
+Sets up the base toolchain used for building all the spells that will be used in producing the final iso.
+.RE
+.PP
+\fBsystem caches\fR
+.RS 4
+
+.RE
+.PP
+\fBiso caches\fR
+.RS 4
+
+.RE
+.SS "Generation"
+.PP
+\fBupdate\fR
+.RS 4
+Brings a given build set up to date. This can be used both on partially completed iso builds as well as on older builds (for which all of the information is intact) to do a quick update of the spells and Source Mage components (sorcery and the grimoires) without having to build a fresh iso from scratch. Note that official releases are always built from scratch to ensure quality.
+.RE
+.SS "Installers"
+.PP
+\fBenchant\fR
+.RS 4
+Adds the installers listed in $\fICAULDRON_INSTALLERS\fR to the iso filesystem and performs any necessary setup, such as linking executables to alternative names or paths.
+.RE
+.SH "TERMINOLOGY"
+.PP
+target
+.RS 4
+The system which the iso is being generated for.
+.RE
+.PP
+iso
+.RS 4
+Refers to the installation runtime. The runtime is typically available via a burned cd, consisting of the contents of an iso9660 filesystem prepared by cauldron, hence the labelling of the runtime as iso. This is in contrast to system, defined below. The spells and binaries available for use in the iso may differ from those available in the system.
+.RE
+.PP
+system
+.RS 4
+Refers to the target runtime. Note that the target runtime is not necessarily available in the target until after a certain stage of the installation is completed. This also refers to the pre-built compressed archive of the minimal target runtime, typically stored as system.tar.bz2 in the root directory of an officially released iso. The spells and binaries available for use in the system may differ from those available in the iso.
+.RE
+.PP
+installer
+.RS 4
+A user interface to libenchantment (and the associated sub-libraries). This includes, for example, the command-line installer (described by the present man-page you are reading) and the TUI menu installer (which uses dialog to display the text menus).
+.RE
+.PP
+spell
+.RS 4
+A software package.
+.RE
+.PP
+source
+.RS 4
+The source code collection needed to build a spell.
+.RE
+.PP
+cache
+.RS 4
+A compressed archive of a pre-built spell.
+.RE
+.SH "ENVIRONMENT VARIABLES"
+
+Various enchantment commands use the following user-level environment variables. The default value is given in square brackets ('[' and ']') after the name of the environment variable. The default values may be overridden/changed either on the command line in the shell, or by setting the variable's value in the enchantment config file \fI/etc/enchantment/enchantment.conf\fR.
+.SS "Source Paths"
+.PP
+\fIENCHANT_ISO_PATH\fR [/]
+.RS 4
+This represents where the iso is running from. Unless you know what you are doing and you want to do some really tricky hacking with the installation, it is highly recommended that you leave this at the default setting.
+.RE
+.PP
+\fIENCHANT_SPELL_SOURCES\fR [$\fIENCHANT_ISO_PATH\fR/var/spool/sorcery]
+.RS 4
+Path where spell sources should be taken from to install into the target.
+.RE
+.PP
+\fIENCHANT_SPELL_CACHES\fR [$\fIENCHANT_ISO_PATH\fR/var/cache/sorcery]
+.RS 4
+Path where spell caches should be taken from to install into the target.
+.RE
+.SS "Target Paths"
+.PP
+\fIENCHANT_TARGET\fR [$\fIENCHANT_ISO_PATH\fR/mnt/root]
+.RS 4
+Base path where content will be installed to. Typically this is where the root filesystem of the target system is mounted (e.g., /dev/sda1).
+.RE
+.PP
+\fIENCHANT_TARGET_SOURCES\fR [$\fIENCHANT_TARGET\fR/var/spool/sorcery]
+.RS 4
+Path where spell sources should be installed to within the target. Normally you should not change this.
+.RE
+.PP
+\fIENCHANT_TARGET_CACHES\fR [$\fIENCHANT_TARGET\fR/var/cache/sorcery]
+.RS 4
+Path where spell caches should be installed to within the target. Normally you should not change this.
+.RE
+.SS "Target Kernel"
+.PP
+\fIENCHANT_TARGET_KERNEL\fR [$\fIENCHANT_TARGET\fR/boot/vmlinuz]
+.RS 4
+Absolute path (including file name) of where the kernel image will be installed to in the target.
+.RE
+.PP
+\fIENCHANT_TARGET_KMODS\fR [$\fIENCHANT_TARGET\fR/lib/modules]
+.RS 4
+Absolute path to the base directory of where the kernel modules will be installed to in the target. You normally shouldn't change this setting unless you have a good reason to and you know what you are doing.
+.RE
+.SS "Source Kernel"
+.PP
+\fIENCHANT_ISO_KVERS\fR [$(uname -r)]
+.RS 4
+The version of the kernel which the installation (not the target) is running.
+.RE
+.PP
+\fIENCHANT_ISO_KERNEL\fR [$\fIENCHANT_ISO_PATH\fR/boot/vmlinux]
+.RS 4
+The kernel image which the installation (not the target) is running.
+.RE
+.PP
+\fIENCHANT_ISO_KMODS\fR [$\fIENCHANT_ISO_PATH\fR/lib/modules]
+.RS 4
+The kernel modules which the installation (not the target) is running, corresponding to the kernel image and version given in \fIENCHANT_ISO_KVERS\fR and \fIENCHANT_ISO_KERNEL\fR.
+.RE
+.SS "Chroot Command"
+.PP
+\fIENCHANT_CHROOT\fR [$\fIENCHANT_ISO_PATH\fR/bin/chroot]
+.RS 4
+The command to run when chrooting into the target.
+.RE
+.SS "Spell Selection"
+.PP
+\fIENCHANT_SOURCES_LIST\fR [$\fIENCHANT_TMP\fR/spell-sources]
+.RS 4
+The list of spell sources you want to install.
+.RE
+.PP
+\fIENCHANT_CACHES_LIST\fR [$\fIENCHANT_TMP\fR/spell-caches]
+.RS 4
+The list of spell caches you want to install.
+.RE
+.SS "Potion (history) Functionality"
+.PP
+\fIENCHANT_POTION\fR [$\fIENCHANT_TMP\fR/potion]
+.RS 4
+Specifies the base path of where installation state information is recorded. This information is used for the back and forward commands (see the \fBCOMMANDS\fR section above) as well as for installation restoration and automated installation.
+.RE
+.PP
+\fIENCHANT_POTION_BUFFER\fR [20]
+.RS 4
+The size of each buffer in the potion system. This is the number of forward/back steps you can take. If this value is set to 0, potion is disabled.
+.RE
+.SS "Appearance"
+.PP
+\fIENCHANT_COLOR\fR [yes]
+.RS 4
+Whether to use colored output.
+.RE
+.SH "FILES"
+.PP
+$\fIENCHANT_TMP\fR/current_module
+.RS 4
+Tracks the current installation module (step) within the installation scheme.
+.RE
+.PP
+$\fIENCHANT_TMP\fR/i18n-keymap
+.RS 4
+Defines the keymap in use for the installation session.
+.RE
+.PP
+$\fIENCHANT_POTION\fR/back
+.RS 4
+A list of modules of length $\fIENCHANT_HISTORY_SIZE\fR used to go to previously visited modules, in the order they were visited.
+.RE
+.PP
+$\fIENCHANT_POTION\fR/forward
+.RS 4
+A list of modules of length $\fIENCHANT_HISTORY_SIZE\fR used to return to modules one went "back" from (see above and the \fBCOMMANDS\fR section), in the order they were visited.
+.RE
+.SH "AUTHORS"
+.PP
+The Cauldron Team, Source Mage GNU/Linux
+.SH "SEE ALSO"
+
+\fBcauldron\fR(8), \fBsorcery\fR(8)
