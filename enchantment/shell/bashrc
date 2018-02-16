@@ -22,13 +22,13 @@
 PATH="${ENCHANT_ENCHANTERS:+$ENCHANT_ENCHANTERS/shell/bin:}$PATH"
 
 # initialize the installer
-enchantment init
+enchantment-shell init
 
 # use titlecase because this will pollute the user's namespace, and we want to
 # minimize the likelihood that it would interfere with the user's regular
 # processing
 function Shell_Set_Prompt() {
-  enchantment prompt
+  enchantment-shell prompt
 }
 
 PS1="\$(Shell_Set_Prompt)\n\u \w\$ "

@@ -25,7 +25,7 @@ sources=(
                   "lib/lib.potion"
                   "shell/bashrc"
                   "shell/functions"
-                  "shell/bin/enchantment"
+                  "shell/bin/enchantment-shell"
                   "modules/*/{enter,exit,potion}/*"
                   )
 
