@@ -49,6 +49,19 @@ function enchant_shell_command_keymap() {
   return $ERR_OK
 }
 
+function enchant_shell_command_aliases() {
+  local aliases="$ENCHANT_DATA/$ENCHANT_INSTALLER/aliases"
+
+  # source installer-specific command aliases
+  if [[ -r "$aliases" ]]
+  then
+    source "$aliases" &> "$ENCHANT_NULL" ||
+      liberror_die $ERR_INSTALLER "cannot load aliases file"
+  fi
+
+  return $ERR_OK
+}
+
 function enchant_shell_command_prompt() {
   local ccurr="$(libcolor_color BOLD)$(libcolor_color WHITE)"
   local cnext="$(libcolor_color BOLD)$(libcolor_color GREEN)"
@@ -188,6 +201,10 @@ command="$1"
 shift
 
 case "$command" in
+  "aliases" )
+    enchant_shell_command_aliases
+    liberror_check_fatal
+    ;;
   "keymap" )
     enchant_shell_command_keymap
     liberror_check_fatal

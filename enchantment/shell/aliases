@@ -1,0 +1,16 @@
+#!/bin/bash
+
+# shell aliases for the shell enchanter (installer)
+
+alias welcome="enchantment-shell welcome"
+alias help="enchantment-shell help"
+alias keymap="enchantment-shell keymap"
+alias 539="enchantment-shell keymap"
+alias todo="enchantment-shell todo"
+alias list="enchantment-shell list"
+alias jump="enchantment-shell jump"
+alias next="enchantment-shell next"
+alias prev="enchantment-shell prev"
+alias install="enchantment-shell install"
+alias potion="enchantment-shell potion"
+

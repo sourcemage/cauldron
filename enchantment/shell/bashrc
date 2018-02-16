@@ -24,6 +24,13 @@ PATH="${ENCHANT_ENCHANTERS:+$ENCHANT_ENCHANTERS/shell/bin:}$PATH"
 # initialize the installer
 enchantment-shell init
 
+
+# source installer-specific command aliases, if defined
+if [[ -r "$ENCHANT_ENCHANTERS/shell/aliases" ]]
+then
+  source "$ENCHANT_ENCHANTERS/shell/aliases"
+fi
+
 # use titlecase because this will pollute the user's namespace, and we want to
 # minimize the likelihood that it would interfere with the user's regular
 # processing
