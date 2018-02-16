@@ -224,6 +224,11 @@ function enchant_shell_perform_chroot() {
   PS1="${PS1}\n\u \w\$ "
   export PS1
 
+  if [[ "$ENCHANT_COLOR" == "yes" ]]
+  then
+    export LS_COLORS="$(${ENCHANT_CMD_DIRCOLORS[@]})"
+  fi
+
   enchant_chroot "$@"
   liberror_check || return $?
 
