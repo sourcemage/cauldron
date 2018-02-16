@@ -50,12 +50,18 @@ function enchant_shell_command_keymap() {
 }
 
 function enchant_shell_command_prompt() {
+  local ccurr="$(libcolor_color BOLD)$(libcolor_color WHITE)"
+  local cnext="$(libcolor_color BOLD)$(libcolor_color GREEN)"
+  local ccurnum="$(libcolor_color BOLD)$(libcolor_color WHITE)"
+  local ctotal="$(libcolor_color BOLD)$(libcolor_color RED)"
+  local normal="$(libcolor_color NORMAL_COLOR)"
+
   [[ "$#" -eq 0 ]] || return $ERR_INSTALLER_CMD
 
-  local current="current:$(enchant_get_current)"
-  local next="next:$(enchant_get_next)"
-  local num="$(enchant_modules_number)"
-  local total="$(enchant_modules_total)"
+  local current="current:$ccurr$(enchant_get_current)$normal"
+  local next="next:$cnext$(enchant_get_next)$normal"
+  local num="$ccurnum$(enchant_modules_number_current)$normal"
+  local total="$ctotal$(enchant_modules_number_total)$normal"
   local stats="$current $next $num/$total"
 
   "${ENCHANT_CMD_OUTPUT[@]}" \
