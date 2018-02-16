@@ -17,14 +17,9 @@
 ##
 #-------------------------------------------------------------------------------
 
-# these variables are defined the same in etc/enchantment/enchantment.conf
-# if redefined in the environment, they will be overridden for
-# all enchantment scripts
-ENCHANT_ISO_PATH="${ENCHANT_ISO_PATH:-}"
-ENCHANT_DATA="${ENCHANT_DATA:-$ENCHANT_ISO_PATH/usr/share/enchantment}"
-
-# set path to include the shell installer commands
-PATH="$ENCHANT_DATA/shell/bin:$PATH"
+# set path to include the shell enchanter commands, if ENCHANT_ENCHANTERS is
+# defined (otherwise the shell enchanter is assumed to already be in PATH)
+PATH="${ENCHANT_ENCHANTERS:+$ENCHANT_ENCHANTERS/shell/bin:}$PATH"
 
 # initialize the installer
 enchantment init
