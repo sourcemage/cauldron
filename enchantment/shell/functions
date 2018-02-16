@@ -27,29 +27,29 @@ function enchant_shell_header() {
   # if arg1 supplied, cat it
   if [[ -n "$1" ]]
   then
-    [[ -f "$1" ]] || return $ERR_FILE_NOT_FOUND
-    cat "$1"
+    [[ -f "$1" ]] || return $ERR_FILE_ACCESS
+    "${ENCHANT_CMD_CAT[@]}" "$1" || return $ERR_FILE_ACCESS
   fi
 
   return $ERR_OK
 }
 
 # output the step instructions
-# use color if libcolor loaded, else just plain bold
+# use color if desired, else just plain bold
 function enchant_shell_print() {
   local file="$1"
   local hilight=""
   local normal=""
 
-  [[ -f "$file" ]] || return $ERR_FILE_NOT_FOUND
+  [[ -f "$file" ]] || return $ERR_FILE_ACCESS
 
-  if [[ "$LIBCOLOR_NOCOLOR" == "yes" ]]
+  if [[ "$ENCHANT_COLOR" == "yes" ]]
   then
-    hilight="$LIBCOLOR_NOTICE_COLOR"
-    normal="$LIBCOLOR_NORMAL_COLOR"
+    hilight="$(libcolor_color NOTICE_COLOR)"
+    normal="$(libcolor_color NORMAL_COLOR)"
   else
-    hilight="$LIBCOLOR_BOLD"
-    normal="$LIBCOLOR_NORMAL"
+    hilight="$(libcolor_color BOLD)"
+    normal="$(libcolor_color NORMAL)"
   fi
 
   # replace instances of "@[...]" with $hilight...$normal in situ
@@ -57,7 +57,8 @@ function enchant_shell_print() {
   # functions) due to the in situ nature of the markup, otherwise we would have
   # to overly complicate the instruction printing function by printing one line
   # at a time
-  sed "s/@\[\([^]]*\)\]/$hilight\1$normal/g" "$file"
+  "${ENCHANT_CMD_SED[@]}" "s/@\[\([^]]*\)\]/$hilight\1$normal/g;" "$file" ||
+    return $ERR_FILE_ACCESS
 
   return $ERR_OK
 }
@@ -199,7 +200,7 @@ function enchant_shell_perform_help() {
     then
       libcolor_msg warn "No installer help for '$1'"
     else
-      return $ERR_FILE_NOT_FOUND
+      return $ERR_TARGET
     fi
   fi
 
@@ -244,12 +245,12 @@ function enchant_shell_keymap_list {
     for ((i=0; i < "$max"; i++))
     do
       printf "\n[%2d] %s\n" "$(($i + 1))" "${choices[i]}"
-    done | column | more
+    done | "${ENCHANT_CMD_COLUMN[@]}" | "${ENCHANT_CMD_PAGER[@]}"
   else
     for ((i=0; i < "$max"; i++))
     do
       printf "\n\t\t\t[%2d] %s\n" "$(($i + 1))" "${choices[i]}"
-    done | more
+    done | "${ENCHANT_CMD_PAGER[@]}"
   fi
 
   return $ERR_OK
@@ -286,7 +287,7 @@ function enchant_shell_keymap_prompt() {
   libcolor_notice "Please enter a number (0 to go back, * to exit): "
 }
 
-function enchant_shell_peform_keymap() {
+function enchant_shell_perform_keymap() {
   local choices=()
   local prefix=""
   local rc=""
@@ -297,7 +298,7 @@ function enchant_shell_peform_keymap() {
   while [[ "$rc" -ne "$ERR_KEYMAP_EXIT" ]]
   do
     # get the list of choices
-    choices=( "$(enchant_i18n_keymap_make_list $prefix)" )
+    choices=( $(enchant_i18n_keymap_make_list "$prefix") )
 
     # print the list of choices as a numbered menu
     enchant_shell_keymap_list "${choices[@]}"
@@ -308,7 +309,7 @@ function enchant_shell_peform_keymap() {
     # get user input and update the menu prefix
     # enchant_i18n_keymap_input will automatically set the keymap if the input
     # is for a specific keymap rather than a directory
-    prefix="$(enchant_i18n_keymap_input $prefix ${#choices[*]})"
+    prefix=$(enchant_i18n_keymap_input_handler "$prefix" "${#choices[@]}")
     rc="$?"
 
     # if we got bad input, just repeat the loop until we get good input
@@ -318,12 +319,15 @@ function enchant_shell_peform_keymap() {
       case "$rc" in
         # exit is handled by the loop condition itself, so we don't need to do
         # anything for this one
-        "$ERR_KEYMAP_EXIT" )
+        $ERR_KEYMAP_EXIT )
+          break
           ;;
         # if there was a problem with the input, let the user know and re-loop
-        "$ERR_KEYMAP_INPUT" )
-          echo "Error: You must enter a number corresponding to one"
-          echo "of the choices in the list above!"
+        $ERR_KEYMAP_INPUT )
+          "${ENCHANT_CMD_OUTPUT[@]}" \
+            "Error: You must enter a number corresponding to one" \
+            "of the choices in the list above!" ||
+              return $ERR_OUTPUT
           ;;
         * )
           # return any errors which weren't explicitly handled above
