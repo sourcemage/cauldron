@@ -56,10 +56,11 @@ function enchant_shell_command_prompt() {
   local next="next:$(enchant_get_next)"
   local num="$(enchant_modules_number)"
   local total="$(enchant_modules_total)"
+  local stats="$current $next $num/$total"
 
-  echo -n "[$current $next $num/$total] "
-  echo -n "For a list of commands, type "
-  libcolor_notice "help"
+  "${ENCHANT_CMD_OUTPUT[@]}" \
+    "[$stats] For a list of commands, type "$(libcolor_notice "help") ||
+      return $ERR_OUTPUT
 
   return $ERR_OK
 }
@@ -74,10 +75,10 @@ function enchant_shell_command_chroot() {
   return $ERR_OK
 }
 
-function_enchant_shell_command_list() {
+function enchant_shell_command_list_modules() {
   [[ $# -eq 0 ]] || return $ERR_INSTALLER_CMD
 
-  enchant_shell_list_modules
+  enchant_shell_perform_list_modules
   liberror_check_fatal
 
   return $ERR_OK
@@ -120,7 +121,7 @@ function enchant_shell_command_init() {
   return $ERR_OK
 }
 
-function enchant_shell_command_install {
+function enchant_shell_command_install() {
   local command="$1"
   shift
 
@@ -142,9 +143,9 @@ function enchant_shell_command_install {
       ;;
     "spells" )
       [[ $# -ne 0 ]] && return $ERR_INSTALLER_CMD
-      enchant_install_spell_sources
+      enchant_install_sources
       liberror_check_fatal
-      enchant_install_spell_caches
+      enchant_install_caches
       liberror_check_fatal
       ;;
     "sources" )
