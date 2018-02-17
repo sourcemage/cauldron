@@ -185,6 +185,11 @@ function enchant_shell_command_install() {
   return $ERR_OK
 }
 
+function enchant_shell_command_variable() {
+  enchant_shell_perform_variable "$@"
+  liberror_check_fatal
+}
+
 function enchant_shell_command_potion() {
   # TODO: not yet implemented
 
@@ -251,6 +256,10 @@ case "$command" in
     ;;
   "potion" )
     enchant_shell_command_potion "$@"
+    liberror_check_fatal
+    ;;
+  "config" )
+    enchant_shell_command_variable "$@"
     liberror_check_fatal
     ;;
   "help" )

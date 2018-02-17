@@ -112,6 +112,38 @@ function enchant_shell_modules() {
   return $ERR_OK
 }
 
+function enchant_shell_perform_variable() {
+  local list="$@"
+  local var=
+  local value=
+  local llist=
+
+  [[ "$#" -eq 0 ]] && list=( ${!ENCHANT_*} )
+
+  for var in "${list[@]}"
+  do
+    # check for user-desired globbing
+    if [[ "${var:$((${#var}-1)):1}" == "*" ]]
+    then
+      eval llist=( \${!${var}} )
+      for i in "${llist[@]}"
+      do
+        value=$(enchant_get_variable "$var")
+        liberror_check || return $?
+
+        libcolor_msg notice "$var: $value"
+      done
+    else
+      value=$(enchant_get_variable "$var")
+      liberror_check || return $?
+
+      libcolor_msg notice "$var: $value"
+    fi
+  done | "${ENCHANT_CMD_PAGER[@]}" || return $ERR_OUTPUT
+
+  return $ERR_OK
+}
+
 function enchant_shell_perform_todo() {
   local curstep="${1:-$(enchant_get_current)}"
 

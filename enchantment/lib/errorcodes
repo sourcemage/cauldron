@@ -28,6 +28,7 @@ liberror_add_error ERR_DIR_ACCESS "directory not accessible"
 liberror_add_error ERR_LOAD_LIBRARY "could not load enchantment library"
 liberror_add_error ERR_PREPARE "could not initialize enchantment"
 liberror_add_error ERR_CLEANUP "could not clean up after finishing"
+liberror_add_error ERR_VARIABLE "variable not found"
 
 # libenchantment module processing
 liberror_add_error ERR_GET_CURRENT "could not get current module"
