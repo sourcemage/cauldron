@@ -202,6 +202,17 @@ function enchant_shell_command_potion() {
 ## MAIN PROCESSING ##
 #####################
 
+while [[ "x$1" == "x-"* ]]
+do
+  case "${1#-}" in
+    "f" )
+      shift
+      CONFIG="$1"
+      shift
+      ;;
+  esac
+done
+
 command="$1"
 shift
 
