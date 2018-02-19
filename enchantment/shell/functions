@@ -131,13 +131,13 @@ function enchant_shell_perform_variable() {
         value=$(enchant_get_variable "$var")
         liberror_check || return $?
 
-        libcolor_msg notice "$var: $value"
+        libcolor_msg notice "$var: $(libcolor_info $value)"
       done
     else
       value=$(enchant_get_variable "$var")
       liberror_check || return $?
 
-      libcolor_msg notice "$var: $value"
+      libcolor_msg notice "$var: $(libcolor_info $value)"
     fi
   done | "${ENCHANT_CMD_PAGER[@]}" || return $ERR_OUTPUT
 

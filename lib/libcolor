@@ -83,6 +83,14 @@ libcolor_printf() {
 }
 
 #-------------------------------------------------------------------------------
+## @param info message
+##
+## Prints the given message in "info" color.
+##
+#-------------------------------------------------------------------------------
+function libcolor_info() { libcolor_printf "$LIBCOLOR_NORMAL_COLOR" "$@" ;}
+
+#-------------------------------------------------------------------------------
 ## @param notice message
 ##
 ## Prints the given message in "notice" color.

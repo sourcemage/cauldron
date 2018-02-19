@@ -1052,19 +1052,16 @@ function process_what() {
 
 function process_config() {
   local list="$@"
-  local pager=( $PAGER )
   local var=
   local value=
   local llist=
 
   [[ "$#" -eq 0 ]] && list=( ${!CAULDRON_*} )
 
-  [[ "${#pager[*]}" -eq 0 ]] && pager=( "${CAULDRON_CMD_CAT[@]}" )
-
   for var in "${list[@]}"
   do
     # check for user-desired globbing
-    if [[ "${var:$((${#var}-1)):1}" == "*" ]]
+    if [[ "${var%\*}" != "$var" ]]
     then
       eval llist=( \${!${var}} )
       for i in "${llist[@]}"
@@ -1072,15 +1069,15 @@ function process_config() {
         value=$(cauldron_get_variable "$var")
         liberror_check || return $?
 
-        libcolor_msg notice "$var: $value"
+        libcolor_msg notice "$var: $(libcolor_info $value)"
       done
     else
       value=$(cauldron_get_variable "$var")
       liberror_check || return $?
 
-      libcolor_msg notice "$var: $value"
+      libcolor_msg notice "$var: $(libcolor_info $value)"
     fi
-  done | "${pager[@]}" || return $ERR_OUTPUT
+  done | "${CAULDRON_CMD_PAGER[@]}" || return $ERR_OUTPUT
 
   return $ERR_OK
 }

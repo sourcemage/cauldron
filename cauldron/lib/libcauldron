@@ -129,7 +129,7 @@ function cauldron_get_variable() {
   do
     [[ -n "$var" ]] || return $ERR_TARGET
 
-    var=$(declare -p "$var")
+    var=$(declare -p "$var" 2> "$CAULDRON_NULL")
     printf "%s\n" "${var##*$1=}"
   done
 
