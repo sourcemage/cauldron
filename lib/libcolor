@@ -56,7 +56,7 @@ function libcolor_msg() {
   [[ -n "$func" ]] || return $?
 
   shift
-  eval libcolor_${func} "$@"
+  eval libcolor_${func} "\$@"
   printf "\n"
 }
 
