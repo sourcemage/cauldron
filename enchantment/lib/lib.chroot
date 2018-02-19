@@ -15,75 +15,248 @@
 ##
 #-------------------------------------------------------------------------------
 
+# global variables for tracking chroot users
+LIBCHROOT_PATHS=()
+LIBCHROOT_USERS=()
+
+# non-hardcoded /dev/null for output dumping
+ENCHANT_NULL="${ENCHANT_NULL:-/dev/null}"
+# non-hardcoded /dev/stdout for output dumping
+ENCHANT_STDOUT="${ENCHANT_STDOUT:-/dev/stdout}"
+
+# set LC_COLLATE to C so we don't get affected by the user's locale
+# when grepping, sorting, etc.
+export LC_COLLATE="C"
+
 #-------------------------------------------------------------------------------
 ## @param target dir to chroot into
 ##
 ## Prepares a chroot environment and exports necessary variables. For every
 ## target dir to chroot into, there should be one
-## [cauldron_chroot_init ... cauldron_chroot_done] pair.
+## [enchant_chroot_init ... enchant_chroot_done] pair.
 ##
 #-------------------------------------------------------------------------------
 function enchant_chroot_init() {
-  if [[ "$ENCHANT_CHROOT_INIT" -ne 1 ]]
+  local target="${1:-$ENCHANT_TARGET}"
+  local num="${#LIBCHROOT_PATHS[@]}"
+  local bind=""
+
+  # ensure an existing absolute path
+  target=$("${ENCHANT_CMD_READLINK[@]}" "$target") ||
+    return $ERR_CHROOT_INVALID
+
+  # if target is either null or not a valid directory, return an error
+  [[ -d "$target" ]] || return $ERR_CHROOT_INVALID
+
+  # if target matches the root directory, return an error
+  [[ "$target" == "/" ]] && return $ERR_CHROOT_ISROOT
+
+  # test if the target path is already loaded as a chroot -- if it is, just
+  # increase the count, but if it isn't do the bind mounts and set up the
+  # counts
+  local already_loaded=0
+  for p in "${LIBCHROOT_PATHS[@]}"
+  do
+    [[ "$p" == "$target" ]] && already_loaded=1
+  done
+  if [[ "$already_loaded" -eq 1 ]]
   then
-    # if target is somehow null, return an error
-    [[ -z "$ENCHANT_TARGET" ]] && return $ERR_CHROOT_UNDEF
+    for ((path=0; path < num; path++))
+    do
+      if [[ "$target" == "${LIBCHROOT_PATHS[path]}" ]]
+      then
+        ((LIBCHROOT_USERS[path]++))
+      fi
+    done
+  else
+    # bind mount the dev tree
+    for bind in dev dev/pts
+    do
+      "${ENCHANT_CMD_MOUNT_BIND[@]}" \
+        "$ENCHANT_ISO_PATH/$bind" \
+        "$target/$bind" ||
+          return $ERR_CHROOT_INIT
+    done
+    # mount procfs
+    "${ENCHANT_CMD_MOUNT[@]}" -t proc proc "$target/proc" ||
+      return $ERR_CHROOT_INIT
+    # mount sysfs
+    "${ENCHANT_CMD_MOUNT[@]}" -t sysfs sys "$target/sys" ||
+      return $ERR_CHROOT_INIT
+    # mount runfs
+    "${ENCHANT_CMD_MOUNT[@]}" -t tmpfs run "$target/run" ||
+      return $ERR_CHROOT_INIT
 
-    # bind the needed mounts
-    mount --bind "$ENCHANT_ISO_PATH/dev" "$ENCHANT_TARGET/dev" ||
-      return $ERR_CHROOT_INIT
-    mount --bind "$ENCHANT_ISO_PATH/dev/pts" "$ENCHANT_TARGET/dev/pts" ||
-      return $ERR_CHROOT_INIT
-    mount --bind "$ENCHANT_ISO_PATH/proc" "$ENCHANT_TARGET/proc" ||
-      return $ERR_CHROOT_INIT
+    # add the target path to the list of chrooted paths
+    LIBCHROOT_PATHS[num]="$target"
+    # set the user count to 1
+    LIBCHROOT_USERS[num]=1
+  fi
 
-    # export that the chroot is successfully constructed
-    export ENCHANT_CHROOT_INIT=1
+  # test if the target path matches the currently defined chroot command target
+  # path -- if it doesn't, we need to set the chroot command
+  if [[ "$num" -eq 0 ||
+    "$target" == "${ENCHANT_CHROOT[${num}-1]}" ]]
+  then
+    # everything went OK, so export the chroot definitions
+    ENCHANT_CHROOT=( "${ENCHANT_CMD_CHROOT[@]}" "$target" )
   fi
 
   return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
+## @param target dir to chroot into (optional)
 ##
 ## Cleans up the chroot environment after it is no longer needed
 ##
 #-------------------------------------------------------------------------------
 function enchant_chroot_done() {
-  if [[ "$ENCHANT_CHROOT_INIT" -eq 1 ]]
-  then
-    # if target is somehow null, return an error
-    [[ -z "$ENCHANT_TARGET" ]] && return $ERR_CHROOT_UNDEF
+  local target="${1:-$ENCHANT_TARGET}"
+  local index=""
 
-    # unmount the bind mounts
-    umount "$ENCHANT_TARGET/proc" || return $ERR_CHROOT_DONE
-    umount "$ENCHANT_TARGET/dev/pts" || return $ERR_CHROOT_DONE
-    umount "$ENCHANT_TARGET/dev" || return $ERR_CHROOT_DONE
+  # ensure an existing absolute path
+  target=$("${ENCHANT_CMD_READLINK[@]}" "$target") || return $ERR_TARGET
 
-    # clear the chroot definitions
-    unset ENCHANT_CHROOTINIT
-  fi
+  # if target doesn't point to a valid directory, return an error
+  [[ -d "$target" ]] || return $ERR_CHROOT_INVALID
+
+  for ((index=0; index < "${#LIBCHROOT_PATHS[@]}"; index++))
+  do
+    if [[ "$target" == "${LIBCHROOT_PATHS[index]}" ]]
+    then
+      # remove one "lock" for each time cauldron_chroot_done is called until we
+      # are down to the last one, and then do the actual cleanup of the chroot
+      if [[ "${LIBCHROOT_USERS[index]}" -gt 1 ]]
+      then
+        LIBCHROOT_USERS[index]=$((LIBCHROOT_USERS[index]-1))
+      else
+        # unmount the chroot mount points
+        "${ENCHANT_CMD_UNMOUNT_RECURSIVE[@]}" "$target"/* ||
+          return $ERR_CHROOT_DONE
+
+        # clear the chroot definitions
+        unset ENCHANT_CHROOT
+        unset LIBCHROOT_USERS[index]
+        unset LIBCHROOT_PATHS[index]
+      fi
+    fi
+  done
 
   return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
+##
+## Forcefully cleans up all known chroot paths (only to be used before a forced
+## exit from the main program due to a non-recoverable error condition)
+##
+#-------------------------------------------------------------------------------
+function enchant_chroot_cleanup() {
+  local target=
+
+  for target in "${LIBCHROOT_PATHS[@]}"
+  do
+    # unmount the chroot mount points
+    "${ENCHANT_CMD_UNMOUNT_RECURSIVE[@]}" "$target"/* ||
+      return $ERR_CHROOT_DONE
+  done
+
+  # clear the chroot definitions
+  unset LIBCHROOT_USERS
+  unset LIBCHROOT_PATHS
+  unset ENCHANT_CHROOT
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+## @param -q [quiet -- don't output anything, just test] (optional)
+## @param chroot path (optional)
+##
+## Determines the current chroot. If called with no parameters, it will return
+## (echo) the path of the current chroot. If provided the chroot path parameter,
+## it will test whether the provided path matches the current chroot, and will
+## return an error if they don't match.
+##
+#-------------------------------------------------------------------------------
+function enchant_chroot_current() {
+  local num="${#LIBCHROOT_PATHS[*]}"
+  local current=""
+  local target=""
+  local match=0
+  local quiet=0
+
+  # check if we should disable output
+  if [[ "$1" == "-q" ]]
+  then
+    quiet=1
+    shift
+  fi
+  target="$1"
+
+  # use the correct index into the array (indexing starts from 0, but count of
+  # elements starts from 1)
+  [[ "$num" -gt 0 ]] && ((num--))
+  current="${LIBCHROOT_PATHS[num]}"
+
+  # if there is no current chroot, then return immediately (no sense testing if
+  # anything matches the currently defined chroot when there is none)
+  [[ -z "$current" ]] && return $ERR_CHROOT_CURRENT
+
+  # make sure that the chroot is also present in LIBCHROOT_USERS
+  # if it is not present in LIBCHROOT_USERS, then there is something wrong and
+  # the chroot should probably be reloaded
+  [[ "${LIBCHROOT_USERS[num]}" -ge 1 ]] || return $ERR_CHROOT_CURRENT
+
+  if [[ -n "$target" ]]
+  then
+    # test if the target path doesn't match the currently defined chroot command
+    # target path -- if it doesn't match, return an error
+    [[ "$target" != "$current" ]] && return $ERR_CHROOT_CURRENT
+  fi
+
+  # output the currently loaded chroot
+  [[ "$quiet" -ne 1 ]] && echo "$current"
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+## @param -q (optional)
+## @param -s (optional)
 ## @param command plus args to execute inside the chroot
 ##
 ## Executes the command given as the first parameter and any args that follow
-## inside the chroot constructed by enchant_chroot_init.
+## inside the chroot constructed by enchant_chroot_init. If the -q flag is
+## passed, the command will be "quieted", meaning that messages from enchantment
+## will be disabled. If the -s flag is passed, the command will run silently,
+## where even the normal output of the chrooted command will be suppressed. The
+## outupt follows the general pattern of configurable output, meaning that
+## ENCHANT_NULL and ENCHANT_STDOUT will be used as the targets.
 ##
 #-------------------------------------------------------------------------------
 function enchant_chroot() {
-  if [[ "$ENCHANT_CHROOT_INIT" -eq 1 ]]
-  then
-    # if target is somehow null, return an error
-    [[ -z "$ENCHANT_TARGET" ]] && return $ERR_CHROOT_UNDEF
+  local stdout="$ENCHANT_STDOUT"
 
-    "$ENCHANT_CHROOT" "$ENCHANT_TARGET" "$@" || return $ERR_CHROOT_EXEC
-  else
-    return $ERR_CHROOT_NOT_INIT
-  fi
+  case "${1#-}" in
+    q)
+      verbose="no"
+      shift
+      ;;
+    s)
+      verbose="no"
+      stdout="$ENCHANT_NULL"
+      shift
+      ;;
+  esac
+
+  enchant_chroot_current -q || return $ERR_CHROOT_CURRENT
+
+  enchant_verbose "${ENCHANT_CHROOT[@]} $@"
+
+  PATH="/sbin:/bin:/usr/sbin:/usr/bin"
+  "${ENCHANT_CHROOT[@]}" "$@" @> "$stdout" || return $ERR_CHROOT_EXEC
 
   return $ERR_OK
 }

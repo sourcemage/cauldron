@@ -23,6 +23,7 @@ liberror_add_error ERR_MK_DIR "could not make directory"
 liberror_add_error ERR_DIR_EXISTS "directory already exists"
 liberror_add_error ERR_FILE_ACCESS "file not accessible"
 liberror_add_error ERR_DIR_ACCESS "directory not accessible"
+liberror_add_error ERR_TARGET "invalid target parameter"
 
 # libenchantment base
 liberror_add_error ERR_LOAD_LIBRARY "could not load enchantment library"
@@ -39,11 +40,14 @@ liberror_add_error ERR_SET_NEXT "could not set next module"
 liberror_add_error ERR_SET_PREV "could not set previous module"
 
 # lib.chroot
-liberror_add_error ERR_CHROOT_INIT "could not initialized chroot"
+liberror_add_error ERR_CHROOT_INVALID "chroot target is undefined or invalid"
+liberror_add_error ERR_CHROOT_ISROOT "chroot target equals the host root fs"
+liberror_add_error ERR_CHROOT_INIT "could not initialize chroot"
 liberror_add_error ERR_CHROOT_NOT_INIT "chroot not initialized"
 liberror_add_error ERR_CHROOT_UNDEF "chroot command undefined"
-liberror_add_error ERR_CHROOT_EXEC "could not execute chroot command"
+liberror_add_error ERR_CHROOT_CURRENT "chroot not current or not defined"
 liberror_add_error ERR_CHROOT_DONE "could not properly clean up chroot"
+liberror_add_error ERR_CHROOT_EXEC "could not execute chroot command"
 
 # lib.i18n keymap
 liberror_add_error ERR_KEYMAP_EXIT "keymap processing finished"
