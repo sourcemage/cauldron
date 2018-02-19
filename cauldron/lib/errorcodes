@@ -32,6 +32,7 @@ liberror_add_error ERR_RM_FILE "could not remove file"
 liberror_add_error ERR_LINK_FILE "could not symlink file"
 liberror_add_error ERR_URL_DL "could not download from url"
 liberror_add_error ERR_TARGET "invalid target parameter"
+liberror_add_error ERR_OUTPUT "could not write output"
 
 # libcauldron base
 liberror_add_error ERR_LOAD_LIBRARY "problem loading library"
