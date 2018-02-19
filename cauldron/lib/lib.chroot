@@ -223,11 +223,17 @@ function cauldron_chroot_current() {
 }
 
 #-------------------------------------------------------------------------------
+## @param -q (optional)
+## @param -s (optional)
 ## @param command plus args to execute inside the chroot
 ##
 ## Executes the command given as the first parameter and any args that follow
-## inside the cauldron chroot defined by cauldron_chroot_init. Also accepts
-## optional switches (as first parameters) to disable output.
+## inside the chroot constructed by enchant_chroot_init. If the -q flag is
+## passed, the command will be "quieted", meaning that messages from enchantment
+## will be disabled. If the -s flag is passed, the command will run silently,
+## where even the normal output of the chrooted command will be suppressed. The
+## outupt follows the general pattern of configurable output, meaning that
+## ENCHANT_NULL and ENCHANT_STDOUT will be used as the targets.
 ##
 #-------------------------------------------------------------------------------
 function cauldron_chroot() {
