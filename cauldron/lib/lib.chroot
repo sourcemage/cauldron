@@ -74,7 +74,7 @@ function cauldron_chroot_init() {
       "$target/dev" ||
         return $ERR_CHROOT_INIT
     # mount procfs
-    "${CAULDRON_CMD_MOUNT[@]}" -t procfs proc "$target/proc" ||
+    "${CAULDRON_CMD_MOUNT[@]}" -t proc proc "$target/proc" ||
       return $ERR_CHROOT_INIT
     # mount sysfs
     "${CAULDRON_CMD_MOUNT[@]}" -t sysfs sys "$target/sys" ||
@@ -154,7 +154,7 @@ function cauldron_chroot_cleanup() {
   for target in "${LIBCHROOT_PATHS[@]}"
   do
     # unmount the chroot mount points
-    "${CAULDRON_CMD_UNMOUNT_RECURSIVE[@]}" "$path"/* ||
+    "${CAULDRON_CMD_UNMOUNT_RECURSIVE[@]}" "$target"/* ||
       return $ERR_CHROOT_DONE
   done
 
@@ -209,7 +209,7 @@ function cauldron_chroot_current() {
   then
     # test if the target path doesn't match the currently defined chroot command
     # target path -- if it doesn't match, return an error
-    [[ "$target" != "$current" ]] || return $ERR_CHROOT_CURRENT
+    [[ "$target" != "$current" ]] && return $ERR_CHROOT_CURRENT
   fi
 
   # output the current chroot path if not quieted
