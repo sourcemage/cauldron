@@ -79,6 +79,30 @@ function enchant_load_library() {
 }
 
 #-------------------------------------------------------------------------------
+## @param messages
+##
+## Prints informational messages to the console, but only if CAULDRON_VERBOSE
+## is enabled.
+##
+#-------------------------------------------------------------------------------
+function enchant_verbose() {
+  [[ "$ENCHANT_VERBOSE" == "yes" ]] &&
+    libcolor_msg info "$@"
+}
+
+#-------------------------------------------------------------------------------
+## @param messages
+##
+## Prints error messages to the console, but only if CAULDRON_VERBOSE is
+## enabled.
+##
+#-------------------------------------------------------------------------------
+function enchant_verbose_error() {
+  [[ "$ENCHANT_VERBOSE" == "yes" ]] &&
+    libcolor_msg error "$@"
+}
+
+#-------------------------------------------------------------------------------
 # enchant includes
 #-------------------------------------------------------------------------------
 enchant_load_library "lib.chroot"
