@@ -39,6 +39,7 @@ export LC_COLLATE="C"
 function cauldron_chroot_init() {
   local target="${1:-$CAULDRON_BUILD}"
   local num="${#LIBCHROOT_PATHS[@]}"
+  local bind=
 
   # ensure a direct and absolute path
   target=$("${CAULDRON_CMD_READLINK[@]}" "$target") ||
@@ -69,10 +70,13 @@ function cauldron_chroot_init() {
     done
   else
     # bind mount the dev tree
-    "${CAULDRON_CMD_MOUNT_BIND[@]}" \
-      "$CAULDRON_HOST/dev" \
-      "$target/dev" ||
-        return $ERR_CHROOT_INIT
+    for bind in dev dev/pts
+    do
+      "${CAULDRON_CMD_MOUNT_BIND[@]}" \
+        "$CAULDRON_HOST/$bind" \
+        "$target/$bind" ||
+          return $ERR_CHROOT_INIT
+    done
     # mount procfs
     "${CAULDRON_CMD_MOUNT[@]}" -t proc proc "$target/proc" ||
       return $ERR_CHROOT_INIT
