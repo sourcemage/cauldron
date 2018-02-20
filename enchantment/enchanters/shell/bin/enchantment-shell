@@ -220,7 +220,89 @@ function enchant_shell_command_potion() {
 
   return $ERR_OK
 }
-#------------------------------------------------------------------------------
+#-------------------------------------------------------------------------------
+
+#-------------------------------------------------------------------------------
+function enchant_shell_command_help() {
+  "${ENCHANT_CMD_CAT[@]}" << EndUsage
+Usage: $selfname [-h | --help] [-v | --version] [-f FILE | --config FILE]
+                [COMMAND [SUBCOMMAND ...]]
+OPTIONS
+  -f FILE
+  --config FILE
+          use config file FILE, overriding any value of the CONFIG_FILE
+          env var
+  -h
+  --help
+          displays the present help/usage information (see the manpage
+          enchantment.8 for more detail)
+  -v
+  --version
+          displays the current version of $selfname
+
+MAIN COMMANDS
+  welcome
+          present the welcome info
+  list
+          show a list of all available modules, in order
+  config VARIABLE [ VARIABLE2 [ VARIABLE 3 ... ] ]
+          show the value of enchantment environment variable VARIABLE for each
+          variable name passed as arguments
+  jump MODULE
+          jump to module MODULE
+  keymap
+          set the current keymap via a menu of keymaps to choose from
+  chroot
+          chroot into the target directory (ENCHANT_TARGET by default)
+  next
+          proceed to the next module
+  prev
+          return to the previous module
+  todo [MODULE]
+          show what needs to be done for module MODULE (current module if none
+          given)
+  select SUBCOMMAND
+          sets items to install via the install command
+          the SUBCOMMAND can be one of:
+
+          caches
+                  select built spells (packages) to install into the target
+                  (ENCHANT_TARGET)
+          sources
+                  select spell (package) sources to install into the target
+                  (ENCHANT_TARGET)
+  install SUBCOMMAND
+          installs a given component into the target (ENCHANT_TARGET)
+          the SUBCOMMAND can be one of:
+
+          caches
+                  install selected built spells (packages) into the target
+                  (ENCHANT_TARGET)
+          sources
+                  install selected spell (package) sources into the target
+                  (ENCHANT_TARGET)
+          system
+                  install a basesystem into the target (ENCHANT_TARGET)
+          isokernel
+                  install the iso kernel and modules into the target
+                  (ENCHANT_TARGET)
+          kernel
+                  install a configured kernel into the target (ENCHANT_TARGET)
+  potion
+          back
+                  goes back in the potion history (undo)
+          forward
+                  goes forward in the potion history (redo)
+          bottle [potion_file]
+                  bottle a potion -- saves metadata from the current install
+                  session so that it can be restored/copied later (defaults to
+                  ENCHANT_POTION_BOTTLE)
+          apply [potion_file]
+                  restore from the bottled (saved) potion potion_file (defaults
+                  to ENCHANT_POTION_BOTTLE)
+EndUsage
+}
+#-------------------------------------------------------------------------------
 
 
 #####################
@@ -234,6 +316,10 @@ do
       shift
       CONFIG="$1"
       shift
+      ;;
+    "h" )
+      enchant_shell_command_help
+      exit $?
       ;;
     "v" )
       enchant_shell_command_version
