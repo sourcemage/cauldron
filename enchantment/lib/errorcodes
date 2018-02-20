@@ -20,10 +20,18 @@
 #-------------------------------------------------------------------------------
 # base error codes
 liberror_add_error ERR_MK_DIR "could not make directory"
+liberror_add_error ERR_MK_FILE "could not create file"
+liberror_add_error ERR_WRITE_FILE "could not write file"
 liberror_add_error ERR_DIR_EXISTS "directory already exists"
 liberror_add_error ERR_FILE_ACCESS "file not accessible"
 liberror_add_error ERR_DIR_ACCESS "directory not accessible"
+liberror_add_error ERR_CP_FILE "could not copy file"
+liberror_add_error ERR_CHMOD_FILE "could not chmod file"
+liberror_add_error ERR_RM_FILE "could not remove file"
+liberror_add_error ERR_SYMLINK_FILE "could not symlink file"
+liberror_add_error ERR_SYMLINK_DIR "could not symlink dir"
 liberror_add_error ERR_TARGET "invalid target parameter"
+liberror_add_error ERR_OUTPUT "could not write output"
 
 # libenchantment base
 liberror_add_error ERR_LOAD_LIBRARY "could not load enchantment library"
