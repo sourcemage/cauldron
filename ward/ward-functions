@@ -42,7 +42,7 @@ fi
 
 function ward_print_usage() {
   cat << EndUsage
-Usage: $(basename $0) [-n]
+Usage: $(basename $0) [-n] [-p PREFIX] [cauldron | enchantment]
 
 Calls the functions delinter to check whether there are functions called in the
 known cauldron and enchantment source files that aren't defined in the
@@ -55,12 +55,23 @@ function ward_usage() {
   exit $ERR_FATAL
 }
 
-while [[ "$#" -gt 0 ]]
+PREFIXES=()
+PREFIX=
+while [[ -n "$@" ]]
 do
   case "$1" in
     # check if color should be disabled
     "-n")
       ward_color "no"
+      ;;
+    # function name prefix to check against
+    "-p")
+      PREFIX="${1#-?}"
+      if [ -z "$PREFIX" ] ;then
+        shift
+        PREFIX="$1"
+      fi
+      PREFIXES[${#PREFIXES[@]}+1]="$PREFIX"
       ;;
     # check if the user only wants to process cauldron
     "cauldron")
@@ -78,6 +89,12 @@ do
   shift
 done
 
+if [[ "${#PREFIXES[@]}" -gt 0 ]]
+then
+  PREFIX=$(printf '%s\|' "${PREFIXES[@]}")
+  PREFIX="\\(${PREFIX%\\|}\\)"
+fi
+
 PROCESS_CAULDRON="${PROCESS_CAULDRON:-yes}"
 PROCESS_ENCHANTMENT="${PROCESS_ENCHANTMENT:-yes}"
 
@@ -89,7 +106,7 @@ then
   # check cauldron files
   libcolor_notice "Checking for undefined cauldron functions..."
   echo ""
-  ward_functions -p "$cauldron" -l "$cauldron/lib" "${sources[@]}"
+  ward_functions -P "$PREFIX" -p "$cauldron" -l "$cauldron/lib" "${sources[@]}"
 fi
 
 if [[ "$PROCESS_ENCHANTMENT" == "yes" ]]
@@ -101,7 +118,7 @@ then
   # check enchantment files
   libcolor_notice "Checking for undefined enchantment functions..."
   echo ""
-  ward_functions -p "$enchantment" -l "$enchantment/lib" -e "$enchantment/$enchanter" "${sources[@]}"
+  ward_functions -P "$PREFIX" -p "$enchantment" -l "$enchantment/lib" -e "$enchantment/$enchanter" "${sources[@]}"
 fi
 
 #-------------------------------------------------------------------------------

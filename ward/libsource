@@ -410,6 +410,7 @@ function ward_error_variables() {
 ## @param -p base path to sources (optional)
 ## @param -l base path to libraries (optional)
 ## @param -e path to enchanter functions (optional)
+## @param -P prefix to check function names for (optional)
 ## @param source1 [source2 source3...] (required)
 ##
 ## Tests whether any functions used in source1 (source2, source3, etc.) are
@@ -418,7 +419,8 @@ function ward_error_variables() {
 ## found in via libcolor_file. Both base paths default to the current working
 ## directory if not supplied. Enchanter-specific functions are tested against
 ## the corresponding enchanter functions file, if supplied as an argument to the
-## -e option.
+## -e option. If a prefix is given via -P, then only functions beginning with
+## the given prefix are checked.
 ##
 #-------------------------------------------------------------------------------
 function ward_functions() {
@@ -453,6 +455,10 @@ function ward_functions() {
         epath="${2%/}"
         shift 2
         ;;
+      "P")
+        prefix="${2}"
+        shift 2
+        ;;
       *)
         libcolor_error "error: invalid function parameter $1"
         echo ""
@@ -480,8 +486,7 @@ function ward_functions() {
   local aznum="[[:alnum:]]"
   local az_num="[[:alnum:]_]"
   local space="[[:space:]]"
-  #local needle="^${space}*${az}${aznum}_${az_num}\+\b[^[:punct:]]\?"
-  local needle="^${space}*${az}${aznum}\+_${az_num}\+$space\+"
+  local needle="^${space}*${prefix:-${az}${aznum}\+_}${az_num}\+$space\+"
   while [[ $# -gt 0 ]]
   do
     file="$1"
@@ -506,7 +511,7 @@ function ward_functions() {
       local mangle="$function"
 
       # check against the prefixes, one at a time
-      while $(echo $mangle | grep -q '^[a-z][a-z0-9]*_[a-z0-9_]\+')
+      while $(echo $mangle | grep -q "^${az}${aznum}*_${az_num}\+")
       do
         prefix="${mangle%%_*}"
 
@@ -528,21 +533,20 @@ function ward_functions() {
         esac
 
         # check for the function in a library file matching the prefix
-        if [[ -f "$lpath/lib$prefix" ]]
-        then
-          if grep -q "^function $function() {" "$lpath/lib$prefix"
+        for lib in "$lpath/lib"{,.}"$prefix"
+        do
+          if [[ -f "$lib" ]]
           then
-            matched="yes"
-            break
+            if grep -q "^function $function() {" "$lib"
+            then
+              matched="yes"
+              break
+            fi
           fi
-        elif [[ -f "$lpath/lib.$prefix" ]]
-        then
-          if grep -q "^function $function() {" "$lpath/lib.$prefix"
-          then
-            matched="yes"
-            break
-          fi
-        elif [[ -f "${epath:+$epath/functions}" ]]
+        done
+
+        # check for the function in a given enchanter function file
+        if [[ -f "${epath:+$epath/functions}" ]]
         then
           if grep -q "^function $function() {" "$epath/functions"
           then
@@ -557,13 +561,17 @@ function ward_functions() {
 
       if [[ "$matched" != "yes" ]]
       then
-        if [[ -f "$lpath/lib.${function#*_}" ]]
-        then
-          if grep -q "^function $function() {" "$lpath/lib.${function#*_}"
+        for lib in "$lpath/lib"{.,}"${function#*_}"
+        do
+          if [[ -f "$lib" ]]
           then
-            matched="yes"
+            if grep -q "^function $function() {" "$lib"
+            then
+              matched="yes"
+              break
+            fi
           fi
-        fi
+        done
       fi
 
       # if the function isn't defined in the corresponding file, warn the user
