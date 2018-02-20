@@ -198,6 +198,12 @@ function enchant_shell_command_variable() {
   liberror_check_fatal
 }
 
+function enchant_shell_command_select() {
+  # TODO: not yet implemented
+
+  return $ERR_OK
+}
+
 function enchant_shell_command_potion() {
   local command="$1"
   shift
@@ -393,6 +399,10 @@ case "$command" in
     ;;
   "welcome" )
     enchant_shell_perform_welcome
+    liberror_check_fatal
+    ;;
+  "select" )
+    enchant_shell_command_select "$@"
     liberror_check_fatal
     ;;
   "install" )
