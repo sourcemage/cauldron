@@ -24,8 +24,27 @@ ENCHANT_INSTALLER="shell"
 selfname="${0##*/}"
 
 
+#-------------------------------------------------------------------------------
+function enchant_shell_command_version() {
+  local ver="$ENCHANT_VERSION"
+  local isover="$ENCHANT_ISO_VERSION"
+  local verpath="$ENCHANT_DATA/version"
+  local sorceryver="sorcery"
+  local grim="grimoire"
+  local grimver="grimoire_version"
 
-#------------------------------------------------------------------------------
+  [ -r "$verpath/$sorceryver" ] && sorceryver=$(< "$verpath/$sorceryver")
+  [ -r "$verpath/$grim" ] && grim=$(< "$verpath/$grim")
+  [ -r "$verpath/$grimver" ] && grimver=$(< "$verpath/$grimver")
+
+  "${ENCHANT_CMD_CAT[@]}" << EndVersion
+    ISO version $isover
+    Sorcery version $sorceryver
+    Grimoire ${grim// /,} version ${grimver// /,}
+    $selfname version $ver
+EndVersion
+}
+
 function enchant_shell_command_keymap() {
   [[ "$#" -le 1 ]] || return $ERR_INSTALLER_CMD
 
@@ -215,6 +234,10 @@ do
       shift
       CONFIG="$1"
       shift
+      ;;
+    "v" )
+      enchant_shell_command_version
+      exit $?
       ;;
   esac
 done
