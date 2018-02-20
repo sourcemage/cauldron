@@ -1,9 +1,9 @@
 @[disk-format step]
 Now create filesystems on the partitions you just created. Below is a list
-of example commands for the different types of filesystems supported on this
-ISO. The partitions given are examples. Be sure to format all the partitions
-you need.
+of example commands for different types of filesystems. The partitions given
+are examples only. Be sure to format all the partitions you need.
 
+Examples:
   @[mkfs.xfs /dev/sda1]
   @[mke2fs /dev/sda2]
   @[mkreiserfs /dev/sda3]
@@ -11,10 +11,5 @@ you need.
 
 You probably want a swap partition:
   @[mkswap /dev/sda5]
-
-The reiser4 tools are provided on the ISO. However, the ISO kernel does not
-yet support reiser4, so although you can create reiser4 filesystems and
-check ones already created, you cannot yet mount them. Only make a reiser4
-filesystem if you really know what you are doing. (@[mkfs.reiser4])
 
 Type @[next] to go to the next step.

@@ -1,0 +1,21 @@
+@[spell-caches step]
+You may now select the spell caches (built packages) you would like installed
+that are provided on the ISO. You can accomplish this either using enchantment
+or by directly editing @[$ENCHANT_TMP/spell_caches]. The iso caches available
+for installation are present in /var/cache/sorcery/.
+
+enchantment:
+  @[enchantment select caches] # presents a text menu for toggling caches
+  @[enchantment select caches add glob] # adds files matching the pattern
+  @[enchantment select caches del glob] # removes files matching the pattern
+
+manually:
+  @[$EDITOR "$ENCHANT_TMP/spell_caches"]
+
+You can of course use any editor you like, in case you haven't set $EDITOR.
+
+You can re-edit @[$ENCHANT_TMP/spell_caches] any time during the install session
+and your changes will be remembered if you have potion functionality enabled.
+Likewise, you may always re-run @[enchantment select caches] at any time.
+
+When you are finished selecting your spell caches, type @[next].

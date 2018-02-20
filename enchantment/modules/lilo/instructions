@@ -1,11 +1,10 @@
 @[lilo step]:
-Edit @[/mnt/root/etc/lilo.conf] to your setup (especially, you'll want to change
-the boot= and root= entries to point to your partitions, and you'll need to
-set the kernel version correctly).
+Edit @[$ENCHANT_TARGET/etc/lilo.conf] to fit your setup (especially, you'll
+want to change the boot= and root= entries to point to your partitions, and
+you'll need to set the kernel version correctly).
 
-To run lilo properly, it needs to be chroot'ed into the new system. This needs
-some directories (/dev, /proc), so we provide a wrapper to set those up for
-you and clean them up again when you're done.
+To run lilo properly, you need to chroot into the new system and then install
+lilo.
 
 chroot into the installed system:
   @[enchantment chroot]

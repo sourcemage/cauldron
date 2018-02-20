@@ -1,22 +1,23 @@
 @[edit-confs step]
-Now, we need to set up our partitions so the system will find them again on
-bootup. For this, edit @[/mnt/root/etc/fstab] and add your partitions.
+(For editors available on this iso, type @[list-editors])
 
-(For editors available on this iso, do @[help editors])
+Partitions and mounts: @[$ENCHANT_TARGET/etc/fstab]
+Edit fstab for your partitions and mounts so your system will find them again
+on bootup.
 
-Also, take a look at the files in @[/mnt/root/etc/sysconfig/] and edit any you
+Also, take a look at the files in @[$ENCHANT_TARGET/etc/sysconfig/] and edit any you
 feel should be different. Especially, you should make sure the @[facilities] file
 looks correct, and if you selected a custom keymap at the start of this
 install, you'll need to edit the file called @[keymap] in that directory
-(do @[ cat /tmp/selected-keymap] to see which you chose).
+(type @[cat /tmp/enchantment/keymap] to see which you chose).
 
-You may also wish to create @[/mnt/root/etc/hostname] with a hostname for your
-system, and you can set up networking by editing the
-@[/mnt/root/etc/network/interfaces] file.
+Hostname: @[$ENCHANT_TARGET/etc/hostname]
+If you wish to set a hostname for your system, add it here.
 
-Finally, you can choose to set your timezone by doing the following:
+Networking: @[/mnt/root/etc/network/interfaces]
+Edit this file (@[man interfaces] for help) to set your networking.
+
+Timezone: (replace "SOME/TIMEZONE" with your actual timezone)
   @[enchantment chroot ln -sf /usr/share/zoneinfo/SOME/TIMEZONE /etc/localtime]
-
-Just remember to replace "SOME/TIMEZONE" with your actual timezone.
 
 Type @[next] to go to the next step.

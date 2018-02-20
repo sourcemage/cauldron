@@ -1,7 +1,7 @@
 @[disk-mount step]
-You need to mount the filesystems. We'll be installing to /mnt/root,
-so mount the filesystem that will be / onto /mnt/root. The partitions given are
-only examples. Replace them with the partitions you used in @[disk-format].
+You need to mount the filesystems you will use. Please be sure to mount your
+intended / and all sub-mounts (e.g. /usr) relative to the installer target mount:
+   @[$ENCHANT_TARGET] (e.g., mount /usr at @[$ENCHANT_TARGET]/usr)
 
 Examples:
   @[mount -t xfs /dev/sda1 $ENCHANT_TARGET]
@@ -10,16 +10,11 @@ Examples:
   @[mount -t reiserfs /dev/sda3 $ENCHANT_TARGET/usr]
   @[mount -t ext3 /dev/sda3 $ENCHANT_TARGET/var]
 
-Then mount any other partitions you made at the proper subdirectories.
-You'll probably need to make directories for the other mount points first
-(assuming you formatted the / partition). Make sure you mount / first.
+The above are examples only. Replace them with the partitions and filesystem
+types you used in the @[disk-format] step.
 
-For example, if you created /dev/sda2 for /usr:
-@[ mkdir /mnt/root/usr]
-@[ mount -t ext2 /dev/sda2 /mnt/root/usr]
-(or, for example, if it's a jfs partition)
-@[ mount -t jfs /dev/sda1 /mnt/root]
+Don't forget to mount @[all] the (system) partitions you plan to use under
+@[$ENCHANT_TARGET]. Also, you may want to turn on swap via e.g.
+  @[swapon /dev/sda5]
 
-Don't forget to mount @[all] the (system) partitions you plan to use.
-Also, you may want to turn on swap via e.g.
-@[ swapon /dev/sda2]
+Type @[next] to go to the next step.

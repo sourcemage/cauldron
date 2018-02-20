@@ -1,23 +1,21 @@
 @[install step]
 It is time to install all of the spells to your system. There are two ways that
-you can do this: manually, and using the @[smgl-enchant] script. Note
-that system.tar.bz2 is @[required] for a new install.
+you can do this: manually, and using @[enchantment install spells].
+
+enchantment method (uses $ENCHANT_TMP/spells):
+  @[enchantment install spells]
+
+@[enchantment install spells] will by default install all spells found in
+$ENCHANT_TMP/spells. You can also specify a command-line argument to a
+cache file with a specified path to install a single cache file instead.
 
 manual method:
   @[tar -C $ENCHANT_TARGET -xjvf /system.tar.bz2]
   @[cd /var/cache/sorcery]
   @[tar -C $ENCHANT_TARGET -xvjf SPELL]
 
-Remember to replace "SPELL" with the filename of the spell cache to install. As
-an example, to install lilo:
-@[ tar jxf /var/cache/sorcery/lilo-22.8-i486-pc-linux-gnu.tar.bz2 -C /mnt/root]
+Remember to replace "SPELL" with the filename of the spell cache to install.
+As an example, to install lilo:
+  @[tar -xvf /var/cache/sorcery/lilo-VERSION-ARCH.tar.bz2 -C $ENCHANT_TARGET]
 
-enchantment method (uses $ENCHANT_TMP/spells):
-  @[enchantment install spells]
-
-Enchant can also take a command-line argument to a cache file with a specified
-path. This enables you to run enchant on any cache file you choose, from any
-directory, without the tedium of typing in the tar line as given in the "manual
-method" section. See @[ smgl-enchant] for more information.
-
-When the step finishes type @[next].
+Type @[next] to proceed to the next step.

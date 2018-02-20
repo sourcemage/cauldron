@@ -1,17 +1,17 @@
 @[boot-loader step]
-Now it is time to set up a boot loader. Since this is the x86 ISO, you can
-set up either grub or lilo. Use whichever you please, but only use one of them.
-It is assumed that whichever boot loader you will set up here was selected and
-installed during the @[select-spells] and @[install] steps.
+Now it is time to set up a boot loader. It is assumed that whichever boot
+loader you will set up here was selected and installed during the
+@[select-spells] and @[install] steps.
 
 Once you have decided which boot loader to set up, you need to configure the
 boot loader. After you finish configuring your boot loader, you need to
-"install" it.  This involves running the boot loader, which will install itself
+"install" it. This involves running the boot loader, which will install itself
 to the location you specified in the config file.
 
-For lilo instructions, type @[todo lilo].
+For instructions for your bootloader, type @[todo name]
+where @[name] is the spell name of your bootloader (e.g. lilo, grub2, etc.).
 
-For grub instructions, type @[todo grub].
+example: for grub instructions, type @[todo grub].
 
 To see the instructions for this step again, just type @[todo].
 

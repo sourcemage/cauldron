@@ -1,0 +1,25 @@
+@[spell-sources step]
+You may now select the spell sources you would like to install. You can
+accomplish this either using enchantment or editing the file directly. @[NOTE:]
+the iso sources are located in /var/spool/sorcery/. It is also highly
+recommended that you select at least one bootloader to build later. Bootloaders
+must be provided as sources rather than prebuilt caches (packages) because they
+come with varying options, some of which (depending on the bootloader at least)
+may be self-conflicting.
+
+via text menu:
+  @[enchantment select sources] # presents a text menu for toggling sources
+  @[enchantment select sources add glob] # adds files matching the pattern
+  @[enchantment select sources del glob] # removes files matching the pattern
+
+edit manually:
+  @[$EDITOR "$ENCHANT_TMP/spell_sources"]
+
+You can of course use any editor you like, in case you haven't set $EDITOR.
+
+You can re-edit @[$ENCHANT_TMP/spell_sources] any time during the install
+session and your changes will be remembered if you have potion functionality
+enabled. Likewise, you may always re-run @[enchantment select sources] at any
+time.
+
+When you are finished selecting your spell sources, type @[next].

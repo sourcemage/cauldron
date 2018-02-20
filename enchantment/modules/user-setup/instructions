@@ -11,7 +11,7 @@ and bear in mind that it can be bypassed with a screwdriver):
   @[passwd mbolton]
 
 Replace @[mbolton] with whatever login you want. Don't forget to change
-@[/home/mbolton] accordingly. You may also change the group (@[-g users]) if you
+@[/home/mbolton] accordingly. You may also change the group (-g users) if you
 wish.
 
 Finally, exit the chroot to return to the installer:

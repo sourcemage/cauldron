@@ -1,0 +1,12 @@
+@[basesystem step]
+In this step, you will unpack and install the basesystem chroot image to your target partitions.
+
+enchantment:
+  @[enchantment install basesystem]
+
+manually:
+  @[tar -xf /system.tar.xz -C "$ENCHANT_TARGET"]
+
+If all goes well, you will have a very minimal base system that you can now play around in.
+
+When you are ready, type @[next].

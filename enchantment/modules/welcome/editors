@@ -1,0 +1,6 @@
+This iso provides the following text editors (additional editors may be
+installed from spell caches).
+
+  @[nano] - a quite easy-to-use, small editor
+  @[vi] - a small vi clone, part of busybox
+
