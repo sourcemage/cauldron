@@ -21,6 +21,7 @@
 # let libenchantment know which installer this is
 ENCHANT_INSTALLER="shell"
 
+selfname="${0##*/}"
 
 
 
@@ -129,6 +130,10 @@ function enchant_shell_command_install() {
   shift
 
   case "$command" in
+    "headers" )
+      enchant_install_kernel_headers "$@"
+      liberror_check_fatal
+      ;;
     "kernel" )
       [[ $# -ne 3 ]] && return $ERR_INSTALLER_CMD
       enchant_install_kernel "$@"

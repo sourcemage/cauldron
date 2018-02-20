@@ -161,6 +161,7 @@ function enchant_install_system() {
 ## @param kernel_image (absolute path - e.g. $ENCHANT_ISO_PATH/boot/vmlinux)
 ## @param modules_path (absolute path - e.g. $ENCHANT_ISO_PATH/lib/modules)
 ## @param kernel_version (e.g. 2.6.32.8)
+## @param kernel_type (e.g. linux)
 ##
 ## Copies the kernel and it's associated modules from the ISO to the TARGET
 ## system. Requires that / and /boot on the TARGET system are mounted (unless
@@ -176,19 +177,111 @@ function enchant_install_kernel() {
   local kernel="${1:-$ENCHANT_ISO_KERNEL}"
   local kmods="${2:-$ENCHANT_ISO_KMODS}"
   local kvers="${3:-$ENCHANT_ISO_KVERS}"
+  local ktype="${4:-$ENCHANT_KERNEL_TYPE}"
 
   # copy the kernel over
   enchant_install_file "$kernel" "$target_kernel" || return $ERR_INSTALL_KERNEL
 
-  # copy the modules over
-  enchant_install_dir "$kmods/$kvers" "$target_kmods/$(basename $kmods)" ||
-      return $ERR_INSTALL_KMODS
+  case "$ktype" in
+    linux)
+      # copy the modules over
+      enchant_install_dir "$kmods/$kvers" "$target_kmods/$(basename $kmods)" ||
+          return $ERR_INSTALL_KMODS
 
-  # make sure that the proper dep info is generated on the target system
-  depmod -a -b "$target_kmods/$kvers" "$kvers" ||
-    return $ERR_INSTALL_DEPMOD
+      # make sure that the proper dep info is generated on the target system
+      depmod -a -b "$target_kmods/$kvers" "$kvers" ||
+        return $ERR_INSTALL_DEPMOD
+      ;;
+  esac
 
   return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##
+## @param kernel_source (absolute path - e.g. $ENCHANT_ISO_PATH/usr/src/kern.tar)
+## @param kernel_arch (architecture to install for - e.g. x86)
+##
+## Installs the kernel headers into the TARGET's /usr/include/ to be used by the
+## system build toolchain for compiling packages from source.
+## Requires that / on the TARGET system is mounted.
+##
+#-------------------------------------------------------------------------------
+function enchant_install_kernel_headers_linux() {
+  local ksrc="${1:-$ENCHANT_KERNEL_SOURCE}"
+  local karch="${2:-$ENCHANT_ARCH}"
+  local target="$ENCHANT_TARGET"
+  local ksrcd="${ksrc%%.*}"
+
+  [[ -f "$ksrc" ]] || return $ERR_TARGET
+
+  [[ -f "$karch" ]] && karch=$(< "$karch")
+  liberror_check || return $ERR_FILE_ACCESS
+
+  # unpack the kernel headers into the target
+  "${ENCHANT_CMD_MKDIR[@]}" "$target/usr/src" ||
+    return $ERR_MK_DIR
+  "${ENCHANT_CMD_TAR[@]}" -C "$target/usr/src" -xf "$ksrc" ||
+    return $ERR_INSTALL_KHDRS
+
+  # adjust the arch setting for what linux uses
+  case "$karch" in
+    x86_64 )
+      karch="x86"
+      ;;
+  esac
+
+  ksrc="${ksrc##*/}"
+
+  # sylink the needed header dirs for the initial install
+  for hdir in \
+    "arch/$karch/include/asm" \
+    "include/uapi/asm-generic" \
+    "include/uapi/linux"
+  do
+    "${ENCHANT_CMD_SYMLINK[@]}" \
+      "/usr/src/$ksrcd/$hdir" \
+      "$target/usr/include/${hdir##*/}" ||
+        return $ERR_SYMLINK_DIR
+  done
+
+  # install the headers via kernel makefile in the chroot
+  enchant_chroot_init "$target"
+  liberror_check || return $?
+  enchant_chroot "/usr/src/$ksrcd/make" ARCH="$karch" headers_install
+  liberror_check || return $?
+  enchant_chroot_done "$target"
+  liberror_check || return $?
+
+  # remove the symlinks
+  for hlink in asm asm-generic linux
+  do
+    "${ENCHANT_CMD_RM[@]}" "$target/usr/include/$hlink" ||
+      return $ERR_RM_FILE
+  done
+
+  # move the kernel headers from the src tree to the target's root
+  "${ENCHANT_CMD_MV[@]}" \
+    "$target/usr/src/$ksrcd/usr/include/"* \
+    "$target/usr/include/" ||
+      return $ERR_INSTALL_KHDRS
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##
+## @param kernel_type (e.g. linux)
+##
+## Installs the kernel headers into the TARGET's /usr/include/ to be used by the
+## system build toolchain for compiling packages from source.
+## Requires that / on the TARGET system is mounted.
+##
+#-------------------------------------------------------------------------------
+function enchant_install_kernel_headers() {
+  local ktype="${1:-$ENCHANT_KERNEL_TYPE}"
+
+  enchant_install_kernel_headers_"${!ktype}"
 }
 
 #-------------------------------------------------------------------------------
