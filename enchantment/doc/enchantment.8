@@ -44,13 +44,13 @@
 Enchantment is a command-line front-end to the enchantment library (which serves as a backend for all the Source Mage GNU/Linux installer front-ends, including the menu system). All of the installation functions are accessible through this single command-line frontend by passing the desired command as the first parameter to the program, followed by any arguments that command needs.
 .SH "ENCHANTMENT COMMANDS"
 A list of acceptable commands is given below. For each command, if it can accept any arguements, they are described in that command's section. Optional arguments are enclosed in square brackets ('[' and ']'), while required arguments are bare (not surrounded by brackets or anything else). The commands are organized by logical function.
-.SS General
+.SS "General Commands"
 .PP
 \fBhelp\fR [TOPIC]
 .RS 4
 Displays help for a given topic. If no topic is provided, it will display a list of topics available.
 .RE
-.SS "Module Interaction"
+.SS "Module Interaction Commands"
 .PP
 \fBtodo\fR [MODULE]
 .RS 4
@@ -81,11 +81,11 @@ Jump to the installation step MODULE given as the first (and only) argument. MOD
 .RS 4
 Display the initial welcome message, which provides some introductory information on how to use the installation interface.
 .RE
-.SS "Content Installation"
+.SS "Content Installation Commands"
 .PP
 \fBchroot\fR [ARGS]
 .RS 4
-Chroot to $\fIENCHANT_TARGET\fR using the command given in $\fIENCHANT_CHROOT\fR (see the section on \fBENVIRONMENT VARIABLES\fR below), performing necessary mount bindings needed for shell functionality inside the chroot, and also setting the shell prompt to indicate that you are now in a chroot. If called with arguments, the arguments are passed to the $\fIENCHANT_CHROOT\fR command (you can use this to directly execute commands in the chroot, rather than having to first enter an interactive shell and then manually execute the command afterwards).
+Chroot to \fIENCHANT_TARGET\fR using the command given in \fIENCHANT_CHROOT\fR (see the section on \fBENVIRONMENT VARIABLES\fR below), performing necessary mount bindings needed for shell functionality inside the chroot, and also setting the shell prompt to indicate that you are now in a chroot. If called with arguments, the arguments are passed to the \fIENCHANT_CHROOT\fR command (you can use this to directly execute commands in the chroot, rather than having to first enter an interactive shell and then manually execute the command afterwards).
 .RE
 .PP
 \fBinstall\fR SUBCOMMAND
@@ -97,7 +97,7 @@ Performs a given installation, according to the supplied SUBCOMMAND, which can b
 \fBkernel\fR IMAGE MODULES_PATH VERSION
 .RE
 .RS 8
-Installs the given kernel to the target as specified in \fIENCHANT_TARGET\fR (see the section on \fBENVIRONMENT VARIABLES\fR below). The first argument, IMAGE, must be an absolute path the to kernel image itself (i.e. /boot/vmlinuz), which will be installed to \fIENCHANT_TARGET_KERNEL\fR (see the section on \fBENVIRONMENT VARIABLES\fR below). The second argument, MODULES_PATH, must be an aboslute path to the directory where the kernel modules matching the image supplied in IMAGE are to be taken from (e.g. /lib/modules/2.6.32.8). The kernel modules will be installed to \fIENCHANT_TARGET_KMODS\fR (see the section on \fBENVIRONMENT VARIABLES\fR below). Finally, VERSION, the third and last argument, must supply the numbered kernel version associated with the kernel image and modules (e.g. 2.6.32.8).
+Installs the given kernel to the target as specified in \fIENCHANT_TARGET\fR (see the section on \fBENVIRONMENT VARIABLES\fR below). The first argument, IMAGE, must be an absolute path to the kernel image itself (i.e. /boot/kernel), which will be installed to \fIENCHANT_TARGET_KERNEL\fR (see the section on \fBENVIRONMENT VARIABLES\fR below). The second argument, MODULES_PATH, must be an aboslute path to the directory where the kernel modules matching the image supplied in IMAGE are to be taken from (e.g. /lib/modules/2.6.32.8). The kernel modules will be installed to \fIENCHANT_TARGET_KMODS\fR (see the section on \fBENVIRONMENT VARIABLES\fR below). Finally, VERSION, the third and last argument, must supply the numbered kernel version associated with the kernel image and modules (e.g. 2.6.32.8).
 .RE
 .RS 4
 \fBisokernel\fR
@@ -109,7 +109,7 @@ Installs the kernel image and modules that are used for the ISO runtime itself t
 \fBsystem\fR
 .RE
 .RS 8
-Installs the minimal base system (system.tar.bz2) to the target specified in \fIENCHANT_TARGET\fR (see the section on \fBENVIRONMENT VARIABLES\fR below).
+Installs the minimal base system (system.tar.xz) to the target specified in \fIENCHANT_TARGET\fR (see the section on \fBENVIRONMENT VARIABLES\fR below).
 .RE
 .RS 4
 \fBspells\fR
@@ -132,7 +132,7 @@ Installs spell caches from \fIENCHANT_SPELL_CACHES\fR to the target location spe
 
 .RS 8
 .RE
-.SS "Potion (history) Interaction"
+.SS "Potion (history) Interaction Commands"
 .PP
 \fBback\fR
 .RS 4
@@ -148,13 +148,13 @@ Move forward one level in the history stack (similar to pressing the forward but
 .RS 4
 Package the present installation state into a restorable potion. This can then be used either to restore the current installation if something goes wrong, or it can be used later for automated installs (e.g. on other machines with the same hardware for site-wide installs). This only takes effect if history is enabled in the current install (can be configured at run-time, see the section on \fBENVIRONMENT VARIABLES\fR below for more information).
 .RE
-.SS "i18n"
+.SS "i18n Commands"
 .PP
 \fBkeymap\fR [/path/to/keymap.file]
 .RS 4
 If called without an argument, presents a menu by which you can select an appropriate keymap to use for the current installation session. If supplied a keymap file (with path) as an argument, it will directly select that keymap to use for the installation session.
 .RE
-.SS "Setup"
+.SS "Setup Commands"
 .PP
 \fBinit\fR
 .RS 4
@@ -174,12 +174,12 @@ Where the installation goes to. For example, if you have an 80GB partition /dev/
 .PP
 iso
 .RS 4
-Refers to the installation runtime. The runtime is typically available via a burned cd, consisting of the contents of an iso9660 filesystem prepared by cauldron, hence the labelling of the runtime as iso. This is in contrast to system, defined below. The spells and binaries available for use in the iso may differ from those available in the system.
+Refers to the installation runtime (an \fBi\fRnitial \fBs\fRsystem \fBo\fRbject). The runtime prepared by cauldron is typically available as the contents of a filesystem image, such as iso9660 or udf, which is then burned onto removable media like a cdrom, but may alternatively be available via a usb key or even direct from a hard disk. This is in contrast to system, defined below. The spells and binaries available for use in the iso may differ from those available in the system.
 .RE
 .PP
 system
 .RS 4
-Refers to the target runtime. Note that the target runtime is not necessarily available in the target until after a certain stage of the installation is completed. This also refers to the pre-built compressed archive of the minimal target runtime, typically stored as system.tar.bz2 in the root directory of an officially released iso. The spells and binaries available for use in the system may differ from those available in the iso.
+Refers to the target runtime. Note that the target runtime is not necessarily available in the target until after a certain stage of the installation is completed. This also refers to the pre-built compressed archive of the minimal target runtime, typically stored as system.tar.xz in the root directory of an officially released iso. The spells and binaries available for use in the system may differ from those available in the iso.
 .RE
 .PP
 module
@@ -189,10 +189,10 @@ An installation "step". It is a logical unit within the entire installation proc
 .PP
 potion
 .RS 4
-This is the component of the Enchantment script suite responsible for managing history and state tracking. It is also the name of an instance of a collection of such state, to be used for install process recovery, automated installs, and possibly other things.
+This is the component of the Enchantment script suite responsible for managing history and tracking state. It is also the name of an instance of a collection of such state, to be used for install process recovery, automated installs, and possibly other things.
 .RE
 .PP
-installer
+enchanter
 .RS 4
 A user interface to libenchantment (and the associated sub-libraries). This includes, for example, the command-line installer (described by the present man-page you are reading) and the TUI menu installer (which uses dialog to display the text menus).
 .RE
@@ -209,7 +209,7 @@ The source code collection needed to build a spell.
 .PP
 cache
 .RS 4
-A compressed archive of a pre-built spell.
+A compressed archive of a pre-built spell (otherwise known as a binary package).
 .RE
 .SH "ENVIRONMENT VARIABLES"
 
