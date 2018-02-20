@@ -328,7 +328,7 @@ function enchant_set_current() {
 #-------------------------------------------------------------------------------
 function enchant_get_next() {
   local step
-  step="$(grep -m1 \"^$(enchant_get_current):\" $ENCHANT_DATA/modules)" ||
+  step="$(grep -m1 \"^$(enchant_get_current):\" $ENCHANT_ENCHANTER_MODULES)" ||
     return $ERR_GET_NEXT
 
   step="$(echo $step | cut -d: -f2)" || return $ERR_GET_NEXT
@@ -357,7 +357,7 @@ function enchant_set_next() {
   liberror_check || return $ERR_SET_NEXT
 
   # save new status
-  enchant_set_step "$module"
+  enchant_set_current "$module"
   liberror_check || return $ERR_SET_NEXT
 
   return $ERR_OK
@@ -374,7 +374,8 @@ function enchant_get_prev() {
   # get the current step
   step="$(enchant_get_current)" || return $ERR_GET_PREV
 
-  step="$(grep -m1 \":$step$\" $ENCHANT_DATA/order)" || return $ERR_GET_PREV
+  step="$(grep -m1 \":$step$\" $ENCHANT_ENCHANTER_MODULES)" ||
+    return $ERR_GET_PREV
 
   step="$(echo $step | cut -d: -f1)" || return $ERR_GET_PREV
 
