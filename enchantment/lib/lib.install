@@ -136,6 +136,28 @@ function enchant_install_caches() {
 
 #-------------------------------------------------------------------------------
 ##
+## @param system_archive
+##
+## Copies the selected spell caches into the target. If caches_list is empty
+## (no caches were passed as arguments), it reads the list of caches to
+## install from $ENCHANT_SOURCES_LIST.
+##
+#-------------------------------------------------------------------------------
+function enchant_install_system() {
+  local sys="${1:-$ENCHANT_INSTALL_SYSTEM}"
+  local dst="$ENCHANT_TARGET"
+
+  # if the spells are specified via a file, read the file
+  [[ -f "$sys" ]] || return $ERR_INSTALL_SYSTEM
+
+  "${ENCHANT_CMD_TAR[@]}" -C "$dst" -xf "$sys" ||
+    return $ERR_INSTALL_SYSTEM
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##
 ## @param kernel_image (absolute path - e.g. $ENCHANT_ISO_PATH/boot/vmlinux)
 ## @param modules_path (absolute path - e.g. $ENCHANT_ISO_PATH/lib/modules)
 ## @param kernel_version (e.g. 2.6.32.8)
