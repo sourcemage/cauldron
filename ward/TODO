@@ -1,3 +1,18 @@
+add a manpage
+	ward needs some documentation to explain what it is for, what it does,
+	and how it does it
+
+find include files dynamically
+	rather than hardcode a list of include files to test against, scan for
+		sourced files in the target; this will ensure only files
+		actually sourced are checked for variable and function
+		definitions, and will also enable testing for sourcing
+		non-existent files
+	this is harder to achieve, as it will require recursively scanning
+		variable definitions to determine real paths, and in some cases
+		will result in paths that cannot be available before an actual
+		run-time instance
+
 add ISO runtime/build tests
 	test for all necessary runtime spells
 	test for all necessary install caches
