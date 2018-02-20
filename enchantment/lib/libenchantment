@@ -45,14 +45,14 @@ function enchant_fatal_error() {
 #-------------------------------------------------------------------------------
 # liberror includes
 #-------------------------------------------------------------------------------
-. "$ENCHANT_BASE/liberror" ||
+. "$ENCHANT_COMMON/liberror" ||
   enchant_fatal_error "error: cannot load base library liberror"
 
 # load enchantment error code and message defines
 . "$ENCHANT_LIBS/errorcodes" ||
   enchant_fatal_error "error: cannot load enchantment error codes"
 
-. "$ENCHANT_BASE/libcolor" ||
+. "$ENCHANT_COMMON/libcolor" ||
   enchant_fatal_error "error: cannot load base library libcolor"
 
 # test/set whether color output should be enabled

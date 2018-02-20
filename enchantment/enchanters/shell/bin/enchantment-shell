@@ -34,7 +34,7 @@ then
 fi
 
 # source installer-specific functions
-source "$ENCHANT_DATA/$ENCHANT_INSTALLER/functions" ||
+source "$ENCHANT_ENCHANTERS/$ENCHANT_INSTALLER/functions" ||
   liberror_die \
     $ERR_INSTALLER_FUNCS \
     "cannot load $ENCHANT_INSTALLER functions file"
@@ -50,7 +50,7 @@ function enchant_shell_command_keymap() {
 }
 
 function enchant_shell_command_aliases() {
-  local aliases="$ENCHANT_DATA/$ENCHANT_INSTALLER/aliases"
+  local aliases="$ENCHANT_ENCHANTERS/$ENCHANT_INSTALLER/aliases"
 
   # source installer-specific command aliases
   if [[ -r "$aliases" ]]

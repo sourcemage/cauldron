@@ -30,9 +30,9 @@
 ##
 #-------------------------------------------------------------------------------
 function enchant_modules_list() {
-  local modlist="$ENCHANT_DATA/$ENCHANT_INSTALLER/modules"
+  local modlist="$ENCHANT_ENCHANTERS/$ENCHANT_INSTALLER/modules"
   local output=()
-  local module=""
+  local module=
 
   # make sure the installer's modules file exists
   [[ -f "$modlist" ]] || return $ERR_MODULE_FILE
