@@ -1,0 +1,75 @@
+CURRENT PROBLEMS/BUGS:
+	sys build fails
+		1) libmpc
+			bug in INSTALL (symlink -s instead of symlink -sf)
+			fixed in test; fixed in stable v. ??? (forthcoming)
+		2) util-linux
+			bug in PREPARE (erroneous and outdated query concerning /dev/ttyN)
+			fixed in test; fixed in stable v. ??? (forthcoming)
+		3) glibc
+			bugs all over the place, most notably in overwriting
+				the headers from the kernel
+			removing any/all code that forcibly installs kernel
+				headers fixes the problem
+			glibc ALSO seems to need --disable-werror in it's BUILD
+				or it will fail in regex.c for an uninitialized
+				variable
+			not fixed anywhere at present
+		Patching/correcting the spell files (either via loadable
+		patches or in-situ) fixes the problems and sys build then
+		succeeds
+	iso build fails
+		1) net-tools
+			fails in PREPARE because of the warning that defaults to bailing out
+				this is for (*really*) old setups that no one
+				should have anymore, especially not
+				newly-installed systems, so the warning doesn't
+				apply and could be removed, or at least default
+				to not bailing out
+			not fixed anywhere at present
+			not needed in the iso runtime due to using busybox
+			STILL NEEDED as an installable cache for other spells
+		2) pciutils
+			completely unknown cause for failure in BUILD on first
+				run (perhaps a missing dependency?)
+			success on second cast with no change otherwise
+			NOT NEEDED ANYMORE THANKS TO USING lshw INSTEAD
+		3) cryptsetup-luks source is missing (1.6.6)
+			no idea about cryptmount, but removed both from the iso
+			spell lists (iso.caches and iso.spells) for the time
+			being
+
+convert spell list files to array vars
+	make a base/default CAULDRON_ISO_SOURCES=( ... ) in config/iso.conf
+	have an arch-specific arch/x86/iso.conf that defines
+		CAULDRON_ISO_SOURCES=( "${CAULDRON_ISO_SOURCES[@]}" ... ) to
+		add any arch-specific sources to the list
+	no more need for etc/<arch>/iso.sources and friends
+	the list can be modified either by editing the config file or by
+		setting env vars
+	do the same for both <iso> and <sys>
+
+clean up the directory structure usage
+	figure out what directories to use for what, when, and where to put all
+	the "junk" temporary stuff needed for interim building/setting up of
+	toolchains and whatnot
+
+	currently, everything is kind of haphazardly dumped into
+	CAULDRON_BUILD, which is probably not where everything belongs. Perhaps
+	use a CAULDRON_TMP/tmp? That seems a little redundant/silly, but might
+	work. Or CAULDRON_BUILD/tmp perhaps. I suppose ideally CAULDRON_TMP/tmp
+	would be better, since a download of sorcery and/or grimoire should be
+	usable for build, sys, and iso, so it would be more logical to put it
+	in a common dir.
+
+need a metadata/tracking file (or dir of files)
+	when cauldron performs operations, we need to track what was performed,
+	using what method, and when (at what time).
+
+	this will facilitate smart updates later, so we only need to check when
+	the operation was done if it's the same op being requested, and update
+	if it's too old or if it's different from the op requested (switch to
+	the new op).
+
+	it is also needed for dependency resolution, so we can know if a given
+	dependency has been met or not

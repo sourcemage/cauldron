@@ -1,0 +1,8 @@
+modules
+	bootloader
+		the choice(s) of bootloader is dependent on the arch, as well
+		as which spells were selected for inclusion in the iso, so
+		there needs to be a dynamic selection "interface" for the
+		bootloader module instructions
+	disk-partition
+		same problem as for bootloader
