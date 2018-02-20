@@ -138,8 +138,11 @@ function enchant_modules_enter() {
 ##
 #-------------------------------------------------------------------------------
 function enchant_modules_exit() {
-  local module="$(enchant_get_current)"
-  local script=""
+  local module=
+  local script=
+
+  module="$(enchant_get_current)"
+  libcheck_error || return $?
 
   for script in "$ENCHANT_MODULES/$module/exit"/*
   do
@@ -162,9 +165,12 @@ function enchant_modules_exit() {
 ##
 #-------------------------------------------------------------------------------
 function enchant_modules_potion() {
-  local module="$(enchant_get_current)"
   local potion="$1"
-  local script=""
+  local module=
+  local script=
+
+  module="$(enchant_get_current)"
+  libcheck_error || return $?
 
   [[ -d "$potion" ]] || $ERR_DIR_ACCESS
 

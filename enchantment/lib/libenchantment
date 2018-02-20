@@ -290,13 +290,14 @@ function enchant_get_current() {
 function enchant_set_current() {
   local module="$1"
 
-  if ! $(enchant_modules_list | grep -q "$module")
+  # make sure the requested module exists in the set of possible modules
+  if [[ " $(enchant_modules_list) " != *" $module "* ]]
   then
     return $ERR_SET_CURRENT
   fi
 
   enchant_modules_exit
-  liberror_check || return $ERR_MODULE_EXIT
+  liberror_check || return $ERR_SET_CURRENT
 
   # if the max history size has been reached, then we drop the oldest item
   if [[ "$(enchant_history_total back)" -ge "$ENCHANT_POTION_BUFFER" ]]
@@ -310,13 +311,13 @@ function enchant_set_current() {
 
   # check the installation state
   enchant_potion_update
-  liberror_check || return $?
+  liberror_check || return $ERR_SET_CURRENT
 
   # set the current module
   echo "$module" > "$ENCHANT_STATUS" || return $ERR_SET_CURRENT
 
   enchant_modules_enter
-  liberror_check || return $ERR_MODULE_ENTER
+  liberror_check || return $ERR_SET_CURRENT
 
   return $ERR_OK
 }
@@ -327,19 +328,15 @@ function enchant_set_current() {
 ##
 #-------------------------------------------------------------------------------
 function enchant_get_next() {
-  local step
-  step="$(grep -m1 \"^$(enchant_get_current):\" $ENCHANT_ENCHANTER_MODULES)" ||
-    return $ERR_GET_NEXT
+  local modlist="$ENCHANT_ENCHANTER_MODULES"
+  local mod=""
 
-  step="$(echo $step | cut -d: -f2)" || return $ERR_GET_NEXT
+  mod=$(grep -m1 "^$(enchant_get_current):" "$modlist") || return $ERR_GET_NEXT
+  mod="${mod#*:}"
 
-  if [[ -z "$step" ]]
-  then
-    echo "error"
-    return $ERR_GET_NEXT
-  fi
+  [[ -z "$mod" ]] && return $ERR_GET_NEXT
 
-  echo $step
+  echo "$mod"
 
   return $ERR_OK
 }
@@ -369,23 +366,15 @@ function enchant_set_next() {
 ##
 #-------------------------------------------------------------------------------
 function enchant_get_prev() {
-  local step
+  local modlist="$ENCHANT_ENCHANTER_MODULES"
+  local mod=""
 
-  # get the current step
-  step="$(enchant_get_current)" || return $ERR_GET_PREV
+  mod=$(grep -m1 ":$(enchant_get_current)$" "$modlist") || return $ERR_GET_PREV
+  mod="${mod%%:*}"
 
-  step="$(grep -m1 \":$step$\" $ENCHANT_ENCHANTER_MODULES)" ||
-    return $ERR_GET_PREV
+  [[ -z "$mod" ]] && return $ERR_GET_PREV
 
-  step="$(echo $step | cut -d: -f1)" || return $ERR_GET_PREV
-
-  if [[ -z "$step" ]]
-  then
-    echo "error"
-    return $ERR_GET_PREV
-  fi
-
-  echo "$step"
+  echo "$mod"
 
   return $ERR_OK
 }
