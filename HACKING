@@ -316,7 +316,7 @@ installers are just eye-candy on top of this one.)
 *******************
 	These directories host any end-user executable front-ends which call
 the functions in the various enchantment libraries. The primary front-end is
-enchantment, the shell installer.
+enchantment-shell, the shell installer.
 
 **********************
 * $installer/modules *
