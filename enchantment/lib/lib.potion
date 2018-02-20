@@ -34,12 +34,33 @@
 ## ENCHANT_POTION/.
 ##
 #-------------------------------------------------------------------------------
-function enchant_potion_make_dir() {
+function enchant_potion_new() {
   local potion="$1"
 
+  [[ -n "$potion" ]] || return $ERR_TARGET
   [[ -d "$potion" ]] && return $ERR_DIR_EXISTS
 
   mkdir -p "$ENCHANT_POTION/$potion" || return $ERR_MK_DIR
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
+##
+## Initializes the potion subsystem
+##
+#-------------------------------------------------------------------------------
+function enchant_potion_init() {
+  local initpotion="default"
+
+  mkdir -p "$ENCHANT_POTION" || return $ERR_MK_DIR
+  echo "" > "$ENCHANT_BACK" || return $ERR_WRITE_FILE
+  echo "" > "$ENCHANT_FORWARD" || return $ERR_WRITE_FILE
+
+  enchant_potion_new "$initpotion"
+  liberror_check || return $?
+  enchant_potion_set_current "$initpotion"
+  liberror_check || return $?
 
   return $ERR_OK
 }
@@ -50,7 +71,21 @@ function enchant_potion_make_dir() {
 ##
 #-------------------------------------------------------------------------------
 function enchant_potion_get_current() {
-  echo -n "$ENCHANT_POTION_CURRENT"
+  local pdir="$ENCHANT_POTION"
+  local pfile="$pdir/.current"
+  local current="$ENCHANT_POTION_CURRENT"
+
+  if [[ -z "$current" ]]
+  then
+    [[ -d "$pdir" ]] || return $ERR_POTION_DIR
+    [[ -f "$pfile" ]] || return $ERR_POTION_CURRENT
+
+    current=$(< $pfile) || return $ERR_POTION_CURRENT
+    [[ -d "$current" ]] || return $ERR_DIR_ACCESS
+    ENCHANT_POTION_CURRENT="$current"
+  fi
+
+  printf "%s" "$current"
 
   return $ERR_OK
 }
@@ -75,7 +110,8 @@ function enchant_potion_set_current() {
     fi
   fi
 
-  $ENCHANT_POTION_CURRENT="$potion"
+  echo "$potion" > "$ENCHANT_POTION/.current" || return $ERR_WRITE_FILE
+  ENCHANT_POTION_CURRENT="$potion"
 
   return $ERR_OK
 }
@@ -84,7 +120,10 @@ function enchant_potion_set_current() {
 ## @param file to get the hash for (relative to the current potion dir)
 ## @param potion directory name (relative to $ENCHANT_POTION/) [optional]
 ##
-## Gets the stored hashsum of the given file
+## Gets the stored hashsum of the given file. A deleted file results in a cached
+## hashsum consisting of a single "0" and no cached file content. A file that
+## hasn't yet been cached (something new) should have neither cached content nor
+## a cached hashsum, and this is not an error.
 ##
 #-------------------------------------------------------------------------------
 function enchant_potion_get_hashsum() {
@@ -116,14 +155,19 @@ function enchant_potion_get_hashsum() {
 ##
 #-------------------------------------------------------------------------------
 function enchant_potion_set_hashsum() {
-  local hashfunc="$ENCHANT_POTION_HASHFUNC"
   local file="$1"
   local potion="${2:-$ENCHANT_POTION_CURRENT}"
+  local hashfunc="$ENCHANT_POTION_HASHFUNC"
+  local pfile="$potion/${file##*/}.${hashfunc##*/}"
 
   [[ -d "$potion" ]] || return $ERR_DIR_ACCESS
 
-  "$hashfunc" "$file" > "$ENCHANT_POTION/$potion/${file##*/}.${hashfunc##*/}" ||
-    return $ERR_POTION_SET_HASHSUM
+  if [[ -f "$file" ]]
+  then
+    "$hashfunc" "$file" > "$pfile" || return $ERR_POTION_SET_HASHSUM
+  else
+    echo "0" > "$pfile" || return $ERR_POTION_SET_HASHSUM
+  fi
 
   return $ERR_OK
 }
@@ -139,96 +183,115 @@ function enchant_potion_set_hashsum() {
 function enchant_potion_cache_file() {
   local file="$1"
   local potion="${2:-$ENCHANT_POTION_CURRENT}"
-  local sum=""
+  local pfile=""
+  local sum1=""
+  local sum2=""
 
-  [[ -f "$file" ]] || return $ERR_FILE_ACCESS
+  # last-ditch effort to ensure we have a valid current potion to work with
+  if ! [[ -d "$potion" ]]
+  then
+    potion=$(enchant_potion_get_current)
+    [[ -d "$potion" ]] || return $ERR_DIR_ACCESS
+  fi
 
-  sum="$($ENCHANT_POTION_HASHFUNC $file | cut -d' ' -f1)"
+  # set the target file path
+  pfile="$potion/${file##*/}"
+
+  # if the file doesn't exist, then either it didn't exist to begin with, or the
+  # user (purposely) deleted it, so we track that the requested file doesn't
+  # exist by giving it an invalid hash
+  if [[ -f "$file" ]]
+  then
+    sum1="$($ENCHANT_POTION_HASHFUNC $file | cut -d' ' -f1)" ||
+      return $ERR_POTION_SET_HASHSUM
+  else
+    sum1=0
+  fi
+
+  sum2="$(enchant_potion_get_hashsum $file $potion)" ||
+    return $ERR_POTION_SET_HASHSUM
 
   # only update if the checksums differ or we don't already have the hashsum
-  if [[ "$sum" != "$(enchant_potion_get_hashsum $file $potion)" ]]
+  if [[ "$sum1" != "$sum2" ]]
   then
     # generate and store the (new) hashsum of the file
     enchant_potion_set_hashsum "$file" "$potion"
     liberror_check "$file" || return $ERR_POTION_CACHE_FILE
+
+    # store the file itself, but only if it's a valid file (i.e. not deleted)
+    if [[ "$sum1" && "$sum1" != "0" ]]
+    then
+      "${ENCHANT_CMD_CP_FORCE[@]}" "$file" "$pfile" ||
+        return $ERR_POTION_CACHE_FILE
+    fi
   fi
 
-  # store the file itself
-  cp -f "$file" "$ENCHANT_POTION/$potion/${file##*/}" || return $ERR_POTION_CACHE_FILE
-
   return $ERR_OK
 }
 
 #-------------------------------------------------------------------------------
-## @param potion directory name (relative to $ENCHANT_POTION/) [optional]
+## @param target (the data field to extract)
+## @param output_file (defaults to $ENCHANT_POTION/target) [optional]
 ##
-## Parses /proc/mounts to determine which partitions are mounted, excluding the
-## list of ISO mounts.
+## Parses /proc/mounts to extract the requested target data, excluding the list
+## of ISO mounts, and stores the information in output_file.
 ##
 #-------------------------------------------------------------------------------
-function enchant_potion_get_partitions() {
-  local mounts="/proc/mounts"
-  local potion="${1:-$ENCHANT_POTION_CURRENT}"
-
-  # list of ISO mounts to exclude
-  # each match is exact
+function enchant_potion_get_diskinfo() {
+  local target="$1"
+  local potion="${2:-$ENCHANT_POTION}"
   local excl="$ENCHANT_POTION_MOUNT_EXCLUDES"
+  local src="/proc/mounts"
+  local record=""
 
-  [[ -d "$ENCHANT_POTION" ]] || return $ERR_POTION_DIR
+  [[ -d "$potion" ]] || return $ERR_POTION_DIR
+
+  case "$target" in
+    "partitions" )
+      record=1
+      ;;
+    "mount_points" )
+      record=2
+      ;;
+    "filesystems" )
+      record=3
+      ;;
+    * )
+      return $ERR_TARGET
+      ;;
+  esac
+
+  [[ "$target" == $potion* ]] || target="$potion/$target"
+
+  [[ -n "$excl" ]] || return $ERR_POTION_GET_DISKINFO
+  excl=(-v i="${excl[@]}")
+
+  [[ "$record" -gt 0 ]] || return $ERR_POTION_GET_DISKINFO
 
   # for every line, if the 2nd field exactly matches one of excl, skip it
-  # otherwise, store the filesystem (field 3) to the temp file
-  gawk -v i="$excl" '{if(match(i,$2)) next; else print $1}' $mounts > \
-    $ENCHANT_POTION/partitions || return $ERR_POTION_GET_PARTITIONS
-
-  return $ERR_OK
+  # otherwise, store the source data to the target file
+  "${ENCHANT_CMD_AWK[@]}" "${excl[@]}" \
+    "{if(match(i,\$2)) next; else print \$$record}" "$src" \
+    > "$target" ||
+      return $ERR_POTION_GET_DISKINFO
 }
 
 #-------------------------------------------------------------------------------
 ## @param potion directory name (relative to $ENCHANT_POTION/) [optional]
 ##
-## Checks to see if the list of partitions has changed, and updates the state
-## cache if they were changed.
+## Checks to see if the list of partitions has changed, excluding the list of
+## iso mounts, and updates the state cache if they were changed.
 ##
 #-------------------------------------------------------------------------------
 function enchant_potion_update_partitions() {
-  local potion_parts="$ENCHANT_POTION/$1/filesystems"
-  local parts="$ENCHANT_POTION/filesystems"
   local potion="${1:-$ENCHANT_POTION_CURRENT}"
+  local target="partitions"
 
-  enchant_potion_get_filesystems || return $ERR_POTION_GET_PARTITIONS
+  enchant_potion_get_diskinfo "$target"
+  liberror_check "$target" || return $ERR_POTION_UPDATE_PARTITIONS
 
-  # if there isn't a stored copy of the mount points, or if the stored copy
-  # differs from what we currently have, then store the current set
-  if [[ ! -f "$potion_parts" || "$(cat $potion_parts)" != "$(cat $parts)" ]]
-  then
-    cp -f "$parts" > "$potion_parts" || return $ERR_POTION_UPDATE_PARTITIONS
-  fi
-
-  return $ERR_OK
-}
-
-#-------------------------------------------------------------------------------
-## @param potion directory name (relative to $ENCHANT_POTION/) [optional]
-##
-## Parses /proc/mounts to determine which filesystems are mounted, excluding the
-## list of ISO mounts.
-##
-#-------------------------------------------------------------------------------
-function enchant_potion_get_filesystems() {
-  local mounts="/proc/mounts"
-  local potion="${1:-$ENCHANT_POTION_CURRENT}"
-
-  # list of ISO mounts to exclude
-  # each match is exact
-  local excl="$ENCHANT_POTION_MOUNT_EXCLUDES"
-
-  [[ -d "$ENCHANT_POTION" ]] || return $ERR_POTION_DIR
-
-  # for every line, if the 2nd field exactly matches one of excl, skip it
-  # otherwise, store the filesystem (field 3) to the temp file
-  gawk -v i="$excl" '{if(match(i,$2)) next; else print $3}' $mounts > \
-    $ENCHANT_POTION/filesystems || return $ERR_POTION_GET_FILESYSTEMS
+  enchant_potion_cache_file "$ENCHANT_POTION/$target" "$potion"
+  liberror_check "$target" || return $ERR_POTION_UPDATE_PARTITIONS
 
   return $ERR_OK
 }
@@ -237,47 +300,19 @@ function enchant_potion_get_filesystems() {
 ## @param potion directory name (relative to $ENCHANT_POTION/) [optional]
 ##
 ## Checks to see if the list of filesystems corresponding to partitions has
-## changed, and updates the state cache if they were changed.
+## changed, excluding the iso mounts, and updates the state cache if they were
+## changed.
 ##
 #-------------------------------------------------------------------------------
 function enchant_potion_update_filesystems() {
-  local potion_fs="$ENCHANT_POTION/$1/filesystems"
-  local fs="$ENCHANT_POTION/filesystems"
   local potion="${1:-$ENCHANT_POTION_CURRENT}"
+  local target="filesystems"
 
-  enchant_potion_get_filesystems || return $ERR_POTION_GET_FILESYSTEMS
+  enchant_potion_get_diskinfo "$target"
+  liberror_check "$target" || return $ERR_POTION_UPDATE_PARTITIONS
 
-  # if there isn't a stored copy of the mount points, or if the stored copy
-  # differs from what we currently have, then store the current set
-  if [[ ! -f "$potion_fs" || "$(cat $potion_fs)" != "$(cat $fs)" ]]
-  then
-    cp -f "$fs" > "$potion_fs" || return $ERR_POTION_UPDATE_FILESYSTEMS
-  fi
-
-  return $ERR_OK
-}
-
-#-------------------------------------------------------------------------------
-## @param potion directory name (relative to $ENCHANT_POTION/) [optional]
-##
-## Parses /proc/mounts to determine which devices are mounted where, excluding
-## the list of ISO mounts.
-##
-#-------------------------------------------------------------------------------
-function enchant_potion_get_mount_points() {
-  local mounts="/proc/mounts"
-  local potion="${1:-$ENCHANT_POTION_CURRENT}"
-
-  # list of ISO mounts to exclude
-  # each match is exact
-  local excl="$ENCHANT_POTION_MOUNT_EXCLUDES"
-
-  [[ -d "$ENCHANT_POTION" ]] || return $ERR_POTION_DIR
-
-  # for every line, if the 2nd field exactly matches one of excl, skip it
-  # otherwise, store the mount point (field 2) to the temp file
-  gawk -v i="$excl" '{if(match(i,$2)) next; else print $2}' $mounts > \
-    $ENCHANT_POTION/mount_points || return $ERR_POTION_GET_MOUNT_POINTS
+  enchant_potion_cache_file "$ENCHANT_POTION/$target" "$potion"
+  liberror_check "$target" || return $ERR_POTION_UPDATE_FILESYSTEMS
 
   return $ERR_OK
 }
@@ -286,24 +321,19 @@ function enchant_potion_get_mount_points() {
 ## @param potion directory name (relative to $ENCHANT_POTION/) [optional]
 ##
 ## Checks to see if the list of mount points (/, /usr, etc.) corresponding to
-## partitions/filesystems has changed, and updates the state cache if they were
-## changed.
+## partitions/filesystems has changed, excluding the iso mounts, and updates the
+## state cache if they were changed.
 ##
 #-------------------------------------------------------------------------------
 function enchant_potion_update_mount_points() {
-  local potion_mounts="$ENCHANT_POTION/$1/mount_points"
-  local mounts="$ENCHANT_POTION/mount_points"
   local potion="${1:-$ENCHANT_POTION_CURRENT}"
+  local target="mount_points"
 
-  enchant_potion_get_mount_points
-  liberror_check "mount_points" || return $ERR_POTION_GET_MOUNT_POINTS
+  enchant_potion_get_diskinfo "$target"
+  liberror_check "$target" || return $ERR_POTION_UPDATE_PARTITIONS
 
-  # if there isn't a stored copy of the mount points, or if the stored copy
-  # differs from what we currently have, then store the current set
-  if [[ ! -f "$potion_mounts" || "$(cat $potion_mounts)" != "$(cat $mounts)" ]]
-  then
-    cp -f "$mounts" > "$potion_mounts" || return $ERR_POTION_UPDATE_MOUNT_POINTS
-  fi
+  enchant_potion_cache_file "$ENCHANT_POTION/$target" "$potion"
+  liberror_check "$target" || return $ERR_POTION_UPDATE_MOUNT_POINTS
 
   return $ERR_OK
 }
@@ -478,7 +508,7 @@ function enchant_potion_update() {
 #-------------------------------------------------------------------------------
 function enchant_potion_bottle() {
   local potion="${1:-$ENCHANT_POTION_CURRENT}"
-  local output="$ENCHANT_POTION/potion"
+  local output="$ENCHANT_POTION_BOTTLE"
 
   [[ -d "$potion" ]] || return $ERR_DIR_ACCESS
 
@@ -514,9 +544,9 @@ function enchant_potion_bottle() {
 }
 
 #-------------------------------------------------------------------------------
+## @param potion (optional, defaults to ENCHANT_POTION_BOTTLE)
 ## @param -s start (optional)
 ## @param -e end (optional)
-## @param potion (required)
 ##
 ## If potion is an archive, it unpacks the archive and performs an automated
 ## install. If potion is a directory, it assumes it is a proper state directory
@@ -537,8 +567,8 @@ function enchant_potion_bottle() {
 ## actions.
 ##
 #-------------------------------------------------------------------------------
-function enchant_potion_quaff() {
-  local potion="$1"
+function enchant_potion_apply() {
+  local potion="${1:-$ENCHANT_POTION_BOTTLE}"
   local current=""
   local end=""
   local list=""
@@ -592,9 +622,9 @@ function enchant_potion_quaff() {
   list=($(enchant_modules_list))
 
   # process each module's potion scripts from start module to end module
-  for ((current < end; current++))
+  for ((i=current; i < end; i++))
   do
-    enchant_modules_potion "${list[current]}" "$potion"
+    enchant_modules_potion "${list[i]}" "$potion"
   done
 
   return $ERR_OK

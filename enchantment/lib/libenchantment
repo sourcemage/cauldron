@@ -126,11 +126,13 @@ function enchant_prepare() {
   echo 'init' > "$ENCHANT_STATUS" || return $ERR_PREPARE
 
   # the next lines are to init the history files
-  "${ENCHANT_CMD_MKDIR[@]}" "$ENCHANT_POTION" || return $ERR_PREPARE
-  "${ENCHANT_CMD_CAT[@]}" < "$ENCHANT_NULL" > "$ENCHANT_BACK" ||
-    return $ERR_PREPARE
-  "${ENCHANT_CMD_CAT[@]}" < "$ENCHANT_NULL" > "$ENCHANT_FORWARD" ||
-    return $ERR_PREPARE
+  enchant_potion_init
+  liberror_check || return $ERR_PREPARE
+
+  for file in bootloaders caches filesystems kernels mount_points sources
+  do
+    printf '' > "$ENCHANT_TMP/$file" || return $ERR_PREPARE
+  done
 
   return $ERR_OK
 }

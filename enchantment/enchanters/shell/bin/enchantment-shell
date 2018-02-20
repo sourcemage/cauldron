@@ -175,7 +175,24 @@ function enchant_shell_command_variable() {
 }
 
 function enchant_shell_command_potion() {
+  local command="$1"
+  shift
+
   # TODO: not yet implemented
+  case "$command" in
+    back )
+      enchant_shell_perform_back
+      ;;
+    forward )
+      enchant_shell_perform_forward
+      ;;
+    bottle )
+      enchant_potion_bottle "$@"
+      ;;
+    apply )
+      enchant_potion_apply "$@"
+      ;;
+  esac
 
   return $ERR_OK
 }

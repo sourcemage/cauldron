@@ -88,6 +88,7 @@ liberror_add_error ERR_HISTORY_BACK "could not go back in install history"
 liberror_add_error ERR_HISTORY_FORWARD "could not go forward in install history"
 
 # lib.potion
+liberror_add_error ERR_POTION_CURRENT "current potion invalid"
 liberror_add_error ERR_POTION_DIR "potion directory not found"
 liberror_add_error ERR_POTION_GET_HASHSUM "could not read hashsum of file"
 liberror_add_error ERR_POTION_SET_HASHSUM "could not store hashsum of file"
@@ -100,12 +101,10 @@ liberror_add_error ERR_POTION_COMPRESS "could not compress potion archive"
 # lib.potion gets
 liberror_add_error ERR_POTION_GET_BOOTLOADER "could not read bootloader config"
 liberror_add_error ERR_POTION_GET_CONFS "could not read target system configs"
-liberror_add_error ERR_POTION_GET_FILESYSTEMS "could not read filesystems"
 liberror_add_error ERR_POTION_GET_KERNEL "could not read kernel config"
-liberror_add_error ERR_POTION_GET_MOUNT_POINTS "could not read mount points"
+liberror_add_error ERR_POTION_GET_DISKINFO "could not read disk information"
 liberror_add_error ERR_POTION_GET_OPT_SPELLS \
   "could not read optional spell selection"
-liberror_add_error ERR_POTION_GET_PARTITIONS "could not read partitions"
 liberror_add_error ERR_POTION_GET_USERS "could not read user/group config"
 
 # lib.potion updates
