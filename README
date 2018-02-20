@@ -1,5 +1,9 @@
-This directory contains the *development* version of the ISO, installer, and
-general cauldron tools.
+This directory contains the *development* version of the following code
+projects:
+
+	cauldron (iso generation)
+	enchantment (installer library and interfaces)
+	ward (test framework)
 
 If you would like to contribute to Cauldron development, please read HACKING
 and API first. DESIGN will explain the general principles motivating how
