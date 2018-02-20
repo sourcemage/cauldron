@@ -73,8 +73,10 @@ liberror_add_error ERR_INSTALL_FILE "could not install file"
 liberror_add_error ERR_INSTALL_CACHES "could not install spell caches"
 liberror_add_error ERR_INSTALL_SOURCES "could not install spell sources"
 liberror_add_error ERR_INSTALL_KERNEL "could not install kernel image"
+liberror_add_error ERR_INSTALL_KHDRS "could not install kernel headers"
 liberror_add_error ERR_INSTALL_KMODS "could not install kernel modules"
 liberror_add_error ERR_INSTALL_DEPMOD "could not perform depmod in install"
+liberror_add_error ERR_INSTALL_SYSTEM "could not install sys image"
 
 # lib.module
 liberror_add_error ERR_MODULE_NONE "no modules found"
