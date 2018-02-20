@@ -21,23 +21,7 @@
 # let libenchantment know which installer this is
 ENCHANT_INSTALLER="shell"
 
-CONFIG="${CONFIG:-/etc/enchantment/enchantment.conf}"
 
-# source configs and libenchantment
-. "$CONFIG"
-
-# load the main library (which in turn loads sub-libraries)
-if ! . "$ENCHANT_LIBS/libenchantment"
-then
-  echo "error: could not load libenchantment"
-  exit 1
-fi
-
-# source installer-specific functions
-source "$ENCHANT_ENCHANTERS/$ENCHANT_INSTALLER/functions" ||
-  liberror_die \
-    $ERR_INSTALLER_FUNCS \
-    "cannot load $ENCHANT_INSTALLER functions file"
 
 
 #------------------------------------------------------------------------------
@@ -215,6 +199,25 @@ done
 
 command="$1"
 shift
+
+
+# source configs and libenchantment
+: "${CONFIG:=/etc/enchantment/enchantment.conf}"
+. "$CONFIG"
+
+# load the main library (which in turn loads sub-libraries)
+if ! . "$ENCHANT_LIBS/libenchantment"
+then
+  echo "error: could not load libenchantment"
+  exit 1
+fi
+
+# source installer-specific functions
+. "$ENCHANT_ENCHANTERS/$ENCHANT_INSTALLER/functions" ||
+  liberror_die \
+    $ERR_INSTALLER_FUNCS \
+    "cannot load $ENCHANT_INSTALLER functions file"
+
 
 case "$command" in
   "aliases" )
