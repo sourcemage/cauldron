@@ -171,13 +171,13 @@ function enchant_color() {
 ##
 #-------------------------------------------------------------------------------
 function enchant_get_variable() {
-  local var="$1"
+  for var in "$@"
+  do
+    [[ -n "$var" ]] || return $ERR_TARGET
 
-  [[ -n "$var" ]] || return $ERR_TARGET
-
-  var=$(declare -p "$var" 2> "$ENCHANT_NULL")
-  liberror_check "$ERR_VARIABLE" "$var" || return $ERR_VARIABLE
-  echo "${var##*$1=}"
+    var=$(declare -p "$var" 2> "$ENCHANT_NULL")
+    printf "%s\n" "${var##*$1=}"
+  done
 
   return $ERR_OK
 }
