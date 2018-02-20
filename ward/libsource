@@ -199,7 +199,7 @@ function ward_global_variables() {
   for file in ${defines[@]}
   do
     #eval vars=( "${vars[@]}" $(grep '[A-Z][A-Z_]*[0-9]*=' "$file" | cut -d= -f1) )
-    vars=( "${vars[@]}" $(grep '[A-Z][A-Z_]*[0-9]*=' "$file" | cut -d= -f1) )
+    vars=( "${vars[@]}" $(grep '[A-Z][A-Z_]*[0-9]*[:]\?=' "$file" | cut -d= -f1) )
   done
   # pass the data to sort so it can sort and remove duplicates
   vars=(
