@@ -4,6 +4,6 @@
 export ENCHANT_BASE="${ENCHANT_BASE:-${0%/*}/..}"
 
 export CONFIG="${0%/*}/enchantment.conf"
-export PATH="$ENCHANT_BASE/enchantment/shell/bin:$PATH"
+export PATH="$ENCHANT_BASE/enchantment/enchanters/shell/bin:$PATH"
 
 enchantment-shell "$@"
