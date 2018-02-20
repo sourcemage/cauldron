@@ -125,6 +125,8 @@ liberror_add_error ERR_POTION_UPDATE_PARTITIONS "could not update partitions"
 liberror_add_error ERR_POTION_UPDATE_USERS "could not update user/group config"
 
 # installer
+liberror_add_error ERR_INSTALLER \
+  "\$ENCHANT_INSTALLER error"
 liberror_add_error ERR_INSTALLER_FUNCS \
   "could not load \$ENCHANT_INSTALLER functions file"
 liberror_add_error ERR_INSTALLER_CMD "incorrect usage or unrecognized command"
