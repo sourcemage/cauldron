@@ -136,18 +136,17 @@ function enchant_install_caches() {
 
 #-------------------------------------------------------------------------------
 ##
-## @param system_archive
+## @param sys iaage archive file
 ##
-## Copies the selected spell caches into the target. If caches_list is empty
-## (no caches were passed as arguments), it reads the list of caches to
-## install from $ENCHANT_SOURCES_LIST.
+## Unpacks the given sys image to the target system. If the sys image is not
+## specified, it defaults to ENCHANT_SYSTEM_ARCHIVE.
 ##
 #-------------------------------------------------------------------------------
 function enchant_install_system() {
-  local sys="${1:-$ENCHANT_INSTALL_SYSTEM}"
+  local sys="${1:-$ENCHANT_SYSTEM_ARCHIVE}"
   local dst="$ENCHANT_TARGET"
 
-  # if the spells are specified via a file, read the file
+  # ensure that the sys image is a file
   [[ -f "$sys" ]] || return $ERR_INSTALL_SYSTEM
 
   "${ENCHANT_CMD_TAR[@]}" -C "$dst" -xf "$sys" ||
