@@ -184,6 +184,9 @@ function liberror_check() {
   local error="$?"
   local info=""
 
+  # return "OK" immediately if the error code matches ERR_OK
+  [[ "$error" -eq "$ERR_OK" ]] && return 0
+
   # if we were given two parameters, the first is the error name (override), and
   # the second is the info message. Otherwise, the first parameter (if given) is
   # the info message, and error is taken from the $? resulting from whatever
@@ -196,7 +199,7 @@ function liberror_check() {
     info="$1"
   fi
 
-  [[ "$error" -gt 0 ]] && liberror_print_error "$error" "$info"
+  liberror_print_error "$error" "$info"
 
   # return the same error back so that we don't modify the return value
   # environment
@@ -226,6 +229,9 @@ function liberror_check_fatal() {
   local error="$?"
   local info=""
 
+  # return "OK" immediately if the error code matches ERR_OK
+  [[ "$error" -eq "$ERR_OK" ]] && return 0
+
   # if we were given two parameters, the first is the error name (override), and
   # the second is the info message. Otherwise, the first parameter (if given) is
   # the info message, and error is taken from the $? resulting from whatever
@@ -238,8 +244,12 @@ function liberror_check_fatal() {
     info="$1"
   fi
 
-  [[ "$error" -gt 0 ]] && liberror_die "$error" "$info"
+  liberror_die "$error" "$info"
 
+  # liberror_die calls exit so we should never reach the following return
+  # statement
+  # in the event that we do reach it, we don't want to cycle errors endlessly,
+  # so return "OK"
   return $ERR_OK
 }
 
