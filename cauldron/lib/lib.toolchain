@@ -141,14 +141,14 @@ function cauldron_toolchain_baseroot() {
       # get a fresh basesystem chroot package
       (
         cd "$CAULDRON_TMP"
-        "${CAULDRON_CMD_URL_DL[@]}" "$baseroot_url"
-          liberror_check $ERR_TOOLCHAIN_BASEROOT \
-            "could not acquire baseroot image file" ||
-              return $ERR_TOOLCHAIN_BASEROOT
-        "${CAULDRON_CMD_URL_DL[@]}" "$baseroot_sig"
-          liberror_check $ERR_TOOLCHAIN_BASEROOT \
-            "could not acquire baseroot signature file" ||
-              return $ERR_TOOLCHAIN_BASEROOT
+        "${CAULDRON_CMD_URL_DL[@]}" "$baseroot_url" ||
+        liberror_check $ERR_TOOLCHAIN_BASEROOT \
+          "could not acquire baseroot image file" ||
+            return $ERR_TOOLCHAIN_BASEROOT
+        "${CAULDRON_CMD_URL_DL[@]}" "$baseroot_sig" ||
+        liberror_check $ERR_TOOLCHAIN_BASEROOT \
+          "could not acquire baseroot signature file" ||
+            return $ERR_TOOLCHAIN_BASEROOT
       )
       liberror_check || return $?
     fi
