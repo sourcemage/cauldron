@@ -125,16 +125,17 @@ function enchant_chroot_close() {
 
   for target in "${chroot[@]}"
   do
-    local mounts=( $(grep -o "$target[^[:space:]]*" | sort -r) )
-    [[ -n "$mounts" ]] || mounts=( sys run dev/pts dev proc )
-    cauldron_verbose "closing chroot mounts: ${mounts[@]}"
+    # get a list of all mounted subdirs in the target in reverse order to ensure
+    # that subdirs are unmounted before their parents
+    local mounts=( $(grep -o "$target[^[:space:]]*" "/proc/mounts" | sort -r) )
 
     # unmount the chroot mount points
     for mnt in "${mounts[@]}"
     do
-      if grep -q "$mnt" "$target/proc/mounts"
+      if grep -q "$mnt" "/proc/mounts"
       then
-        "${CAULDRON_CMD_UNMOUNT[@]}" "$target/$mnt" ||
+        enchant_verbose "umounting in chroot: ${mnt#$target/}"
+        "${ENCHANT_CMD_UNMOUNT[@]}" "$mnt" ||
           return $ERR_CHROOT_DONE
       fi
     done
