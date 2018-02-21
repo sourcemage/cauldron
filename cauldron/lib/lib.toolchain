@@ -61,7 +61,7 @@ function cauldron_toolchain_compiler_test() {
 
   # run the generated binary to make sure it was properly compiled
   cauldron_chroot "/$comptest"
-  liberror_check "execute $comptest" || return $?
+  liberror_check "execute $chroot/$comptest" || return $?
 
   cauldron_chroot_done "$chroot"
   liberror_check || return $?
