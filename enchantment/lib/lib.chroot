@@ -106,6 +106,55 @@ function enchant_chroot_init() {
 }
 
 #-------------------------------------------------------------------------------
+## @param chroot index (optional)
+## @param target chroot paths (optional)
+##
+## Unmounts required mount points in the chroot and unsets the related CHROOT
+## variables. If no target chroot is not provided, it will close ALL known
+## chroot paths.
+##
+#-------------------------------------------------------------------------------
+function enchant_chroot_close() {
+  local index="$1"
+  local chroot=
+  local target=
+
+  shift 1
+  chroot=( "$@" )
+  [[ -z "$chroot" ]] && chroot=( "${LIBCHROOT_PATHS[@]}" )
+
+  for target in "${chroot[@]}"
+  do
+    local mounts=( $(grep -o "$target[^[:space:]]*" | sort -r) )
+    [[ -n "$mounts" ]] || mounts=( sys run dev/pts dev proc )
+    cauldron_verbose "closing chroot mounts: ${mounts[@]}"
+
+    # unmount the chroot mount points
+    for mnt in "${mounts[@]}"
+    do
+      if grep -q "$mnt" "$target/proc/mounts"
+      then
+        "${CAULDRON_CMD_UNMOUNT[@]}" "$target/$mnt" ||
+          return $ERR_CHROOT_DONE
+      fi
+    done
+  done
+
+  # clear the chroot definitions
+  if [[ -n "$index" ]]
+  then
+    unset LIBCHROOT_USERS[index]
+    unset LIBCHROOT_PATHS[index]
+  else
+    unset LIBCHROOT_USERS
+    unset LIBCHROOT_PATHS
+  fi
+  unset CAULDRON_CHROOT
+
+  return $ERR_OK
+}
+
+#-------------------------------------------------------------------------------
 ## @param target dir to chroot into (optional)
 ##
 ## Cleans up the chroot environment after it is no longer needed
@@ -131,14 +180,7 @@ function enchant_chroot_done() {
       then
         LIBCHROOT_USERS[index]=$((LIBCHROOT_USERS[index]-1))
       else
-        # unmount the chroot mount points
-        "${ENCHANT_CMD_UNMOUNT_RECURSIVE[@]}" "$target"/* ||
-          return $ERR_CHROOT_DONE
-
-        # clear the chroot definitions
-        unset ENCHANT_CHROOT
-        unset LIBCHROOT_USERS[index]
-        unset LIBCHROOT_PATHS[index]
+        enchant_chroot_close "$index" "$target"
       fi
     fi
   done
@@ -153,21 +195,7 @@ function enchant_chroot_done() {
 ##
 #-------------------------------------------------------------------------------
 function enchant_chroot_cleanup() {
-  local target=
-
-  for target in "${LIBCHROOT_PATHS[@]}"
-  do
-    # unmount the chroot mount points
-    "${ENCHANT_CMD_UNMOUNT_RECURSIVE[@]}" "$target"/* ||
-      return $ERR_CHROOT_DONE
-  done
-
-  # clear the chroot definitions
-  unset LIBCHROOT_USERS
-  unset LIBCHROOT_PATHS
-  unset ENCHANT_CHROOT
-
-  return $ERR_OK
+  enchant_chroot_close
 }
 
 #-------------------------------------------------------------------------------
