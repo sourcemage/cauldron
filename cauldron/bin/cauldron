@@ -739,7 +739,20 @@ function command_shell() {
 
       if ! get_command -t "$input"
       then
+        # check if the user is trying to set a shell variable
+        case "$input" in
+          *=*)
+            libcolor_msg warn "this REPL does not support setting variables"
+            continue
+            ;;
+        esac
         # attempt to run the command through the regular shell as a backup
+        if ! command -v $input >/dev/null
+        then
+          echo "$cmd"
+          libcolor_msg error "command not found: $input"
+          continue
+        fi
         $input
         input=""
         continue
@@ -779,7 +792,7 @@ function get_command() {
     return 1
   fi
 
-  if ! declare -lF "$cmd"
+  if ! command -v "$cmd" >/dev/null
   then
     return 1
   fi
