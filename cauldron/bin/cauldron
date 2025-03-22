@@ -185,7 +185,8 @@ MAIN COMMANDS
           more information)
           if no SUBCOMMAND is given, a default run will be attempted
   shell
-          invoke a cauldron command subshell
+          invoke a cauldron command subshell (the default if COMMAND is not
+          specified)
   sys [SUBCOMMAND]
           commands to generate sys material (see ${0##*/} help sys for
           more information)
@@ -1136,7 +1137,7 @@ function process_shell() {
 }
 
 function run_command() {
-  local cmdname="${1:-help}"
+  local cmdname="${1:-shell}"
   local cmd=$(get_command "$cmdname")
   shift
   if [[ -n "$cmd" ]]
