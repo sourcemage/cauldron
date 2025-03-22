@@ -146,6 +146,11 @@ function help_main() {
 
   if [[ "$#" -ge 1 ]]
   then
+    if ! command -v help_"$1"
+    then
+      echo "no help for topic: $1"
+      return 1
+    fi
     eval help_"$1"
     return $?
   fi
